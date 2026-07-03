@@ -368,7 +368,7 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
 
     sw, sh = _media_dims()
     try:
-        _thumbnail, frames, num_frames = await run.io_bound(build_preview, entry)
+        result = await run.io_bound(build_preview, entry)
     except Exception:  # noqa: BLE001 - a bad/missing file must not break the row
         if anchor is not None and not _alive(anchor):
             return
@@ -380,6 +380,9 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
                 with slot:
                     ui.icon("broken_image", color=theme.DANGER)
         return
+    if result is None:
+        return  # NiceGUI's io_bound yields None while the app is shutting down
+    _thumbnail, frames, num_frames = result
     state.frames_cache[entry.key] = num_frames
     if anchor is not None and not _alive(anchor):
         return  # the page was reloaded/closed during the decode; don't touch a dead client
@@ -406,6 +409,8 @@ async def _probe_audio(entry: VideoEntry, badges: _RowBadges) -> None:
             present = await run.io_bound(probe.has_audio, entry.video_path)
         except Exception:  # noqa: BLE001 - probe failure must not break the row
             return
+        if present is None:
+            return  # NiceGUI's io_bound yields None while the app is shutting down
         state.audio_cache[entry.key] = present
     if badges.audio_slot is None or not _alive(badges.audio_slot):
         return

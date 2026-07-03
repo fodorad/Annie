@@ -139,7 +139,7 @@ async def _populate(entry: VideoEntry, thumb: ui.element, strip: list[ui.element
     except Exception:  # noqa: BLE001 - client never connected / already gone
         return
     try:
-        thumbnail, frames, _ = await run.io_bound(build_preview, entry)
+        result = await run.io_bound(build_preview, entry)
     except Exception:  # noqa: BLE001 - a bad/missing file must not break the row
         if not _alive(thumb):
             return
@@ -150,6 +150,9 @@ async def _populate(entry: VideoEntry, thumb: ui.element, strip: list[ui.element
         except RuntimeError:
             pass
         return
+    if result is None:
+        return  # NiceGUI's io_bound yields None while the app is shutting down
+    thumbnail, frames, _ = result
     if not _alive(thumb):
         return  # the page was reloaded/closed during the decode
     try:
