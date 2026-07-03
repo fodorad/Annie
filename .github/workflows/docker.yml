@@ -2,12 +2,17 @@ name: Docker
 
 # Runs after the CD workflow (PyPI publish + GitHub Release) rather than directly
 # on the tag, so the image is never pushed pointing at a version that failed to
-# publish to PyPI. Manual dispatch is still available for ad-hoc rebuilds.
+# publish to PyPI. Manual dispatch (with an explicit tag) is available for ad-hoc
+# rebuilds — e.g. to (re)build a past release without re-running CD.
 on:
   workflow_run:
     workflows: ["CD"]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to build and push (e.g. v1.0.0)"
+        required: true
 
 jobs:
   build-push:
@@ -20,10 +25,18 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
 
     steps:
+      - name: Resolve version
+        id: meta
+        # workflow_dispatch → the input tag; workflow_run for a tag push →
+        # head_branch is the tag name (e.g. v1.0.0). `version` strips the leading v.
+        run: |
+          tag="${{ github.event.inputs.tag || github.event.workflow_run.head_branch }}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v6
         with:
-          # For workflow_run, check out the exact commit the CD run built.
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          ref: ${{ github.event.inputs.tag || github.event.workflow_run.head_sha }}
           fetch-depth: 0  # required for hatch-vcs git describe
 
       - name: Log in to Docker Hub
@@ -32,17 +45,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract version tag
-        id: meta
-        # For a tag-triggered CD run, head_branch is the tag name (e.g. v1.2.3);
-        # fall back to the ref name for manual dispatch.
-        run: echo "tag=${{ github.event.workflow_run.head_branch || github.ref_name }}" >> "$GITHUB_OUTPUT"
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          build-args: |
+            ANNIE_VERSION=${{ steps.meta.outputs.version }}
           tags: |
             fodorad/annie:latest
-            fodorad/annie:${{ steps.meta.outputs.tag }}
+            fodorad/annie:${{ steps.meta.outputs.version }}

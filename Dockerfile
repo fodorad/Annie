@@ -13,6 +13,12 @@ ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 COPY . .
 
+# hatch-vcs derives the version from git metadata, which is absent in the build
+# context (.dockerignore excludes .git). Supply it explicitly so building Annie
+# in place succeeds; CI passes the release tag (e.g. 1.0.0) as ANNIE_VERSION.
+ARG ANNIE_VERSION=0.0.0
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${ANNIE_VERSION}
+
 # CPU-only torch wheels avoid the 8 GB CUDA runtime while keeping full
 # decode and render functionality (torchcodec runs on CPU just fine). The
 # BuildKit cache mount keeps uv's download cache (torch is ~700 MB) across
