@@ -1,0 +1,32 @@
+annie.pages.settings
+====================
+
+.. py:module:: annie.pages.settings
+
+.. autoapi-nested-parse::
+
+   Settings tab — UI preferences, render cache, review export/import, maintenance.
+
+   Surfaces the session-only UI preferences (Browse / Annotator row height), the
+   render-cache controls, the review-status export/import actions, and a Maintenance
+   block that lets you reclaim disk space by removing old logs, session databases, and
+   rendered clips.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.settings.render
+
+
+Module Contents
+---------------
+
+.. py:function:: render() -> None
+
+   Build the Settings tab body.
+
+

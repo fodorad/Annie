@@ -1,0 +1,1056 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/_modules/annie/pages/browse.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>annie.pages.browse - Annie latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">Annie latest documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">Annie latest documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/sources/index.html">annie.dataset.sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/storage/index.html">annie.dataset.storage</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/color/index.html">annie.media.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/compose/index.html">annie.media.compose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/convert/index.html">annie.media.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/decode/index.html">annie.media.decode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/probe/index.html">annie.media.probe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/rendering/index.html">annie.media.rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/pages/index.html">annie.pages</a><input aria-label="Toggle navigation of annie.pages" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/annotator/index.html">annie.pages.annotator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/browse/index.html">annie.pages.browse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/base/index.html">annie.parsers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/csvmeta/index.html">annie.parsers.csvmeta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for annie.pages.browse</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Browse tab — the scrollable, per-video dataset visualizer (main view).</span>
+
+<span class="sd">Browse is a pure consumer of the cached scan manifest and only populates once a</span>
+<span class="sd">videos folder is configured. An always-visible **filter bar** (not part of the</span>
+<span class="sd">scroll) narrows the list by name prefix, video/audio/vdet/track presence, review</span>
+<span class="sd">verdict, notes, annotator selection, and any label-column values. Each row is three</span>
+<span class="sd">stacked lines:</span>
+
+<span class="sd">1. the video id, a &quot;Show at location&quot; icon, and the media/annotation/label **tags**</span>
+<span class="sd">   (``video`` / ``audio`` / ``#frames`` / ``vdet`` / ``N track`` / ``main`` / labels);</span>
+<span class="sd">2. an **ORIGINAL** placeholder (click to embed the clip), the annotated **five-frame</span>
+<span class="sd">   strip**, and a **render** box (burn the full annotated clip and embed it);</span>
+<span class="sd">3. the review controls (liked by default, dislike, note, &quot;Add to Annotator&quot;).</span>
+
+<span class="sd">Row height is a Settings-tab preference. Frames decode and audio is probed lazily</span>
+<span class="sd">in background tasks; the body refreshes when the tab is opened or sources change.</span>
+
+<span class="sd">Each browser tab gets its own isolated filter state and transform settings via a</span>
+<span class="sd">per-client :class:`_BrowseState` keyed by :attr:`nicegui.Client.id`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">background_tasks</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">manipulate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.filtering</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterSpec</span><span class="p">,</span> <span class="n">apply_filters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_preview</span><span class="p">,</span> <span class="n">to_data_uri</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.rendering</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.reveal</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_docker</span><span class="p">,</span> <span class="n">reveal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">Verdict</span>
+
+<span class="c1">#: Number of Browse rows revealed per &quot;load more&quot; step (initial page size).</span>
+<span class="n">_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="c1">#: Shared CSS for the grey, centred media placeholder boxes (ORIGINAL / render slots).</span>
+<span class="n">_BOX</span> <span class="o">=</span> <span class="s2">&quot;border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center&quot;</span>
+<span class="c1">#: Whether Annie runs inside Docker. Evaluated once at import — the container</span>
+<span class="c1">#: boundary is fixed for the process lifetime — so Browse rows don&#39;t stat</span>
+<span class="c1">#: ``/.dockerenv`` on every render.</span>
+<span class="n">_IS_DOCKER</span> <span class="o">=</span> <span class="n">is_docker</span><span class="p">()</span>
+
+
+<span class="c1"># ── per-client state ──────────────────────────────────────────────────────────</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_BrowseState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter + transform state isolated to one browser tab.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        spec: The active filter snapshot for this client.</span>
+<span class="sd">        transforms: Per-label-column transform settings for this client.</span>
+<span class="sd">        timer_host: The persistent hidden element used as a timer parent at build time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">spec</span><span class="p">:</span> <span class="n">FilterSpec</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">FilterSpec</span><span class="p">)</span>
+    <span class="n">transforms</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">Transform</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">timer_host</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="c1">#: Per-client state registry; cleaned up on disconnect in :func:`render`.</span>
+<span class="n">_browse_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_BrowseState</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_state</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">_BrowseState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the :class:`_BrowseState` for the currently active client.&quot;&quot;&quot;</span>
+    <span class="n">cid</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_browse_state</span><span class="p">:</span>
+        <span class="n">_browse_state</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">_BrowseState</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_browse_state</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_column_type</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">ColumnType</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The data type chosen for a label column (defaults to ``str``).&quot;&quot;&quot;</span>
+    <span class="n">declared</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">label_column_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">&quot;str&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;str&quot;</span>
+    <span class="k">if</span> <span class="n">declared</span> <span class="o">==</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;int&quot;</span>
+    <span class="k">if</span> <span class="n">declared</span> <span class="o">==</span> <span class="s2">&quot;float&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;float&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;str&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_effective_label</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A label value after its column transform (Manipulate); ``None`` if absent.&quot;&quot;&quot;</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">raw</span>
+    <span class="k">return</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">apply_transform</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">_column_type</span><span class="p">(</span><span class="n">column</span><span class="p">),</span> <span class="n">transform</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_effective_values</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sorted distinct transformed values a column takes across the manifest.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">:=</span> <span class="n">_effective_label</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">column</span><span class="p">))}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_key</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">seen</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">_key</span><span class="p">)</span>
+
+
+<span class="c1">#: A persistent, never-refreshed element that owns the lazy-decode and render-poll</span>
+<span class="c1">#: timers. Parenting timers here (instead of inside a row) means a body refresh</span>
+<span class="c1">#: never deletes a timer&#39;s parent slot mid-flight — the callbacks guard against the</span>
+<span class="c1">#: row they target having been refreshed away.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_host</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The persistent timer host for the current client (created in :func:`render`).&quot;&quot;&quot;</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">timer_host</span>
+    <span class="k">assert</span> <span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;browse.render() must run before scheduling timers&quot;</span>
+    <span class="k">return</span> <span class="n">host</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_dims</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``(width, height)`` in px for every media box (16:9 by height).&quot;&quot;&quot;</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">browse_row_height</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">/</span> <span class="mi">9</span><span class="p">),</span> <span class="n">height</span>
+
+
+<span class="c1"># ── tags &amp; controls ──────────────────────────────────────────────────────────</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_RowBadges</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazily-filled badges a row&#39;s decode/probe update.&quot;&quot;&quot;</span>
+
+    <span class="n">frames</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">badge</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">audio_slot</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_audio_badge</span><span class="p">(</span><span class="n">present</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw a coloured ``audio`` / ``no audio`` chip in the current slot.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">present</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;audio&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">AUDIO_TAG_COLOR</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;no audio&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tags</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_RowBadges</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the media/annotation/label chips; return the lazily-filled badges.</span>
+
+<span class="sd">    ``video`` is known from the scan; ``#frames`` fills after decode; the ``audio``</span>
+<span class="sd">    chip fills after the audio probe (see :func:`_populate`), shown immediately when</span>
+<span class="sd">    already cached.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">badges</span> <span class="o">=</span> <span class="n">_RowBadges</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+        <span class="n">badges</span><span class="o">.</span><span class="n">audio_slot</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;span&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">badges</span><span class="o">.</span><span class="n">audio_slot</span><span class="p">:</span>
+            <span class="n">cached</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;audio: …&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_audio_badge</span><span class="p">(</span><span class="n">cached</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">VIDEO_TAG_COLOR</span><span class="p">)</span>
+        <span class="n">badges</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;#frames: …&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_vdet</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;vdet&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_track</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">track_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> track&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_active_track</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;main: track</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">)</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">label_columns</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">_effective_label</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">LABEL_COLOR</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">badges</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_review_controls</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the (default-liked) verdict toggle, note, and annotator checkbox.&quot;&quot;&quot;</span>
+    <span class="n">review</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">review_state</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">verdict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">review</span><span class="o">.</span><span class="n">verdict</span><span class="p">}</span>
+
+    <span class="n">like</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;thumb_up&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense&quot;</span><span class="p">)</span>
+    <span class="n">dislike</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;thumb_down&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">paint</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">liked</span> <span class="o">=</span> <span class="n">verdict</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;good&quot;</span>
+        <span class="n">like</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color=</span><span class="si">{</span><span class="s1">&#39;positive&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">liked</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;grey-5&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">dislike</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color=</span><span class="si">{</span><span class="s1">&#39;negative&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="n">liked</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;grey-5&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_verdict</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Verdict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">verdict</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_verdict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">paint</span><span class="p">()</span>
+
+    <span class="n">like</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">set_verdict</span><span class="p">(</span><span class="s2">&quot;good&quot;</span><span class="p">))</span>
+    <span class="n">dislike</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">set_verdict</span><span class="p">(</span><span class="s2">&quot;bad&quot;</span><span class="p">))</span>
+    <span class="n">paint</span><span class="p">()</span>
+
+    <span class="n">note</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;note&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">review</span><span class="o">.</span><span class="n">note</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense&quot;</span><span class="p">)</span>
+    <span class="n">note</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;blur&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_note</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">note</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">toggle_annotator</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_annotate</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
+
+    <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span>
+        <span class="s2">&quot;Add to Annotator&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">review</span><span class="o">.</span><span class="n">in_annotator</span><span class="p">,</span> <span class="n">on_change</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">toggle_annotator</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reveal_target</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the most relevant on-disk file to reveal (video ▸ vdet ▸ first track).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">vdet_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">entry</span><span class="o">.</span><span class="n">vdet_path</span>
+    <span class="k">return</span> <span class="n">entry</span><span class="o">.</span><span class="n">track_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">track_paths</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reveal_button</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the icon-only &quot;Show at location&quot; button (reveals the file in the OS).&quot;&quot;&quot;</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">_reveal_target</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="n">button</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;folder_open&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense round&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">button</span><span class="p">:</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Copy path to clipboard&quot;</span> <span class="k">if</span> <span class="n">_IS_DOCKER</span> <span class="k">else</span> <span class="s2">&quot;Show at location&quot;</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;delay=600&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">button</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_IS_DOCKER</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">run_javascript</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;navigator.clipboard.writeText(</span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path copied: </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;content_copy&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">reveal</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - surface any OS error to the user</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not reveal file: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+
+    <span class="n">button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="n">show</span><span class="p">)</span>
+
+
+<span class="c1"># ── media slots ──────────────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_original_box</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the ORIGINAL placeholder (like the render box): click to embed the clip.&quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_media_dims</span><span class="p">()</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center justify-center&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px;</span><span class="si">{</span><span class="n">_BOX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;videocam_off&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;audio only — no video frames&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">video_path</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">play</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">video_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video file not found: </span><span class="si">{</span><span class="n">video_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File not found: </span><span class="si">{</span><span class="n">video_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px&quot;</span><span class="p">)</span>
+
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;ORIGINAL&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;play_circle&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">play</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_strip</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the five fixed strip slots and return them for later population.&quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_media_dims</span><span class="p">()</span>
+    <span class="n">slots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;gap-1 no-wrap&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+            <span class="n">slots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px;</span><span class="si">{</span><span class="n">_BOX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">slots</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_box</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the render box: idle → spinner → embedded annotated clip on completion.&quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_media_dims</span><span class="p">()</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center justify-center&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px;</span><span class="si">{</span><span class="n">_BOX</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_render</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">&quot;lg&quot;</span><span class="p">)</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="n">background_tasks</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">_watch_render</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">box</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;annie-render&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;render&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;movie&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">start_render</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;movie_filter&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;no video to render&quot;</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_watch_render</span><span class="p">(</span><span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">box</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Poll a render job from a background task and embed the clip when it&#39;s done.</span>
+
+<span class="sd">    Guards every UI mutation so a body refresh mid-render stops the watcher cleanly</span>
+<span class="sd">    instead of raising from a deleted slot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">box</span><span class="p">):</span>
+            <span class="k">return</span>  <span class="c1"># page reloaded/closed; stop watching</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">:</span>
+                <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;render failed&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="k">return</span>  <span class="c1"># the row was refreshed away; stop watching</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.4</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_populate</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">strip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">],</span> <span class="n">badges</span><span class="p">:</span> <span class="n">_RowBadges</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode the strip, fill the frame count, and probe the audio stream.</span>
+
+<span class="sd">    Guards every UI mutation: if the row was refreshed away while the work was in</span>
+<span class="sd">    flight, the target slots are gone and NiceGUI raises ``RuntimeError`` — which we</span>
+<span class="sd">    swallow rather than letting it surface as a background-task error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">anchor</span> <span class="o">=</span> <span class="n">strip</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">strip</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">anchor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">anchor</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">connected</span><span class="p">()</span>  <span class="c1"># the task may start before the socket connects</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - client never connected / already gone</span>
+            <span class="k">return</span>
+
+    <span class="n">sw</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="n">_media_dims</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">build_preview</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the row</span>
+        <span class="k">if</span> <span class="n">anchor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">anchor</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">badges</span><span class="o">.</span><span class="n">frames</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">badges</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">&quot;#frames: ?&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">strip</span><span class="p">:</span>
+                <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;broken_image&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># NiceGUI&#39;s io_bound yields None while the app is shutting down</span>
+    <span class="n">_thumbnail</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">num_frames</span> <span class="o">=</span> <span class="n">result</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_frames</span>
+    <span class="k">if</span> <span class="n">anchor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">anchor</span><span class="p">):</span>
+        <span class="k">return</span>  <span class="c1"># the page was reloaded/closed during the decode; don&#39;t touch a dead client</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">badges</span><span class="o">.</span><span class="n">frames</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">badges</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;#frames: </span><span class="si">{</span><span class="n">num_frames</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slot</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">strip</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">to_data_uri</span><span class="p">(</span><span class="n">frame</span><span class="p">))</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">sw</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">sh</span><span class="si">}</span><span class="s2">px&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># the row was refreshed away mid-decode</span>
+
+    <span class="k">await</span> <span class="n">_probe_audio</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">badges</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_probe_audio</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">badges</span><span class="p">:</span> <span class="n">_RowBadges</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Probe (and cache) whether the video has an audio stream; fill its chip slot.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">present</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">present</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">has_audio</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - probe failure must not break the row</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">present</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>  <span class="c1"># NiceGUI&#39;s io_bound yields None while the app is shutting down</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">present</span>
+    <span class="k">if</span> <span class="n">badges</span><span class="o">.</span><span class="n">audio_slot</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">badges</span><span class="o">.</span><span class="n">audio_slot</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">badges</span><span class="o">.</span><span class="n">audio_slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">badges</span><span class="o">.</span><span class="n">audio_slot</span><span class="p">:</span>
+            <span class="n">_audio_badge</span><span class="p">(</span><span class="n">present</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row_card</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">can_decode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one per-video row as three stacked lines: name+tags, media, controls.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-2&quot;</span><span class="p">):</span>
+        <span class="c1"># 1) name, 1em, the reveal icon, 1em, then the tags</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-0 wrap&quot;</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium break-all&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;min-width:1em&quot;</span><span class="p">)</span>
+            <span class="n">_reveal_button</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;min-width:1em&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-1 wrap&quot;</span><span class="p">):</span>
+                <span class="n">badges</span> <span class="o">=</span> <span class="n">_tags</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+        <span class="c1"># 2) ORIGINAL placeholder, the five-frame strip, the rendered-clip box</span>
+        <span class="k">with</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;width:100%;overflow-x:auto&quot;</span><span class="p">),</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-start gap-3 no-wrap&quot;</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">_original_box</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="n">strip</span> <span class="o">=</span> <span class="n">_strip</span><span class="p">()</span>
+            <span class="n">_render_box</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+        <span class="c1"># 3) the review controls</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2 wrap&quot;</span><span class="p">):</span>
+            <span class="n">_review_controls</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">can_decode</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+        <span class="n">schedule</span><span class="p">(</span><span class="n">_host</span><span class="p">(),</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_populate</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">badges</span><span class="p">))</span>
+
+
+<span class="c1"># ── filter bar ───────────────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_frames_preset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the frame-filter preset key from the current spec (for persistence).&quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span>
+    <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">frames</span> <span class="o">==</span> <span class="s2">&quot;lt&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;lt25&quot;</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="o">==</span> <span class="mi">25</span> <span class="k">else</span> <span class="s2">&quot;ltx&quot;</span>
+    <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">frames</span> <span class="o">==</span> <span class="s2">&quot;gt&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;gt250&quot;</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="o">==</span> <span class="mi">250</span> <span class="k">else</span> <span class="s2">&quot;gtx&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;any&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_frames_filter</span><span class="p">(</span><span class="n">on_change</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ``# frames`` facet: presets plus a typed threshold ``X``.&quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;any&quot;</span><span class="p">:</span> <span class="s2">&quot;# frames: any&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lt25&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt; 25&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gt250&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt; 250&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ltx&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt; X&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gtx&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt; X&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">preset</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">_frames_preset</span><span class="p">())</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+    <span class="n">x_box</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="ow">or</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-24&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">preset</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x_box</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;lt25&quot;</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="o">=</span> <span class="s2">&quot;lt&quot;</span><span class="p">,</span> <span class="mi">25</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;gt250&quot;</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="o">=</span> <span class="s2">&quot;gt&quot;</span><span class="p">,</span> <span class="mi">250</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;ltx&quot;</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="o">=</span> <span class="s2">&quot;lt&quot;</span><span class="p">,</span> <span class="n">x</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;gtx&quot;</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">frames_threshold</span> <span class="o">=</span> <span class="s2">&quot;gt&quot;</span><span class="p">,</span> <span class="n">x</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="s2">&quot;any&quot;</span>
+        <span class="n">x_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;ltx&quot;</span><span class="p">,</span> <span class="s2">&quot;gtx&quot;</span><span class="p">))</span>
+        <span class="n">on_change</span><span class="p">()</span>
+
+    <span class="n">preset</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_e</span><span class="p">:</span> <span class="n">apply</span><span class="p">())</span>
+    <span class="n">x_box</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_e</span><span class="p">:</span> <span class="n">apply</span><span class="p">())</span>
+    <span class="n">x_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">preset</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;ltx&quot;</span><span class="p">,</span> <span class="s2">&quot;gtx&quot;</span><span class="p">))</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filters</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the filter controls (rebuilt when a transform changes the facets).&quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-3 wrap&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;filter_alt&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">on_change</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_rows</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+        <span class="n">name</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;name starts with&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">name_prefix</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined clearable&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;min-w-[12rem]&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">name</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;name_prefix&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">video</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;any&quot;</span><span class="p">:</span> <span class="s2">&quot;video: any&quot;</span><span class="p">,</span> <span class="s2">&quot;has&quot;</span><span class="p">:</span> <span class="s2">&quot;has video&quot;</span><span class="p">,</span> <span class="s2">&quot;missing&quot;</span><span class="p">:</span> <span class="s2">&quot;no video&quot;</span><span class="p">},</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">video</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="n">video</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;any&quot;</span><span class="p">:</span> <span class="s2">&quot;audio: any&quot;</span><span class="p">,</span> <span class="s2">&quot;has&quot;</span><span class="p">:</span> <span class="s2">&quot;has audio&quot;</span><span class="p">,</span> <span class="s2">&quot;missing&quot;</span><span class="p">:</span> <span class="s2">&quot;no audio&quot;</span><span class="p">},</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">audio</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">audio</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;Audio is probed as rows are viewed&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;delay=600&quot;</span><span class="p">)</span>
+        <span class="n">audio</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;audio&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">vdet</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;any&quot;</span><span class="p">:</span> <span class="s2">&quot;vdet: any&quot;</span><span class="p">,</span> <span class="s2">&quot;has&quot;</span><span class="p">:</span> <span class="s2">&quot;has vdet&quot;</span><span class="p">,</span> <span class="s2">&quot;missing&quot;</span><span class="p">:</span> <span class="s2">&quot;no vdet&quot;</span><span class="p">},</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">vdet</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="n">vdet</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;vdet&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">tracks</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;any&quot;</span><span class="p">:</span> <span class="s2">&quot;tracks: any&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span> <span class="s2">&quot;0 tracks&quot;</span><span class="p">,</span> <span class="s2">&quot;one&quot;</span><span class="p">:</span> <span class="s2">&quot;1 track&quot;</span><span class="p">,</span> <span class="s2">&quot;multi&quot;</span><span class="p">:</span> <span class="s2">&quot;2+ tracks&quot;</span><span class="p">},</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">tracks</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="n">tracks</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;tracks&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">_frames_filter</span><span class="p">(</span><span class="n">on_change</span><span class="p">)</span>
+
+        <span class="n">review</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;any&quot;</span><span class="p">:</span> <span class="s2">&quot;review: any&quot;</span><span class="p">,</span> <span class="s2">&quot;liked&quot;</span><span class="p">:</span> <span class="s2">&quot;liked&quot;</span><span class="p">,</span> <span class="s2">&quot;disliked&quot;</span><span class="p">:</span> <span class="s2">&quot;disliked&quot;</span><span class="p">},</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">review</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="n">review</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;review&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="s2">&quot;has note&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">has_note</span><span class="p">)</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;has_note&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+        <span class="n">anno</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="s2">&quot;for annotator&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">in_annotator</span><span class="p">)</span>
+        <span class="n">anno</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">&quot;in_annotator&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;flex-basis:100%;height:0&quot;</span><span class="p">)</span>  <span class="c1"># force line break</span>
+
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">label_columns</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">_effective_values</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+            <span class="n">sel</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                    <span class="n">values</span><span class="p">,</span>
+                    <span class="n">multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">],</span>
+                    <span class="n">label</span><span class="o">=</span><span class="n">column</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;min-w-[10rem]&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">sel</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">column</span><span class="p">:</span> <span class="p">(</span><span class="n">_set_label</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
+
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Clear&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;clear&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_clear</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set</span><span class="p">(</span><span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update one scalar facet on the current client&#39;s spec.&quot;&quot;&quot;</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_label</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update one label facet on the current client&#39;s spec.&quot;&quot;&quot;</span>
+    <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clear</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reset every facet and rebuild the bar + rows.&quot;&quot;&quot;</span>
+    <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">FilterSpec</span><span class="p">()</span>
+    <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="c1"># ── manipulate block ─────────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_manip_row</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One Manipulate row: column · type · transform · threshold / digits.&quot;&quot;&quot;</span>
+    <span class="n">col_type</span> <span class="o">=</span> <span class="n">_column_type</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">Transform</span><span class="p">())</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2 wrap&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">column</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-sm&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;min-width:8rem&quot;</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="n">col_type</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
+        <span class="n">kinds</span> <span class="o">=</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">transforms_for</span><span class="p">(</span><span class="n">col_type</span><span class="p">)</span>
+        <span class="n">kind_sel</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">TRANSFORM_LABELS</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kinds</span><span class="p">},</span> <span class="n">value</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">kind</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="n">x_box</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-24&quot;</span><span class="p">)</span>
+        <span class="n">x_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;threshold&quot;</span><span class="p">)</span>
+        <span class="n">digits_box</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">&quot;Digits&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">digits</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+            <span class="s2">&quot;w-24&quot;</span>
+        <span class="p">)</span>
+        <span class="n">digits_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">kind_sel</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">transforms</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">Transform</span><span class="p">(</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">x_box</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="n">digits</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">digits_box</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">digits_box</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">x_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;threshold&quot;</span><span class="p">)</span>
+            <span class="n">digits_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+            <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># facet values changed; reset filter</span>
+            <span class="n">_filters</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+            <span class="n">_rows</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+        <span class="n">kind_sel</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_e</span><span class="p">:</span> <span class="n">apply</span><span class="p">())</span>
+        <span class="n">x_box</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_e</span><span class="p">:</span> <span class="n">apply</span><span class="p">())</span>
+        <span class="n">digits_box</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_e</span><span class="p">:</span> <span class="n">apply</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_manipulate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the per-column transform controls (collapsed by default).&quot;&quot;&quot;</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">label_columns</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">expansion</span><span class="p">(</span><span class="s2">&quot;Manipulate&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;tune&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Transform a label column&#39;s value for its tag and filter.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+            <span class="s2">&quot;text-xs&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">_manip_row</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+
+
+<span class="c1"># ── body ─────────────────────────────────────────────────────────────────────</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the filtered, paged rows.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">can_decode</span> <span class="o">=</span> <span class="n">media_available</span><span class="p">()</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="n">apply_filters</span><span class="p">(</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span>
+        <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">review_state</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">get</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">get</span><span class="p">,</span>
+        <span class="n">_effective_label</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;No videos match the filters.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">body</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-2&quot;</span><span class="p">)</span>
+    <span class="n">shown</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">show_more</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">body</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">[</span><span class="n">shown</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="p">:</span> <span class="n">shown</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">_PAGE_SIZE</span><span class="p">]:</span>
+                <span class="n">_row_card</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">can_decode</span><span class="o">=</span><span class="n">can_decode</span><span class="p">)</span>
+        <span class="n">shown</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">shown</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">_PAGE_SIZE</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">))</span>
+        <span class="n">more</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">shown</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">))</span>
+        <span class="n">more</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Show more (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">shown</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> left)&quot;</span><span class="p">)</span>
+
+    <span class="n">more</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Show more&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">show_more</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+    <span class="n">show_more</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jump_to_top</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A floating bottom-right button that scrolls the page back to the top.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">page_sticky</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="s2">&quot;bottom-right&quot;</span><span class="p">,</span> <span class="n">x_offset</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">y_offset</span><span class="o">=</span><span class="mi">18</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+            <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;keyboard_arrow_up&quot;</span><span class="p">,</span>
+            <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">run_javascript</span><span class="p">(</span><span class="s2">&quot;window.scrollTo({top:0,behavior:&#39;smooth&#39;})&quot;</span><span class="p">),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;fab-mini color=primary&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;Back to top&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Browse body: gate, Manipulate, Filter, rows, and jump-to-top.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Browse&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xl font-medium&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Add a videos folder on the Dataset tab to browse.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+                <span class="s2">&quot;Install the &#39;media&#39; extra to see frame thumbnails and rendered clips.&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">_manipulate</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">expansion</span><span class="p">(</span><span class="s2">&quot;Filter&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;filter_alt&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
+            <span class="n">_filters</span><span class="p">()</span>
+        <span class="n">_rows</span><span class="p">()</span>
+        <span class="n">_jump_to_top</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="render">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/browse/index.html#annie.pages.browse.render">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Browse tab body; initialise and register per-client state.&quot;&quot;&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">_BrowseState</span><span class="p">(</span><span class="n">timer_host</span><span class="o">=</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;display:none&quot;</span><span class="p">))</span>
+    <span class="n">_browse_state</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">st</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">on_disconnect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_browse_state</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">_content</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="refresh">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/browse/index.html#annie.pages.browse.refresh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rebuild the Browse body (after a scan, source change, or tab open).&quot;&quot;&quot;</span>
+    <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Ádám Fodor
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=c6e86fd7"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

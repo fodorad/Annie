@@ -1,0 +1,255 @@
+annie.core.models
+=================
+
+.. py:module:: annie.core.models
+
+.. autoapi-nested-parse::
+
+   Domain models for Annie.
+
+   These are pure data structures with no I/O and no framework dependencies. They
+   form the vocabulary shared by every other layer: parsers produce them, the
+   service layer arranges them into a manifest, and the UI renders them.
+
+   The geometry uses image-pixel coordinates with the origin at the top-left, ``x``
+   increasing rightwards and ``y`` increasing downwards — the convention used by the
+   underlying detection/tracking CSV files.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.core.models.LANDMARK_NAMES
+   annie.core.models.RowStatus
+   annie.core.models.NO_ACTIVE_TRACK
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.core.models.BBox
+   annie.core.models.FrameAnnotation
+   annie.core.models.Event
+   annie.core.models.VideoEntry
+
+
+Module Contents
+---------------
+
+.. py:data:: LANDMARK_NAMES
+   :type:  tuple[str, Ellipsis]
+   :value: ('left_eye', 'right_eye', 'nose', 'left_mouth', 'right_mouth')
+
+
+   The five named facial landmark points carried by every detection row.
+
+   Ordered to match the shared 17-column CSV schema.
+
+.. py:data:: RowStatus
+
+   The three states a manifest row can be in. See :mod:`annie.scanning`.
+
+.. py:class:: BBox
+
+   A single face bounding box with confidence and named landmarks.
+
+   .. attribute:: x
+
+      Left edge of the box, in pixels.
+
+   .. attribute:: y
+
+      Top edge of the box, in pixels.
+
+   .. attribute:: w
+
+      Box width, in pixels.
+
+   .. attribute:: h
+
+      Box height, in pixels.
+
+   .. attribute:: score
+
+      Detector confidence in ``[0, 1]``.
+
+   .. attribute:: landmarks
+
+      Mapping of landmark name (see :data:`LANDMARK_NAMES`) to its
+      ``(x, y)`` pixel coordinate.
+
+   .. attribute:: track_id
+
+      The owning track's id when the box came from a ``.track`` file,
+      otherwise ``None`` (e.g. a raw ``.vdet`` detection).
+
+
+   .. py:property:: x2
+      :type: int
+
+
+      Right edge of the box (``x + w``), in pixels.
+
+
+   .. py:property:: y2
+      :type: int
+
+
+      Bottom edge of the box (``y + h``), in pixels.
+
+
+   .. py:property:: area
+      :type: int
+
+
+      Box area in square pixels (clamped to be non-negative).
+
+
+   .. py:method:: contains(px: int, py: int) -> bool
+
+      Return whether the pixel ``(px, py)`` lies inside this box (inclusive).
+
+      :param px: X coordinate of the query point, in pixels.
+      :param py: Y coordinate of the query point, in pixels.
+
+      :returns: ``True`` if the point is within the box bounds, ``False`` otherwise.
+
+
+
+.. py:class:: FrameAnnotation
+
+   All face boxes belonging to a single video frame.
+
+   A ``.vdet`` frame may carry several boxes (one per detected face); a
+   ``.track`` frame carries exactly one.
+
+   .. attribute:: frame_idx
+
+      Zero-based frame index within the source video.
+
+   .. attribute:: boxes
+
+      The bounding boxes present on this frame.
+
+
+.. py:class:: Event
+
+   A temporal annotation produced by the Annotator tab.
+
+   .. attribute:: event_id
+
+      Stable identifier, unique within a video's annotation file.
+
+   .. attribute:: name
+
+      Human-readable label.
+
+   .. attribute:: start
+
+      Start time in seconds.
+
+   .. attribute:: end
+
+      End time in seconds.
+
+   .. attribute:: metadata
+
+      Optional free-form key/value extras.
+
+
+.. py:data:: NO_ACTIVE_TRACK
+   :value: -1
+
+
+   Sentinel ``track_id`` meaning "no active / main-character track".
+
+.. py:class:: VideoEntry
+
+   One Browse row: a single video with all of its annotations aggregated.
+
+   Unlike a per-annotation fan-out, a video is represented once and carries its
+   raw detections (``.vdet``) together with every derived track. This is what the
+   Browse tab renders and what the overview metrics are computed from.
+
+   .. attribute:: video_id
+
+      The video stem used for matching, labelling, and as the review key.
+
+   .. attribute:: video_path
+
+      Path to the source ``.mp4``, or ``None`` when annotation-only.
+
+   .. attribute:: vdet_path
+
+      Path to the raw-detection ``.vdet``, or ``None`` if absent.
+
+   .. attribute:: track_paths
+
+      Paths to the video's ``__track{N}.csv`` files, ordered by track id.
+
+   .. attribute:: track_ids
+
+      The track indices, aligned with ``track_paths``.
+
+   .. attribute:: active_track_id
+
+      The resolved main-character track id, or ``-1`` if none.
+
+   .. attribute:: status
+
+      One of :data:`RowStatus`.
+
+   .. attribute:: labels
+
+      Per-video label values gathered from CSV label sources, keyed by
+      column name (e.g. ``{"Sentiment": "negative", "Angry": "0.33"}``).
+      Drives the Browse label tags and the label filters.
+
+
+   .. py:property:: has_video
+      :type: bool
+
+
+      Whether a source video file is present.
+
+
+   .. py:property:: has_vdet
+      :type: bool
+
+
+      Whether a raw-detection ``.vdet`` is present.
+
+
+   .. py:property:: has_track
+      :type: bool
+
+
+      Whether at least one track file is present.
+
+
+   .. py:property:: has_active_track
+      :type: bool
+
+
+      Whether a valid main-character track is assigned (``active_track_id >= 0``).
+
+
+   .. py:property:: label
+      :type: str
+
+
+      The on-screen label (the video id).
+
+
+   .. py:property:: key
+      :type: str
+
+
+      Stable per-video identity, used as the SQLite review-status key.
+
+

@@ -1,0 +1,36 @@
+annie.pages
+===========
+
+.. py:module:: annie.pages
+
+.. autoapi-nested-parse::
+
+   NiceGUI page builders for Annie's four tabs.
+
+   Each module exposes a ``render(...)`` function that populates the body of one tab.
+   Pages call **down** into the service layer only; they never import ``sqlite3`` or
+   ``torchcodec`` directly.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/annie/pages/annotator/index
+   /autoapi/annie/pages/browse/index
+   /autoapi/annie/pages/convert/index
+   /autoapi/annie/pages/csv_dialog/index
+   /autoapi/annie/pages/dataset/index
+   /autoapi/annie/pages/folder_picker/index
+   /autoapi/annie/pages/fsbrowse/index
+   /autoapi/annie/pages/home/index
+   /autoapi/annie/pages/lazy/index
+   /autoapi/annie/pages/logs/index
+   /autoapi/annie/pages/reveal/index
+   /autoapi/annie/pages/settings/index
+   /autoapi/annie/pages/utils/index
+
+

@@ -1,0 +1,102 @@
+annie.parsers.csvmeta
+=====================
+
+.. py:module:: annie.parsers.csvmeta
+
+.. autoapi-nested-parse::
+
+   Generic CSV metadata parser for label / main-character sources (domain).
+
+   Unlike the fixed 17-column detection schema (:mod:`annie.parsers.base`), a label
+   CSV has an arbitrary shape: the user picks which column joins to the video id (the
+   **key column**) and which columns to surface as tags/filters (the **value
+   columns**). This module reads headers, suggests a key column by matching values
+   against the known video stems, and builds a ``video_id -> {column: value}`` map.
+
+   It is pure and dependency-light (stdlib :mod:`csv` only), so it is unit-tested
+   without any media backend.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.parsers.csvmeta.read_header
+   annie.parsers.csvmeta.read_rows
+   annie.parsers.csvmeta.count_rows
+   annie.parsers.csvmeta.suggest_key_column
+   annie.parsers.csvmeta.load_value_map
+   annie.parsers.csvmeta.distinct_values
+
+
+Module Contents
+---------------
+
+.. py:function:: read_header(path: str | pathlib.Path) -> list[str]
+
+   Return the column names of a CSV (its header row).
+
+   :param path: Path to the CSV file.
+
+   :returns: The header column names in order, or an empty list if the file is empty
+             or missing.
+
+
+.. py:function:: read_rows(path: str | pathlib.Path) -> list[dict[str, str]]
+
+   Read a CSV into column-keyed dict rows (BOM- and CRLF-tolerant).
+
+   :param path: Path to the CSV file.
+
+   :returns: One dict per data row, keyed by column name. Empty if missing.
+
+
+.. py:function:: count_rows(path: str | pathlib.Path) -> int
+
+   Count data rows in a CSV (excludes the header), cheaply.
+
+   :param path: Path to the CSV file.
+
+   :returns: The number of data rows, or ``0`` if missing/empty.
+
+
+.. py:function:: suggest_key_column(path: str | pathlib.Path, video_stems: set[str] | None = None, *, sample: int = 500) -> str | None
+
+   Guess which column joins the CSV to videos.
+
+   Scores each column by the fraction of its sampled values found in
+   ``video_stems``; the best non-zero column wins. With no stems (or no match),
+   falls back to the first header that looks like an id (see ``_KEY_HINTS``),
+   else the first column.
+
+   :param path: Path to the CSV file.
+   :param video_stems: Known video stems to match against, or ``None``.
+   :param sample: Maximum number of rows to inspect.
+
+   :returns: The suggested key-column name, or ``None`` if the file has no header.
+
+
+.. py:function:: load_value_map(path: str | pathlib.Path, key_column: str, value_columns: tuple[str, Ellipsis] | list[str]) -> dict[str, dict[str, str]]
+
+   Build a ``key -> {value_column: value}`` mapping from a CSV.
+
+   :param path: Path to the CSV file.
+   :param key_column: The column whose value identifies the video (the join key).
+   :param value_columns: The columns to carry into each entry.
+
+   :returns: Mapping from the (stripped) key value to a dict of the selected column
+             values. Rows with an empty key are skipped; later rows win on a key clash.
+
+
+.. py:function:: distinct_values(value_map: dict[str, dict[str, str]], column: str) -> list[str]
+
+   Return the sorted distinct non-empty values of ``column`` across a map.
+
+   :param value_map: A map from :func:`load_value_map`.
+   :param column: The value column to collect.
+
+   :returns: Sorted distinct values, empties excluded.
+
+

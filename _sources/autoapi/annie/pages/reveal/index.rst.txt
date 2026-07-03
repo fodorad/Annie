@@ -1,0 +1,66 @@
+annie.pages.reveal
+==================
+
+.. py:module:: annie.pages.reveal
+
+.. autoapi-nested-parse::
+
+   Reveal a file in the OS file manager (service over the platform shell).
+
+   Annie is local-first — the browser and the filesystem are the same machine — so a
+   "Show at location" button can open the user's native file manager with the file
+   selected. The command is platform-dependent:
+
+   * macOS  → ``open -R <file>``           (Finder, file highlighted)
+   * Windows→ ``explorer /select,<file>``  (Explorer, file highlighted)
+   * other  → ``xdg-open <dir>``           (opens the containing folder)
+
+   The command builder (:func:`reveal_command`) is pure and unit-tested; the thin
+   :func:`reveal` wrapper spawns it.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.reveal.is_docker
+   annie.pages.reveal.reveal_command
+   annie.pages.reveal.reveal
+
+
+Module Contents
+---------------
+
+.. py:function:: is_docker(sentinel: pathlib.Path = _DOCKER_SENTINEL) -> bool
+
+   Return ``True`` when Annie is running inside a Docker container.
+
+   Docker creates ``/.dockerenv`` in every container; its presence is the
+   standard detection mechanism. The ``sentinel`` parameter exists solely to
+   make this function testable without mocking.
+
+   :param sentinel: Path whose existence signals a Docker environment.
+
+   :returns: ``True`` if the sentinel exists, ``False`` otherwise.
+
+
+.. py:function:: reveal_command(path: str | pathlib.Path, platform: str) -> list[str]
+
+   Build the file-manager command that reveals ``path`` on ``platform``.
+
+   :param path: The file (or folder) to reveal.
+   :param platform: A :data:`sys.platform` value (``"darwin"``, ``"win32"``, …).
+
+   :returns: The argv list to spawn. On unknown platforms the containing directory is
+             opened with ``xdg-open``.
+
+
+.. py:function:: reveal(path: str | pathlib.Path) -> None
+
+   Open the OS file manager with ``path`` selected (fire-and-forget).
+
+   :param path: The file to reveal.
+
+

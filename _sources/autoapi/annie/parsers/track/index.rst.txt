@@ -1,0 +1,53 @@
+annie.parsers.track
+===================
+
+.. py:module:: annie.parsers.track
+
+.. autoapi-nested-parse::
+
+   Parser for ``.track`` / ``__track{N}.csv`` files (one tracked face per file).
+
+   A track file is derived from a ``.vdet`` by a tracking heuristic and follows a
+   single face across frames — exactly one row per frame it appears in. The track
+   index is encoded in the filename after a **double** underscore, e.g.
+   ``{video_id}__track0.csv``.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.parsers.track.track_id_from_name
+   annie.parsers.track.load_track
+
+
+Module Contents
+---------------
+
+.. py:function:: track_id_from_name(path: str | pathlib.Path) -> int
+
+   Extract the track index ``N`` from a ``...__track{N}`` filename.
+
+   :param path: The track file path or name.
+
+   :returns: The parsed track index.
+
+   :raises ValueError: If the name does not contain a ``__track{N}`` segment.
+
+
+.. py:function:: load_track(path: str | pathlib.Path) -> tuple[int, list[annie.core.models.FrameAnnotation]]
+
+   Load a track file into its track id and per-frame annotations.
+
+   Every box is stamped with the track id parsed from the filename. A
+   well-formed track has exactly one box per frame, but the loader does not
+   enforce that — it groups defensively like the vdet loader.
+
+   :param path: Path to the ``__track{N}.csv`` file.
+
+   :returns: A ``(track_id, frames)`` tuple where ``frames`` is ordered by ascending
+             frame index.
+
+

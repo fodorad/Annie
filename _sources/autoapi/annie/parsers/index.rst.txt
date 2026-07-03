@@ -1,0 +1,28 @@
+annie.parsers
+=============
+
+.. py:module:: annie.parsers
+
+.. autoapi-nested-parse::
+
+   Annotation parsers for Annie.
+
+   Each parser consumes one on-disk annotation format and returns domain models
+   (:mod:`annie.models`). All current formats share a single 17-column CSV schema;
+   see :mod:`annie.parsers.base`.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/annie/parsers/base/index
+   /autoapi/annie/parsers/csvmeta/index
+   /autoapi/annie/parsers/participants/index
+   /autoapi/annie/parsers/track/index
+   /autoapi/annie/parsers/vdet/index
+
+

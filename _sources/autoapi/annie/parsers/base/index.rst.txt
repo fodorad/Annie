@@ -1,0 +1,117 @@
+annie.parsers.base
+==================
+
+.. py:module:: annie.parsers.base
+
+.. autoapi-nested-parse::
+
+   Shared CSV schema and the parser protocol.
+
+   Both ``.vdet`` and ``.track`` files use one identical 17-column schema with a
+   header row and CRLF line endings:
+
+   ``frame_id, source, score, x, y, w, h,``
+   ``left_eye_x, left_eye_y, right_eye_x, right_eye_y,``
+   ``nose_x, nose_y, left_mouth_x, left_mouth_y, right_mouth_x, right_mouth_y``
+
+   The ``source`` column is informational only — matching is done by file stem, not
+   by this path (it points at the original capture location, which need not exist).
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.parsers.base.CSV_COLUMNS
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.parsers.base.AnnotationParser
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.parsers.base.read_csv_rows
+   annie.parsers.base.parse_bbox_row
+   annie.parsers.base.group_rows_by_frame
+
+
+Module Contents
+---------------
+
+.. py:data:: CSV_COLUMNS
+   :type:  tuple[str, Ellipsis]
+   :value: ('frame_id', 'source', 'score', 'x', 'y', 'w', 'h', 'left_eye_x', 'left_eye_y', 'right_eye_x',...
+
+
+   The 17 columns of the shared detection/track CSV schema, in order.
+
+.. py:class:: AnnotationParser
+
+   Bases: :py:obj:`Protocol`
+
+
+   Protocol implemented by every annotation loader.
+
+   A parser turns a path into a list of :class:`~annie.models.FrameAnnotation`,
+   one entry per distinct ``frame_id`` it contains.
+
+
+   .. py:method:: __call__(path: str | pathlib.Path) -> list[annie.core.models.FrameAnnotation]
+
+      Parse ``path`` into per-frame annotations.
+
+      :param path: Path to the annotation file.
+
+      :returns: One :class:`~annie.models.FrameAnnotation` per distinct frame index.
+
+
+
+.. py:function:: read_csv_rows(path: str | pathlib.Path) -> list[dict[str, str]]
+
+   Read a shared-schema CSV into a list of column-keyed dict rows.
+
+   Tolerant of both CRLF and LF line endings (``newline=""`` lets :mod:`csv`
+   handle either) and of a UTF-8 BOM. The header row is required and is used as
+   the dict keys.
+
+   :param path: Path to the CSV file.
+
+   :returns: One dict per data row, keyed by column name.
+
+   :raises FileNotFoundError: If ``path`` does not exist.
+
+
+.. py:function:: parse_bbox_row(row: dict[str, str], track_id: int | None = None) -> annie.core.models.BBox
+
+   Build a :class:`~annie.models.BBox` from one CSV row.
+
+   :param row: A column-keyed dict as produced by :func:`read_csv_rows`.
+   :param track_id: The owning track id to stamp onto the box, or ``None`` for a
+                    raw detection.
+
+   :returns: The parsed bounding box, with its five named landmarks populated.
+
+
+.. py:function:: group_rows_by_frame(rows: list[dict[str, str]], track_id: int | None = None) -> list[annie.core.models.FrameAnnotation]
+
+   Group flat CSV rows into per-frame annotations, sorted by frame index.
+
+   Multiple rows sharing a ``frame_id`` (possible in a ``.vdet``) collapse into a
+   single :class:`~annie.models.FrameAnnotation` carrying all their boxes.
+
+   :param rows: Column-keyed CSV rows from :func:`read_csv_rows`.
+   :param track_id: Track id to stamp on every box, or ``None`` for raw detections.
+
+   :returns: Per-frame annotations ordered by ascending ``frame_idx``.
+
+

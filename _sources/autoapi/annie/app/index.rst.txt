@@ -1,0 +1,52 @@
+annie.app
+=========
+
+.. py:module:: annie.app
+
+.. autoapi-nested-parse::
+
+   NiceGUI application entry — assembles the four tabs into one page.
+
+   This is the only module that touches NiceGUI's app lifecycle. It applies the
+   global theme colour, builds a fixed primary **header bar** that carries the logo,
+   the tab navigation (Dataset, Browse, Annotator, Settings), and the version — all
+   white-on-primary and always visible — then starts the server bound to the
+   configured host/port. Run it with ``python -m annie.app``, ``make run``, or the
+   installed ``annie`` console script.
+
+   The UI is built **per browser connection** via :func:`@ui.page("/") <nicegui.ui.page>`
+   (not the shared auto-index) so every client has a live connection and a running
+   event loop while it builds. That is what lets the rows decode their frames as
+   background tasks bound to the real client, instead of a build-time timer firing
+   against a torn-down auto-index client.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.app.build
+   annie.app.index
+   annie.app.main
+
+
+Module Contents
+---------------
+
+.. py:function:: build() -> None
+
+   Build the single-page tabbed UI.
+
+
+.. py:function:: index() -> None
+
+   Build the tabbed UI fresh for each browser connection.
+
+
+.. py:function:: main() -> None
+
+   Console-script / module entry point: register the page and run the server.
+
+

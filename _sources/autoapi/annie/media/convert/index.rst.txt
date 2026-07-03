@@ -1,0 +1,534 @@
+annie.media.convert
+===================
+
+.. py:module:: annie.media.convert
+
+.. autoapi-nested-parse::
+
+   Re-encode an audio/video dataset to a consistent, validated form (service).
+
+   Some source clips are subtly broken: their container metadata disagrees with the
+   real frame count (torchcodec's ``approximate`` mode derives ``num_frames`` from
+   duration × fps, so a clip can report more frames than it has and blow up decoding
+   near the end). Re-encoding every file to constant-frame-rate H.264 — and
+   **validating** the result with torchcodec — makes the dataset consistent for Annie
+   and for downstream dataloaders / feature extraction.
+
+   The module is split into pure, unit-tested pieces (ffmpeg command builders, stem
+   pairing, length math, the batch runner with an injected work function) and thin
+   impure wrappers (``run_ffmpeg``, ``validate_video``, ``convert_*_file``) that need a
+   system FFmpeg and the ``media`` extra and are exercised manually.
+
+   Audio/video length contract when muxing: the audio filter ``apad`` pads the audio
+   with silence and ``-shortest`` trims the output to the (finite) video stream, so the
+   muxed audio is exactly the video's duration — short audio is padded, long audio is
+   cut — which is what :func:`audio_video_consistent` checks.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.media.convert.AUDIO_INPUT_SUFFIXES
+   annie.media.convert.VIDEO_INPUT_SUFFIXES
+   annie.media.convert.AUDIO_OUTPUT_FORMATS
+   annie.media.convert.VIDEO_OUTPUT_FORMATS
+   annie.media.convert.COMMON_SAMPLE_RATES
+   annie.media.convert.COMMON_FPS
+   annie.media.convert.BLACK_DEFAULT_SIZE
+   annie.media.convert.BLACK_DEFAULT_FPS
+   annie.media.convert.ConvertStatus
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.media.convert.AudioOptions
+   annie.media.convert.VideoOptions
+   annie.media.convert.AudioItem
+   annie.media.convert.VideoItem
+   annie.media.convert.ConvertProgress
+   annie.media.convert.ConversionRunner
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.convert.audio_command
+   annie.media.convert.video_filters
+   annie.media.convert.video_command
+   annie.media.convert.black_video_command
+   annie.media.convert.plan_audio
+   annie.media.convert.plan_video
+   annie.media.convert.expected_frame_count
+   annie.media.convert.expected_sample_count
+   annie.media.convert.audio_video_consistent
+   annie.media.convert.run_ffmpeg
+   annie.media.convert.decodable_frames
+   annie.media.convert.validate_video
+   annie.media.convert.convert_audio_file
+   annie.media.convert.convert_video_file
+   annie.media.convert.export_ids
+   annie.media.convert.export_failures
+
+
+Module Contents
+---------------
+
+.. py:data:: AUDIO_INPUT_SUFFIXES
+   :type:  tuple[str, Ellipsis]
+   :value: ('.wav', '.mp3', '.flac', '.m4a', '.aac', '.ogg', '.opus')
+
+
+   Accepted source-audio suffixes (lower-case, dotted).
+
+.. py:data:: VIDEO_INPUT_SUFFIXES
+   :type:  tuple[str, Ellipsis]
+   :value: ('.mp4', '.avi', '.mov', '.mkv', '.webm', '.m4v')
+
+
+   Accepted source-video suffixes (lower-case, dotted).
+
+.. py:data:: AUDIO_OUTPUT_FORMATS
+   :type:  tuple[str, Ellipsis]
+   :value: ('wav', 'flac', 'mp3')
+
+
+   Offered audio output containers/codecs.
+
+.. py:data:: VIDEO_OUTPUT_FORMATS
+   :type:  tuple[str, Ellipsis]
+   :value: ('mp4',)
+
+
+   Offered video containers/codecs.
+
+.. py:data:: COMMON_SAMPLE_RATES
+   :type:  tuple[int, Ellipsis]
+   :value: (8000, 16000, 22050, 44100, 48000)
+
+
+   Sample rates the UI offers as quick picks.
+
+.. py:data:: COMMON_FPS
+   :type:  tuple[float, Ellipsis]
+   :value: (10, 24, 25, 30)
+
+
+   Quick-pick constant frame rates.
+
+.. py:class:: AudioOptions
+
+   Audio re-encode settings.
+
+   .. attribute:: out_format
+
+      Output container/codec (``"wav"`` default, PCM 16-bit).
+
+   .. attribute:: sample_rate
+
+      Target sample rate in Hz.
+
+   .. attribute:: channels
+
+      Channel count (``1`` = mono, the default).
+
+
+.. py:class:: VideoOptions
+
+   Video re-encode settings.
+
+   .. attribute:: width
+
+      Target width in px, or ``None`` to keep the source width.
+
+   .. attribute:: height
+
+      Target height in px, or ``None`` to keep the source height.
+
+   .. attribute:: grayscale
+
+      Desaturate to black-and-white when ``True`` (still yuv420p).
+
+   .. attribute:: fps
+
+      Target constant frame rate, or ``None`` to keep the source fps.
+
+   .. attribute:: add_audio
+
+      Mux the matching-stem audio into the output when ``True``.
+
+   .. attribute:: min_frames
+
+      Reject (skip) any source whose output would have fewer than this
+      many decodable frames. ``2`` (default) drops degenerate single-frame
+      "videos" (audio-only files that carry one thumbnail-like frame); ``1``
+      only requires that at least one frame decodes.
+
+   .. attribute:: out_format
+
+      Output container (``"mp4"``).
+
+
+   .. py:property:: keep_resolution
+      :type: bool
+
+
+      Whether the source resolution is kept (no scaling).
+
+
+.. py:data:: BLACK_DEFAULT_SIZE
+   :value: 256
+
+
+   Black-frame fallback size for a synthesised audio-only video.
+
+   Used when the options keep the original size/fps (of which there is none).
+
+.. py:data:: BLACK_DEFAULT_FPS
+   :value: 25.0
+
+
+   Fps of the synthesised black video when the source has none.
+
+.. py:function:: audio_command(src: str | pathlib.Path, dst: str | pathlib.Path, opts: AudioOptions) -> list[str]
+
+   Build the ffmpeg argv to re-encode one audio file.
+
+   :param src: Source audio (or a media file with an audio stream).
+   :param dst: Destination path.
+   :param opts: Audio settings.
+
+   :returns: The ffmpeg argv list (no shell).
+
+
+.. py:function:: video_filters(opts: VideoOptions) -> str
+
+   Build the ``-vf`` filter chain string for the given video options.
+
+   :param opts: Video settings.
+
+   :returns: A comma-joined filter chain, or ``""`` when no spatial filter is needed.
+             A single given dimension scales the other by ``-2`` (keeps aspect, even).
+
+
+.. py:function:: video_command(src: str | pathlib.Path, dst: str | pathlib.Path, opts: VideoOptions, audio_path: str | pathlib.Path | None = None) -> list[str]
+
+   Build the ffmpeg argv to re-encode one video (constant frame rate H.264).
+
+   Audio handling: when ``opts.add_audio`` and ``audio_path`` is given, the audio
+   is muxed and matched to the video length via ``apad`` + ``-shortest``; otherwise
+   the output has no audio (``-an``).
+
+   :param src: Source video.
+   :param dst: Destination ``.mp4``.
+   :param opts: Video settings.
+   :param audio_path: Matching audio file to mux, or ``None``.
+
+   :returns: The ffmpeg argv list (no shell).
+
+
+.. py:function:: black_video_command(dst: str | pathlib.Path, audio: str | pathlib.Path, opts: VideoOptions) -> list[str]
+
+   Build the ffmpeg argv for an audio-only item: a black-frame video + audio.
+
+   The black ``lavfi`` source is infinite and ``-shortest`` trims the output to the
+   (finite) audio, so the synthesised video has exactly the audio's duration. The
+   frame size / fps come from ``opts`` or fall back to :data:`BLACK_DEFAULT_SIZE` /
+   :data:`BLACK_DEFAULT_FPS` when the options keep the (non-existent) original.
+
+   :param dst: Destination ``.mp4``.
+   :param audio: The audio to carry.
+   :param opts: Video settings (used for size / fps).
+
+   :returns: The ffmpeg argv list (no shell).
+
+
+.. py:class:: AudioItem
+
+   One planned audio conversion (source → destination).
+
+
+   .. py:property:: label
+      :type: str
+
+
+      Display name for progress (the source filename).
+
+
+.. py:class:: VideoItem
+
+   One planned video conversion.
+
+   ``src`` is the source video, or ``None`` for an **audio-only** item that should
+   be synthesised as a black-frame video carrying ``audio``.
+
+
+   .. py:property:: label
+      :type: str
+
+
+      Display name for progress (the source filename, or the output name).
+
+
+   .. py:property:: is_black
+      :type: bool
+
+
+      Whether this item synthesises a black-frame video (no source video).
+
+
+.. py:function:: plan_audio(in_dir: str | pathlib.Path | None, out_dir: str | pathlib.Path, opts: AudioOptions) -> list[AudioItem]
+
+   Plan the audio batch: one :class:`AudioItem` per input file.
+
+   :param in_dir: Folder of source audio files.
+   :param out_dir: Destination folder.
+   :param opts: Audio settings (its ``out_format`` sets the destination suffix).
+
+   :returns: The planned items (empty if the input folder is missing).
+
+
+.. py:function:: plan_video(in_dir: str | pathlib.Path | None, out_dir: str | pathlib.Path, opts: VideoOptions, audio_dir: str | pathlib.Path | None = None) -> list[VideoItem]
+
+   Plan the video batch: one :class:`VideoItem` per input file.
+
+   When ``opts.add_audio`` and ``audio_dir`` is given, each video is paired by stem
+   with an audio file of any supported format in ``audio_dir``. When
+   ``opts.audio_only_black`` is also set, an audio file with **no** matching video
+   becomes a black-frame video carrying that audio; otherwise such audio yields no
+   video at all (it stays only in the audio folder).
+
+   :param in_dir: Folder of source videos.
+   :param out_dir: Destination folder.
+   :param opts: Video settings (its ``out_format`` sets the destination suffix).
+   :param audio_dir: Folder of audio to mux (typically the audio output folder).
+
+   :returns: The planned items (empty if the input folder is missing).
+
+
+.. py:function:: expected_frame_count(duration_s: float, fps: float) -> int
+
+   Return the number of frames a ``duration_s`` clip at ``fps`` should have.
+
+
+.. py:function:: expected_sample_count(duration_s: float, sample_rate: int) -> int
+
+   Return the number of audio samples a ``duration_s`` clip at ``sample_rate`` has.
+
+
+.. py:function:: audio_video_consistent(num_frames: int, fps: float, num_samples: int, sample_rate: int, *, tolerance_s: float = 0.04) -> bool
+
+   Whether an audio track and a video stream have matching durations.
+
+   :param num_frames: Decoded video frame count.
+   :param fps: Video frame rate.
+   :param num_samples: Decoded audio sample count (per channel).
+   :param sample_rate: Audio sample rate.
+   :param tolerance_s: Allowed absolute difference in seconds (≈ one frame at 25 fps).
+
+   :returns: ``True`` if the two durations agree within ``tolerance_s``.
+
+
+.. py:function:: run_ffmpeg(cmd: list[str]) -> None
+
+   Run an ffmpeg command, raising :class:`RuntimeError` with its tail on failure.
+
+
+.. py:function:: decodable_frames(path: str | pathlib.Path) -> int
+
+   Return the torchcodec frame count, verified by actually decoding, or ``0``.
+
+   A file with a declared video stream but **no real frames** (an audio-only
+   ``.mp4`` that VLC plays as audio) can still report ``num_frames >= 1`` in its
+   metadata, so the count alone is not enough — we decode the first (and last)
+   frame to confirm they really exist. Any decode failure yields ``0``.
+
+   :param path: The media file to inspect.
+
+   :returns: The number of decodable frames (``0`` if the frames cannot be decoded).
+
+
+.. py:function:: validate_video(path: str | pathlib.Path, min_frames: int = 1) -> tuple[bool, str]
+
+   Validate a re-encoded video with torchcodec.
+
+   Requires at least ``min_frames`` frames (so a degenerate single-frame, audio-only
+   result is rejected), decodes **every** frame in ``exact`` mode (so an unreadable
+   frame raises), and confirms the ``exact`` and ``approximate`` frame counts agree —
+   the discrepancy that makes some source clips fail late in decoding.
+
+   :param path: The video to validate.
+   :param min_frames: Minimum decodable frame count required to pass.
+
+   :returns: An ``(ok, message)`` pair.
+
+
+.. py:function:: convert_audio_file(item: AudioItem, opts: AudioOptions) -> None
+
+   Re-encode one audio file, skipping it if a non-empty output already exists.
+
+   On any failure the (possibly partial) output is removed, so the output folder
+   only ever contains good files.
+
+
+.. py:function:: convert_video_file(item: VideoItem, opts: VideoOptions) -> None
+
+   Re-encode one video (or synthesise a black-frame one), then validate it.
+
+   Grace handling: a source ``.mp4`` is skipped with an error (and never lands in
+   the output folder) when it has **no video stream** or yields fewer than
+   ``opts.min_frames`` decodable frames — which drops degenerate single-frame
+   "videos" (audio-only files carrying one thumbnail-like frame, which VLC plays as
+   audio-only). A stale bad output from a previous run is removed in those cases too.
+   If a torchcodec-valid output already exists it is skipped (resume); any failure
+   removes a partial output.
+
+
+.. py:function:: export_ids(path: str | pathlib.Path, ids: list[str]) -> pathlib.Path
+
+   Write a one-column CSV (``id``) of the given filenames' stems, sorted.
+
+   :param path: Destination CSV path.
+   :param ids: Filenames (or ids); their stems are written, de-duplicated and sorted.
+
+   :returns: The path written.
+
+
+.. py:function:: export_failures(path: str | pathlib.Path, failures: list[tuple[str, str]]) -> pathlib.Path
+
+   Write a two-column CSV (``id,error``) for the failed files, sorted by id.
+
+   :param path: Destination CSV path.
+   :param failures: ``(filename, error)`` pairs.
+
+   :returns: The path written.
+
+
+.. py:data:: ConvertStatus
+
+   Lifecycle state of a batch conversion run.
+
+.. py:class:: ConvertProgress
+
+   A snapshot of a running (or finished) conversion batch.
+
+   .. attribute:: title
+
+      Human label of the batch (e.g. ``"Audio"`` / ``"Video"``).
+
+   .. attribute:: total
+
+      Number of files in the batch.
+
+   .. attribute:: done
+
+      Number processed so far (succeeded or failed).
+
+   .. attribute:: current
+
+      The file currently being processed.
+
+   .. attribute:: succeeded
+
+      Filenames that converted (or were skipped as already done).
+
+   .. attribute:: failed
+
+      ``(filename, error)`` pairs for files that failed.
+
+   .. attribute:: started_at
+
+      Epoch seconds when the batch started, or ``None``.
+
+   .. attribute:: finished_at
+
+      Epoch seconds when it finished, or ``None`` while running.
+
+   .. attribute:: status
+
+      One of :data:`ConvertStatus`.
+
+
+   .. py:property:: elapsed
+      :type: float
+
+
+      Seconds elapsed since the batch started (frozen once finished).
+
+
+   .. py:property:: fraction
+      :type: float
+
+
+      Progress as a fraction in ``[0, 1]``.
+
+
+   .. py:property:: eta_seconds
+      :type: float | None
+
+
+      Estimated seconds remaining, or ``None`` if not yet estimable.
+
+
+   .. py:property:: succeeded_count
+      :type: int
+
+
+      Number of files processed without error.
+
+
+.. py:class:: ConversionRunner
+
+   Runs one conversion batch at a time on a background thread, with progress.
+
+   The batch loop is generic: it is given a list of items, a ``work`` callable that
+   converts one item (raising on failure), and a ``label`` callable for display.
+   Failures are recorded per item and never stop the batch.
+
+
+   .. py:method:: running() -> bool
+
+      Whether a batch is currently in progress.
+
+
+
+   .. py:method:: progress() -> ConvertProgress
+
+      Return a consistent snapshot of the current progress.
+
+
+
+   .. py:method:: cancel() -> None
+
+      Request cancellation; the batch stops after the current file.
+
+
+
+   .. py:method:: start(title: str, items: list, work: collections.abc.Callable[[object], None], *, label: collections.abc.Callable[[object], str] = lambda it: getattr(it, 'label', str(it))) -> concurrent.futures.Future
+
+      Begin a batch on the worker thread.
+
+      :param title: Human label for the batch.
+      :param items: The planned items to convert.
+      :param work: Converts one item, raising on failure.
+      :param label: Maps an item to its display name.
+
+      :returns: The :class:`~concurrent.futures.Future` of the batch (mostly for tests).
+
+      :raises RuntimeError: If a batch is already running.
+
+
+
+   .. py:method:: shutdown() -> None
+
+      Shut the worker pool down, waiting for an in-flight batch to finish.
+
+
+

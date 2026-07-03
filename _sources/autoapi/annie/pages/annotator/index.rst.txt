@@ -1,0 +1,67 @@
+annie.pages.annotator
+=====================
+
+.. py:module:: annie.pages.annotator
+
+.. autoapi-nested-parse::
+
+   Annotator tab — focused main-character review for the queued videos.
+
+   The tab is greyed out until at least one video is checked "Add to Annotator" on
+   the Browse tab. Opening it shows only those queued videos, in responsive rows. For
+   each video:
+
+   * the thumbnail and five-frame strip show the current main-character track in green
+     (click the thumbnail to play the original clip);
+   * picking a different track in the **Main character** selector re-renders the strip
+     immediately and **auto-saves** the choice to the ``_manual`` CSV — there is no
+     Save button; selection *is* the save;
+   * the option matching the value in the source CSV is marked ``(default)`` so it is
+     obvious which track the heuristic chose;
+   * a **render** box burns the full clip with the chosen track green so the choice can
+     be double-checked across the whole video.
+
+   The corrected datasource can be exported to a standalone CSV at any time.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.annotator.set_tab
+   annie.pages.annotator.sync_tab
+   annie.pages.annotator.update_availability
+   annie.pages.annotator.render
+   annie.pages.annotator.refresh
+
+
+Module Contents
+---------------
+
+.. py:function:: set_tab(tab: nicegui.ui.tab) -> None
+
+   Register the tab element so availability can be toggled from elsewhere.
+
+
+.. py:function:: sync_tab() -> None
+
+   Enable the tab only when at least one video is queued (safe at build time).
+
+
+.. py:function:: update_availability() -> None
+
+   Sync the tab state and rebuild the body (runtime; needs the event loop).
+
+
+.. py:function:: render() -> None
+
+   Build the Annotator tab body; register per-client timer host.
+
+
+.. py:function:: refresh() -> None
+
+   Rebuild the Annotator body (after queueing changes or a tab open).
+
+

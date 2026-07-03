@@ -1,0 +1,123 @@
+annie.parsers.participants
+==========================
+
+.. py:module:: annie.parsers.participants
+
+.. autoapi-nested-parse::
+
+   Parser and resolver for the main-character participant file.
+
+   A main-character file maps each video to the track index that is its active /
+   monitored main character. Classically this is a two-column CSV — ``uuid,track_id``
+   — but Annie is dataset-agnostic: the **key column** (the video id) and the
+   **value column** (the track id) are chosen when the source is added, defaulting to
+   ``uuid`` / ``track_id``. A ``track_id`` of ``-1`` means "no active track".
+
+   Annie keeps human judgement separate from heuristic output. The user selects the
+   source file; Annie never writes to it. Manual corrections go to its ``_manual``
+   sibling (``..._heuristic.csv`` → ``..._heuristic_manual.csv``), an upsert keyed by
+   the video id, written with the same two columns. Resolution order is
+   **manual ▸ source ▸ -1**.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.parsers.participants.manual_path_for
+   annie.parsers.participants.load_participants
+   annie.parsers.participants.resolved_mapping
+   annie.parsers.participants.resolve_active_track
+   annie.parsers.participants.set_active_track
+   annie.parsers.participants.export_resolved
+
+
+Module Contents
+---------------
+
+.. py:function:: manual_path_for(source_file: str | pathlib.Path) -> pathlib.Path
+
+   Return the manual-correction sibling path for a source file.
+
+   ``/x/participant_face_track_heuristic.csv`` →
+   ``/x/participant_face_track_heuristic_manual.csv``.
+
+   :param source_file: Path to the pristine main-character source CSV.
+
+   :returns: The path where manual corrections are written.
+
+
+.. py:function:: load_participants(path: str | pathlib.Path, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> dict[str, int]
+
+   Load a main-character CSV into a ``video_id -> track_id`` mapping.
+
+   A missing file resolves to an empty mapping (treated as "no corrections /
+   no source yet") rather than raising, so resolution degrades cleanly. Rows
+   whose track-id value is blank or non-integer are skipped.
+
+   :param path: Path to the main-character CSV.
+   :param key_column: The column holding the video id.
+   :param value_column: The column holding the track index.
+
+   :returns: Mapping from video id to its active track index (may be ``-1``). Empty if
+             the file does not exist.
+
+
+.. py:function:: resolved_mapping(source_file: str | pathlib.Path, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> dict[str, int]
+
+   Return the merged ``video_id -> track_id`` mapping (manual overrides source).
+
+   :param source_file: Path to the main-character source CSV.
+   :param key_column: The column holding the video id.
+   :param value_column: The column holding the track index.
+
+   :returns: The source mapping with manual corrections layered on top.
+
+
+.. py:function:: resolve_active_track(uuid: str, source_file: str | pathlib.Path, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> int
+
+   Resolve the active track id for a video using manual ▸ source ▸ -1.
+
+   :param uuid: The video id to look up.
+   :param source_file: Path to the main-character source CSV.
+   :param key_column: The column holding the video id.
+   :param value_column: The column holding the track index.
+
+   :returns: The resolved active track index, or ``-1`` when none applies.
+
+
+.. py:function:: set_active_track(uuid: str, track_id: int, source_file: str | pathlib.Path, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> pathlib.Path
+
+   Upsert a manual main-character correction for ``uuid``.
+
+   Writes to the ``_manual`` sibling of the source file only (the source file is
+   never touched). The write is an upsert keyed by the video id — re-correcting a
+   video overwrites its previous manual row rather than appending.
+
+   :param uuid: The video id being corrected.
+   :param track_id: The newly chosen active track index.
+   :param source_file: Path to the main-character source CSV (defines where the
+                       ``_manual`` sibling lives).
+   :param key_column: The column holding the video id.
+   :param value_column: The column holding the track index.
+
+   :returns: The path to the manual-correction file that was written.
+
+
+.. py:function:: export_resolved(source_file: str | pathlib.Path, out_path: str | pathlib.Path, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> pathlib.Path
+
+   Write the resolved (manual ▸ source) mapping to a standalone CSV.
+
+   This is the export of the corrected main-character datasource: the heuristic
+   rows with every manual correction applied, in one self-contained file.
+
+   :param source_file: Path to the main-character source CSV.
+   :param out_path: Destination CSV path.
+   :param key_column: The column holding the video id.
+   :param value_column: The column holding the track index.
+
+   :returns: The path written.
+
+

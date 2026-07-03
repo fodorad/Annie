@@ -1,0 +1,11 @@
+annie.pages.utils
+=================
+
+.. py:module:: annie.pages.utils
+
+.. autoapi-nested-parse::
+
+   Shared UI helpers used by multiple page modules (UI).
+
+
+

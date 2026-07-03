@@ -1,0 +1,45 @@
+annie.pages.logs
+================
+
+.. py:module:: annie.pages.logs
+
+.. autoapi-nested-parse::
+
+   Log tab — browse, filter, and copy recorded events (UI).
+
+   A consumer of :data:`annie.logbook.LOG`. Shows the most recent events (newest
+   first) with a level/text filter and, per row, a **Copy** button (to the clipboard)
+   and a **Details** dialog with the full text / traceback. A per-client poller
+   surfaces *new* errors as auto-dismissing toasts so a background failure is visible
+   without watching the terminal.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.logs.render
+   annie.pages.logs.refresh
+   annie.pages.logs.start_toasts
+
+
+Module Contents
+---------------
+
+.. py:function:: render() -> None
+
+   Build the Log tab body.
+
+
+.. py:function:: refresh() -> None
+
+   Rebuild the event table (called when the tab is opened).
+
+
+.. py:function:: start_toasts() -> None
+
+   Start a per-client poller that shows new errors as auto-dismissing toasts.
+
+

@@ -1,0 +1,38 @@
+annie.pages.convert
+===================
+
+.. py:module:: annie.pages.convert
+
+.. autoapi-nested-parse::
+
+   Convert tab — re-encode audio and video to a consistent, validated form.
+
+   Two sections: **Audio** (optional) re-encodes audio to a uniform format / sample
+   rate / channel count; **Video** re-encodes to constant-frame-rate H.264 and
+   validates each output with torchcodec (decode every frame, exact == approximate
+   count) so the dataset never trips the broken-seeking class of bug downstream.
+
+   Audio/video combination is explicit: mux the matching-stem audio into each video,
+   or keep videos frame-only; and an audio file with no matching video can become a
+   black-frame video carrying that audio, or be left as audio-only. A shared progress
+   panel shows ``X/Y`` with a bar, elapsed time, and an ETA while the background batch
+   runs.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.convert.render
+
+
+Module Contents
+---------------
+
+.. py:function:: render() -> None
+
+   Build the Convert tab body.
+
+

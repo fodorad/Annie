@@ -1,0 +1,112 @@
+annie.dataset.manipulate
+========================
+
+.. py:module:: annie.dataset.manipulate
+
+.. autoapi-nested-parse::
+
+   Browse 'Manipulate' transforms — derive a display/filter value per label column.
+
+   A label column carries raw CSV text plus a **data type** (``str`` / ``int`` /
+   ``float``, chosen when the CSV is added). The Browse *Manipulate* block then applies
+   one **transform** per column, replacing its raw value for tags and filtering:
+
+   * text → ``trim`` (strip surrounding whitespace);
+   * numeric → ``round`` (to the nearest integer, e.g. sentiment ``1.0`` → ``1``),
+     ``threshold`` (``≥X`` / ``<X`` buckets), or ``sign`` (``negative`` / ``zero`` /
+     ``positive``).
+
+   The functions are pure and unit-tested; the UI only wires them up.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.dataset.manipulate.ColumnType
+   annie.dataset.manipulate.TransformKind
+   annie.dataset.manipulate.TRANSFORM_LABELS
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.manipulate.Transform
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.manipulate.transforms_for
+   annie.dataset.manipulate.detect_type
+   annie.dataset.manipulate.apply_transform
+
+
+Module Contents
+---------------
+
+.. py:data:: ColumnType
+
+   A column's data type.
+
+.. py:data:: TransformKind
+
+   A transform a column can carry.
+
+.. py:data:: TRANSFORM_LABELS
+   :type:  dict[TransformKind, str]
+
+   Short human labels for the transform dropdown.
+
+.. py:class:: Transform
+
+   One column's transform.
+
+   .. attribute:: kind
+
+      The transform to apply.
+
+   .. attribute:: threshold
+
+      The cut for the ``threshold`` transform.
+
+   .. attribute:: digits
+
+      Decimal places for the ``round`` transform (default 2).
+
+
+.. py:function:: transforms_for(col_type: ColumnType) -> tuple[TransformKind, Ellipsis]
+
+   Return the transforms valid for a column type.
+
+
+.. py:function:: detect_type(values: collections.abc.Iterable[str]) -> ColumnType
+
+   Guess a column's type from a sample of its (string) values.
+
+   :param values: Sample cell values.
+
+   :returns: ``"int"`` if every non-empty value is an integer, ``"float"`` if every value
+             is numeric, else ``"str"``. An all-empty/absent column defaults to ``"str"``.
+
+
+.. py:function:: apply_transform(value: str, col_type: ColumnType, transform: Transform) -> str
+
+   Apply a column's transform to one raw value, returning its display value.
+
+   A value that cannot be parsed as a number (in a numeric column) is returned
+   unchanged, so a stray non-numeric cell never breaks the row.
+
+   :param value: The raw cell text.
+   :param col_type: The column's data type.
+   :param transform: The transform to apply.
+
+   :returns: The transformed string.
+
+

@@ -1,0 +1,57 @@
+annie.media.preview
+===================
+
+.. py:module:: annie.media.preview
+
+.. autoapi-nested-parse::
+
+   Build Browse preview images for a video (service; needs the ``media`` extra).
+
+   Produces the static thumbnail (clean first frame) and the annotated five-frame
+   strip (vdet boxes in blue, the main-character track in green) shown on each Browse
+   row. Decoding is lazy via :mod:`annie.decode`, so importing this module never
+   requires torch; call :func:`annie.decode.media_available` before using it.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.preview.to_data_uri
+   annie.media.preview.build_preview
+
+
+Module Contents
+---------------
+
+.. py:function:: to_data_uri(image: PIL.Image.Image) -> str
+
+   Encode a PIL image as a self-contained ``data:`` PNG URI.
+
+   Embedding the pixels in the element (rather than serving a per-client temp
+   file) means a thumbnail/strip frame never produces an orphaned static route
+   that 404s after a reconnect.
+
+   :param image: The image to encode.
+
+   :returns: A ``data:image/png;base64,…`` string usable as a ``ui.image`` source.
+
+
+.. py:function:: build_preview(entry: annie.core.models.VideoEntry, count: int = 5) -> tuple[PIL.Image.Image, list[PIL.Image.Image], int]
+
+   Decode a video's strip and draw its annotations.
+
+   :param entry: The video to preview; ``entry.video_path`` must be set.
+   :param count: Number of strip frames (first / ¼ / ½ / ¾ / last by default).
+
+   :returns: the clean first frame as a
+             thumbnail, a list of annotated strip frames (vdet blue, active track green),
+             and the video's total frame count.
+   :rtype: A ``(thumbnail, strip, num_frames)`` triple
+
+   :raises ValueError: If the entry has no video to decode.
+   :raises annie.decode.MediaUnavailableError: If the ``media`` extra is absent.
+
+

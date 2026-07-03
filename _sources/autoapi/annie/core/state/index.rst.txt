@@ -1,0 +1,132 @@
+annie.core.state
+================
+
+.. py:module:: annie.core.state
+
+.. autoapi-nested-parse::
+
+   Process-wide UI state shared across the NiceGUI tabs (service-facing glue).
+
+   Holds the configured :class:`~annie.sources.SourceRegistry`, the cached scan
+   manifest (Browse/Annotator are pure consumers of it), the review store, the render
+   service, and session-only UI settings (row heights). Adding or removing a source
+   re-runs the scan in place, so there is no Scan button.
+
+   Sources are **session-only**: the registry is seeded from the ``ANNIE_*``
+   environment variables on startup and otherwise lives for the process lifetime.
+   Curation (verdicts, notes, annotator selection) and main-character corrections
+   persist independently in SQLite / the ``_manual`` CSV.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.core.state.state
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.core.state.UiSettings
+   annie.core.state.AppState
+
+
+Module Contents
+---------------
+
+.. py:class:: UiSettings
+
+   Session-only UI preferences set on the Settings tab.
+
+   .. attribute:: browse_row_height
+
+      Media height (px) of a Browse row's thumbnail/strip/render.
+
+   .. attribute:: annotator_row_height
+
+      Max media height (px) of an Annotator row; its boxes
+      flex to share the row width and only hit this cap on very wide screens.
+
+
+.. py:class:: AppState
+
+   Mutable application state shared between tabs.
+
+   .. attribute:: registry
+
+      The configured data sources (the dataset definition).
+
+   .. attribute:: scan
+
+      The most recent scan result, recomputed on every source change.
+
+   .. attribute:: store
+
+      The SQLite review-status store.
+
+   .. attribute:: renderer
+
+      The render-job service.
+
+   .. attribute:: converter
+
+      The audio/video re-encode batch runner.
+
+   .. attribute:: audio_cache
+
+      Probed audio-stream presence per video id (lazy; see Browse).
+
+   .. attribute:: frames_cache
+
+      Decoded frame count per video id (lazy; see Browse).
+
+   .. attribute:: ui
+
+      Session-only UI preferences.
+
+
+   .. py:method:: rescan() -> None
+
+      Rebuild the manifest from the current registry (after a source change).
+
+      Also clears the audio and frame-count caches so that any replaced or
+      renamed video files are re-probed on the next Browse render.
+
+
+
+   .. py:method:: set_store(db_path: pathlib.Path) -> None
+
+      Replace the active review store with one backed by ``db_path``.
+
+      The file is created (with the schema applied) if it does not exist yet.
+      Call this whenever the user changes the persistence target — either by
+      loading a config that embeds a ``"db"`` path, or by choosing a DB file
+      in the Persistence block on the Dataset tab.
+
+      :param db_path: Absolute path to the SQLite file to open.
+
+
+
+   .. py:method:: review_state(key: str) -> annie.dataset.filtering.ReviewState
+
+      Return the filtering-facing review state for a video (default liked).
+
+      :param key: The video key.
+
+      :returns: A :class:`~annie.filtering.ReviewState`; videos with no stored row are
+                liked (good) with no note and not queued for the Annotator.
+
+
+
+.. py:data:: state
+
+   The single shared state instance.
+
+   The initial scan is deferred to app startup (see :mod:`annie.app`) so imports
+   stay fast.
+

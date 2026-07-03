@@ -1,0 +1,195 @@
+annie.media.decode
+==================
+
+.. py:module:: annie.media.decode
+
+.. autoapi-nested-parse::
+
+   Frame-reading wrapper over torchcodec (infrastructure).
+
+   torchcodec and the rest of the PyTorch ecosystem are an **optional** dependency
+   (the ``media`` extra). Everything here imports them lazily, so importing
+   :mod:`annie` — and running the bulk of the test suite — never requires a 2 GB
+   torch install. Call :func:`media_available` to check, and the loaders raise a
+   clear :class:`MediaUnavailableError` if torchcodec is missing.
+
+   Two seek modes are exposed (per the design):
+
+   * ``approximate`` — fast preview scrubbing (Browse thumbnails / strips).
+   * ``exact`` — frame-accurate reads for the Annotator (guarantees frame ``i`` is
+     frame ``i``).
+
+   Frames are returned as ``numpy`` ``uint8`` arrays in HWC/RGB order, which is what
+   the Pillow-based overlay renderer in :mod:`annie.color` consumes.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.media.decode.SeekMode
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   annie.media.decode.MediaUnavailableError
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.media.decode.VideoMetadata
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.decode.media_available
+   annie.media.decode.read_frame
+   annie.media.decode.read_frames
+   annie.media.decode.frame_count
+   annie.media.decode.video_metadata
+   annie.media.decode.read_strip
+   annie.media.decode.strip_indices
+
+
+Module Contents
+---------------
+
+.. py:data:: SeekMode
+
+   ``"exact"`` for frame accuracy, ``"approximate"`` for speed.
+
+   :type: Frame-seek strategy
+
+.. py:exception:: MediaUnavailableError
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when a frame-decode operation needs torchcodec but it is absent.
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:function:: media_available() -> bool
+
+   Return whether the optional torchcodec backend can be imported.
+
+   :returns: ``True`` if ``torchcodec`` is importable, ``False`` otherwise.
+
+
+.. py:function:: read_frame(path: str | pathlib.Path, frame_idx: int, *, seek_mode: SeekMode = 'exact') -> numpy.ndarray
+
+   Read a single frame by index.
+
+   :param path: Path to the video file.
+   :param frame_idx: Zero-based frame index to read.
+   :param seek_mode: ``"exact"`` (frame-accurate) or ``"approximate"`` (fast).
+
+   :returns: The frame as an HWC ``uint8`` RGB numpy array.
+
+   :raises MediaUnavailableError: If torchcodec is not installed.
+
+
+.. py:function:: read_frames(path: str | pathlib.Path, indices: list[int], *, seek_mode: SeekMode = 'approximate') -> list[numpy.ndarray]
+
+   Read several frames by index.
+
+   :param path: Path to the video file.
+   :param indices: Zero-based frame indices to read.
+   :param seek_mode: Seek mode; defaults to ``"approximate"`` for fast previews.
+
+   :returns: One HWC ``uint8`` RGB numpy array per requested index, in order.
+
+   :raises MediaUnavailableError: If torchcodec is not installed.
+
+
+.. py:function:: frame_count(path: str | pathlib.Path) -> int
+
+   Return the number of frames in a video.
+
+   :param path: Path to the video file.
+
+   :returns: The total frame count.
+
+   :raises MediaUnavailableError: If torchcodec is not installed.
+
+
+.. py:class:: VideoMetadata
+
+   Basic video metadata needed by the render/preview pipeline.
+
+   .. attribute:: num_frames
+
+      Total decoded frame count.
+
+   .. attribute:: width
+
+      Frame width in pixels.
+
+   .. attribute:: height
+
+      Frame height in pixels.
+
+   .. attribute:: fps
+
+      Average frames per second.
+
+
+.. py:function:: video_metadata(path: str | pathlib.Path) -> VideoMetadata
+
+   Read frame count, dimensions, and fps for a video.
+
+   :param path: Path to the video file.
+
+   :returns: The :class:`VideoMetadata`.
+
+   :raises MediaUnavailableError: If torchcodec is not installed.
+
+
+.. py:function:: read_strip(path: str | pathlib.Path, count: int = 5, *, seek_mode: SeekMode = 'exact') -> tuple[list[int], list[numpy.ndarray], int]
+
+   Read evenly spaced sample frames for the Browse strip in one pass.
+
+   Defaults to ``"exact"`` seek mode: in ``"approximate"`` mode torchcodec derives
+   ``num_frames`` from duration × fps, which can over-report the true count for
+   some clips and make the last sample index point past the real end (raising
+   "no more frames left to decode"). Exact mode scans the file so the count and
+   every sampled index are valid; decoding is still guarded per frame.
+
+   :param path: Path to the video file.
+   :param count: Number of evenly spaced frames (first / ¼ / ½ / ¾ / last by default).
+   :param seek_mode: Seek mode; ``"exact"`` for an accurate frame count.
+
+   :returns: the sampled frame indices that
+             decoded, their HWC ``uint8`` RGB arrays (aligned), and the total frame count.
+   :rtype: An ``(indices, frames, num_frames)`` triple
+
+   :raises MediaUnavailableError: If torchcodec is not installed.
+
+
+.. py:function:: strip_indices(total: int, count: int = 5) -> list[int]
+
+   Compute evenly spaced sample indices for the Browse 5-frame strip.
+
+   Returns indices at first / ¼ / ½ / ¾ / last by default. Pure arithmetic, so
+   it needs no media backend and is unit-tested directly.
+
+   :param total: Total number of frames in the video (must be ``>= 1``).
+   :param count: How many sample indices to return (``>= 1``).
+
+   :returns: A sorted list of ``count`` distinct-where-possible frame indices.
+
+   :raises ValueError: If ``total < 1`` or ``count < 1``.
+
+

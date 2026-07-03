@@ -1,0 +1,53 @@
+annie.pages.folder_picker
+=========================
+
+.. py:module:: annie.pages.folder_picker
+
+.. autoapi-nested-parse::
+
+   Server-side folder/file pickers for the Dataset tab.
+
+   Annie runs locally, so the browser and the filesystem are the same machine: the
+   user can navigate the real directory tree and pick a folder (or a file) instead
+   of typing its path. Thin NiceGUI views over the pure helpers in
+   :mod:`annie.fsbrowse`.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.folder_picker.pick_directory
+   annie.pages.folder_picker.pick_file
+
+
+Module Contents
+---------------
+
+.. py:function:: pick_directory(start: str | pathlib.Path | None = None) -> str | None
+   :async:
+
+
+   Open a modal folder picker and return the chosen directory path.
+
+   :param start: A path hint to open at. Falls back to the nearest existing ancestor
+                 or the home directory.
+
+   :returns: The absolute path of the selected folder, or ``None`` if cancelled.
+
+
+.. py:function:: pick_file(start: str | pathlib.Path | None = None) -> str | None
+   :async:
+
+
+   Open a modal file picker and return the chosen file path.
+
+   Navigate folders as usual; clicking a file selects it and closes the dialog.
+
+   :param start: A path hint to open at (a file or its directory).
+
+   :returns: The absolute path of the selected file, or ``None`` if cancelled.
+
+

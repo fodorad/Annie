@@ -1,0 +1,40 @@
+annie.pages.csv_dialog
+======================
+
+.. py:module:: annie.pages.csv_dialog
+
+.. autoapi-nested-parse::
+
+   CSV source configuration dialog (UI).
+
+   After the user picks a CSV file, this modal lets them describe how it joins to the
+   dataset: its **role** (label tags vs the main-character track), the **key column**
+   that matches the video id (auto-suggested), and the **value columns** to surface.
+   It returns a fully-formed :class:`~annie.sources.DataSource`, or ``None`` if
+   cancelled.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.csv_dialog.configure_csv
+
+
+Module Contents
+---------------
+
+.. py:function:: configure_csv(path: str | pathlib.Path, video_stems: collections.abc.Iterable[str]) -> annie.dataset.sources.DataSource | None
+   :async:
+
+
+   Open the CSV configuration modal and return the resulting source.
+
+   :param path: The chosen CSV file.
+   :param video_stems: Known video stems, used to auto-suggest the key column.
+
+   :returns: A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.
+
+

@@ -1,0 +1,216 @@
+annie.dataset.storage
+=====================
+
+.. py:module:: annie.dataset.storage
+
+.. autoapi-nested-parse::
+
+   SQLite-backed review-status store (Browse tab curation state).
+
+   This holds *curation* state per video — a good/bad verdict, an optional note, and
+   an "add to annotator" flag — not fine-grained annotation content (that lives in
+   the main-character ``_manual`` CSV and, later, per-video JSON). The store is a real
+   file (default ``~/.annie/annie.db``) so it survives restarts, and is keyed by
+   :attr:`annie.models.VideoEntry.key`.
+
+   Every video is **liked (good) by default**: a row only exists once the user
+   interacts, and the UI treats "no row" as good. The store is exportable to CSV/JSON
+   in one call and importable via upsert, so a reviewer's curation travels with them.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.dataset.storage.Verdict
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.storage.ReviewRecord
+   annie.dataset.storage.ReviewStore
+
+
+Module Contents
+---------------
+
+.. py:data:: Verdict
+
+   A review verdict. ``None`` (no row) is treated as ``"good"`` by the UI.
+
+.. py:class:: ReviewRecord
+
+   One persisted review row.
+
+   .. attribute:: row_key
+
+      Stable per-row identity (:attr:`annie.models.VideoEntry.key`).
+
+   .. attribute:: video_id
+
+      The video this review belongs to.
+
+   .. attribute:: annotation_suffix
+
+      The annotation suffix, or ``None`` for an exact match.
+
+   .. attribute:: verdict
+
+      ``"good"``, ``"bad"``, or ``None`` if untouched (treated as good).
+
+   .. attribute:: note
+
+      Free-text reviewer note (empty string when none).
+
+   .. attribute:: annotate
+
+      Whether the video is queued for the Annotator tab.
+
+   .. attribute:: updated_at
+
+      ISO-8601 UTC timestamp of the last change.
+
+
+.. py:class:: ReviewStore(db_path: str | pathlib.Path)
+
+   A thin, connection-per-call wrapper over the ``review`` table.
+
+   The store opens a fresh connection for each operation, which keeps it safe to
+   call from the render worker threads and the UI thread alike without sharing a
+   connection across threads.
+
+   Open (creating if needed) the review database at ``db_path``.
+
+   :param db_path: Filesystem path to the SQLite file. Parent directories are
+                   created as needed.
+
+
+   .. py:method:: get(row_key: str) -> ReviewRecord | None
+
+      Return the review record for ``row_key``, or ``None`` if unreviewed.
+
+      :param row_key: The row identity to look up.
+
+      :returns: The stored :class:`ReviewRecord`, or ``None``.
+
+
+
+   .. py:method:: all() -> list[ReviewRecord]
+
+      Return every review record, ordered by row key.
+
+      :returns: All stored review records.
+
+
+
+   .. py:method:: list_by_verdict(verdict: Verdict) -> list[ReviewRecord]
+
+      Return all records with the given verdict (the good or bad list).
+
+      :param verdict: ``"good"`` or ``"bad"``.
+
+      :returns: Matching review records ordered by row key.
+
+
+
+   .. py:method:: upsert(row_key: str, video_id: str, annotation_suffix: str | None, *, verdict: Verdict | None = None, note: str | None = None, annotate: bool | None = None) -> ReviewRecord
+
+      Insert or update a review row, preserving fields left as ``None``.
+
+      Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` keeps any
+      existing value, so the good/bad toggle, the note, and the annotator flag
+      update independently.
+
+      :param row_key: Stable row identity (primary key).
+      :param video_id: The video id, stored for export/grouping.
+      :param annotation_suffix: The annotation suffix, or ``None``.
+      :param verdict: New verdict, or ``None`` to leave unchanged.
+      :param note: New note, or ``None`` to leave unchanged.
+      :param annotate: New annotator flag, or ``None`` to leave unchanged.
+
+      :returns: The resulting :class:`ReviewRecord`.
+
+
+
+   .. py:method:: set_verdict(row_key: str, video_id: str, annotation_suffix: str | None, verdict: Verdict | None) -> ReviewRecord
+
+      Set (or clear) the good/bad verdict for a row.
+
+      :param row_key: Stable row identity.
+      :param video_id: The video id.
+      :param annotation_suffix: The annotation suffix, or ``None``.
+      :param verdict: ``"good"``, ``"bad"``, or ``None`` to clear.
+
+      :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: set_annotate(row_key: str, video_id: str, annotation_suffix: str | None, value: bool) -> ReviewRecord
+
+      Set the "add to annotator" flag for a video.
+
+      :param row_key: Stable row identity.
+      :param video_id: The video id.
+      :param annotation_suffix: The annotation suffix, or ``None``.
+      :param value: Whether the video is queued for the Annotator tab.
+
+      :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: annotator_keys() -> set[str]
+
+      Return the row keys flagged for the Annotator tab.
+
+      :returns: The set of ``row_key`` values whose ``annotate`` flag is set.
+
+
+
+   .. py:method:: set_note(row_key: str, video_id: str, annotation_suffix: str | None, note: str) -> ReviewRecord
+
+      Set the free-text note for a row.
+
+      :param row_key: Stable row identity.
+      :param video_id: The video id.
+      :param annotation_suffix: The annotation suffix, or ``None``.
+      :param note: The note text.
+
+      :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: export_json(path: str | pathlib.Path) -> pathlib.Path
+
+      Write all review records to a JSON array file.
+
+      :param path: Destination JSON path.
+
+      :returns: The path written.
+
+
+
+   .. py:method:: export_csv(path: str | pathlib.Path) -> pathlib.Path
+
+      Write all review records to a CSV file.
+
+      :param path: Destination CSV path.
+
+      :returns: The path written.
+
+
+
+   .. py:method:: import_records(records: collections.abc.Iterable[dict[str, object]]) -> int
+
+      Upsert review records from dicts (e.g. a re-imported export).
+
+      :param records: Iterable of dicts with at least ``row_key`` and ``video_id``.
+
+      :returns: The number of records imported.
+
+
+

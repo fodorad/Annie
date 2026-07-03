@@ -1,0 +1,127 @@
+annie.dataset.datasets
+======================
+
+.. py:module:: annie.dataset.datasets
+
+.. autoapi-nested-parse::
+
+   Dataset config files: save, load, and discover a :class:`SourceRegistry` (service).
+
+   A *config* is a small JSON file describing a dataset as a list of data sources, so a
+   set of folders/CSVs can be loaded in one click instead of re-picking them every
+   restart. Paths may be **relative** (resolved against the config file's directory, so
+   configs that reference the bundled examples travel with the repo) or absolute.
+
+   When running from a source checkout, example configs under ``data/config/`` are
+   auto-discovered and listed in the Dataset tab dropdown. When installed from PyPI
+   the ``data/`` directory is absent and discovery returns an empty list silently;
+   users load configs via the file picker or save their own.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.datasets.repo_data_dir
+   annie.dataset.datasets.bundled_config_dir
+   annie.dataset.datasets.discover_configs
+   annie.dataset.datasets.config_name
+   annie.dataset.datasets.load_config
+   annie.dataset.datasets.to_config_dict
+   annie.dataset.datasets.save_config
+
+
+Module Contents
+---------------
+
+.. py:function:: repo_data_dir() -> pathlib.Path
+
+   Return the bundled ``data`` directory.
+
+   Prefers the explicit ``ANNIE_DATA_DIR`` override (``settings.data_dir``), which
+   non-editable installs (Docker, PyPI) need because the package lives in
+   ``site-packages`` and ``data`` does not. Otherwise falls back to three levels up
+   from this file, which is valid only from a ``git clone``. Callers must handle a
+   non-existent path gracefully.
+
+
+.. py:function:: bundled_config_dir() -> pathlib.Path
+
+   Return the source-checkout config directory (``data/config``).
+
+   May not exist when Annie is installed from PyPI.
+
+
+.. py:function:: discover_configs(directory: str | pathlib.Path | None = None) -> list[pathlib.Path]
+
+   List ``*.json`` config files for the Dataset tab dropdown.
+
+   Returns an empty list silently when a directory does not exist, so PyPI
+   installs degrade gracefully without bundled examples.
+
+   With no argument this scans the bundled config directory and, when
+   ``ANNIE_CONFIG_DIR`` is set (e.g. in Docker to a persistent volume path),
+   appends that directory's configs deduplicated by stem. When an explicit
+   ``directory`` is passed it is treated as the sole search root — the
+   ``ANNIE_CONFIG_DIR`` merge is not applied — so callers get exactly what they ask for.
+
+   :param directory: Explicit directory to scan exclusively; defaults to the bundled
+                     dir merged with ``ANNIE_CONFIG_DIR``.
+
+   :returns: Sorted config file paths, or ``[]`` if the directories are absent.
+
+
+.. py:function:: config_name(path: str | pathlib.Path) -> str
+
+   Return a config's display name (its ``name`` field, or the file stem).
+
+   :param path: The config file.
+
+   :returns: The configured name, or the filename stem on any read/parse error.
+
+
+.. py:function:: load_config(path: str | pathlib.Path) -> tuple[str, annie.dataset.sources.SourceRegistry, pathlib.Path | None]
+
+   Load a config file into a ``(name, registry, db_path)`` triple.
+
+   Relative source paths — and the optional ``db`` path — are resolved against
+   the config file's directory. Column types for CSV sources are auto-detected
+   from a 500-row sample when not declared in the config.
+
+   :param path: The config file to load.
+
+   :returns: The dataset name, a populated :class:`SourceRegistry`, and an optional
+             :class:`~pathlib.Path` to a pre-configured review database (``None`` if
+             the config has no ``"db"`` field).
+
+   :raises ValueError: If the JSON is malformed or a source kind is unknown.
+
+
+.. py:function:: to_config_dict(registry: annie.dataset.sources.SourceRegistry, name: str, *, relative_to: str | pathlib.Path | None = None, db_path: str | pathlib.Path | None = None) -> dict
+
+   Serialise a registry to a config dict.
+
+   :param registry: The sources to serialise.
+   :param name: The dataset name to store.
+   :param relative_to: If given, store paths relative to this directory where possible.
+   :param db_path: Optional path to a review database to embed in the config so that
+                   loading it re-opens the same DB automatically.
+
+   :returns: A JSON-serialisable config dict.
+
+
+.. py:function:: save_config(path: str | pathlib.Path, registry: annie.dataset.sources.SourceRegistry, name: str, *, relative_to: str | pathlib.Path | None = None, db_path: str | pathlib.Path | None = None) -> pathlib.Path
+
+   Write a registry to a config file as JSON.
+
+   :param path: Destination ``.json`` path.
+   :param registry: The sources to save.
+   :param name: The dataset name to store.
+   :param relative_to: If given, store paths relative to this directory where possible.
+   :param db_path: Optional review-database path to embed in the config.
+
+   :returns: The path written.
+
+

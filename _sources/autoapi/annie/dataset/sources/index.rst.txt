@@ -1,0 +1,254 @@
+annie.dataset.sources
+=====================
+
+.. py:module:: annie.dataset.sources
+
+.. autoapi-nested-parse::
+
+   Generic, extensible data-source registry (domain).
+
+   Annie is dataset-agnostic: a dataset is described as an ordered list of
+   **data sources** the user adds on the Dataset tab, rather than four fixed
+   folders. Each source is one of:
+
+   * :attr:`SourceKind.VIDEO` — a folder of source videos (the mandatory spine; one
+     Browse row per video). Singleton.
+   * :attr:`SourceKind.VDET` — a folder of raw-detection ``.vdet`` files. Singleton.
+   * :attr:`SourceKind.TRACK` — a folder of ``__track{N}.csv`` files. Singleton.
+   * :attr:`SourceKind.CSV` — a label/metadata CSV joined to videos by a chosen
+     **key column**. A CSV plays one of two roles (:class:`CsvRole`): ``labels``
+     (its selected value columns become Browse tags/filters; many allowed) or
+     ``main_character`` (one value column is the active-track id; singleton).
+
+   This module is pure domain — no NiceGUI, no config, no torch. The registry is the
+   single source of truth the scanner (:mod:`annie.scanning`) consumes.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.dataset.sources.FOLDER_KINDS
+   annie.dataset.sources.VIDEO_SUFFIXES
+   annie.dataset.sources.VDET_SUFFIXES
+   annie.dataset.sources.TRACK_GLOB
+   annie.dataset.sources.KIND_LABELS
+   annie.dataset.sources.KIND_ICONS
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.sources.SourceKind
+   annie.dataset.sources.CsvRole
+   annie.dataset.sources.DataSource
+   annie.dataset.sources.SourceRegistry
+
+
+Module Contents
+---------------
+
+.. py:class:: SourceKind
+
+   Bases: :py:obj:`enum.StrEnum`
+
+
+   The kind of a data source.
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:class:: CsvRole
+
+   Bases: :py:obj:`enum.StrEnum`
+
+
+   How a CSV source is interpreted.
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:data:: FOLDER_KINDS
+   :type:  tuple[SourceKind, Ellipsis]
+
+   Folder-backed kinds. Each is a **singleton** in a registry.
+
+.. py:data:: VIDEO_SUFFIXES
+   :type:  tuple[str, Ellipsis]
+   :value: ('.mp4',)
+
+
+   Accepted source-video suffixes (lower-case, dotted).
+
+.. py:data:: VDET_SUFFIXES
+   :type:  tuple[str, Ellipsis]
+   :value: ('.vdet',)
+
+
+   Suffix identifying a raw-detection file.
+
+.. py:data:: TRACK_GLOB
+   :value: '*__track*.csv'
+
+
+   Glob identifying derived single-track files.
+
+.. py:data:: KIND_LABELS
+   :type:  dict[SourceKind, str]
+
+   Short human label per kind, for the Dataset source list and the add menu.
+
+.. py:data:: KIND_ICONS
+   :type:  dict[SourceKind, str]
+
+   Tabler icon per kind for the Dataset cards.
+
+.. py:class:: DataSource
+
+   One configured data source.
+
+   .. attribute:: kind
+
+      The :class:`SourceKind`.
+
+   .. attribute:: path
+
+      Folder (for folder kinds) or file (for CSV) the source points at.
+
+   .. attribute:: role
+
+      For a CSV source, its :class:`CsvRole`; ignored otherwise.
+
+   .. attribute:: key_column
+
+      For a CSV source, the column joined to the video id.
+
+   .. attribute:: value_columns
+
+      For a CSV source, the selected value columns (label tags,
+      or a single main-character track-id column).
+
+   .. attribute:: column_types
+
+      For a CSV source, the chosen data type per value column
+      (``"str"`` / ``"int"`` / ``"float"``); columns absent here default to str.
+
+
+   .. py:property:: is_folder
+      :type: bool
+
+
+      Whether this source points at a folder (vs a single CSV file).
+
+
+   .. py:property:: is_main_character
+      :type: bool
+
+
+      Whether this is the CSV that assigns each video's main-character track.
+
+
+   .. py:property:: available
+      :type: bool
+
+
+      Whether the source path currently exists (folder for folders, file for CSV).
+
+
+   .. py:property:: label
+      :type: str
+
+
+      A short label for the Dataset source list.
+
+
+   .. py:method:: count() -> int
+
+      Count the items the source contributes (cheap; no matching).
+
+      :returns: The number of videos / vdet / track files, or CSV data rows. ``0`` if
+                the path is missing.
+
+
+
+.. py:class:: SourceRegistry
+
+   An ordered set of data sources with singleton rules.
+
+   Folder kinds (video/vdet/track) and the main-character CSV are singletons:
+   adding one replaces any existing source of that role. Label CSVs are
+   unlimited, keyed by path (re-adding the same file replaces it).
+
+
+   .. py:method:: add(source: DataSource) -> None
+
+      Add ``source``, enforcing the singleton rules in place of duplicates.
+
+      :param source: The source to add.
+
+
+
+   .. py:method:: remove(source: DataSource) -> None
+
+      Remove ``source`` if present (identity by path + kind).
+
+
+
+   .. py:method:: get(kind: SourceKind) -> DataSource | None
+
+      Return the first source of ``kind``, or ``None``.
+
+
+
+   .. py:property:: video
+      :type: DataSource | None
+
+
+      The video-folder source, or ``None``.
+
+
+   .. py:property:: vdet
+      :type: DataSource | None
+
+
+      The vdet-folder source, or ``None``.
+
+
+   .. py:property:: track
+      :type: DataSource | None
+
+
+      The track-folder source, or ``None``.
+
+
+   .. py:property:: main_character
+      :type: DataSource | None
+
+
+      The main-character CSV source, or ``None``.
+
+
+   .. py:property:: label_sources
+      :type: list[DataSource]
+
+
+      All label CSV sources (excludes the main-character CSV).
+
+
+   .. py:property:: has_video
+      :type: bool
+
+
+      Whether a usable (existing) video folder is configured.
+
+
+   .. py:method:: available_kinds_to_add() -> list[SourceKind]
+
+      Kinds offered by the ``+`` menu (singletons drop out once present).
+
+
+

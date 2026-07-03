@@ -1,0 +1,33 @@
+annie.pages.home
+================
+
+.. py:module:: annie.pages.home
+
+.. autoapi-nested-parse::
+
+   Home tab — the landing page: brand mark, tagline, and a guide to the tabs.
+
+   A static, modern overview that opens by default. Each capability is a card that
+   jumps to its tab when clicked, so a first-time user can see at a glance what Annie
+   does and where to start.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.home.render
+
+
+Module Contents
+---------------
+
+.. py:function:: render(navigate: collections.abc.Callable[[str], None]) -> None
+
+   Build the Home tab body.
+
+   :param navigate: Switches the active tab to the given tab name (card clicks).
+
+

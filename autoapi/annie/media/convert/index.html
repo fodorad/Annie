@@ -1,0 +1,1147 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.media.decode" href="../decode/index.html"><link rel="prev" title="annie.media.compose" href="../compose/index.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/media/convert/index.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>annie.media.convert - Annie latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../../index.html"><div class="brand">Annie latest documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
+  
+  <span class="sidebar-brand-text">Annie latest documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../../index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html">annie</a><input aria-label="Toggle navigation of annie" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../app/index.html">annie.app</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../core/config/index.html">annie.core.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/logbook/index.html">annie.core.logbook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/state/index.html">annie.core.state</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/theme/index.html">annie.core.theme</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/corrections/index.html">annie.dataset.corrections</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/scanning/index.html">annie.dataset.scanning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/sources/index.html">annie.dataset.sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/storage/index.html">annie.dataset.storage</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../color/index.html">annie.media.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../compose/index.html">annie.media.compose</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">annie.media.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../decode/index.html">annie.media.decode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../probe/index.html">annie.media.probe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../rendering/index.html">annie.media.rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../pages/index.html">annie.pages</a><input aria-label="Toggle navigation of annie.pages" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/annotator/index.html">annie.pages.annotator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/browse/index.html">annie.pages.browse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/convert/index.html">annie.pages.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/base/index.html">annie.parsers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/csvmeta/index.html">annie.parsers.csvmeta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/participants/index.html">annie.parsers.participants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/track/index.html">annie.parsers.track</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/vdet/index.html">annie.parsers.vdet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../../../_sources/autoapi/annie/media/convert/index.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-annie.media.convert">
+<span id="annie-media-convert"></span><h1>annie.media.convert<a class="headerlink" href="#module-annie.media.convert" title="Link to this heading">¶</a></h1>
+<p>Re-encode an audio/video dataset to a consistent, validated form (service).</p>
+<p>Some source clips are subtly broken: their container metadata disagrees with the
+real frame count (torchcodec’s <code class="docutils literal notranslate"><span class="pre">approximate</span></code> mode derives <code class="docutils literal notranslate"><span class="pre">num_frames</span></code> from
+duration × fps, so a clip can report more frames than it has and blow up decoding
+near the end). Re-encoding every file to constant-frame-rate H.264 — and
+<strong>validating</strong> the result with torchcodec — makes the dataset consistent for Annie
+and for downstream dataloaders / feature extraction.</p>
+<p>The module is split into pure, unit-tested pieces (ffmpeg command builders, stem
+pairing, length math, the batch runner with an injected work function) and thin
+impure wrappers (<code class="docutils literal notranslate"><span class="pre">run_ffmpeg</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_video</span></code>, <code class="docutils literal notranslate"><span class="pre">convert_*_file</span></code>) that need a
+system FFmpeg and the <code class="docutils literal notranslate"><span class="pre">media</span></code> extra and are exercised manually.</p>
+<p>Audio/video length contract when muxing: the audio filter <code class="docutils literal notranslate"><span class="pre">apad</span></code> pads the audio
+with silence and <code class="docutils literal notranslate"><span class="pre">-shortest</span></code> trims the output to the (finite) video stream, so the
+muxed audio is exactly the video’s duration — short audio is padded, long audio is
+cut — which is what <a class="reference internal" href="#annie.media.convert.audio_video_consistent" title="annie.media.convert.audio_video_consistent"><code class="xref py py-func docutils literal notranslate"><span class="pre">audio_video_consistent()</span></code></a> checks.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.AUDIO_INPUT_SUFFIXES" title="annie.media.convert.AUDIO_INPUT_SUFFIXES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AUDIO_INPUT_SUFFIXES</span></code></a></p></td>
+<td><p>Accepted source-audio suffixes (lower-case, dotted).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.VIDEO_INPUT_SUFFIXES" title="annie.media.convert.VIDEO_INPUT_SUFFIXES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VIDEO_INPUT_SUFFIXES</span></code></a></p></td>
+<td><p>Accepted source-video suffixes (lower-case, dotted).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.AUDIO_OUTPUT_FORMATS" title="annie.media.convert.AUDIO_OUTPUT_FORMATS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AUDIO_OUTPUT_FORMATS</span></code></a></p></td>
+<td><p>Offered audio output containers/codecs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.VIDEO_OUTPUT_FORMATS" title="annie.media.convert.VIDEO_OUTPUT_FORMATS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VIDEO_OUTPUT_FORMATS</span></code></a></p></td>
+<td><p>Offered video containers/codecs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.COMMON_SAMPLE_RATES" title="annie.media.convert.COMMON_SAMPLE_RATES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COMMON_SAMPLE_RATES</span></code></a></p></td>
+<td><p>Sample rates the UI offers as quick picks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.COMMON_FPS" title="annie.media.convert.COMMON_FPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COMMON_FPS</span></code></a></p></td>
+<td><p>Quick-pick constant frame rates.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.BLACK_DEFAULT_SIZE" title="annie.media.convert.BLACK_DEFAULT_SIZE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BLACK_DEFAULT_SIZE</span></code></a></p></td>
+<td><p>Black-frame fallback size for a synthesised audio-only video.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.BLACK_DEFAULT_FPS" title="annie.media.convert.BLACK_DEFAULT_FPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BLACK_DEFAULT_FPS</span></code></a></p></td>
+<td><p>Fps of the synthesised black video when the source has none.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.ConvertStatus" title="annie.media.convert.ConvertStatus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConvertStatus</span></code></a></p></td>
+<td><p>Lifecycle state of a batch conversion run.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.AudioOptions" title="annie.media.convert.AudioOptions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AudioOptions</span></code></a></p></td>
+<td><p>Audio re-encode settings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.VideoOptions" title="annie.media.convert.VideoOptions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VideoOptions</span></code></a></p></td>
+<td><p>Video re-encode settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.AudioItem" title="annie.media.convert.AudioItem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AudioItem</span></code></a></p></td>
+<td><p>One planned audio conversion (source → destination).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.VideoItem" title="annie.media.convert.VideoItem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VideoItem</span></code></a></p></td>
+<td><p>One planned video conversion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.ConvertProgress" title="annie.media.convert.ConvertProgress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConvertProgress</span></code></a></p></td>
+<td><p>A snapshot of a running (or finished) conversion batch.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.ConversionRunner" title="annie.media.convert.ConversionRunner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConversionRunner</span></code></a></p></td>
+<td><p>Runs one conversion batch at a time on a background thread, with progress.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.audio_command" title="annie.media.convert.audio_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audio_command</span></code></a>(→ list[str])</p></td>
+<td><p>Build the ffmpeg argv to re-encode one audio file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.video_filters" title="annie.media.convert.video_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_filters</span></code></a>(→ str)</p></td>
+<td><p>Build the <code class="docutils literal notranslate"><span class="pre">-vf</span></code> filter chain string for the given video options.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.video_command" title="annie.media.convert.video_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_command</span></code></a>(→ list[str])</p></td>
+<td><p>Build the ffmpeg argv to re-encode one video (constant frame rate H.264).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.black_video_command" title="annie.media.convert.black_video_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">black_video_command</span></code></a>(→ list[str])</p></td>
+<td><p>Build the ffmpeg argv for an audio-only item: a black-frame video + audio.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.plan_audio" title="annie.media.convert.plan_audio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan_audio</span></code></a>(→ list[AudioItem])</p></td>
+<td><p>Plan the audio batch: one <a class="reference internal" href="#annie.media.convert.AudioItem" title="annie.media.convert.AudioItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AudioItem</span></code></a> per input file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.plan_video" title="annie.media.convert.plan_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan_video</span></code></a>(→ list[VideoItem])</p></td>
+<td><p>Plan the video batch: one <a class="reference internal" href="#annie.media.convert.VideoItem" title="annie.media.convert.VideoItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoItem</span></code></a> per input file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.expected_frame_count" title="annie.media.convert.expected_frame_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expected_frame_count</span></code></a>(→ int)</p></td>
+<td><p>Return the number of frames a <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> clip at <code class="docutils literal notranslate"><span class="pre">fps</span></code> should have.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.expected_sample_count" title="annie.media.convert.expected_sample_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expected_sample_count</span></code></a>(→ int)</p></td>
+<td><p>Return the number of audio samples a <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> clip at <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> has.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.audio_video_consistent" title="annie.media.convert.audio_video_consistent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audio_video_consistent</span></code></a>(→ bool)</p></td>
+<td><p>Whether an audio track and a video stream have matching durations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.run_ffmpeg" title="annie.media.convert.run_ffmpeg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_ffmpeg</span></code></a>(→ None)</p></td>
+<td><p>Run an ffmpeg command, raising <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code> with its tail on failure.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.decodable_frames" title="annie.media.convert.decodable_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decodable_frames</span></code></a>(→ int)</p></td>
+<td><p>Return the torchcodec frame count, verified by actually decoding, or <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.validate_video" title="annie.media.convert.validate_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_video</span></code></a>(→ tuple[bool, str])</p></td>
+<td><p>Validate a re-encoded video with torchcodec.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.convert_audio_file" title="annie.media.convert.convert_audio_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_audio_file</span></code></a>(→ None)</p></td>
+<td><p>Re-encode one audio file, skipping it if a non-empty output already exists.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.convert_video_file" title="annie.media.convert.convert_video_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_video_file</span></code></a>(→ None)</p></td>
+<td><p>Re-encode one video (or synthesise a black-frame one), then validate it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.export_ids" title="annie.media.convert.export_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_ids</span></code></a>(→ pathlib.Path)</p></td>
+<td><p>Write a one-column CSV (<code class="docutils literal notranslate"><span class="pre">id</span></code>) of the given filenames' stems, sorted.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.export_failures" title="annie.media.convert.export_failures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_failures</span></code></a>(→ pathlib.Path)</p></td>
+<td><p>Write a two-column CSV (<code class="docutils literal notranslate"><span class="pre">id,error</span></code>) for the failed files, sorted by id.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.AUDIO_INPUT_SUFFIXES">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">AUDIO_INPUT_SUFFIXES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('.wav',</span> <span class="pre">'.mp3',</span> <span class="pre">'.flac',</span> <span class="pre">'.m4a',</span> <span class="pre">'.aac',</span> <span class="pre">'.ogg',</span> <span class="pre">'.opus')</span></span><a class="headerlink" href="#annie.media.convert.AUDIO_INPUT_SUFFIXES" title="Link to this definition">¶</a></dt>
+<dd><p>Accepted source-audio suffixes (lower-case, dotted).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.VIDEO_INPUT_SUFFIXES">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">VIDEO_INPUT_SUFFIXES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('.mp4',</span> <span class="pre">'.avi',</span> <span class="pre">'.mov',</span> <span class="pre">'.mkv',</span> <span class="pre">'.webm',</span> <span class="pre">'.m4v')</span></span><a class="headerlink" href="#annie.media.convert.VIDEO_INPUT_SUFFIXES" title="Link to this definition">¶</a></dt>
+<dd><p>Accepted source-video suffixes (lower-case, dotted).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.AUDIO_OUTPUT_FORMATS">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">AUDIO_OUTPUT_FORMATS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('wav',</span> <span class="pre">'flac',</span> <span class="pre">'mp3')</span></span><a class="headerlink" href="#annie.media.convert.AUDIO_OUTPUT_FORMATS" title="Link to this definition">¶</a></dt>
+<dd><p>Offered audio output containers/codecs.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.VIDEO_OUTPUT_FORMATS">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">VIDEO_OUTPUT_FORMATS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('mp4',)</span></span><a class="headerlink" href="#annie.media.convert.VIDEO_OUTPUT_FORMATS" title="Link to this definition">¶</a></dt>
+<dd><p>Offered video containers/codecs.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.COMMON_SAMPLE_RATES">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">COMMON_SAMPLE_RATES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(8000,</span> <span class="pre">16000,</span> <span class="pre">22050,</span> <span class="pre">44100,</span> <span class="pre">48000)</span></span><a class="headerlink" href="#annie.media.convert.COMMON_SAMPLE_RATES" title="Link to this definition">¶</a></dt>
+<dd><p>Sample rates the UI offers as quick picks.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.COMMON_FPS">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">COMMON_FPS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(10,</span> <span class="pre">24,</span> <span class="pre">25,</span> <span class="pre">30)</span></span><a class="headerlink" href="#annie.media.convert.COMMON_FPS" title="Link to this definition">¶</a></dt>
+<dd><p>Quick-pick constant frame rates.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.media.convert.AudioOptions">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">AudioOptions</span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#AudioOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.AudioOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Audio re-encode settings.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.AudioOptions.out_format">
+<span class="sig-name descname"><span class="pre">out_format</span></span><a class="headerlink" href="#annie.media.convert.AudioOptions.out_format" title="Link to this definition">¶</a></dt>
+<dd><p>Output container/codec (<code class="docutils literal notranslate"><span class="pre">&quot;wav&quot;</span></code> default, PCM 16-bit).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.AudioOptions.sample_rate">
+<span class="sig-name descname"><span class="pre">sample_rate</span></span><a class="headerlink" href="#annie.media.convert.AudioOptions.sample_rate" title="Link to this definition">¶</a></dt>
+<dd><p>Target sample rate in Hz.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.AudioOptions.channels">
+<span class="sig-name descname"><span class="pre">channels</span></span><a class="headerlink" href="#annie.media.convert.AudioOptions.channels" title="Link to this definition">¶</a></dt>
+<dd><p>Channel count (<code class="docutils literal notranslate"><span class="pre">1</span></code> = mono, the default).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">VideoOptions</span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#VideoOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.VideoOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Video re-encode settings.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.width">
+<span class="sig-name descname"><span class="pre">width</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.width" title="Link to this definition">¶</a></dt>
+<dd><p>Target width in px, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to keep the source width.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.height">
+<span class="sig-name descname"><span class="pre">height</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.height" title="Link to this definition">¶</a></dt>
+<dd><p>Target height in px, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to keep the source height.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.grayscale">
+<span class="sig-name descname"><span class="pre">grayscale</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.grayscale" title="Link to this definition">¶</a></dt>
+<dd><p>Desaturate to black-and-white when <code class="docutils literal notranslate"><span class="pre">True</span></code> (still yuv420p).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.fps">
+<span class="sig-name descname"><span class="pre">fps</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.fps" title="Link to this definition">¶</a></dt>
+<dd><p>Target constant frame rate, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to keep the source fps.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.add_audio">
+<span class="sig-name descname"><span class="pre">add_audio</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.add_audio" title="Link to this definition">¶</a></dt>
+<dd><p>Mux the matching-stem audio into the output when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.min_frames">
+<span class="sig-name descname"><span class="pre">min_frames</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.min_frames" title="Link to this definition">¶</a></dt>
+<dd><p>Reject (skip) any source whose output would have fewer than this
+many decodable frames. <code class="docutils literal notranslate"><span class="pre">2</span></code> (default) drops degenerate single-frame
+“videos” (audio-only files that carry one thumbnail-like frame); <code class="docutils literal notranslate"><span class="pre">1</span></code>
+only requires that at least one frame decodes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.out_format">
+<span class="sig-name descname"><span class="pre">out_format</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.out_format" title="Link to this definition">¶</a></dt>
+<dd><p>Output container (<code class="docutils literal notranslate"><span class="pre">&quot;mp4&quot;</span></code>).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.VideoOptions.keep_resolution">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">keep_resolution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#annie.media.convert.VideoOptions.keep_resolution" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the source resolution is kept (no scaling).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.BLACK_DEFAULT_SIZE">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">BLACK_DEFAULT_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">256</span></span><a class="headerlink" href="#annie.media.convert.BLACK_DEFAULT_SIZE" title="Link to this definition">¶</a></dt>
+<dd><p>Black-frame fallback size for a synthesised audio-only video.</p>
+<p>Used when the options keep the original size/fps (of which there is none).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.BLACK_DEFAULT_FPS">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">BLACK_DEFAULT_FPS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">25.0</span></span><a class="headerlink" href="#annie.media.convert.BLACK_DEFAULT_FPS" title="Link to this definition">¶</a></dt>
+<dd><p>Fps of the synthesised black video when the source has none.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.audio_command">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">audio_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.AudioOptions" title="annie.media.convert.AudioOptions"><span class="pre">AudioOptions</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#audio_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.audio_command" title="Link to this definition">¶</a></dt>
+<dd><p>Build the ffmpeg argv to re-encode one audio file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> – Source audio (or a media file with an audio stream).</p></li>
+<li><p><strong>dst</strong> – Destination path.</p></li>
+<li><p><strong>opts</strong> – Audio settings.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The ffmpeg argv list (no shell).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.video_filters">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">video_filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.VideoOptions" title="annie.media.convert.VideoOptions"><span class="pre">VideoOptions</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#video_filters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.video_filters" title="Link to this definition">¶</a></dt>
+<dd><p>Build the <code class="docutils literal notranslate"><span class="pre">-vf</span></code> filter chain string for the given video options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>opts</strong> – Video settings.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A comma-joined filter chain, or <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> when no spatial filter is needed.
+A single given dimension scales the other by <code class="docutils literal notranslate"><span class="pre">-2</span></code> (keeps aspect, even).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.video_command">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">video_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.VideoOptions" title="annie.media.convert.VideoOptions"><span class="pre">VideoOptions</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#video_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.video_command" title="Link to this definition">¶</a></dt>
+<dd><p>Build the ffmpeg argv to re-encode one video (constant frame rate H.264).</p>
+<p>Audio handling: when <code class="docutils literal notranslate"><span class="pre">opts.add_audio</span></code> and <code class="docutils literal notranslate"><span class="pre">audio_path</span></code> is given, the audio
+is muxed and matched to the video length via <code class="docutils literal notranslate"><span class="pre">apad</span></code> + <code class="docutils literal notranslate"><span class="pre">-shortest</span></code>; otherwise
+the output has no audio (<code class="docutils literal notranslate"><span class="pre">-an</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> – Source video.</p></li>
+<li><p><strong>dst</strong> – Destination <code class="docutils literal notranslate"><span class="pre">.mp4</span></code>.</p></li>
+<li><p><strong>opts</strong> – Video settings.</p></li>
+<li><p><strong>audio_path</strong> – Matching audio file to mux, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The ffmpeg argv list (no shell).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.black_video_command">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">black_video_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.VideoOptions" title="annie.media.convert.VideoOptions"><span class="pre">VideoOptions</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#black_video_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.black_video_command" title="Link to this definition">¶</a></dt>
+<dd><p>Build the ffmpeg argv for an audio-only item: a black-frame video + audio.</p>
+<p>The black <code class="docutils literal notranslate"><span class="pre">lavfi</span></code> source is infinite and <code class="docutils literal notranslate"><span class="pre">-shortest</span></code> trims the output to the
+(finite) audio, so the synthesised video has exactly the audio’s duration. The
+frame size / fps come from <code class="docutils literal notranslate"><span class="pre">opts</span></code> or fall back to <a class="reference internal" href="#annie.media.convert.BLACK_DEFAULT_SIZE" title="annie.media.convert.BLACK_DEFAULT_SIZE"><code class="xref py py-data docutils literal notranslate"><span class="pre">BLACK_DEFAULT_SIZE</span></code></a> /
+<a class="reference internal" href="#annie.media.convert.BLACK_DEFAULT_FPS" title="annie.media.convert.BLACK_DEFAULT_FPS"><code class="xref py py-data docutils literal notranslate"><span class="pre">BLACK_DEFAULT_FPS</span></code></a> when the options keep the (non-existent) original.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dst</strong> – Destination <code class="docutils literal notranslate"><span class="pre">.mp4</span></code>.</p></li>
+<li><p><strong>audio</strong> – The audio to carry.</p></li>
+<li><p><strong>opts</strong> – Video settings (used for size / fps).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The ffmpeg argv list (no shell).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.media.convert.AudioItem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">AudioItem</span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#AudioItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.AudioItem" title="Link to this definition">¶</a></dt>
+<dd><p>One planned audio conversion (source → destination).</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.AudioItem.label">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#annie.media.convert.AudioItem.label" title="Link to this definition">¶</a></dt>
+<dd><p>Display name for progress (the source filename).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.media.convert.VideoItem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">VideoItem</span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#VideoItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.VideoItem" title="Link to this definition">¶</a></dt>
+<dd><p>One planned video conversion.</p>
+<p><code class="docutils literal notranslate"><span class="pre">src</span></code> is the source video, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for an <strong>audio-only</strong> item that should
+be synthesised as a black-frame video carrying <code class="docutils literal notranslate"><span class="pre">audio</span></code>.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.VideoItem.label">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#annie.media.convert.VideoItem.label" title="Link to this definition">¶</a></dt>
+<dd><p>Display name for progress (the source filename, or the output name).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.VideoItem.is_black">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_black</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#annie.media.convert.VideoItem.is_black" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this item synthesises a black-frame video (no source video).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.plan_audio">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">plan_audio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.AudioOptions" title="annie.media.convert.AudioOptions"><span class="pre">AudioOptions</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.media.convert.AudioItem" title="annie.media.convert.AudioItem"><span class="pre">AudioItem</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#plan_audio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.plan_audio" title="Link to this definition">¶</a></dt>
+<dd><p>Plan the audio batch: one <a class="reference internal" href="#annie.media.convert.AudioItem" title="annie.media.convert.AudioItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AudioItem</span></code></a> per input file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_dir</strong> – Folder of source audio files.</p></li>
+<li><p><strong>out_dir</strong> – Destination folder.</p></li>
+<li><p><strong>opts</strong> – Audio settings (its <code class="docutils literal notranslate"><span class="pre">out_format</span></code> sets the destination suffix).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The planned items (empty if the input folder is missing).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.plan_video">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">plan_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.VideoOptions" title="annie.media.convert.VideoOptions"><span class="pre">VideoOptions</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.media.convert.VideoItem" title="annie.media.convert.VideoItem"><span class="pre">VideoItem</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#plan_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.plan_video" title="Link to this definition">¶</a></dt>
+<dd><p>Plan the video batch: one <a class="reference internal" href="#annie.media.convert.VideoItem" title="annie.media.convert.VideoItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoItem</span></code></a> per input file.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">opts.add_audio</span></code> and <code class="docutils literal notranslate"><span class="pre">audio_dir</span></code> is given, each video is paired by stem
+with an audio file of any supported format in <code class="docutils literal notranslate"><span class="pre">audio_dir</span></code>. When
+<code class="docutils literal notranslate"><span class="pre">opts.audio_only_black</span></code> is also set, an audio file with <strong>no</strong> matching video
+becomes a black-frame video carrying that audio; otherwise such audio yields no
+video at all (it stays only in the audio folder).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_dir</strong> – Folder of source videos.</p></li>
+<li><p><strong>out_dir</strong> – Destination folder.</p></li>
+<li><p><strong>opts</strong> – Video settings (its <code class="docutils literal notranslate"><span class="pre">out_format</span></code> sets the destination suffix).</p></li>
+<li><p><strong>audio_dir</strong> – Folder of audio to mux (typically the audio output folder).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The planned items (empty if the input folder is missing).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.expected_frame_count">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">expected_frame_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#expected_frame_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.expected_frame_count" title="Link to this definition">¶</a></dt>
+<dd><p>Return the number of frames a <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> clip at <code class="docutils literal notranslate"><span class="pre">fps</span></code> should have.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.expected_sample_count">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">expected_sample_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#expected_sample_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.expected_sample_count" title="Link to this definition">¶</a></dt>
+<dd><p>Return the number of audio samples a <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> clip at <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> has.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.audio_video_consistent">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">audio_video_consistent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.04</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#audio_video_consistent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.audio_video_consistent" title="Link to this definition">¶</a></dt>
+<dd><p>Whether an audio track and a video stream have matching durations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_frames</strong> – Decoded video frame count.</p></li>
+<li><p><strong>fps</strong> – Video frame rate.</p></li>
+<li><p><strong>num_samples</strong> – Decoded audio sample count (per channel).</p></li>
+<li><p><strong>sample_rate</strong> – Audio sample rate.</p></li>
+<li><p><strong>tolerance_s</strong> – Allowed absolute difference in seconds (≈ one frame at 25 fps).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the two durations agree within <code class="docutils literal notranslate"><span class="pre">tolerance_s</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.run_ffmpeg">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">run_ffmpeg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#run_ffmpeg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.run_ffmpeg" title="Link to this definition">¶</a></dt>
+<dd><p>Run an ffmpeg command, raising <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code> with its tail on failure.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.decodable_frames">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">decodable_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#decodable_frames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.decodable_frames" title="Link to this definition">¶</a></dt>
+<dd><p>Return the torchcodec frame count, verified by actually decoding, or <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<p>A file with a declared video stream but <strong>no real frames</strong> (an audio-only
+<code class="docutils literal notranslate"><span class="pre">.mp4</span></code> that VLC plays as audio) can still report <code class="docutils literal notranslate"><span class="pre">num_frames</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code> in its
+metadata, so the count alone is not enough — we decode the first (and last)
+frame to confirm they really exist. Any decode failure yields <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> – The media file to inspect.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The number of decodable frames (<code class="docutils literal notranslate"><span class="pre">0</span></code> if the frames cannot be decoded).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.validate_video">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">validate_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#validate_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.validate_video" title="Link to this definition">¶</a></dt>
+<dd><p>Validate a re-encoded video with torchcodec.</p>
+<p>Requires at least <code class="docutils literal notranslate"><span class="pre">min_frames</span></code> frames (so a degenerate single-frame, audio-only
+result is rejected), decodes <strong>every</strong> frame in <code class="docutils literal notranslate"><span class="pre">exact</span></code> mode (so an unreadable
+frame raises), and confirms the <code class="docutils literal notranslate"><span class="pre">exact</span></code> and <code class="docutils literal notranslate"><span class="pre">approximate</span></code> frame counts agree —
+the discrepancy that makes some source clips fail late in decoding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – The video to validate.</p></li>
+<li><p><strong>min_frames</strong> – Minimum decodable frame count required to pass.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An <code class="docutils literal notranslate"><span class="pre">(ok,</span> <span class="pre">message)</span></code> pair.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.convert_audio_file">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">convert_audio_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.AudioItem" title="annie.media.convert.AudioItem"><span class="pre">AudioItem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.AudioOptions" title="annie.media.convert.AudioOptions"><span class="pre">AudioOptions</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#convert_audio_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.convert_audio_file" title="Link to this definition">¶</a></dt>
+<dd><p>Re-encode one audio file, skipping it if a non-empty output already exists.</p>
+<p>On any failure the (possibly partial) output is removed, so the output folder
+only ever contains good files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.convert_video_file">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">convert_video_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.VideoItem" title="annie.media.convert.VideoItem"><span class="pre">VideoItem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.media.convert.VideoOptions" title="annie.media.convert.VideoOptions"><span class="pre">VideoOptions</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#convert_video_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.convert_video_file" title="Link to this definition">¶</a></dt>
+<dd><p>Re-encode one video (or synthesise a black-frame one), then validate it.</p>
+<p>Grace handling: a source <code class="docutils literal notranslate"><span class="pre">.mp4</span></code> is skipped with an error (and never lands in
+the output folder) when it has <strong>no video stream</strong> or yields fewer than
+<code class="docutils literal notranslate"><span class="pre">opts.min_frames</span></code> decodable frames — which drops degenerate single-frame
+“videos” (audio-only files carrying one thumbnail-like frame, which VLC plays as
+audio-only). A stale bad output from a previous run is removed in those cases too.
+If a torchcodec-valid output already exists it is skipped (resume); any failure
+removes a partial output.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.export_ids">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">export_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#export_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.export_ids" title="Link to this definition">¶</a></dt>
+<dd><p>Write a one-column CSV (<code class="docutils literal notranslate"><span class="pre">id</span></code>) of the given filenames’ stems, sorted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – Destination CSV path.</p></li>
+<li><p><strong>ids</strong> – Filenames (or ids); their stems are written, de-duplicated and sorted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The path written.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.convert.export_failures">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">export_failures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failures</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#export_failures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.export_failures" title="Link to this definition">¶</a></dt>
+<dd><p>Write a two-column CSV (<code class="docutils literal notranslate"><span class="pre">id,error</span></code>) for the failed files, sorted by id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – Destination CSV path.</p></li>
+<li><p><strong>failures</strong> – <code class="docutils literal notranslate"><span class="pre">(filename,</span> <span class="pre">error)</span></code> pairs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The path written.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertStatus">
+<span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">ConvertStatus</span></span><a class="headerlink" href="#annie.media.convert.ConvertStatus" title="Link to this definition">¶</a></dt>
+<dd><p>Lifecycle state of a batch conversion run.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">ConvertProgress</span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConvertProgress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConvertProgress" title="Link to this definition">¶</a></dt>
+<dd><p>A snapshot of a running (or finished) conversion batch.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.title">
+<span class="sig-name descname"><span class="pre">title</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.title" title="Link to this definition">¶</a></dt>
+<dd><p>Human label of the batch (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;Audio&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;Video&quot;</span></code>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.total">
+<span class="sig-name descname"><span class="pre">total</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.total" title="Link to this definition">¶</a></dt>
+<dd><p>Number of files in the batch.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.done">
+<span class="sig-name descname"><span class="pre">done</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.done" title="Link to this definition">¶</a></dt>
+<dd><p>Number processed so far (succeeded or failed).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.current">
+<span class="sig-name descname"><span class="pre">current</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.current" title="Link to this definition">¶</a></dt>
+<dd><p>The file currently being processed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.succeeded">
+<span class="sig-name descname"><span class="pre">succeeded</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.succeeded" title="Link to this definition">¶</a></dt>
+<dd><p>Filenames that converted (or were skipped as already done).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.failed">
+<span class="sig-name descname"><span class="pre">failed</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.failed" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">(filename,</span> <span class="pre">error)</span></code> pairs for files that failed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.started_at">
+<span class="sig-name descname"><span class="pre">started_at</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.started_at" title="Link to this definition">¶</a></dt>
+<dd><p>Epoch seconds when the batch started, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.finished_at">
+<span class="sig-name descname"><span class="pre">finished_at</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.finished_at" title="Link to this definition">¶</a></dt>
+<dd><p>Epoch seconds when it finished, or <code class="docutils literal notranslate"><span class="pre">None</span></code> while running.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.status">
+<span class="sig-name descname"><span class="pre">status</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.status" title="Link to this definition">¶</a></dt>
+<dd><p>One of <a class="reference internal" href="#annie.media.convert.ConvertStatus" title="annie.media.convert.ConvertStatus"><code class="xref py py-data docutils literal notranslate"><span class="pre">ConvertStatus</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.elapsed">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">elapsed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.elapsed" title="Link to this definition">¶</a></dt>
+<dd><p>Seconds elapsed since the batch started (frozen once finished).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.fraction">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">fraction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.fraction" title="Link to this definition">¶</a></dt>
+<dd><p>Progress as a fraction in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.eta_seconds">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">eta_seconds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.eta_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>Estimated seconds remaining, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not yet estimable.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="annie.media.convert.ConvertProgress.succeeded_count">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">succeeded_count</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#annie.media.convert.ConvertProgress.succeeded_count" title="Link to this definition">¶</a></dt>
+<dd><p>Number of files processed without error.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.media.convert.ConversionRunner">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.media.convert.</span></span><span class="sig-name descname"><span class="pre">ConversionRunner</span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConversionRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConversionRunner" title="Link to this definition">¶</a></dt>
+<dd><p>Runs one conversion batch at a time on a background thread, with progress.</p>
+<p>The batch loop is generic: it is given a list of items, a <code class="docutils literal notranslate"><span class="pre">work</span></code> callable that
+converts one item (raising on failure), and a <code class="docutils literal notranslate"><span class="pre">label</span></code> callable for display.
+Failures are recorded per item and never stop the batch.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.media.convert.ConversionRunner.running">
+<span class="sig-name descname"><span class="pre">running</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConversionRunner.running"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConversionRunner.running" title="Link to this definition">¶</a></dt>
+<dd><p>Whether a batch is currently in progress.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.media.convert.ConversionRunner.progress">
+<span class="sig-name descname"><span class="pre">progress</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.media.convert.ConvertProgress" title="annie.media.convert.ConvertProgress"><span class="pre">ConvertProgress</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConversionRunner.progress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConversionRunner.progress" title="Link to this definition">¶</a></dt>
+<dd><p>Return a consistent snapshot of the current progress.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.media.convert.ConversionRunner.cancel">
+<span class="sig-name descname"><span class="pre">cancel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConversionRunner.cancel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConversionRunner.cancel" title="Link to this definition">¶</a></dt>
+<dd><p>Request cancellation; the batch stops after the current file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.media.convert.ConversionRunner.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">lambda</span> <span class="pre">it:</span> <span class="pre">...</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">concurrent.futures.Future</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConversionRunner.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConversionRunner.start" title="Link to this definition">¶</a></dt>
+<dd><p>Begin a batch on the worker thread.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>title</strong> – Human label for the batch.</p></li>
+<li><p><strong>items</strong> – The planned items to convert.</p></li>
+<li><p><strong>work</strong> – Converts one item, raising on failure.</p></li>
+<li><p><strong>label</strong> – Maps an item to its display name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">Future</span></code> of the batch (mostly for tests).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If a batch is already running.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.media.convert.ConversionRunner.shutdown">
+<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/convert.html#ConversionRunner.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.convert.ConversionRunner.shutdown" title="Link to this definition">¶</a></dt>
+<dd><p>Shut the worker pool down, waiting for an in-flight batch to finish.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="../decode/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">annie.media.decode</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../compose/index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">annie.media.compose</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Ádám Fodor
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">annie.media.convert</a><ul>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.media.convert.AUDIO_INPUT_SUFFIXES"><code class="docutils literal notranslate"><span class="pre">AUDIO_INPUT_SUFFIXES</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VIDEO_INPUT_SUFFIXES"><code class="docutils literal notranslate"><span class="pre">VIDEO_INPUT_SUFFIXES</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.AUDIO_OUTPUT_FORMATS"><code class="docutils literal notranslate"><span class="pre">AUDIO_OUTPUT_FORMATS</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VIDEO_OUTPUT_FORMATS"><code class="docutils literal notranslate"><span class="pre">VIDEO_OUTPUT_FORMATS</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.COMMON_SAMPLE_RATES"><code class="docutils literal notranslate"><span class="pre">COMMON_SAMPLE_RATES</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.COMMON_FPS"><code class="docutils literal notranslate"><span class="pre">COMMON_FPS</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.AudioOptions"><code class="docutils literal notranslate"><span class="pre">AudioOptions</span></code></a><ul>
+<li><a class="reference internal" href="#annie.media.convert.AudioOptions.out_format"><code class="docutils literal notranslate"><span class="pre">AudioOptions.out_format</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.AudioOptions.sample_rate"><code class="docutils literal notranslate"><span class="pre">AudioOptions.sample_rate</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.AudioOptions.channels"><code class="docutils literal notranslate"><span class="pre">AudioOptions.channels</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions"><code class="docutils literal notranslate"><span class="pre">VideoOptions</span></code></a><ul>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.width"><code class="docutils literal notranslate"><span class="pre">VideoOptions.width</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.height"><code class="docutils literal notranslate"><span class="pre">VideoOptions.height</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.grayscale"><code class="docutils literal notranslate"><span class="pre">VideoOptions.grayscale</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.fps"><code class="docutils literal notranslate"><span class="pre">VideoOptions.fps</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.add_audio"><code class="docutils literal notranslate"><span class="pre">VideoOptions.add_audio</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.min_frames"><code class="docutils literal notranslate"><span class="pre">VideoOptions.min_frames</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.out_format"><code class="docutils literal notranslate"><span class="pre">VideoOptions.out_format</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoOptions.keep_resolution"><code class="docutils literal notranslate"><span class="pre">VideoOptions.keep_resolution</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.media.convert.BLACK_DEFAULT_SIZE"><code class="docutils literal notranslate"><span class="pre">BLACK_DEFAULT_SIZE</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.BLACK_DEFAULT_FPS"><code class="docutils literal notranslate"><span class="pre">BLACK_DEFAULT_FPS</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.audio_command"><code class="docutils literal notranslate"><span class="pre">audio_command()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.video_filters"><code class="docutils literal notranslate"><span class="pre">video_filters()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.video_command"><code class="docutils literal notranslate"><span class="pre">video_command()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.black_video_command"><code class="docutils literal notranslate"><span class="pre">black_video_command()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.AudioItem"><code class="docutils literal notranslate"><span class="pre">AudioItem</span></code></a><ul>
+<li><a class="reference internal" href="#annie.media.convert.AudioItem.label"><code class="docutils literal notranslate"><span class="pre">AudioItem.label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.media.convert.VideoItem"><code class="docutils literal notranslate"><span class="pre">VideoItem</span></code></a><ul>
+<li><a class="reference internal" href="#annie.media.convert.VideoItem.label"><code class="docutils literal notranslate"><span class="pre">VideoItem.label</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.VideoItem.is_black"><code class="docutils literal notranslate"><span class="pre">VideoItem.is_black</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.media.convert.plan_audio"><code class="docutils literal notranslate"><span class="pre">plan_audio()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.plan_video"><code class="docutils literal notranslate"><span class="pre">plan_video()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.expected_frame_count"><code class="docutils literal notranslate"><span class="pre">expected_frame_count()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.expected_sample_count"><code class="docutils literal notranslate"><span class="pre">expected_sample_count()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.audio_video_consistent"><code class="docutils literal notranslate"><span class="pre">audio_video_consistent()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.run_ffmpeg"><code class="docutils literal notranslate"><span class="pre">run_ffmpeg()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.decodable_frames"><code class="docutils literal notranslate"><span class="pre">decodable_frames()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.validate_video"><code class="docutils literal notranslate"><span class="pre">validate_video()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.convert_audio_file"><code class="docutils literal notranslate"><span class="pre">convert_audio_file()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.convert_video_file"><code class="docutils literal notranslate"><span class="pre">convert_video_file()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.export_ids"><code class="docutils literal notranslate"><span class="pre">export_ids()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.export_failures"><code class="docutils literal notranslate"><span class="pre">export_failures()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertStatus"><code class="docutils literal notranslate"><span class="pre">ConvertStatus</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress"><code class="docutils literal notranslate"><span class="pre">ConvertProgress</span></code></a><ul>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.title"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.title</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.total"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.total</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.done"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.done</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.current"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.current</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.succeeded"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.succeeded</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.failed"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.failed</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.started_at"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.started_at</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.finished_at"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.finished_at</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.status"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.status</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.elapsed"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.elapsed</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.fraction"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.fraction</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.eta_seconds"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.eta_seconds</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConvertProgress.succeeded_count"><code class="docutils literal notranslate"><span class="pre">ConvertProgress.succeeded_count</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.media.convert.ConversionRunner"><code class="docutils literal notranslate"><span class="pre">ConversionRunner</span></code></a><ul>
+<li><a class="reference internal" href="#annie.media.convert.ConversionRunner.running"><code class="docutils literal notranslate"><span class="pre">ConversionRunner.running()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConversionRunner.progress"><code class="docutils literal notranslate"><span class="pre">ConversionRunner.progress()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConversionRunner.cancel"><code class="docutils literal notranslate"><span class="pre">ConversionRunner.cancel()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConversionRunner.start"><code class="docutils literal notranslate"><span class="pre">ConversionRunner.start()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.convert.ConversionRunner.shutdown"><code class="docutils literal notranslate"><span class="pre">ConversionRunner.shutdown()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../../_static/documentation_options.js?v=c6e86fd7"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

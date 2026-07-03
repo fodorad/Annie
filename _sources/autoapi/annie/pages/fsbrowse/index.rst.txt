@@ -1,0 +1,78 @@
+annie.pages.fsbrowse
+====================
+
+.. py:module:: annie.pages.fsbrowse
+
+.. autoapi-nested-parse::
+
+   Filesystem browsing helpers for the folder-picker dialog (service).
+
+   Pure, side-effect-free directory navigation used by the Dataset tab's folder
+   picker. Kept out of the UI layer so it can be unit-tested without NiceGUI: the
+   picker dialog (``annie/pages/folder_picker.py``) is a thin view over these.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.fsbrowse.resolve_start_dir
+   annie.pages.fsbrowse.parent_of
+   annie.pages.fsbrowse.list_subdirectories
+   annie.pages.fsbrowse.list_files
+
+
+Module Contents
+---------------
+
+.. py:function:: resolve_start_dir(start: str | pathlib.Path | None) -> pathlib.Path
+
+   Return a sensible existing directory to open the picker at.
+
+   Falls back gracefully: the given path if it is a directory, else its nearest
+   existing ancestor, else the user's home directory.
+
+   :param start: A path hint (e.g. the current text-field value), or ``None``.
+
+   :returns: An existing directory to start browsing from.
+
+
+.. py:function:: parent_of(path: str | pathlib.Path) -> pathlib.Path | None
+
+   Return the parent directory, or ``None`` if already at the filesystem root.
+
+   :param path: The current directory.
+
+   :returns: The parent :class:`~pathlib.Path`, or ``None`` at the root.
+
+
+.. py:function:: list_subdirectories(path: str | pathlib.Path, *, show_hidden: bool = False) -> list[pathlib.Path]
+
+   List immediate subdirectories of ``path``, sorted case-insensitively.
+
+   Hidden entries (dotfiles, including macOS AppleDouble ``._*``) are excluded by
+   default. Unreadable directories yield an empty list rather than raising, so a
+   permission error never breaks the picker.
+
+   :param path: The directory to list.
+   :param show_hidden: Include dot-prefixed entries when ``True``.
+
+   :returns: The child directories, sorted by lower-cased name.
+
+
+.. py:function:: list_files(path: str | pathlib.Path, *, suffixes: tuple[str, Ellipsis] | None = None, show_hidden: bool = False) -> list[pathlib.Path]
+
+   List immediate files of ``path``, sorted case-insensitively.
+
+   Hidden entries are excluded by default; an optional suffix filter restricts the
+   result (e.g. ``(".csv",)``). Unreadable directories yield an empty list.
+
+   :param path: The directory to list.
+   :param suffixes: Lower-case dotted suffixes to keep, or ``None`` for all files.
+   :param show_hidden: Include dot-prefixed entries when ``True``.
+
+   :returns: The child files, sorted by lower-cased name.
+
+

@@ -1,0 +1,192 @@
+annie.core.theme
+================
+
+.. py:module:: annie.core.theme
+
+.. autoapi-nested-parse::
+
+   Central theme tokens — every colour Annie uses lives here.
+
+   Two distinct colour systems are kept apart on purpose:
+
+   * **UI status colours** (:data:`STATUS_COLORS`) — chrome that conveys a row's
+     link state in the Dataset summary and Browse list. Referenced by name, never as
+     raw hex inline.
+   * **Box-drawing colours** (:func:`color_for_track` and friends, in
+     :mod:`annie.color`) — colours burned onto the video frames themselves, given in
+     BGR to match the render convention.
+
+   Keeping both here means a redesign touches one file.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.core.theme.PRIMARY
+   annie.core.theme.ACCENT
+   annie.core.theme.LOGO_MARK_SVG
+   annie.core.theme.SUCCESS
+   annie.core.theme.WARNING
+   annie.core.theme.DANGER
+   annie.core.theme.NEUTRAL
+   annie.core.theme.VDET_COLOR
+   annie.core.theme.TRACK_COLOR
+   annie.core.theme.AVAILABLE
+   annie.core.theme.UNAVAILABLE
+   annie.core.theme.LABEL_COLOR
+   annie.core.theme.VIDEO_TAG_COLOR
+   annie.core.theme.AUDIO_TAG_COLOR
+   annie.core.theme.HEADER_FG
+   annie.core.theme.STATUS_COLORS
+   annie.core.theme.STATUS_LABELS
+   annie.core.theme.STATUS_ICONS
+   annie.core.theme.ColorName
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.core.theme.status_color
+   annie.core.theme.color
+
+
+Module Contents
+---------------
+
+.. py:data:: PRIMARY
+   :value: '#006d77'
+
+
+   App-wide primary/accent colour, applied via NiceGUI's global colour call.
+
+.. py:data:: ACCENT
+   :value: '#22c55e'
+
+
+   More vivid green, e.g. the "validated" check.
+
+.. py:data:: LOGO_MARK_SVG
+   :value: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" style="width:100%;height:100%"><g...
+
+
+   The brand mark — a detection-box bracket enclosing a green validation check.
+
+   Matches ``docs/assets/logo.svg`` (mark only, no wordmark) and is used for the app
+   header and the browser-tab favicon. The SVG scales to its container.
+
+.. py:data:: SUCCESS
+   :value: '#2a9d8f'
+
+
+   Teal — linked / complete / usable.
+
+.. py:data:: WARNING
+   :value: '#f77f00'
+
+
+   Amber — video only / watchable, annotation off.
+
+.. py:data:: DANGER
+   :value: '#d90429'
+
+
+   Coral — annotation only / nothing to preview.
+
+.. py:data:: NEUTRAL
+   :value: '#676D78'
+
+
+   Grey — totals, secondary text.
+
+.. py:data:: VDET_COLOR
+   :value: '#1d3557'
+
+
+   Navy blue — vdet-related metrics.
+
+.. py:data:: TRACK_COLOR
+   :value: '#40916c'
+
+
+   Pastel green — track-related metrics.
+
+.. py:data:: AVAILABLE
+   :value: '#2a9d8f'
+
+
+   Teal — the path exists and was read.
+
+.. py:data:: UNAVAILABLE
+   :value: '#d90429'
+
+
+   Coral — the configured path is missing.
+
+.. py:data:: LABEL_COLOR
+   :value: '#5a189a'
+
+
+   Violet — distinct from vdet/track/status chips.
+
+.. py:data:: VIDEO_TAG_COLOR
+   :value: '#3a86ff'
+
+
+   Bright blue — has video frames.
+
+.. py:data:: AUDIO_TAG_COLOR
+   :value: '#fb8500'
+
+
+   Orange — has an audio stream.
+
+.. py:data:: HEADER_FG
+   :value: '#ffffff'
+
+
+   White header text/icons, readable on the dark primary header bar.
+
+.. py:data:: STATUS_COLORS
+   :type:  dict[annie.core.models.RowStatus, str]
+
+   Status → colour, the single source of truth for the tri-state UI treatment.
+
+.. py:data:: STATUS_LABELS
+   :type:  dict[annie.core.models.RowStatus, str]
+
+   Status → short human label shown on pills and summary cards.
+
+.. py:data:: STATUS_ICONS
+   :type:  dict[annie.core.models.RowStatus, str]
+
+   Status → Tabler icon name used on cards and pills.
+
+.. py:data:: ColorName
+
+   The semantic colour names accepted by :func:`color`.
+
+.. py:function:: status_color(status: annie.core.models.RowStatus) -> str
+
+   Return the hex colour for a row status.
+
+   :param status: One of the :data:`~annie.models.RowStatus` values.
+
+   :returns: The hex colour string for that status.
+
+
+.. py:function:: color(name: ColorName) -> str
+
+   Resolve a semantic colour name to its hex value.
+
+   :param name: A semantic colour name (e.g. ``"success"``).
+
+   :returns: The hex colour string.
+
+   :raises KeyError: If ``name`` is not a known semantic colour.
+
+

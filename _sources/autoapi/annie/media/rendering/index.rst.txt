@@ -1,0 +1,192 @@
+annie.media.rendering
+=====================
+
+.. py:module:: annie.media.rendering
+
+.. autoapi-nested-parse::
+
+   Render pipeline: burn annotations into a browser-playable preview clip.
+
+   A render is submitted as a **job** and runs on a background thread, so the
+   unpredictable, CPU-bound work of decoding and re-encoding never stalls the UI.
+   The submit → poll → path contract is identical whether the work is backed by a
+   thread pool (now) or an external queue (later), so the seam costs nothing today
+   and upgrades cleanly.
+
+   The job tracker (submit / status / sweep) is pure Python and unit-tested with an
+   injected render function. The default render function (:func:`burn_clip`) needs
+   the ``media`` extra and a system FFmpeg; it decodes frames, draws the overlay
+   (:func:`annie.color.draw_overlay`), pipes raw RGB into an ``ffmpeg`` subprocess
+   (libx264), and muxes the source audio back. Outputs land in a temp dir that a TTL
+   sweeper purges, so rendered clips never accumulate on disk.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.media.rendering.RenderFn
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.media.rendering.JobStatus
+   annie.media.rendering.RenderJob
+   annie.media.rendering.RenderService
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.rendering.burn_clip
+
+
+Module Contents
+---------------
+
+.. py:data:: RenderFn
+
+   Signature of a render function.
+
+   Given a video entry and an output path, produce a browser-playable annotated clip.
+
+.. py:class:: JobStatus
+
+   Bases: :py:obj:`enum.StrEnum`
+
+
+   Lifecycle states of a render job.
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:class:: RenderJob
+
+   A single render job and its current state.
+
+   .. attribute:: job_id
+
+      Unique opaque id used to poll for status.
+
+   .. attribute:: row_key
+
+      The Browse row this render belongs to.
+
+   .. attribute:: status
+
+      Current :class:`JobStatus`.
+
+   .. attribute:: output_path
+
+      Path to the finished clip once ``status`` is ``DONE``.
+
+   .. attribute:: error
+
+      Error message when ``status`` is ``FAILED``.
+
+   .. attribute:: created_at
+
+      Monotonic-ish wall-clock submit time (epoch seconds).
+
+
+.. py:class:: RenderService(render_fn: RenderFn | None = None, *, temp_dir: str | pathlib.Path | None = None, max_workers: int | None = None, ttl_seconds: int | None = None)
+
+   Thread-pool-backed render-job tracker with a TTL temp sweeper.
+
+   :param render_fn: The function that actually produces a clip. Defaults to
+                     :func:`burn_clip`; tests inject a fake to exercise the lifecycle
+                     without a media backend.
+   :param temp_dir: Directory for rendered clips. Defaults to the configured temp
+                    dir.
+   :param max_workers: Maximum concurrent renders. Defaults to the configured value.
+   :param ttl_seconds: Age after which a finished clip is eligible for sweeping.
+
+
+   .. py:method:: submit(entry: annie.core.models.VideoEntry) -> str
+
+      Enqueue a render for ``entry`` and return its job id immediately.
+
+      :param entry: The video to render. Must have a video file to decode.
+
+      :returns: The job id to poll with :meth:`get`.
+
+      :raises ValueError: If the entry has no video path to render.
+
+
+
+   .. py:method:: get(job_id: str) -> RenderJob | None
+
+      Return the job for ``job_id``, or ``None`` if unknown.
+
+      :param job_id: The id returned by :meth:`submit`.
+
+      :returns: The :class:`RenderJob`, or ``None``.
+
+
+
+   .. py:method:: jobs() -> list[RenderJob]
+
+      Return a snapshot of all tracked jobs.
+
+      :returns: A list copy of the current jobs.
+
+
+
+   .. py:method:: sweep(*, now: float | None = None) -> int
+
+      Delete finished clips older than the TTL and forget their jobs.
+
+      :param now: Override for the current epoch time (for testing).
+
+      :returns: The number of jobs swept.
+
+
+
+   .. py:method:: clear_all() -> tuple[int, int]
+
+      Delete every finished clip and forget all non-running jobs.
+
+      Unlike :meth:`sweep`, this ignores the TTL and also removes any orphaned
+      ``.mp4`` files in :attr:`temp_dir` that are not tracked by a job (e.g.
+      left over from a previous process). Running jobs are left untouched so an
+      in-flight render is not corrupted.
+
+      :returns: A ``(jobs_cleared, files_deleted)`` pair — the number of jobs removed
+                from the tracker and the number of files actually unlinked from disk.
+
+
+
+   .. py:method:: shutdown() -> None
+
+      Shut the worker pool down, waiting for in-flight jobs to finish.
+
+
+
+.. py:function:: burn_clip(entry: annie.core.models.VideoEntry, output_path: pathlib.Path) -> None
+
+   Render a video's combined annotations into a browser-playable clip.
+
+   Decodes **every** frame of the source (a frame with no detections is written
+   through unchanged, so the render always has the same frame count as the
+   original) and draws, on each: the vdet boxes in flat **blue**, every track in
+   its own **stable unique colour** (never blue/green), and the **active /
+   main-character** track in **green**. Frames are piped as raw RGB into an
+   ``ffmpeg`` libx264 subprocess, and the source audio is muxed back (the encode is
+   not ``-shortest``, so a shorter audio track never truncates the video).
+
+   :param entry: The video to render; ``entry.video_path`` must be set and at least
+                 one of vdet/tracks should be present for boxes to appear.
+   :param output_path: Where to write the encoded ``.mp4``.
+
+   :raises annie.decode.MediaUnavailableError: If the ``media`` extra is absent.
+   :raises ValueError: If the entry has no video path.
+   :raises RuntimeError: If the ffmpeg subprocess fails.
+
+

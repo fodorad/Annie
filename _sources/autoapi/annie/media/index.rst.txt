@@ -1,0 +1,21 @@
+annie.media
+===========
+
+.. py:module:: annie.media
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/annie/media/color/index
+   /autoapi/annie/media/compose/index
+   /autoapi/annie/media/convert/index
+   /autoapi/annie/media/decode/index
+   /autoapi/annie/media/preview/index
+   /autoapi/annie/media/probe/index
+   /autoapi/annie/media/rendering/index
+
+

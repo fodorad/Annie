@@ -1,0 +1,68 @@
+annie.media.probe
+=================
+
+.. py:module:: annie.media.probe
+
+.. autoapi-nested-parse::
+
+   Cheap media probing via ffprobe (service).
+
+   Browse shows ``video`` / ``audio`` tags per sample. Whether a file *has frames* is
+   known from the scan (a video file is present); whether it *has an audio stream* is
+   not, so it is probed on demand with ``ffprobe`` — much cheaper than decoding. The
+   command builder is pure and unit-tested; the thin runner spawns it.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.probe.audio_probe_command
+   annie.media.probe.video_probe_command
+   annie.media.probe.has_audio
+   annie.media.probe.has_video
+
+
+Module Contents
+---------------
+
+.. py:function:: audio_probe_command(path: str | pathlib.Path) -> list[str]
+
+   Build the ffprobe argv that lists a file's audio streams.
+
+   :param path: The media file to inspect.
+
+   :returns: The ffprobe argv (no shell). Non-empty stdout means an audio stream exists.
+
+
+.. py:function:: video_probe_command(path: str | pathlib.Path) -> list[str]
+
+   Build the ffprobe argv that lists a file's video streams.
+
+   :param path: The media file to inspect.
+
+   :returns: The ffprobe argv (no shell). Empty stdout means the file has no video stream
+             (e.g. an ``.mp4`` that is really audio-only and yields no frames).
+
+
+.. py:function:: has_audio(path: str | pathlib.Path) -> bool
+
+   Return whether ``path`` has at least one audio stream.
+
+   :param path: The media file to inspect.
+
+   :returns: ``True`` if ffprobe reports an audio stream, ``False`` otherwise (including
+             on any ffprobe error, so a missing ffprobe degrades to "no audio").
+
+
+.. py:function:: has_video(path: str | pathlib.Path) -> bool
+
+   Return whether ``path`` has at least one video stream.
+
+   :param path: The media file to inspect.
+
+   :returns: ``True`` if ffprobe reports a video stream, ``False`` otherwise.
+
+

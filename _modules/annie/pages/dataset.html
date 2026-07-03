@@ -1,0 +1,798 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/_modules/annie/pages/dataset.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>annie.pages.dataset - Annie latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">Annie latest documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">Annie latest documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/sources/index.html">annie.dataset.sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/storage/index.html">annie.dataset.storage</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/color/index.html">annie.media.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/compose/index.html">annie.media.compose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/convert/index.html">annie.media.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/decode/index.html">annie.media.decode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/probe/index.html">annie.media.probe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/rendering/index.html">annie.media.rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/pages/index.html">annie.pages</a><input aria-label="Toggle navigation of annie.pages" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/annotator/index.html">annie.pages.annotator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/browse/index.html">annie.pages.browse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/base/index.html">annie.parsers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/csvmeta/index.html">annie.parsers.csvmeta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for annie.pages.dataset</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Dataset tab — define the dataset by adding data sources; see live metrics.</span>
+
+<span class="sd">Annie is dataset-agnostic: instead of fixed folder fields, you build the dataset</span>
+<span class="sd">from a list of **data sources** (the ``+`` box). A videos folder is the mandatory</span>
+<span class="sd">spine; vdet/track folders, a main-character CSV, and any number of label CSVs</span>
+<span class="sd">attach to it. There is no Scan button — adding or removing a source re-scans in</span>
+<span class="sd">place, and every metric and Browse row updates immediately. Each source shows an</span>
+<span class="sd">Available / Unavailable chip and a live item count.</span>
+
+<span class="sd">Each browser tab maintains its own scan-in-progress flag and database-mode</span>
+<span class="sd">selection via a per-client :class:`_DatasetState` keyed by</span>
+<span class="sd">:attr:`nicegui.Client.id`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">context</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">_seed_registry</span><span class="p">,</span> <span class="n">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">KIND_ICONS</span><span class="p">,</span> <span class="n">KIND_LABELS</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">,</span> <span class="n">SourceKind</span><span class="p">,</span> <span class="n">SourceRegistry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_csv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
+
+<span class="c1"># ── per-client state ──────────────────────────────────────────────────────────</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_DatasetState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan + persistence state isolated to one browser tab.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        scanning: Whether a rescan is in progress for this client.</span>
+<span class="sd">        db_mode: ``&quot;session&quot;`` (fresh per-startup DB) or ``&quot;existing&quot;`` (pinned file).</span>
+<span class="sd">        db_path_custom: The user-typed or config-embedded DB path when mode is ``&quot;existing&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">scanning</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">db_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;session&quot;</span>
+    <span class="n">db_path_custom</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="c1">#: Per-client state registry; cleaned up on disconnect in :func:`render`.</span>
+<span class="n">_dataset_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_DatasetState</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ds</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">_DatasetState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the :class:`_DatasetState` for the currently active client.&quot;&quot;&quot;</span>
+    <span class="n">cid</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_dataset_state</span><span class="p">:</span>
+        <span class="n">_dataset_state</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">_DatasetState</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_dataset_state</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span>
+
+
+<span class="c1">#: Overview metric key → its live :class:`nicegui.ui.label`, updated after each scan.</span>
+<span class="n">_METRICS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_video_stems</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Current video stems, used to auto-suggest a CSV key column.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">video_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span><span class="p">}</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_apply_changes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-scan the filesystem and refresh every dependent view after a source change.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_source_list</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>  <span class="c1"># redraw button in loading state</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_source_list</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_rescan</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-walk the configured folders (e.g. to pick up newly-converted files).&quot;&quot;&quot;</span>
+    <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rescanned — </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;num_videos&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> videos&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="c1">#: Sentinel select values for the two non-file config options.</span>
+<span class="n">_NEW_CONFIG</span> <span class="o">=</span> <span class="s2">&quot;__new__&quot;</span>
+<span class="n">_ENV_CONFIG</span> <span class="o">=</span> <span class="s2">&quot;__env__&quot;</span>  <span class="c1">#: the &quot;sources seeded from ANNIE_* env vars&quot; option</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_has_env_sources</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True if any ANNIE_* environment variable seeds a data source.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">videos_dir</span><span class="p">,</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">vdet_dir</span><span class="p">,</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">track_dir</span><span class="p">,</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">participants_file</span><span class="p">,</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">labels_csv</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># ── load / save a dataset config ─────────────────────────────────────────────</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_apply_registry</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="n">SourceRegistry</span><span class="p">,</span> <span class="n">config_db</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replace the active sources with ``registry`` and refresh everything.</span>
+
+<span class="sd">    When the loaded config embeds a ``&quot;db&quot;`` path, the review store is switched</span>
+<span class="sd">    to that file and the Persistence block updates to reflect &quot;existing DB&quot; mode.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">registry</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">config_db</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config_db</span><span class="p">)</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">config_db</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; — </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;num_videos&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> videos&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_load_config_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a config file by path, surfacing any error to the log + a toast.&quot;&quot;&quot;</span>
+    <span class="n">config_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">config_db</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - surface a bad config to the user</span>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">report_exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load config: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not load config: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">await</span> <span class="n">_apply_registry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">config_db</span><span class="o">=</span><span class="n">config_db</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_new_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reset the dataset to a blank slate: no sources, fresh session DB.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">SourceRegistry</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;session&quot;</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;New config&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_env_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reload sources from the ANNIE_* environment variables.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">_seed_registry</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;session&quot;</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Loaded from environment variables&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_save_current</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Show a name dialog, then pick a folder and write the config JSON.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Add some sources before saving a config.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-80 gap-4&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Save config&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
+        <span class="n">name_input</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;Config name&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;My dataset&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined autofocus&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;justify-end gap-2 w-full&quot;</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Cancel&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+                <span class="s2">&quot;Choose folder…&quot;</span><span class="p">,</span>
+                <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;folder_open&quot;</span><span class="p">,</span>
+                <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">((</span><span class="n">name_input</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;unelevated&quot;</span><span class="p">)</span>
+
+    <span class="n">config_name</span> <span class="o">=</span> <span class="k">await</span> <span class="n">dialog</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_name</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">folder</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_directory</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">config_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">folder</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;annie_dataset.json&quot;</span>
+    <span class="n">db_to_save</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">)</span> <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">==</span> <span class="s2">&quot;existing&quot;</span> <span class="ow">and</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">datasets</span><span class="o">.</span><span class="n">save_config</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="p">,</span> <span class="n">config_name</span><span class="p">,</span> <span class="n">relative_to</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span> <span class="n">db_path</span><span class="o">=</span><span class="n">db_to_save</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved &#39;</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">&#39; to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_config_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the config selector: sentinel options + predefined configs, auto-loads on change.&quot;&quot;&quot;</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">discover_configs</span><span class="p">()</span>
+
+    <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">_NEW_CONFIG</span><span class="p">:</span> <span class="s2">&quot;New config…&quot;</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">():</span>
+        <span class="n">options</span><span class="p">[</span><span class="n">_ENV_CONFIG</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;[ENV vars] Custom…&quot;</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">config_name</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="n">default</span> <span class="o">=</span> <span class="n">_ENV_CONFIG</span> <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">()</span> <span class="k">else</span> <span class="n">_NEW_CONFIG</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_select</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">_NEW_CONFIG</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">_new_config</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="n">_ENV_CONFIG</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">_env_config</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">_load_config_path</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2 wrap&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;bookmarks&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">default</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Config&quot;</span><span class="p">,</span> <span class="n">on_change</span><span class="o">=</span><span class="n">on_select</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">&quot;dense outlined&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-[20rem]&quot;</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Load from file…&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;folder_open&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_load_from_file</span><span class="p">())</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">&quot;unelevated&quot;</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Save current…&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;save&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_save_current</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;outline&quot;</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_load_from_file</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick a config JSON anywhere on disk and load it.&quot;&quot;&quot;</span>
+    <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">config_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">_load_config_path</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_add_kind</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="n">SourceKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the add flow for a chosen source kind.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span>
+        <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">participants_file</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">labels_csv</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">configure_csv</span><span class="p">(</span><span class="n">chosen</span><span class="p">,</span> <span class="n">_video_stems</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">videos_dir</span><span class="p">,</span>
+            <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">vdet_dir</span><span class="p">,</span>
+            <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">track_dir</span><span class="p">,</span>
+        <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_directory</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_remove</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a source and refresh.&quot;&quot;&quot;</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+
+
+<span class="c1"># ── metric cards ─────────────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_card</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build one overview metric card and register its value label under ``key``.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-1 min-w-[8rem]&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-sm&quot;</span><span class="p">)</span>
+        <span class="n">_METRICS</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;—&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-2xl font-medium&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_cards</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the two rows of overview metric cards and fill them from the scan.&quot;&quot;&quot;</span>
+    <span class="n">_METRICS</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
+        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">&quot;# videos&quot;</span><span class="p">,</span> <span class="s2">&quot;num_videos&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
+        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">&quot;# vdet files&quot;</span><span class="p">,</span> <span class="s2">&quot;num_vdet_files&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">)</span>
+        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">&quot;# track files&quot;</span><span class="p">,</span> <span class="s2">&quot;num_track_files&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
+        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">&quot;# videos with vdet + track&quot;</span><span class="p">,</span> <span class="s2">&quot;videos_vdet_and_track&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">&quot;# videos with vdet&quot;</span><span class="p">,</span> <span class="s2">&quot;videos_with_vdet&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">)</span>
+        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">&quot;# videos with track&quot;</span><span class="p">,</span> <span class="s2">&quot;videos_with_track&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">)</span>
+
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_METRICS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">label</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+
+
+<span class="c1"># ── source list + add box ────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_availability_chip</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw the Available / Unavailable chip for a source.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;Available&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">AVAILABLE</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="s2">&quot;Unavailable&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">UNAVAILABLE</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;path not found&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_source_card</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one configured source row.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-3 no-wrap&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="n">KIND_ICONS</span><span class="p">[</span><span class="n">source</span><span class="o">.</span><span class="n">kind</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;gap-0 flex-grow min-w-0&quot;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium&quot;</span><span class="p">)</span>
+                <span class="n">_availability_chip</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs break-all&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;key: </span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="si">}</span><span class="s2"> · columns: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;delete&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="o">=</span><span class="n">source</span><span class="p">:</span> <span class="n">_remove</span><span class="p">(</span><span class="n">s</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">&quot;flat round dense&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;Remove source&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_source_list</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the list of configured sources plus the add box.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-2&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Sources&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;No sources yet — add a videos folder to begin.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="n">_source_card</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Add data source&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;outline&quot;</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">available_kinds_to_add</span><span class="p">():</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span><span class="n">KIND_LABELS</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="o">=</span><span class="n">kind</span><span class="p">:</span> <span class="n">_add_kind</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+            <span class="n">rescan_btn</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Rescan&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;refresh&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_rescan</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                    <span class="s2">&quot;Re-read the folders — picks up files added since the last scan &quot;</span>
+                    <span class="s2">&quot;(e.g. while a conversion is running)&quot;</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
+                <span class="n">rescan_btn</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">&quot;loading&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># ── persistence block ─────────────────────────────────────────────────────────</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_on_db_mode_change</span><span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Switch between session-DB and existing-DB modes.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="n">mode</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;session&quot;</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_apply_db_path</span><span class="p">(</span><span class="n">path_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open an existing DB at ``path_str`` and switch the store to it.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">path_str</span> <span class="o">=</span> <span class="n">path_str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path_str</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Enter a database file path.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="n">path_str</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path_str</span><span class="p">))</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Review DB: </span><span class="si">{</span><span class="n">path_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_pick_db_file</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open a file picker to select an existing DB, then apply it.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">sessions_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
+        <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_persistence_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistence block: choose between a fresh session DB or a pinned existing file.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;storage&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Persistence&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
+
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active DB: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs break-all&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+            <span class="n">ui</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;New session DB&quot;</span><span class="p">,</span> <span class="s2">&quot;existing&quot;</span><span class="p">:</span> <span class="s2">&quot;Use existing DB&quot;</span><span class="p">},</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span><span class="p">,</span>
+                <span class="n">on_change</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">_on_db_mode_change</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">==</span> <span class="s2">&quot;existing&quot;</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2&quot;</span><span class="p">):</span>
+                    <span class="n">path_input</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;Database file path&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-grow&quot;</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;folder_open&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_pick_db_file</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                        <span class="s2">&quot;flat dense&quot;</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;Browse for a .db file&quot;</span><span class="p">)</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+                        <span class="s2">&quot;Apply&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;check&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_apply_db_path</span><span class="p">(</span><span class="n">path_input</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;unelevated dense&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="render">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/dataset/index.html#annie.pages.dataset.render">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Dataset tab body; register per-client state.&quot;&quot;&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span>
+    <span class="n">_dataset_state</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">_DatasetState</span><span class="p">()</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">on_disconnect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_dataset_state</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-4&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xl font-medium&quot;</span><span class="p">)</span>
+        <span class="n">_config_section</span><span class="p">()</span>
+        <span class="n">_metric_cards</span><span class="p">()</span>
+        <span class="n">_source_list</span><span class="p">()</span>
+        <span class="n">_persistence_section</span><span class="p">()</span>
+
+    <span class="c1"># When the app starts, the initial scan runs in the background (see annie.app).</span>
+    <span class="c1"># Poll until it finishes, then refresh only the metric cards — the source list</span>
+    <span class="c1"># is intentionally skipped here because rebuilding it calls source.count() for</span>
+    <span class="c1"># every directory source, which blocks the event loop for ~1.5 s on large datasets.</span>
+    <span class="c1"># Sources haven&#39;t changed, so only aggregate metrics need updating.</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_poll_startup_scan</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_ds</span><span class="p">()</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
+                    <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+                    <span class="n">_poll_timer</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+                <span class="c1"># Client disconnected before the scan finished; stop quietly.</span>
+                <span class="n">_poll_timer</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">_poll_timer</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">_poll_startup_scan</span><span class="p">)</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Ádám Fodor
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=c6e86fd7"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -1,0 +1,39 @@
+annie.parsers.vdet
+==================
+
+.. py:module:: annie.parsers.vdet
+
+.. autoapi-nested-parse::
+
+   Parser for ``.vdet`` files (raw per-video face detections).
+
+   A ``.vdet`` is computed once per video and holds *all* face detections, frame by
+   frame. A single frame may contain several rows (several faces), so the loader
+   groups rows by ``frame_id``. Detections carry no track identity.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.parsers.vdet.load_vdet
+
+
+Module Contents
+---------------
+
+.. py:function:: load_vdet(path: str | pathlib.Path) -> list[annie.core.models.FrameAnnotation]
+
+   Load a ``.vdet`` file into per-frame annotations.
+
+   Rows sharing a ``frame_id`` are grouped, so a frame with three detected faces
+   yields one :class:`~annie.models.FrameAnnotation` holding three boxes. Boxes
+   have ``track_id is None`` because raw detections are not yet tracked.
+
+   :param path: Path to the ``.vdet`` file.
+
+   :returns: Per-frame annotations ordered by ascending frame index.
+
+

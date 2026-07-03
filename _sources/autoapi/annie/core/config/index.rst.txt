@@ -1,0 +1,154 @@
+annie.core.config
+=================
+
+.. py:module:: annie.core.config
+
+.. autoapi-nested-parse::
+
+   Runtime configuration for Annie.
+
+   All settings are path-agnostic: nothing absolute is baked into the repository.
+   Defaults come from environment variables (prefixed ``ANNIE_``) so the same code
+   runs on any machine — set them on your dev box and your private paths never leak
+   into the public repo — and every folder can still be overridden at runtime from
+   the Dataset tab's pickers.
+
+   The infrastructure layer owns this module; higher layers read :data:`settings`
+   rather than touching the environment directly.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.core.config.settings
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.core.config.Settings
+
+
+Module Contents
+---------------
+
+.. py:class:: Settings
+
+   User-facing configuration, resolved once at import time.
+
+   .. attribute:: videos_dir
+
+      Folder of source ``.mp4`` files (env ``ANNIE_VIDEOS_DIR``).
+
+   .. attribute:: vdet_dir
+
+      Folder of raw-detection ``.vdet`` files (env ``ANNIE_VDET_DIR``).
+
+   .. attribute:: track_dir
+
+      Folder of ``__track{N}.csv`` files (env ``ANNIE_TRACK_DIR``).
+
+   .. attribute:: participants_file
+
+      The main-character heuristic CSV (``uuid,track_id``);
+      manual corrections are written to its ``_manual`` sibling
+      (env ``ANNIE_PARTICIPANTS_FILE``).
+
+   .. attribute:: labels_csv
+
+      A labels CSV file to seed as a label source on startup
+      (env ``ANNIE_LABELS_CSV``).
+
+   .. attribute:: labels_key
+
+      The key column in :attr:`labels_csv` (env ``ANNIE_LABELS_KEY``);
+      auto-detected from the header when omitted.
+
+   .. attribute:: labels_values
+
+      Comma-separated value columns from :attr:`labels_csv`
+      (env ``ANNIE_LABELS_VALUES``); defaults to all non-key columns.
+
+   .. attribute:: db_path
+
+      SQLite file for this session's review status (good/bad/notes). Defaults
+      to a per-session timestamped file; set ``ANNIE_DB_PATH`` to pin a persistent
+      path instead.
+
+   .. attribute:: db_path_is_explicit
+
+      ``True`` when ``ANNIE_DB_PATH`` was set, so the UI can
+      show "existing DB" mode instead of "new session DB" mode on startup.
+
+   .. attribute:: logs_dir
+
+      Directory that receives per-session log files
+      (``<ANNIE_HOME>/logs``).
+
+   .. attribute:: sessions_dir
+
+      Directory that receives per-session SQLite databases
+      (``<ANNIE_HOME>/sessions``).
+
+   .. attribute:: temp_dir
+
+      Scratch directory for rendered preview clips and exports. Defaults
+      to ``<ANNIE_HOME>/tmp`` (falling back to ``~/.annie/tmp``) so it lands on
+      the same persistent location as logs and sessions; override with
+      ``ANNIE_TEMP_DIR``.
+
+   .. attribute:: config_dir
+
+      Optional extra directory scanned for user-saved dataset configs
+      (env ``ANNIE_CONFIG_DIR``). Useful in Docker where the container-side
+      ``data/config/`` is ephemeral; set this to a path on a persistent volume
+      so saved configs survive restarts.
+
+   .. attribute:: data_dir
+
+      Optional override for the bundled ``data`` directory (env
+      ``ANNIE_DATA_DIR``). Needed for non-editable installs (Docker, PyPI)
+      where the package lives in ``site-packages`` and cannot locate ``data``
+      by walking up from ``__file__``; point it at the checked-out ``data``.
+
+   .. attribute:: video_extensions
+
+      Accepted source-video suffixes (lower-case, dotted).
+
+   .. attribute:: vdet_extension
+
+      Suffix identifying a raw-detection file.
+
+   .. attribute:: track_glob
+
+      Glob identifying derived single-track files.
+
+   .. attribute:: render_max_workers
+
+      Maximum concurrent render jobs.
+
+   .. attribute:: temp_ttl_seconds
+
+      Age after which a rendered clip is swept.
+
+   .. attribute:: host
+
+      Interface the NiceGUI server binds to.
+
+   .. attribute:: port
+
+      Port the NiceGUI server listens on.
+
+
+.. py:data:: settings
+
+   The process-wide settings instance.
+
+   Mutate its fields (e.g. from the Dataset tab) to change behaviour at runtime
+   without re-importing.
+

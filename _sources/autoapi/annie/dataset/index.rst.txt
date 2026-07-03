@@ -1,0 +1,21 @@
+annie.dataset
+=============
+
+.. py:module:: annie.dataset
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/annie/dataset/corrections/index
+   /autoapi/annie/dataset/datasets/index
+   /autoapi/annie/dataset/filtering/index
+   /autoapi/annie/dataset/manipulate/index
+   /autoapi/annie/dataset/scanning/index
+   /autoapi/annie/dataset/sources/index
+   /autoapi/annie/dataset/storage/index
+
+

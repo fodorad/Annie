@@ -1,0 +1,42 @@
+annie.pages.lazy
+================
+
+.. py:module:: annie.pages.lazy
+
+.. autoapi-nested-parse::
+
+   Deferred UI work that survives a body refresh (UI helper).
+
+   The Browse/Annotator rows decode frames lazily. Doing that with a per-row
+   ``ui.timer`` is fragile: NiceGUI's ``Timer._run_once`` enters its parent slot
+   *before* it checks for cancellation, so a one-shot timer whose row was refreshed
+   away raises ``RuntimeError: The parent slot ... has been deleted`` — flooding the
+   log.
+
+   So at **runtime** (event loop running) we defer with a tracked background task,
+   which has no parent slot to delete; the coroutine itself guards every UI mutation.
+   Only at **build time** (auto-index, no loop yet) do we fall back to a one-shot
+   timer parented to a persistent host, which is safe because nothing is being
+   refreshed during the initial build.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.lazy.schedule
+
+
+Module Contents
+---------------
+
+.. py:function:: schedule(host: nicegui.ui.element, factory: collections.abc.Callable[[], collections.abc.Coroutine[Any, Any, None]]) -> None
+
+   Run ``factory()`` soon, surviving a refresh of the calling row.
+
+   :param host: A persistent element used only for the build-time timer fallback.
+   :param factory: A zero-arg coroutine function producing the deferred work.
+
+

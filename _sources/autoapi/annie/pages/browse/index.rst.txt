@@ -1,0 +1,51 @@
+annie.pages.browse
+==================
+
+.. py:module:: annie.pages.browse
+
+.. autoapi-nested-parse::
+
+   Browse tab — the scrollable, per-video dataset visualizer (main view).
+
+   Browse is a pure consumer of the cached scan manifest and only populates once a
+   videos folder is configured. An always-visible **filter bar** (not part of the
+   scroll) narrows the list by name prefix, video/audio/vdet/track presence, review
+   verdict, notes, annotator selection, and any label-column values. Each row is three
+   stacked lines:
+
+   1. the video id, a "Show at location" icon, and the media/annotation/label **tags**
+      (``video`` / ``audio`` / ``#frames`` / ``vdet`` / ``N track`` / ``main`` / labels);
+   2. an **ORIGINAL** placeholder (click to embed the clip), the annotated **five-frame
+      strip**, and a **render** box (burn the full annotated clip and embed it);
+   3. the review controls (liked by default, dislike, note, "Add to Annotator").
+
+   Row height is a Settings-tab preference. Frames decode and audio is probed lazily
+   in background tasks; the body refreshes when the tab is opened or sources change.
+
+   Each browser tab gets its own isolated filter state and transform settings via a
+   per-client :class:`_BrowseState` keyed by :attr:`nicegui.Client.id`.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.browse.render
+   annie.pages.browse.refresh
+
+
+Module Contents
+---------------
+
+.. py:function:: render() -> None
+
+   Build the Browse tab body; initialise and register per-client state.
+
+
+.. py:function:: refresh() -> None
+
+   Rebuild the Browse body (after a scan, source change, or tab open).
+
+

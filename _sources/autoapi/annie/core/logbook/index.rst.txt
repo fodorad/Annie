@@ -1,0 +1,182 @@
+annie.core.logbook
+==================
+
+.. py:module:: annie.core.logbook
+
+.. autoapi-nested-parse::
+
+   Central event log — a dated file plus an in-memory store for the Log tab (infra).
+
+   Errors that happen in the background (lazy decode, render workers, the conversion
+   batch, NiceGUI's own callbacks) used to escape to the terminal and were easy to
+   miss. The log book gives them one home:
+
+   * every event is appended to an in-memory ring buffer the **Log tab** reads, and
+   * mirrored to a per-session file (``Annie_YYYY-MM-DD_HH-MM-SS.log``) so each
+     startup gets its own log and multiple same-day runs stay distinct.
+
+   The store is event-sourced: each event has a monotonic ``seq`` so a per-client
+   poller can fetch only what is new (for toasts) without re-rendering everything. It
+   is pure stdlib and thread-safe, so render/convert worker threads can report too.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.core.logbook.LEVELS
+   annie.core.logbook.LOG
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.core.logbook.LogEvent
+   annie.core.logbook.LogBook
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.core.logbook.report
+   annie.core.logbook.report_exception
+
+
+Module Contents
+---------------
+
+.. py:data:: LEVELS
+   :type:  tuple[str, Ellipsis]
+   :value: ('error', 'warning', 'info')
+
+
+   The levels an event can carry, most severe first.
+
+.. py:class:: LogEvent
+
+   One recorded event.
+
+   .. attribute:: seq
+
+      Monotonic sequence number (for incremental polling).
+
+   .. attribute:: timestamp
+
+      When it was recorded.
+
+   .. attribute:: level
+
+      One of :data:`LEVELS`.
+
+   .. attribute:: message
+
+      Short, one-line summary.
+
+   .. attribute:: details
+
+      Optional long text (e.g. a traceback) for the expandable view.
+
+
+   .. py:property:: time_text
+      :type: str
+
+
+      The timestamp formatted as ``YYYY-MM-DD HH:MM:SS``.
+
+
+   .. py:method:: as_clipboard() -> str
+
+      The event rendered as plain text for the Copy button.
+
+
+
+.. py:class:: LogBook(capacity: int = 2000)
+
+   A thread-safe, bounded event store mirrored to a dated log file.
+
+   Create an empty store.
+
+   :param capacity: Maximum number of events kept in memory (oldest dropped).
+
+
+   .. py:method:: attach_file(log_dir: str | pathlib.Path) -> pathlib.Path
+
+      Mirror events to ``<log_dir>/Annie_<date>_<time>.log`` and return the file path.
+
+      :param log_dir: Directory to write the dated log file into (created if needed).
+
+      :returns: The log file path.
+
+
+
+   .. py:method:: add(level: str, message: str, details: str = '') -> LogEvent
+
+      Record an event (and mirror it to the file, if attached).
+
+      :param level: One of :data:`LEVELS`.
+      :param message: One-line summary.
+      :param details: Optional long text.
+
+      :returns: The stored :class:`LogEvent`.
+
+
+
+   .. py:method:: events() -> list[LogEvent]
+
+      Return a snapshot of all stored events, oldest first.
+
+
+
+   .. py:method:: since(seq: int) -> tuple[list[LogEvent], int]
+
+      Return events newer than ``seq`` and the latest sequence number.
+
+      :param seq: The last sequence number the caller has already seen.
+
+      :returns: A ``(new_events, latest_seq)`` pair.
+
+
+
+   .. py:method:: latest_seq() -> int
+
+      Return the most recent sequence number (``0`` when empty).
+
+
+
+   .. py:method:: clear() -> None
+
+      Drop all in-memory events (the file is untouched).
+
+
+
+.. py:data:: LOG
+
+   The process-wide event log.
+
+.. py:function:: report(message: str, *, level: str = 'error', details: str = '') -> LogEvent
+
+   Record an event on the global :data:`LOG`.
+
+   :param message: One-line summary.
+   :param level: One of :data:`LEVELS`.
+   :param details: Optional long text.
+
+   :returns: The stored :class:`LogEvent`.
+
+
+.. py:function:: report_exception(message: str, exc: BaseException | None) -> LogEvent
+
+   Record an error event whose details are ``exc``'s formatted traceback.
+
+   :param message: One-line summary.
+   :param exc: The exception to format into the details, or ``None``.
+
+   :returns: The stored :class:`LogEvent`.
+
+

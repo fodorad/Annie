@@ -1,0 +1,184 @@
+annie.dataset.filtering
+=======================
+
+.. py:module:: annie.dataset.filtering
+
+.. autoapi-nested-parse::
+
+   Browse filtering (service): pure predicates over the manifest.
+
+   The Browse tab's always-visible filter bar narrows the per-video manifest by
+   annotation coverage, review verdict, notes, annotator selection, and label
+   values. The logic lives here — independent of NiceGUI and SQLite — so it is
+   unit-tested directly: the UI supplies a :class:`ReviewState` per row (read from
+   the store) and a :class:`FilterSpec` built from the controls.
+
+   Facets combine with **AND**; within a single label column the selected values
+   combine with **OR** (e.g. Sentiment in {negative, neutral}).
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.dataset.filtering.PresenceFilter
+   annie.dataset.filtering.VdetFilter
+   annie.dataset.filtering.TrackFilter
+   annie.dataset.filtering.ReviewFilter
+   annie.dataset.filtering.FramesFilter
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.filtering.ReviewState
+   annie.dataset.filtering.FilterSpec
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.filtering.matches
+   annie.dataset.filtering.apply_filters
+
+
+Module Contents
+---------------
+
+.. py:data:: PresenceFilter
+
+   Tri-state presence facet (vdet, video frames, audio stream).
+
+.. py:data:: VdetFilter
+
+   Backwards-compatible alias for the vdet facet.
+
+.. py:data:: TrackFilter
+
+   any / none (0) / exactly one / multiple (2+).
+
+   :type: Track-count facet
+
+.. py:data:: ReviewFilter
+
+   any / liked (good, the default) / disliked (bad).
+
+   :type: Review facet
+
+.. py:data:: FramesFilter
+
+   any / less-than-threshold / greater-than-threshold.
+
+   :type: Frame-count facet
+
+.. py:class:: ReviewState
+
+   The per-video review state a filter needs, defaulted to "liked".
+
+   Every video is **liked (good) by default**; a record only exists once the user
+   interacts. Attributes mirror the persisted columns.
+
+   .. attribute:: verdict
+
+      ``"good"`` (liked, default) or ``"bad"`` (disliked).
+
+   .. attribute:: note
+
+      Free-text note (empty when none).
+
+   .. attribute:: in_annotator
+
+      Whether the video is queued for the Annotator tab.
+
+
+.. py:class:: FilterSpec
+
+   A snapshot of the Browse filter bar.
+
+   .. attribute:: name_prefix
+
+      keep only videos whose id starts with this (case-insensitive).
+
+   .. attribute:: video
+
+      video-frames presence facet.
+
+   .. attribute:: audio
+
+      audio-stream presence facet (uses the probed cache; see ``audio_of``).
+
+   .. attribute:: vdet
+
+      vdet-presence facet.
+
+   .. attribute:: tracks
+
+      track-count facet.
+
+   .. attribute:: frames
+
+      frame-count facet (uses the probed cache; see ``frames_of``).
+
+   .. attribute:: frames_threshold
+
+      the threshold for the ``frames`` facet.
+
+   .. attribute:: review
+
+      review-verdict facet.
+
+   .. attribute:: has_note
+
+      keep only videos with a non-empty note.
+
+   .. attribute:: in_annotator
+
+      keep only videos queued for the Annotator.
+
+   .. attribute:: labels
+
+      per-column allowed value sets (OR within a column, AND across).
+
+
+   .. py:property:: is_active
+      :type: bool
+
+
+      Whether any facet is set (so the UI can show a "clear" affordance).
+
+
+.. py:function:: matches(entry, review: ReviewState, spec: FilterSpec, *, has_audio: bool | None = None, num_frames: int | None = None, label_of: collections.abc.Callable[[annie.core.models.VideoEntry, str], str | None] | None = None) -> bool
+
+   Return whether a single video passes every active facet.
+
+   :param entry: The :class:`~annie.models.VideoEntry` under test.
+   :param review: Its :class:`ReviewState`.
+   :param spec: The current filter snapshot.
+   :param has_audio: The probed audio-presence flag (``None`` if not yet known).
+   :param num_frames: The decoded frame count (``None`` if not yet known).
+   :param label_of: Maps ``(entry, column)`` to the (possibly transformed) label value;
+                    defaults to the entry's raw label.
+
+   :returns: ``True`` if the video matches the filter, ``False`` otherwise.
+
+
+.. py:function:: apply_filters(entries: list, spec: FilterSpec, review_of: collections.abc.Callable[[str], ReviewState], audio_of: collections.abc.Callable[[str], bool | None] | None = None, frames_of: collections.abc.Callable[[str], int | None] | None = None, label_of: collections.abc.Callable[[annie.core.models.VideoEntry, str], str | None] | None = None) -> list
+
+   Filter a manifest, keeping the entries that pass ``spec``.
+
+   :param entries: The per-video manifest.
+   :param spec: The current filter snapshot.
+   :param review_of: Maps a video key to its :class:`ReviewState`.
+   :param audio_of: Maps a video key to its probed audio-presence flag (or ``None``).
+   :param frames_of: Maps a video key to its decoded frame count (or ``None``).
+   :param label_of: Maps ``(entry, column)`` to its (possibly transformed) label value.
+
+   :returns: The entries that match, in their original order.
+
+

@@ -1,0 +1,138 @@
+annie.dataset.scanning
+======================
+
+.. py:module:: annie.dataset.scanning
+
+.. autoapi-nested-parse::
+
+   Dataset scanning: aggregate each video with its annotations into the manifest.
+
+   The scanner turns a :class:`~annie.sources.SourceRegistry` into **one row per
+   video** (a :class:`~annie.models.VideoEntry`) carrying that video's raw detections,
+   all of its tracks, its resolved main-character track, and any label values from
+   CSV label sources. Browse consumes the sorted manifest; the Dataset tab shows the
+   overview counts; the Browse filter bar is built from the discovered label columns.
+
+   Because there is no Scan button any more, this runs whenever the set of sources
+   changes (add/remove on the Dataset tab). It stays linear in the number of files:
+
+   * A video is matched by its **stem** (filename minus extension).
+   * A ``.vdet`` matches by exact stem; a ``__track{N}.csv`` matches by the part
+     before ``__track``. Both fall back to a longest-stem-first prefix scan only on
+     a miss.
+   * A label/main-character CSV row matches a video by exact key-column value.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.scanning.ScanResult
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.scanning.resolve_video_stem
+   annie.dataset.scanning.build_manifest
+   annie.dataset.scanning.scan_dataset
+
+
+Module Contents
+---------------
+
+.. py:class:: ScanResult
+
+   The outcome of a dataset scan.
+
+   .. attribute:: entries
+
+      The sorted, per-video manifest the Browse tab renders.
+
+   .. attribute:: num_vdet_files
+
+      Total vdet files discovered.
+
+   .. attribute:: num_track_files
+
+      Total track files discovered.
+
+   .. attribute:: main_char_available
+
+      Whether main-character assignments were found.
+
+   .. attribute:: label_columns
+
+      The label-column names available for tags/filters.
+
+
+   .. py:property:: counts
+      :type: dict[str, int | bool]
+
+
+      Overview metrics for the Dataset cards.
+
+      :returns: Counts keyed by ``num_videos``, ``num_vdet_files``, ``num_track_files``,
+                ``videos_vdet_and_track``, ``videos_with_vdet``, ``videos_with_track``,
+                and ``main_char_available`` (bool).
+
+
+   .. py:method:: label_values(column: str) -> list[str]
+
+      Return the sorted distinct values a label column takes across entries.
+
+      :param column: The label column name.
+
+      :returns: Sorted distinct non-empty values for that column.
+
+
+
+.. py:function:: resolve_video_stem(annotation_stem: str, video_stems_longest_first: list[str]) -> str | None
+
+   Find the video stem an annotation belongs to, longest-stem-first.
+
+   A video stem ``s`` matches when the annotation stem equals ``s`` exactly or
+   begins with ``s`` followed by an underscore separator. Checking longest-first
+   ensures ``X2`` wins over ``X`` for ``X2__track0``.
+
+   :param annotation_stem: The annotation filename minus extension.
+   :param video_stems_longest_first: Known video stems, pre-sorted longest-first.
+
+   :returns: The matching video stem, or ``None`` if no video matches.
+
+
+.. py:function:: build_manifest(registry: annie.dataset.sources.SourceRegistry) -> ScanResult
+
+   Scan all sources in ``registry`` into a per-video manifest.
+
+   The video source is the spine: with none configured the manifest is empty.
+   Every other source attaches to a video by stem (vdet/track) or key column
+   (label/main-character CSV).
+
+   :param registry: The configured data sources.
+
+   :returns: A :class:`ScanResult` with the per-video manifest, overview counts, and the
+             discovered label columns. Missing/unset sources contribute nothing rather
+             than raising.
+
+
+.. py:function:: scan_dataset(videos_dir: str | pathlib.Path | None = None, vdet_dir: str | pathlib.Path | None = None, track_dir: str | pathlib.Path | None = None, participants_file: str | pathlib.Path | None = None) -> ScanResult
+
+   Scan the classic four MOSEI paths into a per-video manifest (convenience).
+
+   A thin wrapper that assembles a :class:`~annie.sources.SourceRegistry` from the
+   given folders and main-character file (with the default ``uuid``/``track_id``
+   columns) and delegates to :func:`build_manifest`.
+
+   :param videos_dir: Folder of source videos.
+   :param vdet_dir: Folder of ``.vdet`` files.
+   :param track_dir: Folder of ``__track{N}.csv`` files.
+   :param participants_file: Main-character heuristic CSV (``uuid,track_id``).
+
+   :returns: A :class:`ScanResult` with the per-video manifest and overview counts.
+
+

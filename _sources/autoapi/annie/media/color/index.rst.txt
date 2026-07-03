@@ -1,0 +1,134 @@
+annie.media.color
+=================
+
+.. py:module:: annie.media.color
+
+.. autoapi-nested-parse::
+
+   Box-drawing colours and frame-overlay rendering (service).
+
+   These colours are burned **onto the video frames** and are distinct from the UI
+   status chrome in :mod:`annie.theme`. Annie renders overlays with Pillow, which
+   works in **RGB**, so colours here are RGB tuples. The numeric values match the
+   design spec (e.g. blue ``(0, 0, 255)``, green ``(0, 255, 0)``); only the
+   colour-space label differs from the spec's BGR note, because Annie does not use
+   OpenCV for drawing.
+
+   Drawing rules (from the design):
+
+   1. **vdet-only frame** — every face box is drawn in flat **blue** so it does not
+      flicker as detection ordering changes between frames.
+   2. **tracks available** — each track gets a **stable colour** keyed by
+      ``track_id``, drawn identically on every frame. The palette excludes the two
+      reserved colours, blue and green.
+   3. **active / main-character track** — always **green**, overriding its palette
+      colour.
+   4. each box is labelled with its ``track_id`` as a small number at the top-left.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.media.color.BLUE
+   annie.media.color.GREEN
+   annie.media.color.TRACK_PALETTE
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.color.color_for_track
+   annie.media.color.box_color
+   annie.media.color.draw_overlay
+   annie.media.color.hit_test
+
+
+Module Contents
+---------------
+
+.. py:data:: BLUE
+   :value: (0, 0, 255)
+
+
+   Raw vdet detections.
+
+.. py:data:: GREEN
+   :value: (0, 255, 0)
+
+
+   The active / main-character track.
+
+.. py:data:: TRACK_PALETTE
+   :type:  tuple[tuple[int, int, int], Ellipsis]
+   :value: ((239, 68, 68), (249, 115, 22), (234, 179, 8), (168, 85, 247), (236, 72, 153), (20, 184, 166),...
+
+
+   Stable palette for ordinary tracks.
+
+   Deliberately excludes blue and green (and anything close to them) so reserved
+   meanings stay unambiguous. Keyed by ``track_id`` modulo the palette length, so a
+   track is always the same colour.
+
+.. py:function:: color_for_track(track_id: int, *, active: bool = False) -> tuple[int, int, int]
+
+   Return the stable RGB colour for a track.
+
+   The active (main-character) track short-circuits to :data:`GREEN` before the
+   palette is consulted; otherwise the colour is a deterministic function of
+   ``track_id`` drawn from :data:`TRACK_PALETTE` (never blue or green).
+
+   :param track_id: The track index.
+   :param active: Whether this is the active / main-character track.
+
+   :returns: An ``(r, g, b)`` colour tuple.
+
+
+.. py:function:: box_color(box: annie.core.models.BBox, *, has_tracks: bool, active_track_id: int | None) -> tuple[int, int, int]
+
+   Choose the colour for a single box per the four drawing rules.
+
+   :param box: The box being drawn.
+   :param has_tracks: Whether any track data is available for this frame. When
+                      ``False`` (raw vdet only) every box is blue.
+   :param active_track_id: The resolved active track id, or ``None``/-1 if none.
+
+   :returns: The RGB colour to draw the box outline (and its label) in.
+
+
+.. py:function:: draw_overlay(frame: numpy.ndarray, annotation: annie.core.models.FrameAnnotation, *, has_tracks: bool, active_track_id: int | None = None, line_width: int = 3) -> PIL.Image.Image
+
+   Draw all boxes (and their track-id labels) for one frame.
+
+   :param frame: The source frame as an HWC ``uint8`` RGB numpy array.
+   :param annotation: The boxes to draw on this frame.
+   :param has_tracks: Whether track data is available (governs blue vs palette).
+   :param active_track_id: The active track id to highlight green, or ``None``.
+   :param line_width: Outline thickness in pixels.
+
+   :returns: A new :class:`PIL.Image.Image` with the overlay drawn on a copy of the
+             frame (the input array is not modified).
+
+
+.. py:function:: hit_test(click_xy: tuple[int, int], annotation: annie.core.models.FrameAnnotation, *, smallest_wins: bool = True) -> int | None
+
+   Return the ``track_id`` of the box under a click, or ``None``.
+
+   Used by the main-character correction flow: the click is tested against every
+   box on the frame. When boxes overlap, the smallest enclosing box wins by
+   default (configurable), which makes it possible to select a face nested
+   inside a larger one.
+
+   :param click_xy: The ``(x, y)`` click position in image-pixel space.
+   :param annotation: The boxes drawn on the clicked frame.
+   :param smallest_wins: If ``True``, ties break to the smallest-area box; if
+                         ``False``, to the largest.
+
+   :returns: The enclosing box's ``track_id``, or ``None`` if the click hit no box (or
+             the hit box has no track id).
+
+

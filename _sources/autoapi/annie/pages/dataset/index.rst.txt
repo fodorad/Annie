@@ -1,0 +1,38 @@
+annie.pages.dataset
+===================
+
+.. py:module:: annie.pages.dataset
+
+.. autoapi-nested-parse::
+
+   Dataset tab — define the dataset by adding data sources; see live metrics.
+
+   Annie is dataset-agnostic: instead of fixed folder fields, you build the dataset
+   from a list of **data sources** (the ``+`` box). A videos folder is the mandatory
+   spine; vdet/track folders, a main-character CSV, and any number of label CSVs
+   attach to it. There is no Scan button — adding or removing a source re-scans in
+   place, and every metric and Browse row updates immediately. Each source shows an
+   Available / Unavailable chip and a live item count.
+
+   Each browser tab maintains its own scan-in-progress flag and database-mode
+   selection via a per-client :class:`_DatasetState` keyed by
+   :attr:`nicegui.Client.id`.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.dataset.render
+
+
+Module Contents
+---------------
+
+.. py:function:: render() -> None
+
+   Build the Dataset tab body; register per-client state.
+
+
