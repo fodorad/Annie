@@ -1,4 +1,11 @@
+.vscode/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
 # Byte-compiled / optimized / DLL files
+PLAN/
 __pycache__/
 *.py[codz]
 *$py.class
@@ -38,6 +45,7 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
+coverage_html/
 .tox/
 .nox/
 .coverage

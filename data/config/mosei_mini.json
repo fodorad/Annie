@@ -1,0 +1,52 @@
+{
+  "name": "[Example] CMU-MOSEI Mini",
+  "sources": [
+    {
+      "kind": "video",
+      "path": "../example/mosei_mini/video"
+    },
+    {
+      "kind": "vdet",
+      "path": "../example/mosei_mini/vdets"
+    },
+    {
+      "kind": "track",
+      "path": "../example/mosei_mini/tracks"
+    },
+    {
+      "kind": "csv",
+      "path": "../example/mosei_mini/participant_face_track_heuristic.csv",
+      "role": "main_character",
+      "key_column": "uuid",
+      "value_columns": [
+        "track_id"
+      ]
+    },
+    {
+      "kind": "csv",
+      "path": "../example/mosei_mini/label.csv",
+      "role": "labels",
+      "key_column": "segment_name",
+      "value_columns": [
+        "subset",
+        "sentiment",
+        "happy",
+        "sad",
+        "anger",
+        "surprise",
+        "disgust",
+        "fear",
+        "text"
+      ],
+      "column_types": {
+        "sentiment": "float",
+        "happy": "float",
+        "sad": "float",
+        "anger": "float",
+        "surprise": "float",
+        "disgust": "float",
+        "fear": "float"
+      }
+    }
+  ]
+}

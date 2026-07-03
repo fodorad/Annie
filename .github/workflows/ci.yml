@@ -1,0 +1,84 @@
+name: CI
+
+# NOTE: macOS is intentionally excluded from CI.
+#
+# torchcodec relies on the Homebrew FFmpeg dylibs, and on macOS runners the
+# Objective-C runtime can register duplicate AVFoundation classes when other
+# FFmpeg-linked wheels are present, causing non-deterministic hangs/segfaults.
+# Linux (ubuntu-latest) is the primary CI target and the reference environment.
+# macOS development continues to work via the local Makefile (which sets
+# DYLD_LIBRARY_PATH explicitly). Revisit once a clean solution is identified.
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0  # required for hatch-vcs git describe
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg libgles2 libegl1
+
+    - name: Install dependencies
+      run: |
+        # On Linux CI, use CPU-only PyTorch wheels to avoid CUDA runtime
+        # dependencies that are absent on the runner. PEP 440 ignores local
+        # version segments, so torch==2.11.0 matches both 2.11.0+cu130 (PyPI
+        # default) and 2.11.0+cpu (CPU index).
+        uv pip install --system --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match -e ".[all,dev,docs]"
+
+    - name: Audit dependencies for vulnerabilities
+      run: uvx pip-audit
+      continue-on-error: true  # torch may have known CVEs; treat as warning
+
+    - name: Ruff Lint
+      run: ruff check .
+
+    - name: Ruff Format
+      run: ruff format --check .
+
+    - name: Type check (ty)
+      run: ty check annie
+
+    - name: Test & Coverage
+      run: |
+        coverage run -m unittest discover -s tests -v
+        coverage report
+        coverage html
+        coverage xml -o coverage.xml
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v6
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage.xml
+        fail_ci_if_error: true
+
+    - name: Upload coverage HTML
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-report
+        path: coverage_html/
+      if: always()
+
+    - name: Build docs
+      run: sphinx-build -b html docs/ site/

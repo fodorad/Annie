@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"
+     role="img" aria-label="Annie">
+  <g fill="none" stroke="#94a3b8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 22 L14 12 L24 12"/>
+    <path d="M40 12 L50 12 L50 22"/>
+    <path d="M14 42 L14 52 L24 52"/>
+    <path d="M40 52 L50 52 L50 42"/>
+  </g>
+  <path d="M21 33 L29 41 L42 24" fill="none" stroke="#22c55e" stroke-width="7"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

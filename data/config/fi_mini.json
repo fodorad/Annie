@@ -1,0 +1,52 @@
+{
+  "name": "[Example] First Impression V2 Mini",
+  "sources": [
+    {
+      "kind": "video",
+      "path": "../example/fi_mini/video"
+    },
+    {
+      "kind": "vdet",
+      "path": "../example/fi_mini/vdets"
+    },
+    {
+      "kind": "track",
+      "path": "../example/fi_mini/tracks"
+    },
+    {
+      "kind": "csv",
+      "path": "../example/fi_mini/participant_face_track_heuristic.csv",
+      "role": "main_character",
+      "key_column": "uuid",
+      "value_columns": [
+        "track_id"
+      ]
+    },
+    {
+      "kind": "csv",
+      "path": "../example/fi_mini/label.csv",
+      "role": "labels",
+      "key_column": "video_id",
+      "value_columns": [
+        "subset",
+        "openness",
+        "conscientiousness",
+        "extraversion",
+        "agreeableness",
+        "neuroticism",
+        "emotional_stability",
+        "interview",
+        "text"
+      ],
+      "column_types": {
+        "openness": "float",
+        "conscientiousness": "float",
+        "extraversion": "float",
+        "agreeableness": "float",
+        "neuroticism": "float",
+        "emotional_stability": "float",
+        "interview": "float"
+      }
+    }
+  ]
+}

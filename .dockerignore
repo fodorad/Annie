@@ -1,0 +1,16 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.pyo
+.ruff_cache
+.ty_cache
+site/
+coverage_html/
+coverage.xml
+.coverage
+*.log
+.env
+.DS_Store
+dist/
+*.egg-info/
