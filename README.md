@@ -8,7 +8,7 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/fodorad/Annie?color=purple)](https://github.com/fodorad/Annie/releases)
 [![PyPI](https://img.shields.io/pypi/v/annie?color=purple)](https://pypi.org/project/annie/)
-[![CI](https://github.com/fodorad/Annie/workflows/CI/badge.svg)](https://github.com/fodorad/Annie/actions)
+[![CI](https://github.com/fodorad/Annie/actions/workflows/ci.yml/badge.svg)](https://github.com/fodorad/Annie/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/fodorad/Annie/graph/badge.svg)](https://codecov.io/gh/fodorad/Annie)
 [![Docs](https://img.shields.io/badge/docs-online-blue?logo=githubpages)](https://fodorad.github.io/Annie/)
 <br/>

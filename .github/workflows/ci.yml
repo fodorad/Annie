@@ -10,6 +10,8 @@ name: CI
 # DYLD_LIBRARY_PATH explicitly). Revisit once a clean solution is identified.
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main, dev]
 
