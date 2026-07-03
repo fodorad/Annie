@@ -1,0 +1,4 @@
+segment_name,subset,sentiment,happy,sad,anger,surprise,disgust,fear,text,video,audio
+-UacrmKiTn4_10,valid,-0.666667,0.333333,0.000000,0.666667,0.000000,0.000000,0.000000,"Because, if they are not in any way held accountable for reading the material they won't do it.",1,1
+--qXJuDtHPw_5,valid,1.000000,0.666667,0.000000,0.000000,0.000000,0.000000,0.000000,I see that a writer is somebody who has an incredible command of mechanics of the English language.,1,1
+100499_3,train,-2.000000,1.000000,0.000000,1.000000,0.000000,0.666667,0.000000," I mean you know Tim Allen is pretty funny in it but the movie itself is so cheesy like it's just it's just (stutter) really cheesy and it says it's going to be a ruff day, get it? Ruff day",1,1

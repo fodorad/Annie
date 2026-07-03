@@ -1,0 +1,35 @@
+services:
+  annie:
+    build: .
+    image: annie:latest
+    ports:
+      - "${ANNIE_PORT:-8080}:8080"
+    volumes:
+      # Annie state: logs, session DBs, render cache, user-saved configs.
+      # Defaults to ./annie-home/ next to this file (accessible from Finder/Explorer).
+      # Override in .env: ANNIE_HOME_HOST=/your/preferred/path
+      - "${ANNIE_HOME_HOST:-./annie-home}:/annie-home"
+
+      # ── Data directories from your HDDs ──────────────────────────────────────
+      # Set matching variables in .env, then uncomment the lines you need.
+      # The participants directory must NOT be read-only: manual corrections are
+      # written as a sibling CSV next to the participants file.
+      #
+      # - "${ANNIE_VIDEOS_DIR}:/data/videos:ro"
+      # - "${ANNIE_VDET_DIR}:/data/vdets:ro"
+      # - "${ANNIE_TRACK_DIR}:/data/tracks:ro"
+      # - "${ANNIE_PARTICIPANTS_DIR}:/data/participants"
+    environment:
+      ANNIE_HOST: "0.0.0.0"
+      ANNIE_PORT: "${ANNIE_PORT:-8080}"
+      ANNIE_HOME: /annie-home
+      # User-saved configs are written here and auto-discovered on the next start.
+      ANNIE_CONFIG_DIR: /annie-home/configs
+
+      # Container-side paths (fixed). Uncomment each line together with the
+      # matching volume mount above.
+      # ANNIE_VIDEOS_DIR: /data/videos
+      # ANNIE_VDET_DIR: /data/vdets
+      # ANNIE_TRACK_DIR: /data/tracks
+      # ANNIE_PARTICIPANTS_FILE: /data/participants/${ANNIE_PARTICIPANTS_FILE_NAME:-participant_face_track_heuristic.csv}
+    restart: unless-stopped

@@ -1,0 +1,83 @@
+.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy run check clean docker-build docker-run help
+
+# macOS: torchcodec requires FFmpeg dylibs which Homebrew installs to a non-standard
+# prefix. make does not inherit DYLD_LIBRARY_PATH, so we set it explicitly here.
+export DYLD_LIBRARY_PATH := /opt/homebrew/opt/ffmpeg/lib:$(DYLD_LIBRARY_PATH)
+
+help:
+	@echo "Dev (modify files):  fix"
+	@echo "Checks (read-only):  lint | type-check | test | docs | check"
+	@echo "Setup:               install | dev | upgrade | install-docs"
+	@echo "Run:                 run"
+	@echo "Docker:              docker-build | docker-run"
+	@echo "Docs:                docs-serve | docs-deploy"
+	@echo "Cleanup:             clean"
+
+# ── Setup ──────────────────────────────────────────────────────────────────────
+
+install:
+	uv pip install --python $(shell which python) "annie[all]"
+
+dev:
+	uv pip install --python $(shell which python) -e ".[all,dev]"
+
+upgrade:
+	uv pip install --python $(shell which python) --upgrade -e ".[all,dev,docs]"
+
+install-docs:
+	uv pip install --python $(shell which python) -e ".[docs]"
+
+# ── Dev helpers (modify files) ─────────────────────────────────────────────────
+
+fix:
+	ruff format .
+	ruff check --fix .
+
+# ── Checks (read-only — mirrors GitHub CI) ─────────────────────────────────────
+
+lint:
+	ruff check .
+	ruff format --check .
+
+type-check:
+	uv tool run ty check annie --python $(shell which python)
+
+test:
+	uv run coverage run -m unittest discover -s tests
+	uv run coverage report
+	uv run coverage html
+	uv run coverage xml -o coverage.xml
+
+docs:
+	sphinx-build -b html docs/ site/
+
+check: lint type-check test docs
+
+# ── Run ────────────────────────────────────────────────────────────────────────
+
+run:
+	python -m annie.app
+
+# ── Docker ─────────────────────────────────────────────────────────────────────
+
+docker-build:
+	docker build -t annie:latest .
+
+docker-run:
+	docker compose up
+
+# ── Docs ───────────────────────────────────────────────────────────────────────
+
+docs-serve:
+	sphinx-autobuild docs/ site/
+
+docs-deploy:
+	@echo "Docs are deployed automatically via GitHub Actions on push to main."
+
+# ── Misc ───────────────────────────────────────────────────────────────────────
+
+clean:
+	rm -rf .venv coverage_html dist/ .pytest_cache/ site/ tmp/
+	rm -f .coverage coverage.xml
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type d -name ".ruff_cache" -exec rm -rf {} +

@@ -1,0 +1,134 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "annie"
+dynamic = ["version"]
+description = "Local-first browser UI to explore, inspect, and validate a video annotation dataset."
+keywords = ["annotation", "dataset", "video", "visualization", "tracking", "mosei", "nicegui"]
+authors = [
+  { name = "fodorad", email = "fodorad201@gmail.com" },
+]
+readme = { "file" = "README.md", "content-type" = "text/markdown" }
+requires-python = ">=3.12"
+license = "MIT"
+classifiers = [
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Web Environment",
+  "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+  "nicegui>=2.0",
+  "pillow>=10.0",
+  "numpy",
+]
+
+[project.optional-dependencies]
+# ── Media backend ────────────────────────────────────────────────────────────
+# torch and torchcodec must be pinned together. torchcodec ships pre-compiled
+# native extensions linked against a specific libc10 C++ ABI that is NOT stable
+# across PyTorch minor releases.
+#
+# Compatibility (https://github.com/meta-pytorch/torchcodec#readme):
+#   torchcodec 0.9  -> torch 2.9
+#   torchcodec 0.10 -> torch 2.10
+#   torchcodec 0.11 -> torch 2.11
+#
+# torchcodec also requires a system FFmpeg (versions 4-8); the same install
+# backs the render pipeline. To upgrade: bump both pins together and verify
+# CI passes. Without this extra, the pure layers (scanning, parsing, matching,
+# storage, theme, colour) still install and run; only frame decode/render need it.
+media = [
+  "torch==2.11.0",
+  "torchcodec==0.11.0",
+]
+dev = [
+  "ruff",
+  "ty",
+  "coverage",
+  "pre-commit",
+]
+docs = [
+  "sphinx>=8.0",
+  "furo",
+  "sphinx-autoapi",
+  "sphinx-autobuild",
+  "myst-parser",
+]
+all = [
+  "annie[media]",
+]
+
+[project.scripts]
+annie = "annie.app:main"
+
+[project.urls]
+Documentation = "https://fodorad.github.io/Annie/"
+Issues = "https://github.com/fodorad/Annie/issues"
+Source = "https://github.com/fodorad/Annie"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["annie"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "TCH", "ARG", "PIE", "D"]
+ignore = [
+  "D107",  # Missing docstring in __init__ (covered by class docstring)
+  "D203",  # Blank line before class (conflicts with D211)
+  "D213",  # Multi-line summary second line (conflicts with D212)
+]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["D104"]
+"tests/**/test_*.py" = ["D", "S", "ARG"]
+"docs/conf.py" = ["D", "ARG"]
+
+[tool.coverage.run]
+source = ["annie"]
+omit = [
+  "*/tests/*",
+  "*/__init__.py",
+  # UI assembly + frame decode need a browser / torchcodec + FFmpeg + real
+  # video files; exercised manually and in integration, not unit-covered here.
+  "annie/app.py",
+  "annie/pages/*",
+  "annie/core/state.py",
+  "annie/media/decode.py",
+  "annie/media/preview.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "coverage_html"
+
+[tool.ty.environment]
+python-version = "3.12"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.15.18",
+]
