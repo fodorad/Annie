@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 from nicegui import ui
 
-from annie import __version__
 from annie.core import theme
 
 if TYPE_CHECKING:
@@ -117,7 +116,6 @@ def render(navigate: Callable[[str], None]) -> None:
             ui.label(_TAGLINE).classes("text-base text-center").style(
                 f"color:{theme.NEUTRAL};max-width:38rem"
             )
-            ui.badge(f"v{__version__}", color=theme.PRIMARY).props("outline")
 
         # ── quick start hint ────────────────────────────────────────────────────
         with ui.row().classes("items-center gap-2 text-sm").style(f"color:{theme.NEUTRAL}"):

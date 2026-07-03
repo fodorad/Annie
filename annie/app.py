@@ -40,21 +40,31 @@ _TABS = (
     ("settings", "settings", "Settings"),
 )
 
+# The fixed header's width tracks the viewport. Without this, switching from a
+# short tab (no scrollbar) to a tall one (scrollbar appears) shrinks the viewport
+# by the scrollbar's width and visibly squeezes/shifts the header. Reserving the
+# gutter unconditionally keeps the header's width constant across every tab.
+ui.add_css("html { overflow-y: scroll; scrollbar-gutter: stable; }", shared=True)
+
 
 def build() -> None:
     """Build the single-page tabbed UI."""
     ui.colors(primary=theme.PRIMARY)
 
-    with ui.header().classes("items-center justify-between q-px-md"):
-        with ui.row().classes("items-center gap-2"):
+    # Three equal-width (flex-1) sections so the middle one — the tabs — stays
+    # exactly centered regardless of how wide the logo or version text are.
+    with ui.header().classes("items-center q-px-md"):
+        with ui.row().classes("flex-1 items-center gap-2"):
             ui.html(theme.LOGO_MARK_SVG).classes("w-8 h-8")
             ui.label("Annie").classes("text-lg font-medium")
-        with ui.tabs() as tabs:
-            for name, icon, title in _TABS:
-                tab = ui.tab(name, label=title, icon=icon)
-                if name == "annotator":
-                    annotator.set_tab(tab)
-        ui.label(f"v{__version__}").classes("text-xs opacity-70")
+        with ui.row().classes("flex-1 items-center justify-center"):
+            with ui.tabs() as tabs:
+                for name, icon, title in _TABS:
+                    tab = ui.tab(name, label=title, icon=icon)
+                    if name == "annotator":
+                        annotator.set_tab(tab)
+        with ui.row().classes("flex-1 items-center justify-end"):
+            ui.label(f"v{__version__}").classes("text-xs opacity-70")
 
     def navigate(name: str) -> None:
         tabs.set_value(name)
