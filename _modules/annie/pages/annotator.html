@@ -350,9 +350,17 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_host</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The persistent timer host for the current client (created in :func:`render`).&quot;&quot;&quot;</span>
-    <span class="n">host</span> <span class="o">=</span> <span class="n">_timer_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;annotator.render() must run before scheduling timers&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The persistent timer host for the current client.</span>
+
+<span class="sd">    Normally created once in :func:`render`; recreated lazily here if a rapid</span>
+<span class="sd">    disconnect/reconnect (e.g. quick tab-clicking) popped the per-client state</span>
+<span class="sd">    before a queued :func:`refresh` ran, rather than crashing the background task.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cid</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">_timer_hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;display:none&quot;</span><span class="p">)</span>
+        <span class="n">_timer_hosts</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">host</span>
     <span class="k">return</span> <span class="n">host</span>
 
 

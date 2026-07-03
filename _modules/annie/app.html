@@ -327,6 +327,12 @@
     <span class="p">(</span><span class="s2">&quot;settings&quot;</span><span class="p">,</span> <span class="s2">&quot;settings&quot;</span><span class="p">,</span> <span class="s2">&quot;Settings&quot;</span><span class="p">),</span>
 <span class="p">)</span>
 
+<span class="c1"># The fixed header&#39;s width tracks the viewport. Without this, switching from a</span>
+<span class="c1"># short tab (no scrollbar) to a tall one (scrollbar appears) shrinks the viewport</span>
+<span class="c1"># by the scrollbar&#39;s width and visibly squeezes/shifts the header. Reserving the</span>
+<span class="c1"># gutter unconditionally keeps the header&#39;s width constant across every tab.</span>
+<span class="n">ui</span><span class="o">.</span><span class="n">add_css</span><span class="p">(</span><span class="s2">&quot;html { overflow-y: scroll; scrollbar-gutter: stable; }&quot;</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="build">
 <a class="viewcode-back" href="../../autoapi/annie/app/index.html#annie.app.build">[docs]</a>
@@ -334,16 +340,20 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the single-page tabbed UI.&quot;&quot;&quot;</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">colors</span><span class="p">(</span><span class="n">primary</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">header</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center justify-between q-px-md&quot;</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
+    <span class="c1"># Three equal-width (flex-1) sections so the middle one — the tabs — stays</span>
+    <span class="c1"># exactly centered regardless of how wide the logo or version text are.</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">header</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center q-px-md&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-1 items-center gap-2&quot;</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">html</span><span class="p">(</span><span class="n">theme</span><span class="o">.</span><span class="n">LOGO_MARK_SVG</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-8 h-8&quot;</span><span class="p">)</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Annie&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tabs</span><span class="p">()</span> <span class="k">as</span> <span class="n">tabs</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">_TABS</span><span class="p">:</span>
-                <span class="n">tab</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">icon</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;annotator&quot;</span><span class="p">:</span>
-                    <span class="n">annotator</span><span class="o">.</span><span class="n">set_tab</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs opacity-70&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-1 items-center justify-center&quot;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tabs</span><span class="p">()</span> <span class="k">as</span> <span class="n">tabs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">_TABS</span><span class="p">:</span>
+                    <span class="n">tab</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">icon</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;annotator&quot;</span><span class="p">:</span>
+                        <span class="n">annotator</span><span class="o">.</span><span class="n">set_tab</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-1 items-center justify-end&quot;</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs opacity-70&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">navigate</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tabs</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
