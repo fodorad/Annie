@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2](https://github.com/fodorad/Annie/compare/v1.0.1...v1.0.2) (2026-07-03)
+
+
+### Bug Fixes
+
+* stabilize header layout and self-heal timer host on rapid tab switching, center header tabs, right-align version, remove duplicate home badge ([#12](https://github.com/fodorad/Annie/issues/12)) ([73a7c82](https://github.com/fodorad/Annie/commit/73a7c82765bb9ac7066bed13d7adef55512f5973))
+
 ## [1.0.1](https://github.com/fodorad/Annie/compare/v1.0.0...v1.0.1) (2026-07-03)
 
 
