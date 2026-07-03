@@ -27,11 +27,11 @@ face tracks), but Annie is dataset-agnostic.
 
 ## Screenshots
 
-<img src="docs/ui/home.png" alt="Annie – Home tab" width="100%"/>
+<img src="https://raw.githubusercontent.com/fodorad/Annie/main/docs/ui/home.png" alt="Annie – Home tab" width="100%"/>
 
 *Home tab — landing page with a summary card for each tab.*
 
-<img src="docs/ui/browse.png" alt="Annie – Browse tab" width="100%"/>
+<img src="https://raw.githubusercontent.com/fodorad/Annie/main/docs/ui/browse.png" alt="Annie – Browse tab" width="100%"/>
 
 *Browse tab — per-video rows with original clip, annotated frame strip, label tags, and review controls.*
 
