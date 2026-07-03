@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1](https://github.com/fodorad/Annie/compare/v1.0.0...v1.0.1) (2026-07-03)
+
+
+### Bug Fixes
+
+* build Docker image with explicit version; absolute README image URLs ([#9](https://github.com/fodorad/Annie/issues/9)) ([feb68ce](https://github.com/fodorad/Annie/commit/feb68ce0d6d6feea085e2f097bf2b36181ee0999))
+
 ## [1.0.0] — 2026-07-01
 
 ### Architecture
