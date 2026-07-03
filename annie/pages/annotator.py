@@ -60,9 +60,17 @@ def set_tab(tab: ui.tab) -> None:
 
 
 def _host() -> ui.element:
-    """The persistent timer host for the current client (created in :func:`render`)."""
-    host = _timer_hosts.get(context.client.id)
-    assert host is not None, "annotator.render() must run before scheduling timers"
+    """The persistent timer host for the current client.
+
+    Normally created once in :func:`render`; recreated lazily here if a rapid
+    disconnect/reconnect (e.g. quick tab-clicking) popped the per-client state
+    before a queued :func:`refresh` ran, rather than crashing the background task.
+    """
+    cid = context.client.id
+    host = _timer_hosts.get(cid)
+    if host is None:
+        host = ui.element("div").style("display:none")
+        _timer_hosts[cid] = host
     return host
 
 

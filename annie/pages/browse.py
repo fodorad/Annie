@@ -130,10 +130,16 @@ def _effective_values(column: str) -> list[str]:
 #: never deletes a timer's parent slot mid-flight — the callbacks guard against the
 #: row they target having been refreshed away.
 def _host() -> ui.element:
-    """The persistent timer host for the current client (created in :func:`render`)."""
-    host = _state().timer_host
-    assert host is not None, "browse.render() must run before scheduling timers"
-    return host
+    """The persistent timer host for the current client.
+
+    Normally created once in :func:`render`; recreated lazily here if a rapid
+    disconnect/reconnect (e.g. quick tab-clicking) popped the per-client state
+    before a queued :func:`refresh` ran, rather than crashing the background task.
+    """
+    st = _state()
+    if st.timer_host is None:
+        st.timer_host = ui.element("div").style("display:none")
+    return st.timer_host
 
 
 def _media_dims() -> tuple[int, int]:
