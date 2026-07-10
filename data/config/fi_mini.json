@@ -16,7 +16,7 @@
     {
       "kind": "csv",
       "path": "../example/fi_mini/participant_face_track_heuristic.csv",
-      "role": "main_character",
+      "role": "protagonist",
       "key_column": "uuid",
       "value_columns": [
         "track_id"

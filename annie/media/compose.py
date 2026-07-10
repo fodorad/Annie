@@ -7,7 +7,7 @@ of its tracks. To draw a frame we merge the relevant boxes into a single
 
 * vdet boxes (``track_id is None``) → flat **blue**;
 * track boxes → a **stable unique colour** per track id (never blue/green);
-* the **active / main-character** track → **green**, overriding its palette colour.
+* the **active / protagonist** track → **green**, overriding its palette colour.
 
 Two inclusion modes are used: the Browse five-frame **strip** shows vdet + only
 the active track; the full **render** shows vdet + every track.
@@ -82,6 +82,6 @@ def strip_track_ids(entry: VideoEntry) -> list[int]:
         entry: The video being shown.
 
     Returns:
-        ``[active_track_id]`` when a main character is assigned, else ``[]``.
+        ``[active_track_id]`` when a protagonist is assigned, else ``[]``.
     """
     return [entry.active_track_id] if entry.has_active_track else []

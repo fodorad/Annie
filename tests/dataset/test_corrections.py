@@ -1,4 +1,4 @@
-"""Tests for the main-character correction service surface."""
+"""Tests for the protagonist correction service surface."""
 
 from __future__ import annotations
 

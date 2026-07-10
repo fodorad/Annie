@@ -2,7 +2,7 @@
 
 The scanner turns a :class:`~annie.sources.SourceRegistry` into **one row per
 video** (a :class:`~annie.models.VideoEntry`) carrying that video's raw detections,
-all of its tracks, its resolved main-character track, and any label values from
+all of its tracks, its resolved protagonist track, and any label values from
 CSV label sources. Browse consumes the sorted manifest; the Dataset tab shows the
 overview counts; the Browse filter bar is built from the discovered label columns.
 
@@ -13,7 +13,7 @@ changes (add/remove on the Dataset tab). It stays linear in the number of files:
 * A ``.vdet`` matches by exact stem; a ``__track{N}.csv`` matches by the part
   before ``__track``. Both fall back to a longest-stem-first prefix scan only on
   a miss.
-* A label/main-character CSV row matches a video by exact key-column value.
+* A label/protagonist CSV row matches a video by exact key-column value.
 """
 
 from __future__ import annotations
@@ -73,14 +73,14 @@ class ScanResult:
         entries: The sorted, per-video manifest the Browse tab renders.
         num_vdet_files: Total vdet files discovered.
         num_track_files: Total track files discovered.
-        main_char_available: Whether main-character assignments were found.
+        protagonist_available: Whether protagonist assignments were found.
         label_columns: The label-column names available for tags/filters.
     """
 
     entries: list[VideoEntry] = field(default_factory=list)
     num_vdet_files: int = 0
     num_track_files: int = 0
-    main_char_available: bool = False
+    protagonist_available: bool = False
     label_columns: list[str] = field(default_factory=list)
     label_column_types: dict[str, str] = field(default_factory=dict)
 
@@ -91,7 +91,7 @@ class ScanResult:
         Returns:
             Counts keyed by ``num_videos``, ``num_vdet_files``, ``num_track_files``,
             ``videos_vdet_and_track``, ``videos_with_vdet``, ``videos_with_track``,
-            and ``main_char_available`` (bool).
+            and ``protagonist_available`` (bool).
         """
         num_videos = sum(1 for entry in self.entries if entry.has_video)
         return {
@@ -103,7 +103,7 @@ class ScanResult:
             ),
             "videos_with_vdet": sum(1 for e in self.entries if e.has_video and e.has_vdet),
             "videos_with_track": sum(1 for e in self.entries if e.has_video and e.has_track),
-            "main_char_available": self.main_char_available,
+            "protagonist_available": self.protagonist_available,
         }
 
     def label_values(self, column: str) -> list[str]:
@@ -186,7 +186,7 @@ def _status_for(*, has_video: bool, has_annotation: bool) -> RowStatus:
 
 
 def _active_mapping(source: DataSource | None) -> dict[str, int]:
-    """Resolve the main-character ``video_id -> track_id`` map from its source."""
+    """Resolve the protagonist ``video_id -> track_id`` map from its source."""
     if source is None or source.key_column is None or not source.value_columns:
         return {}
     return resolved_mapping(source.path, source.key_column, source.value_columns[0])
@@ -212,7 +212,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
 
     The video source is the spine: with none configured the manifest is empty.
     Every other source attaches to a video by stem (vdet/track) or key column
-    (label/main-character CSV).
+    (label/protagonist CSV).
 
     Args:
         registry: The configured data sources.
@@ -254,7 +254,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
         tracks.setdefault(video_id, []).append((track_id, path))
         num_track_files += 1
 
-    active = _active_mapping(registry.main_character)
+    active = _active_mapping(registry.protagonist)
     label_maps, label_columns = _label_maps(registry.label_sources)
     label_column_types: dict[str, str] = {}
     for source in registry.label_sources:
@@ -262,7 +262,9 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
             label_column_types[column] = source.column_types.get(column, "str")
 
     entries: list[VideoEntry] = []
-    for video_id in sorted(set(videos) | set(vdets) | set(tracks)):
+    # Numbered over the full sorted manifest, before any filtering, so a row's id
+    # identifies the sample rather than its position in whatever list is on screen.
+    for row_id, video_id in enumerate(sorted(set(videos) | set(vdets) | set(tracks)), start=1):
         video_tracks = sorted(tracks.get(video_id, []), key=lambda item: item[0])
         track_ids = [tid for tid, _ in video_tracks]
         track_paths = [p for _, p in video_tracks]
@@ -285,6 +287,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
                     has_annotation=vdet_file is not None or bool(track_paths),
                 ),
                 labels=labels,
+                row_id=row_id,
             )
         )
 
@@ -292,7 +295,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
         entries=entries,
         num_vdet_files=num_vdet_files,
         num_track_files=num_track_files,
-        main_char_available=bool(active),
+        protagonist_available=bool(active),
         label_columns=label_columns,
         label_column_types=label_column_types,
     )
@@ -307,14 +310,14 @@ def scan_dataset(
     """Scan the classic four MOSEI paths into a per-video manifest (convenience).
 
     A thin wrapper that assembles a :class:`~annie.sources.SourceRegistry` from the
-    given folders and main-character file (with the default ``uuid``/``track_id``
+    given folders and protagonist file (with the default ``uuid``/``track_id``
     columns) and delegates to :func:`build_manifest`.
 
     Args:
         videos_dir: Folder of source videos.
         vdet_dir: Folder of ``.vdet`` files.
         track_dir: Folder of ``__track{N}.csv`` files.
-        participants_file: Main-character heuristic CSV (``uuid,track_id``).
+        participants_file: Protagonist heuristic CSV (``uuid,track_id``).
 
     Returns:
         A :class:`ScanResult` with the per-video manifest and overview counts.
@@ -334,7 +337,7 @@ def scan_dataset(
             DataSource(
                 SourceKind.CSV,
                 Path(participants_file),
-                role=CsvRole.MAIN_CHARACTER,
+                role=CsvRole.PROTAGONIST,
                 key_column=DEFAULT_KEY_COLUMN,
                 value_columns=(DEFAULT_VALUE_COLUMN,),
             )

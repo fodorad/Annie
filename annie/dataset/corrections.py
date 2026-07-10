@@ -1,11 +1,11 @@
-"""Main-character correction service.
+"""Protagonist correction service.
 
 This is the service surface the UI uses to read and fix which track is the active
-"main character" of a video. It composes the domain-level participant resolver
+"protagonist" of a video. It composes the domain-level participant resolver
 (:mod:`annie.parsers.participants`) and the geometric hit-test
 (:mod:`annie.color`) so the UI never reaches past the service layer.
 
-The correction flow: the annotator clicks the true main character on one of the
+The correction flow: the annotator clicks the true protagonist on one of the
 five highlighted frames; :func:`hit_test_frame` maps the click to a ``track_id``;
 :func:`set_active_track` persists it (manual ``_manual`` sibling, upsert by uuid);
 the frames are re-rendered so the new active track shows green.
@@ -36,7 +36,7 @@ __all__ = ["export_corrected", "hit_test_frame", "resolve_active_track", "set_ac
 
 
 def _participants_file(heuristic_file: str | Path | None) -> Path:
-    """Resolve the main-character source file, falling back to configured settings."""
+    """Resolve the protagonist source file, falling back to configured settings."""
     file = heuristic_file if heuristic_file is not None else settings.participants_file
     if file is None:
         raise ValueError("participants_file is not configured")
@@ -53,7 +53,7 @@ def resolve_active_track(
 
     Args:
         uuid: The video id to look up.
-        heuristic_file: The main-character source CSV. Defaults to the configured
+        heuristic_file: The protagonist source CSV. Defaults to the configured
             ``participants_file``.
         key_column: The column holding the video id.
         value_column: The column holding the track index.
@@ -71,12 +71,12 @@ def set_active_track(
     key_column: str = DEFAULT_KEY_COLUMN,
     value_column: str = DEFAULT_VALUE_COLUMN,
 ) -> Path:
-    """Persist a manual main-character correction (upsert by video id).
+    """Persist a manual protagonist correction (upsert by video id).
 
     Args:
         uuid: The video id being corrected.
         track_id: The newly chosen active track index.
-        heuristic_file: The main-character source CSV (defines where the ``_manual``
+        heuristic_file: The protagonist source CSV (defines where the ``_manual``
             sibling lives). Defaults to the configured ``participants_file``.
         key_column: The column holding the video id.
         value_column: The column holding the track index.
@@ -95,11 +95,11 @@ def export_corrected(
     key_column: str = DEFAULT_KEY_COLUMN,
     value_column: str = DEFAULT_VALUE_COLUMN,
 ) -> Path:
-    """Export the resolved (manual ▸ source) main-character mapping to a CSV.
+    """Export the resolved (manual ▸ source) protagonist mapping to a CSV.
 
     Args:
         out_path: Destination CSV path.
-        heuristic_file: The main-character source CSV. Defaults to the configured
+        heuristic_file: The protagonist source CSV. Defaults to the configured
             ``participants_file``.
         key_column: The column holding the video id.
         value_column: The column holding the track index.

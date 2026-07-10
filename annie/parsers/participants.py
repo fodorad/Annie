@@ -1,7 +1,7 @@
-"""Parser and resolver for the main-character participant file.
+"""Parser and resolver for the protagonist participant file.
 
-A main-character file maps each video to the track index that is its active /
-monitored main character. Classically this is a two-column CSV — ``uuid,track_id``
+A protagonist file maps each video to the track index that is its active /
+monitored protagonist. Classically this is a two-column CSV — ``uuid,track_id``
 — but Annie is dataset-agnostic: the **key column** (the video id) and the
 **value column** (the track id) are chosen when the source is added, defaulting to
 ``uuid`` / ``track_id``. A ``track_id`` of ``-1`` means "no active track".
@@ -33,7 +33,7 @@ __all__ = [
 DEFAULT_KEY_COLUMN = "uuid"
 """Default key/value columns when a source does not specify them."""
 DEFAULT_VALUE_COLUMN = "track_id"
-"""Default main-character track-id column."""
+"""Default protagonist track-id column."""
 
 
 def manual_path_for(source_file: str | Path) -> Path:
@@ -43,7 +43,7 @@ def manual_path_for(source_file: str | Path) -> Path:
     ``/x/participant_face_track_heuristic_manual.csv``.
 
     Args:
-        source_file: Path to the pristine main-character source CSV.
+        source_file: Path to the pristine protagonist source CSV.
 
     Returns:
         The path where manual corrections are written.
@@ -57,14 +57,14 @@ def load_participants(
     key_column: str = DEFAULT_KEY_COLUMN,
     value_column: str = DEFAULT_VALUE_COLUMN,
 ) -> dict[str, int]:
-    """Load a main-character CSV into a ``video_id -> track_id`` mapping.
+    """Load a protagonist CSV into a ``video_id -> track_id`` mapping.
 
     A missing file resolves to an empty mapping (treated as "no corrections /
     no source yet") rather than raising, so resolution degrades cleanly. Rows
     whose track-id value is blank or non-integer are skipped.
 
     Args:
-        path: Path to the main-character CSV.
+        path: Path to the protagonist CSV.
         key_column: The column holding the video id.
         value_column: The column holding the track index.
 
@@ -97,7 +97,7 @@ def resolved_mapping(
     """Return the merged ``video_id -> track_id`` mapping (manual overrides source).
 
     Args:
-        source_file: Path to the main-character source CSV.
+        source_file: Path to the protagonist source CSV.
         key_column: The column holding the video id.
         value_column: The column holding the track index.
 
@@ -119,7 +119,7 @@ def resolve_active_track(
 
     Args:
         uuid: The video id to look up.
-        source_file: Path to the main-character source CSV.
+        source_file: Path to the protagonist source CSV.
         key_column: The column holding the video id.
         value_column: The column holding the track index.
 
@@ -150,7 +150,7 @@ def set_active_track(
     key_column: str = DEFAULT_KEY_COLUMN,
     value_column: str = DEFAULT_VALUE_COLUMN,
 ) -> Path:
-    """Upsert a manual main-character correction for ``uuid``.
+    """Upsert a manual protagonist correction for ``uuid``.
 
     Writes to the ``_manual`` sibling of the source file only (the source file is
     never touched). The write is an upsert keyed by the video id — re-correcting a
@@ -159,7 +159,7 @@ def set_active_track(
     Args:
         uuid: The video id being corrected.
         track_id: The newly chosen active track index.
-        source_file: Path to the main-character source CSV (defines where the
+        source_file: Path to the protagonist source CSV (defines where the
             ``_manual`` sibling lives).
         key_column: The column holding the video id.
         value_column: The column holding the track index.
@@ -181,11 +181,11 @@ def export_resolved(
 ) -> Path:
     """Write the resolved (manual ▸ source) mapping to a standalone CSV.
 
-    This is the export of the corrected main-character datasource: the heuristic
+    This is the export of the corrected protagonist datasource: the heuristic
     rows with every manual correction applied, in one self-contained file.
 
     Args:
-        source_file: Path to the main-character source CSV.
+        source_file: Path to the protagonist source CSV.
         out_path: Destination CSV path.
         key_column: The column holding the video id.
         value_column: The column holding the track index.

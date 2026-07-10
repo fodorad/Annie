@@ -1,4 +1,4 @@
-"""Tests for the participant parser and main-character resolution."""
+"""Tests for the participant parser and protagonist resolution."""
 
 from __future__ import annotations
 

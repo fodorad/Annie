@@ -2,7 +2,7 @@
 
 Annie is dataset-agnostic: instead of fixed folder fields, you build the dataset
 from a list of **data sources** (the ``+`` box). A videos folder is the mandatory
-spine; vdet/track folders, a main-character CSV, and any number of label CSVs
+spine; vdet/track folders, a protagonist CSV, and any number of label CSVs
 attach to it. There is no Scan button — adding or removing a source re-scans in
 place, and every metric and Browse row updates immediately. Each source shows an
 Available / Unavailable chip and a live item count.
@@ -27,6 +27,7 @@ from annie.dataset.sources import KIND_ICONS, KIND_LABELS, DataSource, SourceKin
 from annie.pages import annotator, browse
 from annie.pages.csv_dialog import configure_csv
 from annie.pages.folder_picker import pick_directory, pick_file
+from annie.pages.utils import notify_detached
 
 # ── per-client state ──────────────────────────────────────────────────────────
 
@@ -87,10 +88,17 @@ async def _apply_changes() -> None:
 
 
 async def _rescan() -> None:
-    """Re-walk the configured folders (e.g. to pick up newly-converted files)."""
+    """Re-walk the configured folders (e.g. to pick up newly-converted files).
+
+    The Rescan button lives inside ``_source_list``, which ``_apply_changes`` rebuilds
+    — so by the time there is a count to report, this handler's own slot is gone and
+    the toast has to be raised against the client captured beforehand.
+    """
+    client = context.client
     await _apply_changes()
     counts = state.scan.counts if state.scan is not None else {}
-    ui.notify(f"Rescanned — {counts.get('num_videos', 0)} videos", color=theme.PRIMARY)
+    message = f"Rescanned — {counts.get('num_videos', 0)} videos"
+    notify_detached(client, message, color=theme.PRIMARY)
 
 
 #: Sentinel select values for the two non-file config options.

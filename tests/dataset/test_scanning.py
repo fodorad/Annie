@@ -95,19 +95,34 @@ class TestScanDataset(unittest.TestCase):
         self.assertEqual(entry.vdet_path, exact)  # exact-stem file wins, not iteration order
         self.assertEqual(result.counts["num_vdet_files"], 2)  # both files counted
 
-    def test_main_character_resolution_and_availability(self) -> None:
+    def test_protagonist_resolution_and_availability(self) -> None:
         write_video(self.videos, "A")
         write_track(self.tracks, "A", track_id=1)
         participants = self.root / HEURISTIC
         write_participants(participants, {"A": 1})
 
         result = self._scan(participants)
-        self.assertTrue(result.counts["main_char_available"])
+        self.assertTrue(result.counts["protagonist_available"])
         self.assertEqual(result.entries[0].active_track_id, 1)
 
-    def test_main_character_unavailable_without_file(self) -> None:
+    def test_protagonist_unavailable_without_file(self) -> None:
         write_video(self.videos, "A")
-        self.assertFalse(self._scan().counts["main_char_available"])
+        self.assertFalse(self._scan().counts["protagonist_available"])
+
+    def test_row_ids_number_the_whole_sorted_manifest_from_one(self) -> None:
+        for name in ("C", "A", "B"):
+            write_video(self.videos, name)
+        entries = self._scan().entries
+        self.assertEqual([e.video_id for e in entries], ["A", "B", "C"])
+        self.assertEqual([e.row_id for e in entries], [1, 2, 3])
+
+    def test_row_id_survives_filtering_to_a_subset(self) -> None:
+        """A filtered view must show dataset numbers, not renumber from 1."""
+        for name in ("A", "B", "C", "D"):
+            write_video(self.videos, name)
+        entries = self._scan().entries
+        subset = [e for e in entries if e.video_id in {"B", "D"}]
+        self.assertEqual([e.row_id for e in subset], [2, 4])
 
     def test_skips_apple_double_junk(self) -> None:
         write_video(self.videos, "A")
@@ -172,7 +187,7 @@ class TestBuildManifest(unittest.TestCase):
         self.assertEqual(result.label_columns, ["Sentiment", "Angry"])
         self.assertEqual(result.label_values("Sentiment"), ["negative", "positive"])
 
-    def test_main_character_source_resolves_active_track(self) -> None:
+    def test_protagonist_source_resolves_active_track(self) -> None:
         mc = write_table(
             self.root / "mc.csv", ["uuid", "track_id"], [{"uuid": "A", "track_id": "0"}]
         )
@@ -181,13 +196,13 @@ class TestBuildManifest(unittest.TestCase):
             DataSource(
                 SourceKind.CSV,
                 mc,
-                role=CsvRole.MAIN_CHARACTER,
+                role=CsvRole.PROTAGONIST,
                 key_column="uuid",
                 value_columns=("track_id",),
             )
         )
         result = build_manifest(reg)
-        self.assertTrue(result.main_char_available)
+        self.assertTrue(result.protagonist_available)
         self.assertEqual({e.video_id: e.active_track_id for e in result.entries}["A"], 0)
 
 

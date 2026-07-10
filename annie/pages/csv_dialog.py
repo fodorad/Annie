@@ -1,7 +1,7 @@
 """CSV source configuration dialog (UI).
 
 After the user picks a CSV file, this modal lets them describe how it joins to the
-dataset: its **role** (label tags vs the main-character track), the **key column**
+dataset: its **role** (label tags vs the protagonist track), the **key column**
 that matches the video id (auto-suggested), and the **value columns** to surface.
 It returns a fully-formed :class:`~annie.sources.DataSource`, or ``None`` if
 cancelled.
@@ -52,7 +52,7 @@ async def configure_csv(path: str | Path, video_stems: Iterable[str]) -> DataSou
         ui.label(f"Add CSV — {csv_path.name}").classes("text-lg font-medium")
 
         role = ui.select(
-            {CsvRole.LABELS: "Labels (tags & filters)", CsvRole.MAIN_CHARACTER: "Main character"},
+            {CsvRole.LABELS: "Labels (tags & filters)", CsvRole.PROTAGONIST: "Protagonist"},
             value=CsvRole.LABELS,
             label="Use as",
         ).classes("w-full")
@@ -77,7 +77,7 @@ async def configure_csv(path: str | Path, video_stems: Iterable[str]) -> DataSou
 
         @ui.refreshable
         def _value_controls() -> None:
-            if role.value == CsvRole.MAIN_CHARACTER:
+            if role.value == CsvRole.PROTAGONIST:
                 track_col.set_visibility(True)
                 checkbox_box.set_visibility(False)
             else:
@@ -98,14 +98,14 @@ async def configure_csv(path: str | Path, video_stems: Iterable[str]) -> DataSou
         _value_controls()
 
         def _confirm() -> None:
-            if role.value == CsvRole.MAIN_CHARACTER:
+            if role.value == CsvRole.PROTAGONIST:
                 if not track_col.value:
                     ui.notify("Pick the track-id column.", color=theme.WARNING)
                     return
                 source = DataSource(
                     SourceKind.CSV,
                     csv_path,
-                    role=CsvRole.MAIN_CHARACTER,
+                    role=CsvRole.PROTAGONIST,
                     key_column=key.value,
                     value_columns=(track_col.value,),
                 )

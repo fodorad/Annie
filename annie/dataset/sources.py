@@ -11,7 +11,7 @@ folders. Each source is one of:
 * :attr:`SourceKind.CSV` — a label/metadata CSV joined to videos by a chosen
   **key column**. A CSV plays one of two roles (:class:`CsvRole`): ``labels``
   (its selected value columns become Browse tags/filters; many allowed) or
-  ``main_character`` (one value column is the active-track id; singleton).
+  ``protagonist`` (one value column is the active-track id; singleton).
 
 This module is pure domain — no NiceGUI, no config, no torch. The registry is the
 single source of truth the scanner (:mod:`annie.scanning`) consumes.
@@ -43,8 +43,13 @@ class CsvRole(StrEnum):
 
     #: Value columns become Browse tags and filter facets.
     LABELS = "labels"
-    #: One value column holds each video's active main-character track id.
-    MAIN_CHARACTER = "main_character"
+    #: One value column holds each video's active protagonist track id.
+    PROTAGONIST = "protagonist"
+
+    @classmethod
+    def _missing_(cls, value: object) -> CsvRole | None:
+        """Resolve the pre-rename ``"main_character"`` role stored in older configs."""
+        return cls.PROTAGONIST if value == "main_character" else None
 
 
 FOLDER_KINDS: tuple[SourceKind, ...] = (SourceKind.VIDEO, SourceKind.VDET, SourceKind.TRACK)
@@ -89,7 +94,7 @@ class DataSource:
         role: For a CSV source, its :class:`CsvRole`; ignored otherwise.
         key_column: For a CSV source, the column joined to the video id.
         value_columns: For a CSV source, the selected value columns (label tags,
-            or a single main-character track-id column).
+            or a single protagonist track-id column).
         column_types: For a CSV source, the chosen data type per value column
             (``"str"`` / ``"int"`` / ``"float"``); columns absent here default to str.
     """
@@ -107,9 +112,9 @@ class DataSource:
         return self.kind in FOLDER_KINDS
 
     @property
-    def is_main_character(self) -> bool:
-        """Whether this is the CSV that assigns each video's main-character track."""
-        return self.kind is SourceKind.CSV and self.role is CsvRole.MAIN_CHARACTER
+    def is_protagonist(self) -> bool:
+        """Whether this is the CSV that assigns each video's protagonist track."""
+        return self.kind is SourceKind.CSV and self.role is CsvRole.PROTAGONIST
 
     @property
     def available(self) -> bool:
@@ -120,7 +125,7 @@ class DataSource:
     def label(self) -> str:
         """A short label for the Dataset source list."""
         if self.kind is SourceKind.CSV:
-            return "Main character file" if self.is_main_character else "Label file"
+            return "Protagonist file" if self.is_protagonist else "Label file"
         return KIND_LABELS[self.kind]
 
     def count(self) -> int:
@@ -155,7 +160,7 @@ def _count_suffixes(directory: Path, suffixes: tuple[str, ...]) -> int:
 class SourceRegistry:
     """An ordered set of data sources with singleton rules.
 
-    Folder kinds (video/vdet/track) and the main-character CSV are singletons:
+    Folder kinds (video/vdet/track) and the protagonist CSV are singletons:
     adding one replaces any existing source of that role. Label CSVs are
     unlimited, keyed by path (re-adding the same file replaces it).
     """
@@ -170,8 +175,8 @@ class SourceRegistry:
         """
         if source.kind in FOLDER_KINDS:
             self.sources = [s for s in self.sources if s.kind != source.kind]
-        elif source.is_main_character:
-            self.sources = [s for s in self.sources if not s.is_main_character]
+        elif source.is_protagonist:
+            self.sources = [s for s in self.sources if not s.is_protagonist]
         else:  # a labels CSV: replace any existing source on the same file
             self.sources = [s for s in self.sources if s.path != source.path]
         self.sources.append(source)
@@ -202,13 +207,13 @@ class SourceRegistry:
         return self.get(SourceKind.TRACK)
 
     @property
-    def main_character(self) -> DataSource | None:
-        """The main-character CSV source, or ``None``."""
-        return next((s for s in self.sources if s.is_main_character), None)
+    def protagonist(self) -> DataSource | None:
+        """The protagonist CSV source, or ``None``."""
+        return next((s for s in self.sources if s.is_protagonist), None)
 
     @property
     def label_sources(self) -> list[DataSource]:
-        """All label CSV sources (excludes the main-character CSV)."""
+        """All label CSV sources (excludes the protagonist CSV)."""
         return [s for s in self.sources if s.kind is SourceKind.CSV and s.role is CsvRole.LABELS]
 
     @property

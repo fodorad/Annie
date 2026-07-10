@@ -50,16 +50,26 @@ class TestDataSource(unittest.TestCase):
         self.assertFalse(source.is_folder)
         self.assertEqual(source.count(), 1)
 
-    def test_main_character_flag_and_label(self) -> None:
+    def test_protagonist_flag_and_label(self) -> None:
         mc = DataSource(
             SourceKind.CSV,
             self.root / "mc.csv",
-            role=CsvRole.MAIN_CHARACTER,
+            role=CsvRole.PROTAGONIST,
             key_column="uuid",
             value_columns=("track_id",),
         )
-        self.assertTrue(mc.is_main_character)
-        self.assertEqual(mc.label, "Main character file")
+        self.assertTrue(mc.is_protagonist)
+        self.assertEqual(mc.label, "Protagonist file")
+
+    def test_legacy_main_character_role_value_resolves_to_protagonist(self) -> None:
+        """Configs written before the rename store ``"main_character"``."""
+        self.assertIs(CsvRole("main_character"), CsvRole.PROTAGONIST)
+        self.assertIs(CsvRole("protagonist"), CsvRole.PROTAGONIST)
+        self.assertIs(CsvRole("labels"), CsvRole.LABELS)
+
+    def test_unknown_role_value_still_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            CsvRole("nonsense")
 
 
 class TestSourceRegistry(unittest.TestCase):
@@ -74,18 +84,18 @@ class TestSourceRegistry(unittest.TestCase):
         assert self.reg.video is not None
         self.assertEqual(self.reg.video.path, self.root / "v2")
 
-    def test_main_character_is_singleton(self) -> None:
+    def test_protagonist_is_singleton(self) -> None:
         for name in ("mc1.csv", "mc2.csv"):
             self.reg.add(
                 DataSource(
                     SourceKind.CSV,
                     self.root / name,
-                    role=CsvRole.MAIN_CHARACTER,
+                    role=CsvRole.PROTAGONIST,
                     key_column="uuid",
                     value_columns=("track_id",),
                 )
             )
-        mc = self.reg.main_character
+        mc = self.reg.protagonist
         assert mc is not None
         self.assertEqual(mc.path.name, "mc2.csv")
         self.assertEqual(len(self.reg.sources), 1)

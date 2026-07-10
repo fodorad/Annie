@@ -36,6 +36,26 @@ RenderFn = Callable[[VideoEntry, Path], None]
 Given a video entry and an output path, produce a browser-playable annotated clip.
 """
 
+CRF = 26
+"""x264 quality for rendered previews (lower is better; ffmpeg's default is 23).
+
+These clips are throwaway review aids swept within minutes, watched in a box a few
+hundred pixels wide, so preview-grade quality buys a materially smaller file and a
+faster render without affecting frame count or timing.
+"""
+
+PRESET = "veryfast"
+"""x264 speed/compression trade-off. The reviewer is waiting on this render, so
+spend the time budget on latency rather than on the last few percent of bitrate.
+"""
+
+FASTSTART = "+faststart"
+"""``-movflags`` value that relocates the MP4 ``moov`` atom ahead of the media data.
+
+Without it the atom lands at the end of the file and a browser must fetch the whole
+clip before the first frame can play.
+"""
+
 
 class JobStatus(StrEnum):
     """Lifecycle states of a render job."""
@@ -230,9 +250,17 @@ def burn_clip(
     through unchanged, so the render always has the same frame count as the
     original) and draws, on each: the vdet boxes in flat **blue**, every track in
     its own **stable unique colour** (never blue/green), and the **active /
-    main-character** track in **green**. Frames are piped as raw RGB into an
+    protagonist** track in **green**. Frames are piped as raw RGB into an
     ``ffmpeg`` libx264 subprocess, and the source audio is muxed back (the encode is
     not ``-shortest``, so a shorter audio track never truncates the video).
+
+    The output is H.264 in MP4 — already the most broadly playable web format, so
+    there is nothing to switch *to*. What makes it web-friendly rather than merely
+    web-compatible is :data:`FASTSTART`-style muxing (the ``moov`` atom is moved to
+    the front, letting the browser start playing before the file has fully
+    downloaded) plus a preview-grade :data:`CRF`. Neither touches frame count,
+    duration, resolution, or frame timing — only how many bits each frame costs —
+    so the render stays frame-for-frame aligned with the original.
 
     Args:
         entry: The video to render; ``entry.video_path`` must be set and at least
@@ -268,6 +296,10 @@ def burn_clip(
         "-i", str(entry.video_path),
         "-map", "0:v:0", "-map", "1:a:0?",
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        "-preset", PRESET, "-crf", str(CRF),
+        # Put the moov atom first so the browser can start playing before the whole
+        # clip has downloaded, instead of buffering it end-to-end.
+        "-movflags", FASTSTART,
         "-c:a", "aac",
         str(output_path),
     ]  # fmt: skip

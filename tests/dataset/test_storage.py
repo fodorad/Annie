@@ -105,6 +105,21 @@ class TestReviewStore(unittest.TestCase):
         self.assertEqual(record.note, "crop")
         self.assertTrue(record.annotate)
 
+    def test_dequeue_preserves_verdict_and_note(self) -> None:
+        """The Annotator's X button clears `annotate` without touching curation."""
+        self.store.set_verdict("v::", "v", None, "bad")
+        self.store.set_note("v::", "v", None, "crop")
+        self.store.set_annotate("v::", "v", None, True)
+
+        self.store.set_annotate("v::", "v", None, False)
+
+        record = self.store.get("v::")
+        assert record is not None
+        self.assertFalse(record.annotate)
+        self.assertEqual(record.verdict, "bad")
+        self.assertEqual(record.note, "crop")
+        self.assertEqual(self.store.annotator_keys(), set())
+
     def test_export_includes_annotate(self) -> None:
         self.store.set_annotate("v::", "v", None, True)
         data = json.loads(self.store.export_json(self.tmp / "o.json").read_text("utf-8"))
