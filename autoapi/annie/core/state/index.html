@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -300,7 +302,7 @@ service, and session-only UI settings (row heights). Adding or removing a source
 re-runs the scan in place, so there is no Scan button.</p>
 <p>Sources are <strong>session-only</strong>: the registry is seeded from the <code class="docutils literal notranslate"><span class="pre">ANNIE_*</span></code>
 environment variables on startup and otherwise lives for the process lifetime.
-Curation (verdicts, notes, annotator selection) and main-character corrections
+Curation (verdicts, notes, annotator selection) and protagonist corrections
 persist independently in SQLite / the <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV.</p>
 <section id="attributes">
 <h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
@@ -346,6 +348,33 @@ persist independently in SQLite / the <code class="docutils literal notranslate"
 <span class="sig-name descname"><span class="pre">annotator_row_height</span></span><a class="headerlink" href="#annie.core.state.UiSettings.annotator_row_height" title="Link to this definition">¶</a></dt>
 <dd><p>Max media height (px) of an Annotator row; its boxes
 flex to share the row width and only hit this cap on very wide screens.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.auto_scroll">
+<span class="sig-name descname"><span class="pre">auto_scroll</span></span><a class="headerlink" href="#annie.core.state.UiSettings.auto_scroll" title="Link to this definition">¶</a></dt>
+<dd><p>Whether reaching the bottom of Browse / Annotator reveals the
+next page automatically, instead of waiting for a “Show more” click.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.page_size">
+<span class="sig-name descname"><span class="pre">page_size</span></span><a class="headerlink" href="#annie.core.state.UiSettings.page_size" title="Link to this definition">¶</a></dt>
+<dd><p>How many rows one page reveals, whether auto-scrolled or clicked.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.embed_ttl_seconds">
+<span class="sig-name descname"><span class="pre">embed_ttl_seconds</span></span><a class="headerlink" href="#annie.core.state.UiSettings.embed_ttl_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>How long an embedded clip stays on a row before it
+reverts to its placeholder, freeing the memory the browser holds for it.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.unload_after_seconds">
+<span class="sig-name descname"><span class="pre">unload_after_seconds</span></span><a class="headerlink" href="#annie.core.state.UiSettings.unload_after_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>How long a row may sit off screen before its preview
+frames are dropped; they are decoded again when it scrolls back.</p>
 </dd></dl>
 
 </dd></dl>
@@ -515,6 +544,10 @@ stay fast.</p>
 <li><a class="reference internal" href="#annie.core.state.UiSettings"><code class="docutils literal notranslate"><span class="pre">UiSettings</span></code></a><ul>
 <li><a class="reference internal" href="#annie.core.state.UiSettings.browse_row_height"><code class="docutils literal notranslate"><span class="pre">UiSettings.browse_row_height</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.UiSettings.annotator_row_height"><code class="docutils literal notranslate"><span class="pre">UiSettings.annotator_row_height</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.auto_scroll"><code class="docutils literal notranslate"><span class="pre">UiSettings.auto_scroll</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.page_size"><code class="docutils literal notranslate"><span class="pre">UiSettings.page_size</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.embed_ttl_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.embed_ttl_seconds</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.unload_after_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.unload_after_seconds</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#annie.core.state.AppState"><code class="docutils literal notranslate"><span class="pre">AppState</span></code></a><ul>

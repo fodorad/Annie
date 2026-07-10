@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -507,7 +509,7 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Settings&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xl font-medium&quot;</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Layout&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Browse &amp; Annotator&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium&quot;</span><span class="p">)</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Row height sizes every thumbnail, strip frame, and render box.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
                 <span class="s2">&quot;text-xs&quot;</span>
             <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -539,6 +541,75 @@
                 <span class="n">annotator</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
             <span class="n">annot_h</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;blur&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">set_annot_height</span><span class="p">())</span>
+
+            <span class="n">ui</span><span class="o">.</span><span class="n">separator</span><span class="p">()</span>
+
+            <span class="c1"># Read live by annie.pages.paging on every sentinel event, so toggling</span>
+            <span class="c1"># this takes effect on the open lists without rebuilding them.</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span>
+                <span class="s2">&quot;Auto scroll&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">auto_scroll</span><span class="p">,</span>
+                <span class="n">on_change</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="p">,</span> <span class="s2">&quot;auto_scroll&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">)),</span>
+            <span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Reveal the next rows on reaching the bottom, without clicking.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+                <span class="s2">&quot;text-xs&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">rows_per_load</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span>
+                <span class="s2">&quot;Rows per load&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">page_size</span><span class="p">,</span>
+                <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-64&quot;</span><span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">set_page_size</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">page_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">rows_per_load</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">page_size</span><span class="p">))</span>
+                <span class="n">rows_per_load</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">page_size</span><span class="p">)</span>
+                <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+                <span class="n">annotator</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+            <span class="n">rows_per_load</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;blur&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">set_page_size</span><span class="p">())</span>
+
+            <span class="n">embed_ttl</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span>
+                <span class="s2">&quot;Unembed played clips after (seconds)&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">,</span>
+                <span class="nb">min</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">step</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-64&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+                <span class="s2">&quot;A played clip reverts to its placeholder, releasing the video &quot;</span>
+                <span class="s2">&quot;buffered in this browser tab.&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">set_embed_ttl</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="mi">5</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">embed_ttl</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">embed_ttl</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">)</span>
+
+            <span class="n">embed_ttl</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;blur&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">set_embed_ttl</span><span class="p">())</span>
+
+            <span class="n">unload_after</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span>
+                <span class="s2">&quot;Unload off-screen rows after (seconds)&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">unload_after_seconds</span><span class="p">,</span>
+                <span class="nb">min</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">step</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-64&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+                <span class="s2">&quot;A row scrolled well past drops its preview frames and decodes them &quot;</span>
+                <span class="s2">&quot;again on the way back. Raise it to trade memory for fewer redecodes.&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">set_unload_after</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">unload_after_seconds</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="mi">5</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">unload_after</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">unload_after_seconds</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">unload_after</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">unload_after_seconds</span><span class="p">)</span>
+
+            <span class="n">unload_after</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;blur&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">set_unload_after</span><span class="p">())</span>
 
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Review status export / import&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium&quot;</span><span class="p">)</span>

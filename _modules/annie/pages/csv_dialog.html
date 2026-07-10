@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -288,7 +290,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;CSV source configuration dialog (UI).</span>
 
 <span class="sd">After the user picks a CSV file, this modal lets them describe how it joins to the</span>
-<span class="sd">dataset: its **role** (label tags vs the main-character track), the **key column**</span>
+<span class="sd">dataset: its **role** (label tags vs the protagonist track), the **key column**</span>
 <span class="sd">that matches the video id (auto-suggested), and the **value columns** to surface.</span>
 <span class="sd">It returns a fully-formed :class:`~annie.sources.DataSource`, or ``None`` if</span>
 <span class="sd">cancelled.</span>
@@ -341,7 +343,7 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Add CSV — </span><span class="si">{</span><span class="n">csv_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
 
         <span class="n">role</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-            <span class="p">{</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">:</span> <span class="s2">&quot;Labels (tags &amp; filters)&quot;</span><span class="p">,</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">MAIN_CHARACTER</span><span class="p">:</span> <span class="s2">&quot;Main character&quot;</span><span class="p">},</span>
+            <span class="p">{</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">:</span> <span class="s2">&quot;Labels (tags &amp; filters)&quot;</span><span class="p">,</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">:</span> <span class="s2">&quot;Protagonist&quot;</span><span class="p">},</span>
             <span class="n">value</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">,</span>
             <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Use as&quot;</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">)</span>
@@ -366,7 +368,7 @@
 
         <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">_value_controls</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">MAIN_CHARACTER</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">:</span>
                 <span class="n">track_col</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">checkbox_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -387,14 +389,14 @@
         <span class="n">_value_controls</span><span class="p">()</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_confirm</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">MAIN_CHARACTER</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">track_col</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
                     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Pick the track-id column.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
                     <span class="k">return</span>
                 <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span>
                     <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
                     <span class="n">csv_path</span><span class="p">,</span>
-                    <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">MAIN_CHARACTER</span><span class="p">,</span>
+                    <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">,</span>
                     <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">value_columns</span><span class="o">=</span><span class="p">(</span><span class="n">track_col</span><span class="o">.</span><span class="n">value</span><span class="p">,),</span>
                 <span class="p">)</span>

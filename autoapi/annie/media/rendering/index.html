@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -313,6 +315,15 @@ sweeper purges, so rendered clips never accumulate on disk.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.rendering.RenderFn" title="annie.media.rendering.RenderFn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RenderFn</span></code></a></p></td>
 <td><p>Signature of a render function.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.rendering.CRF" title="annie.media.rendering.CRF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CRF</span></code></a></p></td>
+<td><p>x264 quality for rendered previews (lower is better; ffmpeg's default is 23).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.rendering.PRESET" title="annie.media.rendering.PRESET"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PRESET</span></code></a></p></td>
+<td><p>x264 speed/compression trade-off. The reviewer is waiting on this render, so</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.rendering.FASTSTART" title="annie.media.rendering.FASTSTART"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FASTSTART</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-movflags</span></code> value that relocates the MP4 <code class="docutils literal notranslate"><span class="pre">moov</span></code> atom ahead of the media data.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -354,6 +365,30 @@ sweeper purges, so rendered clips never accumulate on disk.</p>
 <span class="sig-prename descclassname"><span class="pre">annie.media.rendering.</span></span><span class="sig-name descname"><span class="pre">RenderFn</span></span><a class="headerlink" href="#annie.media.rendering.RenderFn" title="Link to this definition">¶</a></dt>
 <dd><p>Signature of a render function.</p>
 <p>Given a video entry and an output path, produce a browser-playable annotated clip.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.rendering.CRF">
+<span class="sig-prename descclassname"><span class="pre">annie.media.rendering.</span></span><span class="sig-name descname"><span class="pre">CRF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">26</span></span><a class="headerlink" href="#annie.media.rendering.CRF" title="Link to this definition">¶</a></dt>
+<dd><p>x264 quality for rendered previews (lower is better; ffmpeg’s default is 23).</p>
+<p>These clips are throwaway review aids swept within minutes, watched in a box a few
+hundred pixels wide, so preview-grade quality buys a materially smaller file and a
+faster render without affecting frame count or timing.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.rendering.PRESET">
+<span class="sig-prename descclassname"><span class="pre">annie.media.rendering.</span></span><span class="sig-name descname"><span class="pre">PRESET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'veryfast'</span></span><a class="headerlink" href="#annie.media.rendering.PRESET" title="Link to this definition">¶</a></dt>
+<dd><p>x264 speed/compression trade-off. The reviewer is waiting on this render, so
+spend the time budget on latency rather than on the last few percent of bitrate.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.rendering.FASTSTART">
+<span class="sig-prename descclassname"><span class="pre">annie.media.rendering.</span></span><span class="sig-name descname"><span class="pre">FASTSTART</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'+faststart'</span></span><a class="headerlink" href="#annie.media.rendering.FASTSTART" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">-movflags</span></code> value that relocates the MP4 <code class="docutils literal notranslate"><span class="pre">moov</span></code> atom ahead of the media data.</p>
+<p>Without it the atom lands at the end of the file and a browser must fetch the whole
+clip before the first frame can play.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -511,9 +546,16 @@ from the tracker and the number of files actually unlinked from disk.</p>
 through unchanged, so the render always has the same frame count as the
 original) and draws, on each: the vdet boxes in flat <strong>blue</strong>, every track in
 its own <strong>stable unique colour</strong> (never blue/green), and the <strong>active /
-main-character</strong> track in <strong>green</strong>. Frames are piped as raw RGB into an
+protagonist</strong> track in <strong>green</strong>. Frames are piped as raw RGB into an
 <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> libx264 subprocess, and the source audio is muxed back (the encode is
 not <code class="docutils literal notranslate"><span class="pre">-shortest</span></code>, so a shorter audio track never truncates the video).</p>
+<p>The output is H.264 in MP4 — already the most broadly playable web format, so
+there is nothing to switch <em>to</em>. What makes it web-friendly rather than merely
+web-compatible is <a class="reference internal" href="#annie.media.rendering.FASTSTART" title="annie.media.rendering.FASTSTART"><code class="xref py py-data docutils literal notranslate"><span class="pre">FASTSTART</span></code></a>-style muxing (the <code class="docutils literal notranslate"><span class="pre">moov</span></code> atom is moved to
+the front, letting the browser start playing before the file has fully
+downloaded) plus a preview-grade <a class="reference internal" href="#annie.media.rendering.CRF" title="annie.media.rendering.CRF"><code class="xref py py-data docutils literal notranslate"><span class="pre">CRF</span></code></a>. Neither touches frame count,
+duration, resolution, or frame timing — only how many bits each frame costs —
+so the render stays frame-for-frame aligned with the original.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -596,6 +638,9 @@ one of vdet/tracks should be present for boxes to appear.</p></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.media.rendering.RenderFn"><code class="docutils literal notranslate"><span class="pre">RenderFn</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.rendering.CRF"><code class="docutils literal notranslate"><span class="pre">CRF</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.rendering.PRESET"><code class="docutils literal notranslate"><span class="pre">PRESET</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.rendering.FASTSTART"><code class="docutils literal notranslate"><span class="pre">FASTSTART</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.rendering.JobStatus"><code class="docutils literal notranslate"><span class="pre">JobStatus</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.rendering.RenderJob"><code class="docutils literal notranslate"><span class="pre">RenderJob</span></code></a><ul>
 <li><a class="reference internal" href="#annie.media.rendering.RenderJob.job_id"><code class="docutils literal notranslate"><span class="pre">RenderJob.job_id</span></code></a></li>

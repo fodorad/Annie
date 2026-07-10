@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -352,7 +354,7 @@ rather than touching the environment directly.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.participants_file">
 <span class="sig-name descname"><span class="pre">participants_file</span></span><a class="headerlink" href="#annie.core.config.Settings.participants_file" title="Link to this definition">¶</a></dt>
-<dd><p>The main-character heuristic CSV (<code class="docutils literal notranslate"><span class="pre">uuid,track_id</span></code>);
+<dd><p>The protagonist heuristic CSV (<code class="docutils literal notranslate"><span class="pre">uuid,track_id</span></code>);
 manual corrections are written to its <code class="docutils literal notranslate"><span class="pre">_manual</span></code> sibling
 (env <code class="docutils literal notranslate"><span class="pre">ANNIE_PARTICIPANTS_FILE</span></code>).</p>
 </dd></dl>
@@ -461,7 +463,7 @@ by walking up from <code class="docutils literal notranslate"><span class="pre">
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.temp_ttl_seconds">
 <span class="sig-name descname"><span class="pre">temp_ttl_seconds</span></span><a class="headerlink" href="#annie.core.config.Settings.temp_ttl_seconds" title="Link to this definition">¶</a></dt>
-<dd><p>Age after which a rendered clip is swept.</p>
+<dd><p>Age after which a rendered clip is swept (default 3 minutes).</p>
 </dd></dl>
 
 <dl class="py attribute">

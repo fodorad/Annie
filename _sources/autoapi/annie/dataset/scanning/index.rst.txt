@@ -9,7 +9,7 @@ annie.dataset.scanning
 
    The scanner turns a :class:`~annie.sources.SourceRegistry` into **one row per
    video** (a :class:`~annie.models.VideoEntry`) carrying that video's raw detections,
-   all of its tracks, its resolved main-character track, and any label values from
+   all of its tracks, its resolved protagonist track, and any label values from
    CSV label sources. Browse consumes the sorted manifest; the Dataset tab shows the
    overview counts; the Browse filter bar is built from the discovered label columns.
 
@@ -20,7 +20,7 @@ annie.dataset.scanning
    * A ``.vdet`` matches by exact stem; a ``__track{N}.csv`` matches by the part
      before ``__track``. Both fall back to a longest-stem-first prefix scan only on
      a miss.
-   * A label/main-character CSV row matches a video by exact key-column value.
+   * A label/protagonist CSV row matches a video by exact key-column value.
 
 
 
@@ -61,9 +61,9 @@ Module Contents
 
       Total track files discovered.
 
-   .. attribute:: main_char_available
+   .. attribute:: protagonist_available
 
-      Whether main-character assignments were found.
+      Whether protagonist assignments were found.
 
    .. attribute:: label_columns
 
@@ -78,7 +78,7 @@ Module Contents
 
       :returns: Counts keyed by ``num_videos``, ``num_vdet_files``, ``num_track_files``,
                 ``videos_vdet_and_track``, ``videos_with_vdet``, ``videos_with_track``,
-                and ``main_char_available`` (bool).
+                and ``protagonist_available`` (bool).
 
 
    .. py:method:: label_values(column: str) -> list[str]
@@ -111,7 +111,7 @@ Module Contents
 
    The video source is the spine: with none configured the manifest is empty.
    Every other source attaches to a video by stem (vdet/track) or key column
-   (label/main-character CSV).
+   (label/protagonist CSV).
 
    :param registry: The configured data sources.
 
@@ -125,13 +125,13 @@ Module Contents
    Scan the classic four MOSEI paths into a per-video manifest (convenience).
 
    A thin wrapper that assembles a :class:`~annie.sources.SourceRegistry` from the
-   given folders and main-character file (with the default ``uuid``/``track_id``
+   given folders and protagonist file (with the default ``uuid``/``track_id``
    columns) and delegates to :func:`build_manifest`.
 
    :param videos_dir: Folder of source videos.
    :param vdet_dir: Folder of ``.vdet`` files.
    :param track_dir: Folder of ``__track{N}.csv`` files.
-   :param participants_file: Main-character heuristic CSV (``uuid,track_id``).
+   :param participants_file: Protagonist heuristic CSV (``uuid,track_id``).
 
    :returns: A :class:`ScanResult` with the per-video manifest and overview counts.
 

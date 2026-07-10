@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -289,7 +291,7 @@
 
 <span class="sd">Annie is dataset-agnostic: instead of fixed folder fields, you build the dataset</span>
 <span class="sd">from a list of **data sources** (the ``+`` box). A videos folder is the mandatory</span>
-<span class="sd">spine; vdet/track folders, a main-character CSV, and any number of label CSVs</span>
+<span class="sd">spine; vdet/track folders, a protagonist CSV, and any number of label CSVs</span>
 <span class="sd">attach to it. There is no Scan button — adding or removing a source re-scans in</span>
 <span class="sd">place, and every metric and Browse row updates immediately. Each source shows an</span>
 <span class="sd">Available / Unavailable chip and a live item count.</span>
@@ -314,6 +316,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_csv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">notify_detached</span>
 
 <span class="c1"># ── per-client state ──────────────────────────────────────────────────────────</span>
 
@@ -374,10 +377,17 @@
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_rescan</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-walk the configured folders (e.g. to pick up newly-converted files).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-walk the configured folders (e.g. to pick up newly-converted files).</span>
+
+<span class="sd">    The Rescan button lives inside ``_source_list``, which ``_apply_changes`` rebuilds</span>
+<span class="sd">    — so by the time there is a count to report, this handler&#39;s own slot is gone and</span>
+<span class="sd">    the toast has to be raised against the client captured beforehand.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
     <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rescanned — </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;num_videos&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> videos&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Rescanned — </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;num_videos&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> videos&quot;</span>
+    <span class="n">notify_detached</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
 <span class="c1">#: Sentinel select values for the two non-file config options.</span>

@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -288,7 +290,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;Build Browse preview images for a video (service; needs the ``media`` extra).</span>
 
 <span class="sd">Produces the static thumbnail (clean first frame) and the annotated five-frame</span>
-<span class="sd">strip (vdet boxes in blue, the main-character track in green) shown on each Browse</span>
+<span class="sd">strip (vdet boxes in blue, the protagonist track in green) shown on each Browse</span>
 <span class="sd">row. Decoding is lazy via :mod:`annie.decode`, so importing this module never</span>
 <span class="sd">requires torch; call :func:`annie.decode.media_available` before using it.</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -307,25 +309,46 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
 
 
+<span class="c1">#: Oversampling factor applied to a box&#39;s CSS size, so previews stay crisp on</span>
+<span class="c1">#: HiDPI/Retina displays without paying for the full decoded frame.</span>
+<span class="n">HIDPI_SCALE</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="c1">#: WebP quality for preview frames. High enough that the thin overlay boxes stay</span>
+<span class="c1">#: clean; low enough that a strip frame costs ~12 KB instead of ~180 KB as PNG.</span>
+<span class="n">_WEBP_QUALITY</span> <span class="o">=</span> <span class="mi">80</span>
+
+
 <div class="viewcode-block" id="to_data_uri">
 <a class="viewcode-back" href="../../../autoapi/annie/media/preview/index.html#annie.media.preview.to_data_uri">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">to_data_uri</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode a PIL image as a self-contained ``data:`` PNG URI.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_data_uri</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="n">box</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode a PIL image as a self-contained ``data:`` WebP URI.</span>
 
 <span class="sd">    Embedding the pixels in the element (rather than serving a per-client temp</span>
 <span class="sd">    file) means a thumbnail/strip frame never produces an orphaned static route</span>
-<span class="sd">    that 404s after a reconnect.</span>
+<span class="sd">    that 404s after a reconnect. The flip side is that every embedded frame is</span>
+<span class="sd">    held in memory twice — server-side in the element&#39;s props, and again in the</span>
+<span class="sd">    browser tab — for as long as its row is on the page. So the image is first</span>
+<span class="sd">    downscaled to the box it will actually be displayed in (times</span>
+<span class="sd">    :data:`HIDPI_SCALE`) and encoded as lossy WebP rather than lossless PNG,</span>
+<span class="sd">    which cuts a Browse row&#39;s payload by roughly 15x.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        image: The image to encode.</span>
+<span class="sd">        box: The ``(width, height)`` CSS size of the element that will show the</span>
+<span class="sd">            image. The image is shrunk to fit ``HIDPI_SCALE`` times this,</span>
+<span class="sd">            preserving aspect ratio. ``None`` encodes at full resolution.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A ``data:image/png;base64,…`` string usable as a ``ui.image`` source.</span>
+<span class="sd">        A ``data:image/webp;base64,…`` string usable as a ``ui.image`` source.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">box</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">image</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">((</span><span class="n">width</span> <span class="o">*</span> <span class="n">HIDPI_SCALE</span><span class="p">,</span> <span class="n">height</span> <span class="o">*</span> <span class="n">HIDPI_SCALE</span><span class="p">),</span> <span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">LANCZOS</span><span class="p">)</span>
     <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-    <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;PNG&quot;</span><span class="p">)</span>
+    <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;WEBP&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">_WEBP_QUALITY</span><span class="p">)</span>
     <span class="n">encoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">encoded</span><span class="si">}</span><span class="s2">&quot;</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;data:image/webp;base64,</span><span class="si">{</span><span class="n">encoded</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
 

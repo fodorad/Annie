@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -293,12 +295,12 @@
         <article role="main" id="furo-main-content">
           <section id="module-annie.dataset.corrections">
 <span id="annie-dataset-corrections"></span><h1>annie.dataset.corrections<a class="headerlink" href="#module-annie.dataset.corrections" title="Link to this heading">¶</a></h1>
-<p>Main-character correction service.</p>
+<p>Protagonist correction service.</p>
 <p>This is the service surface the UI uses to read and fix which track is the active
-“main character” of a video. It composes the domain-level participant resolver
+“protagonist” of a video. It composes the domain-level participant resolver
 (<a class="reference internal" href="../../parsers/participants/index.html#module-annie.parsers.participants" title="annie.parsers.participants"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers.participants</span></code></a>) and the geometric hit-test
 (<code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.color</span></code>) so the UI never reaches past the service layer.</p>
-<p>The correction flow: the annotator clicks the true main character on one of the
+<p>The correction flow: the annotator clicks the true protagonist on one of the
 five highlighted frames; <a class="reference internal" href="#annie.dataset.corrections.hit_test_frame" title="annie.dataset.corrections.hit_test_frame"><code class="xref py py-func docutils literal notranslate"><span class="pre">hit_test_frame()</span></code></a> maps the click to a <code class="docutils literal notranslate"><span class="pre">track_id</span></code>;
 <a class="reference internal" href="#annie.dataset.corrections.set_active_track" title="annie.dataset.corrections.set_active_track"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_active_track()</span></code></a> persists it (manual <code class="docutils literal notranslate"><span class="pre">_manual</span></code> sibling, upsert by uuid);
 the frames are re-rendered so the new active track shows green.</p>
@@ -311,10 +313,10 @@ the frames are re-rendered so the new active track shows green.</p>
 <td><p>Resolve a video's active track id (manual ▸ source ▸ -1).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.set_active_track" title="annie.dataset.corrections.set_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_active_track</span></code></a>(→ pathlib.Path)</p></td>
-<td><p>Persist a manual main-character correction (upsert by video id).</p></td>
+<td><p>Persist a manual protagonist correction (upsert by video id).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.export_corrected" title="annie.dataset.corrections.export_corrected"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_corrected</span></code></a>(→ pathlib.Path)</p></td>
-<td><p>Export the resolved (manual ▸ source) main-character mapping to a CSV.</p></td>
+<td><p>Export the resolved (manual ▸ source) protagonist mapping to a CSV.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.hit_test_frame" title="annie.dataset.corrections.hit_test_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hit_test_frame</span></code></a>(→ int | None)</p></td>
 <td><p>Map a click on a frame to the enclosing box's <code class="docutils literal notranslate"><span class="pre">track_id</span></code>.</p></td>
@@ -333,7 +335,7 @@ the frames are re-rendered so the new active track shows green.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>uuid</strong> – The video id to look up.</p></li>
-<li><p><strong>heuristic_file</strong> – The main-character source CSV. Defaults to the configured
+<li><p><strong>heuristic_file</strong> – The protagonist source CSV. Defaults to the configured
 <code class="docutils literal notranslate"><span class="pre">participants_file</span></code>.</p></li>
 <li><p><strong>key_column</strong> – The column holding the video id.</p></li>
 <li><p><strong>value_column</strong> – The column holding the track index.</p></li>
@@ -348,13 +350,13 @@ the frames are re-rendered so the new active track shows green.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.dataset.corrections.set_active_track">
 <span class="sig-prename descclassname"><span class="pre">annie.dataset.corrections.</span></span><span class="sig-name descname"><span class="pre">set_active_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uuid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heuristic_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_KEY_COLUMN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_VALUE_COLUMN</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/corrections.html#set_active_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.corrections.set_active_track" title="Link to this definition">¶</a></dt>
-<dd><p>Persist a manual main-character correction (upsert by video id).</p>
+<dd><p>Persist a manual protagonist correction (upsert by video id).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>uuid</strong> – The video id being corrected.</p></li>
 <li><p><strong>track_id</strong> – The newly chosen active track index.</p></li>
-<li><p><strong>heuristic_file</strong> – The main-character source CSV (defines where the <code class="docutils literal notranslate"><span class="pre">_manual</span></code>
+<li><p><strong>heuristic_file</strong> – The protagonist source CSV (defines where the <code class="docutils literal notranslate"><span class="pre">_manual</span></code>
 sibling lives). Defaults to the configured <code class="docutils literal notranslate"><span class="pre">participants_file</span></code>.</p></li>
 <li><p><strong>key_column</strong> – The column holding the video id.</p></li>
 <li><p><strong>value_column</strong> – The column holding the track index.</p></li>
@@ -369,12 +371,12 @@ sibling lives). Defaults to the configured <code class="docutils literal notrans
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.dataset.corrections.export_corrected">
 <span class="sig-prename descclassname"><span class="pre">annie.dataset.corrections.</span></span><span class="sig-name descname"><span class="pre">export_corrected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heuristic_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_KEY_COLUMN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_VALUE_COLUMN</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/corrections.html#export_corrected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.corrections.export_corrected" title="Link to this definition">¶</a></dt>
-<dd><p>Export the resolved (manual ▸ source) main-character mapping to a CSV.</p>
+<dd><p>Export the resolved (manual ▸ source) protagonist mapping to a CSV.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>out_path</strong> – Destination CSV path.</p></li>
-<li><p><strong>heuristic_file</strong> – The main-character source CSV. Defaults to the configured
+<li><p><strong>heuristic_file</strong> – The protagonist source CSV. Defaults to the configured
 <code class="docutils literal notranslate"><span class="pre">participants_file</span></code>.</p></li>
 <li><p><strong>key_column</strong> – The column holding the video id.</p></li>
 <li><p><strong>value_column</strong> – The column holding the track index.</p></li>

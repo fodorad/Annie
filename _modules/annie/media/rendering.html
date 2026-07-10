@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -321,6 +323,26 @@
 <span class="sd">&quot;&quot;&quot;Signature of a render function.</span>
 
 <span class="sd">Given a video entry and an output path, produce a browser-playable annotated clip.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">CRF</span> <span class="o">=</span> <span class="mi">26</span>
+<span class="sd">&quot;&quot;&quot;x264 quality for rendered previews (lower is better; ffmpeg&#39;s default is 23).</span>
+
+<span class="sd">These clips are throwaway review aids swept within minutes, watched in a box a few</span>
+<span class="sd">hundred pixels wide, so preview-grade quality buys a materially smaller file and a</span>
+<span class="sd">faster render without affecting frame count or timing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">PRESET</span> <span class="o">=</span> <span class="s2">&quot;veryfast&quot;</span>
+<span class="sd">&quot;&quot;&quot;x264 speed/compression trade-off. The reviewer is waiting on this render, so</span>
+<span class="sd">spend the time budget on latency rather than on the last few percent of bitrate.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">FASTSTART</span> <span class="o">=</span> <span class="s2">&quot;+faststart&quot;</span>
+<span class="sd">&quot;&quot;&quot;``-movflags`` value that relocates the MP4 ``moov`` atom ahead of the media data.</span>
+
+<span class="sd">Without it the atom lands at the end of the file and a browser must fetch the whole</span>
+<span class="sd">clip before the first frame can play.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 
@@ -546,9 +568,17 @@
 <span class="sd">    through unchanged, so the render always has the same frame count as the</span>
 <span class="sd">    original) and draws, on each: the vdet boxes in flat **blue**, every track in</span>
 <span class="sd">    its own **stable unique colour** (never blue/green), and the **active /</span>
-<span class="sd">    main-character** track in **green**. Frames are piped as raw RGB into an</span>
+<span class="sd">    protagonist** track in **green**. Frames are piped as raw RGB into an</span>
 <span class="sd">    ``ffmpeg`` libx264 subprocess, and the source audio is muxed back (the encode is</span>
 <span class="sd">    not ``-shortest``, so a shorter audio track never truncates the video).</span>
+
+<span class="sd">    The output is H.264 in MP4 — already the most broadly playable web format, so</span>
+<span class="sd">    there is nothing to switch *to*. What makes it web-friendly rather than merely</span>
+<span class="sd">    web-compatible is :data:`FASTSTART`-style muxing (the ``moov`` atom is moved to</span>
+<span class="sd">    the front, letting the browser start playing before the file has fully</span>
+<span class="sd">    downloaded) plus a preview-grade :data:`CRF`. Neither touches frame count,</span>
+<span class="sd">    duration, resolution, or frame timing — only how many bits each frame costs —</span>
+<span class="sd">    so the render stays frame-for-frame aligned with the original.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        entry: The video to render; ``entry.video_path`` must be set and at least</span>
@@ -584,6 +614,10 @@
         <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">),</span>
         <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;0:v:0&quot;</span><span class="p">,</span> <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;1:a:0?&quot;</span><span class="p">,</span>
         <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;libx264&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-preset&quot;</span><span class="p">,</span> <span class="n">PRESET</span><span class="p">,</span> <span class="s2">&quot;-crf&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">CRF</span><span class="p">),</span>
+        <span class="c1"># Put the moov atom first so the browser can start playing before the whole</span>
+        <span class="c1"># clip has downloaded, instead of buffering it end-to-end.</span>
+        <span class="s2">&quot;-movflags&quot;</span><span class="p">,</span> <span class="n">FASTSTART</span><span class="p">,</span>
         <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span>
     <span class="p">]</span>  <span class="c1"># fmt: skip</span>

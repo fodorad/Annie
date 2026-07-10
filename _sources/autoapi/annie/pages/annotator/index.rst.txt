@@ -5,21 +5,28 @@ annie.pages.annotator
 
 .. autoapi-nested-parse::
 
-   Annotator tab — focused main-character review for the queued videos.
+   Annotator tab — focused protagonist review for the queued videos.
 
    The tab is greyed out until at least one video is checked "Add to Annotator" on
    the Browse tab. Opening it shows only those queued videos, in responsive rows. For
    each video:
 
-   * the thumbnail and five-frame strip show the current main-character track in green
+   * the thumbnail and five-frame strip show the current protagonist track in green
      (click the thumbnail to play the original clip);
-   * picking a different track in the **Main character** selector re-renders the strip
+   * picking a different track in the **Protagonist** selector re-renders the strip
      immediately and **auto-saves** the choice to the ``_manual`` CSV — there is no
      Save button; selection *is* the save;
    * the option matching the value in the source CSV is marked ``(default)`` so it is
      obvious which track the heuristic chose;
    * a **render** box burns the full clip with the chosen track green so the choice can
      be double-checked across the whole video.
+   * the row's **X** button drops it from the queue once reviewed, so an emptying tab
+     means the backlog is done, and **Clear all** beside the jump box does the same for
+     every row at once. The saved corrections survive either way — only the ``annotate``
+     flag is cleared.
+
+   Rows are revealed a page at a time (see :mod:`annie.pages.paging`), which also keeps
+   the tab from decoding five frames for every queued video the moment it opens.
 
    The corrected datasource can be exported to a standalone CSV at any time.
 

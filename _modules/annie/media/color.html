@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -301,7 +303,7 @@
 <span class="sd">2. **tracks available** — each track gets a **stable colour** keyed by</span>
 <span class="sd">   ``track_id``, drawn identically on every frame. The palette excludes the two</span>
 <span class="sd">   reserved colours, blue and green.</span>
-<span class="sd">3. **active / main-character track** — always **green**, overriding its palette</span>
+<span class="sd">3. **active / protagonist track** — always **green**, overriding its palette</span>
 <span class="sd">   colour.</span>
 <span class="sd">4. each box is labelled with its ``track_id`` as a small number at the top-left.</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -320,7 +322,7 @@
 <span class="n">BLUE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
 <span class="sd">&quot;&quot;&quot;Raw vdet detections.&quot;&quot;&quot;</span>
 <span class="n">GREEN</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;The active / main-character track.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;The active / protagonist track.&quot;&quot;&quot;</span>
 
 <span class="n">TRACK_PALETTE</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="p">(</span><span class="mi">239</span><span class="p">,</span> <span class="mi">68</span><span class="p">,</span> <span class="mi">68</span><span class="p">),</span>  <span class="c1"># red</span>
@@ -347,13 +349,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">color_for_track</span><span class="p">(</span><span class="n">track_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the stable RGB colour for a track.</span>
 
-<span class="sd">    The active (main-character) track short-circuits to :data:`GREEN` before the</span>
+<span class="sd">    The active (protagonist) track short-circuits to :data:`GREEN` before the</span>
 <span class="sd">    palette is consulted; otherwise the colour is a deterministic function of</span>
 <span class="sd">    ``track_id`` drawn from :data:`TRACK_PALETTE` (never blue or green).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        track_id: The track index.</span>
-<span class="sd">        active: Whether this is the active / main-character track.</span>
+<span class="sd">        active: Whether this is the active / protagonist track.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An ``(r, g, b)`` colour tuple.</span>
@@ -430,7 +432,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``track_id`` of the box under a click, or ``None``.</span>
 
-<span class="sd">    Used by the main-character correction flow: the click is tested against every</span>
+<span class="sd">    Used by the protagonist correction flow: the click is tested against every</span>
 <span class="sd">    box on the frame. When boxes overlap, the smallest enclosing box wins by</span>
 <span class="sd">    default (configurable), which makes it possible to select a face nested</span>
 <span class="sd">    inside a larger one.</span>

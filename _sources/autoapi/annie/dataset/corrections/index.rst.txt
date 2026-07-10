@@ -5,14 +5,14 @@ annie.dataset.corrections
 
 .. autoapi-nested-parse::
 
-   Main-character correction service.
+   Protagonist correction service.
 
    This is the service surface the UI uses to read and fix which track is the active
-   "main character" of a video. It composes the domain-level participant resolver
+   "protagonist" of a video. It composes the domain-level participant resolver
    (:mod:`annie.parsers.participants`) and the geometric hit-test
    (:mod:`annie.color`) so the UI never reaches past the service layer.
 
-   The correction flow: the annotator clicks the true main character on one of the
+   The correction flow: the annotator clicks the true protagonist on one of the
    five highlighted frames; :func:`hit_test_frame` maps the click to a ``track_id``;
    :func:`set_active_track` persists it (manual ``_manual`` sibling, upsert by uuid);
    the frames are re-rendered so the new active track shows green.
@@ -38,7 +38,7 @@ Module Contents
    Resolve a video's active track id (manual ▸ source ▸ -1).
 
    :param uuid: The video id to look up.
-   :param heuristic_file: The main-character source CSV. Defaults to the configured
+   :param heuristic_file: The protagonist source CSV. Defaults to the configured
                           ``participants_file``.
    :param key_column: The column holding the video id.
    :param value_column: The column holding the track index.
@@ -48,11 +48,11 @@ Module Contents
 
 .. py:function:: set_active_track(uuid: str, track_id: int, heuristic_file: str | pathlib.Path | None = None, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> pathlib.Path
 
-   Persist a manual main-character correction (upsert by video id).
+   Persist a manual protagonist correction (upsert by video id).
 
    :param uuid: The video id being corrected.
    :param track_id: The newly chosen active track index.
-   :param heuristic_file: The main-character source CSV (defines where the ``_manual``
+   :param heuristic_file: The protagonist source CSV (defines where the ``_manual``
                           sibling lives). Defaults to the configured ``participants_file``.
    :param key_column: The column holding the video id.
    :param value_column: The column holding the track index.
@@ -62,10 +62,10 @@ Module Contents
 
 .. py:function:: export_corrected(out_path: str | pathlib.Path, heuristic_file: str | pathlib.Path | None = None, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> pathlib.Path
 
-   Export the resolved (manual ▸ source) main-character mapping to a CSV.
+   Export the resolved (manual ▸ source) protagonist mapping to a CSV.
 
    :param out_path: Destination CSV path.
-   :param heuristic_file: The main-character source CSV. Defaults to the configured
+   :param heuristic_file: The protagonist source CSV. Defaults to the configured
                           ``participants_file``.
    :param key_column: The column holding the video id.
    :param value_column: The column holding the track index.

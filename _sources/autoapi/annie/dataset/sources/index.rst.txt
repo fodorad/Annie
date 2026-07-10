@@ -18,7 +18,7 @@ annie.dataset.sources
    * :attr:`SourceKind.CSV` — a label/metadata CSV joined to videos by a chosen
      **key column**. A CSV plays one of two roles (:class:`CsvRole`): ``labels``
      (its selected value columns become Browse tags/filters; many allowed) or
-     ``main_character`` (one value column is the active-track id; singleton).
+     ``protagonist`` (one value column is the active-track id; singleton).
 
    This module is pure domain — no NiceGUI, no config, no torch. The registry is the
    single source of truth the scanner (:mod:`annie.scanning`) consumes.
@@ -130,7 +130,7 @@ Module Contents
    .. attribute:: value_columns
 
       For a CSV source, the selected value columns (label tags,
-      or a single main-character track-id column).
+      or a single protagonist track-id column).
 
    .. attribute:: column_types
 
@@ -145,11 +145,11 @@ Module Contents
       Whether this source points at a folder (vs a single CSV file).
 
 
-   .. py:property:: is_main_character
+   .. py:property:: is_protagonist
       :type: bool
 
 
-      Whether this is the CSV that assigns each video's main-character track.
+      Whether this is the CSV that assigns each video's protagonist track.
 
 
    .. py:property:: available
@@ -179,7 +179,7 @@ Module Contents
 
    An ordered set of data sources with singleton rules.
 
-   Folder kinds (video/vdet/track) and the main-character CSV are singletons:
+   Folder kinds (video/vdet/track) and the protagonist CSV are singletons:
    adding one replaces any existing source of that role. Label CSVs are
    unlimited, keyed by path (re-adding the same file replaces it).
 
@@ -225,18 +225,18 @@ Module Contents
       The track-folder source, or ``None``.
 
 
-   .. py:property:: main_character
+   .. py:property:: protagonist
       :type: DataSource | None
 
 
-      The main-character CSV source, or ``None``.
+      The protagonist CSV source, or ``None``.
 
 
    .. py:property:: label_sources
       :type: list[DataSource]
 
 
-      All label CSV sources (excludes the main-character CSV).
+      All label CSV sources (excludes the protagonist CSV).
 
 
    .. py:property:: has_video

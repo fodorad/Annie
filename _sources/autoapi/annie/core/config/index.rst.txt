@@ -55,7 +55,7 @@ Module Contents
 
    .. attribute:: participants_file
 
-      The main-character heuristic CSV (``uuid,track_id``);
+      The protagonist heuristic CSV (``uuid,track_id``);
       manual corrections are written to its ``_manual`` sibling
       (env ``ANNIE_PARTICIPANTS_FILE``).
 
@@ -134,7 +134,7 @@ Module Contents
 
    .. attribute:: temp_ttl_seconds
 
-      Age after which a rendered clip is swept.
+      Age after which a rendered clip is swept (default 3 minutes).
 
    .. attribute:: host
 

@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -301,7 +303,7 @@ of its tracks. To draw a frame we merge the relevant boxes into a single
 <ul class="simple">
 <li><p>vdet boxes (<code class="docutils literal notranslate"><span class="pre">track_id</span> <span class="pre">is</span> <span class="pre">None</span></code>) → flat <strong>blue</strong>;</p></li>
 <li><p>track boxes → a <strong>stable unique colour</strong> per track id (never blue/green);</p></li>
-<li><p>the <strong>active / main-character</strong> track → <strong>green</strong>, overriding its palette colour.</p></li>
+<li><p>the <strong>active / protagonist</strong> track → <strong>green</strong>, overriding its palette colour.</p></li>
 </ul>
 <p>Two inclusion modes are used: the Browse five-frame <strong>strip</strong> shows vdet + only
 the active track; the full <strong>render</strong> shows vdet + every track.</p>
@@ -370,7 +372,7 @@ followed by the selected track boxes present on that frame.</p>
 <dd class="field-odd"><p><strong>entry</strong> – The video being shown.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">[active_track_id]</span></code> when a main character is assigned, else <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">[active_track_id]</span></code> when a protagonist is assigned, else <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -29,8 +29,10 @@ Submodules
    /autoapi/annie/pages/home/index
    /autoapi/annie/pages/lazy/index
    /autoapi/annie/pages/logs/index
+   /autoapi/annie/pages/paging/index
    /autoapi/annie/pages/reveal/index
    /autoapi/annie/pages/settings/index
    /autoapi/annie/pages/utils/index
+   /autoapi/annie/pages/viewport/index
 
 

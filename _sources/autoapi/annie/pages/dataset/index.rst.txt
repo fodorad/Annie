@@ -9,7 +9,7 @@ annie.pages.dataset
 
    Annie is dataset-agnostic: instead of fixed folder fields, you build the dataset
    from a list of **data sources** (the ``+`` box). A videos folder is the mandatory
-   spine; vdet/track folders, a main-character CSV, and any number of label CSVs
+   spine; vdet/track folders, a protagonist CSV, and any number of label CSVs
    attach to it. There is no Scan button — adding or removing a source re-scans in
    place, and every metric and Browse row updates immediately. Each source shows an
    Available / Unavailable chip and a live item count.

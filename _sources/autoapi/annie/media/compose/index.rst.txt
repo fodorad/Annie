@@ -14,7 +14,7 @@ annie.media.compose
 
    * vdet boxes (``track_id is None``) → flat **blue**;
    * track boxes → a **stable unique colour** per track id (never blue/green);
-   * the **active / main-character** track → **green**, overriding its palette colour.
+   * the **active / protagonist** track → **green**, overriding its palette colour.
 
    Two inclusion modes are used: the Browse five-frame **strip** shows vdet + only
    the active track; the full **render** shows vdet + every track.
@@ -64,6 +64,6 @@ Module Contents
 
    :param entry: The video being shown.
 
-   :returns: ``[active_track_id]`` when a main character is assigned, else ``[]``.
+   :returns: ``[active_track_id]`` when a protagonist is assigned, else ``[]``.
 
 

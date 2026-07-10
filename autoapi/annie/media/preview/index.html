@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -295,16 +297,28 @@
 <span id="annie-media-preview"></span><h1>annie.media.preview<a class="headerlink" href="#module-annie.media.preview" title="Link to this heading">¶</a></h1>
 <p>Build Browse preview images for a video (service; needs the <code class="docutils literal notranslate"><span class="pre">media</span></code> extra).</p>
 <p>Produces the static thumbnail (clean first frame) and the annotated five-frame
-strip (vdet boxes in blue, the main-character track in green) shown on each Browse
+strip (vdet boxes in blue, the protagonist track in green) shown on each Browse
 row. Decoding is lazy via <code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.decode</span></code>, so importing this module never
 requires torch; call <code class="xref py py-func docutils literal notranslate"><span class="pre">annie.decode.media_available()</span></code> before using it.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.HIDPI_SCALE" title="annie.media.preview.HIDPI_SCALE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HIDPI_SCALE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.to_data_uri" title="annie.media.preview.to_data_uri"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data_uri</span></code></a>(→ str)</p></td>
-<td><p>Encode a PIL image as a self-contained <code class="docutils literal notranslate"><span class="pre">data:</span></code> PNG URI.</p></td>
+<td><p>Encode a PIL image as a self-contained <code class="docutils literal notranslate"><span class="pre">data:</span></code> WebP URI.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.build_preview" title="annie.media.preview.build_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_preview</span></code></a>(→ tuple[PIL.Image.Image, ...)</p></td>
 <td><p>Decode a video's strip and draw its annotations.</p></td>
@@ -315,19 +329,34 @@ requires torch; call <code class="xref py py-func docutils literal notranslate">
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.media.preview.HIDPI_SCALE">
+<span class="sig-prename descclassname"><span class="pre">annie.media.preview.</span></span><span class="sig-name descname"><span class="pre">HIDPI_SCALE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#annie.media.preview.HIDPI_SCALE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.media.preview.to_data_uri">
-<span class="sig-prename descclassname"><span class="pre">annie.media.preview.</span></span><span class="sig-name descname"><span class="pre">to_data_uri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PIL.Image.Image</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/preview.html#to_data_uri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.preview.to_data_uri" title="Link to this definition">¶</a></dt>
-<dd><p>Encode a PIL image as a self-contained <code class="docutils literal notranslate"><span class="pre">data:</span></code> PNG URI.</p>
+<span class="sig-prename descclassname"><span class="pre">annie.media.preview.</span></span><span class="sig-name descname"><span class="pre">to_data_uri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PIL.Image.Image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/preview.html#to_data_uri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.preview.to_data_uri" title="Link to this definition">¶</a></dt>
+<dd><p>Encode a PIL image as a self-contained <code class="docutils literal notranslate"><span class="pre">data:</span></code> WebP URI.</p>
 <p>Embedding the pixels in the element (rather than serving a per-client temp
 file) means a thumbnail/strip frame never produces an orphaned static route
-that 404s after a reconnect.</p>
+that 404s after a reconnect. The flip side is that every embedded frame is
+held in memory twice — server-side in the element’s props, and again in the
+browser tab — for as long as its row is on the page. So the image is first
+downscaled to the box it will actually be displayed in (times
+<a class="reference internal" href="#annie.media.preview.HIDPI_SCALE" title="annie.media.preview.HIDPI_SCALE"><code class="xref py py-data docutils literal notranslate"><span class="pre">HIDPI_SCALE</span></code></a>) and encoded as lossy WebP rather than lossless PNG,
+which cuts a Browse row’s payload by roughly 15x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>image</strong> – The image to encode.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – The image to encode.</p></li>
+<li><p><strong>box</strong> – The <code class="docutils literal notranslate"><span class="pre">(width,</span> <span class="pre">height)</span></code> CSS size of the element that will show the
+image. The image is shrunk to fit <code class="docutils literal notranslate"><span class="pre">HIDPI_SCALE</span></code> times this,
+preserving aspect ratio. <code class="docutils literal notranslate"><span class="pre">None</span></code> encodes at full resolution.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">data:image/png;base64,…</span></code> string usable as a <code class="docutils literal notranslate"><span class="pre">ui.image</span></code> source.</p>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">data:image/webp;base64,…</span></code> string usable as a <code class="docutils literal notranslate"><span class="pre">ui.image</span></code> source.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -419,8 +448,10 @@ and the video’s total frame count.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">annie.media.preview</a><ul>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.media.preview.HIDPI_SCALE"><code class="docutils literal notranslate"><span class="pre">HIDPI_SCALE</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.preview.to_data_uri"><code class="docutils literal notranslate"><span class="pre">to_data_uri()</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.preview.build_preview"><code class="docutils literal notranslate"><span class="pre">build_preview()</span></code></a></li>
 </ul>

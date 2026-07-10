@@ -8,10 +8,18 @@ annie.media.preview
    Build Browse preview images for a video (service; needs the ``media`` extra).
 
    Produces the static thumbnail (clean first frame) and the annotated five-frame
-   strip (vdet boxes in blue, the main-character track in green) shown on each Browse
+   strip (vdet boxes in blue, the protagonist track in green) shown on each Browse
    row. Decoding is lazy via :mod:`annie.decode`, so importing this module never
    requires torch; call :func:`annie.decode.media_available` before using it.
 
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.media.preview.HIDPI_SCALE
 
 
 Functions
@@ -26,17 +34,29 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: to_data_uri(image: PIL.Image.Image) -> str
+.. py:data:: HIDPI_SCALE
+   :value: 2
 
-   Encode a PIL image as a self-contained ``data:`` PNG URI.
+
+.. py:function:: to_data_uri(image: PIL.Image.Image, box: tuple[int, int] | None = None) -> str
+
+   Encode a PIL image as a self-contained ``data:`` WebP URI.
 
    Embedding the pixels in the element (rather than serving a per-client temp
    file) means a thumbnail/strip frame never produces an orphaned static route
-   that 404s after a reconnect.
+   that 404s after a reconnect. The flip side is that every embedded frame is
+   held in memory twice — server-side in the element's props, and again in the
+   browser tab — for as long as its row is on the page. So the image is first
+   downscaled to the box it will actually be displayed in (times
+   :data:`HIDPI_SCALE`) and encoded as lossy WebP rather than lossless PNG,
+   which cuts a Browse row's payload by roughly 15x.
 
    :param image: The image to encode.
+   :param box: The ``(width, height)`` CSS size of the element that will show the
+               image. The image is shrunk to fit ``HIDPI_SCALE`` times this,
+               preserving aspect ratio. ``None`` encodes at full resolution.
 
-   :returns: A ``data:image/png;base64,…`` string usable as a ``ui.image`` source.
+   :returns: A ``data:image/webp;base64,…`` string usable as a ``ui.image`` source.
 
 
 .. py:function:: build_preview(entry: annie.core.models.VideoEntry, count: int = 5) -> tuple[PIL.Image.Image, list[PIL.Image.Image], int]

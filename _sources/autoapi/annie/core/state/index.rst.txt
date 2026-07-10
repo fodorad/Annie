@@ -14,7 +14,7 @@ annie.core.state
 
    Sources are **session-only**: the registry is seeded from the ``ANNIE_*``
    environment variables on startup and otherwise lives for the process lifetime.
-   Curation (verdicts, notes, annotator selection) and main-character corrections
+   Curation (verdicts, notes, annotator selection) and protagonist corrections
    persist independently in SQLite / the ``_manual`` CSV.
 
 
@@ -51,6 +51,25 @@ Module Contents
 
       Max media height (px) of an Annotator row; its boxes
       flex to share the row width and only hit this cap on very wide screens.
+
+   .. attribute:: auto_scroll
+
+      Whether reaching the bottom of Browse / Annotator reveals the
+      next page automatically, instead of waiting for a "Show more" click.
+
+   .. attribute:: page_size
+
+      How many rows one page reveals, whether auto-scrolled or clicked.
+
+   .. attribute:: embed_ttl_seconds
+
+      How long an embedded clip stays on a row before it
+      reverts to its placeholder, freeing the memory the browser holds for it.
+
+   .. attribute:: unload_after_seconds
+
+      How long a row may sit off screen before its preview
+      frames are dropped; they are decoded again when it scrolls back.
 
 
 .. py:class:: AppState

@@ -1,0 +1,107 @@
+annie.pages.viewport
+====================
+
+.. py:module:: annie.pages.viewport
+
+.. autoapi-nested-parse::
+
+   Drop a row's preview images while it is far off screen (UI helper).
+
+   Paging bounds how fast rows appear, not how many end up on the page: a reviewer who
+   scrolls through 2800 samples has 2800 rows mounted, each pinning ~60 KB of base64
+   WebP in the server's element tree *and* in the browser tab, plus its decoded bitmaps.
+   That adds up to hundreds of megabytes long after the row has left the screen.
+
+   So each row carries a **viewport observer** — a Quasar ``q-intersection`` stretched
+   over the row — and a :class:`OffscreenGate`. When the row has been out of view for
+   :attr:`annie.core.state.UiSettings.unload_after_seconds`, its images are cleared back
+   to the grey placeholders they started as; when it scrolls back, they are decoded
+   again. Both tabs size their media boxes in fixed pixels, so an emptied row keeps its
+   exact height and nothing below it jumps.
+
+   The delay is what makes this safe to do on scroll: a row flicking past the edge of
+   the viewport, or a small scroll jitter, re-enters long before its unload fires, so
+   normal scrolling never triggers a redecode. Only rows genuinely left behind are
+   dropped.
+
+   What this does *not* reclaim is the row skeleton itself (~43 elements: the card, its
+   badges, buttons and selects). Those are far cheaper per row than the images, but they
+   still accumulate; capping the number of mounted rows is a separate change.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.viewport.OffscreenGate
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.viewport.observe_row
+
+
+Module Contents
+---------------
+
+.. py:class:: OffscreenGate
+
+   Decides when an off-screen row's images may be dropped, and when to restore them.
+
+   A row can leave and re-enter the viewport many times while an unload is waiting
+   out its delay. Rather than trying to cancel the pending task, each scroll event
+   bumps :attr:`pending`; a fired unload only takes effect if its generation is still
+   the newest, so a row that came back is left alone.
+
+   .. attribute:: loaded
+
+      Whether the row's images are currently mounted.
+
+   .. attribute:: pending
+
+      Generation of the most recent visibility change.
+
+
+   .. py:method:: hide() -> int | None
+
+      Record that the row left the viewport.
+
+      :returns: The generation to arm an unload with, or ``None`` if the row's images are
+                already gone and there is nothing to drop.
+
+
+
+   .. py:method:: show() -> bool
+
+      Record that the row entered the viewport.
+
+      :returns: ``True`` if the caller must rebuild the images (they had been dropped).
+
+
+
+   .. py:method:: expire(generation: int) -> bool
+
+      Resolve an armed unload whose delay has elapsed.
+
+      :param generation: The generation the unload was armed with.
+
+      :returns: ``True`` if the row is still off screen and its images should be dropped.
+
+
+
+.. py:function:: observe_row(load: collections.abc.Callable[[], None], unload: collections.abc.Callable[[], None]) -> None
+
+   Watch the enclosing row and drop its images once it sits off screen.
+
+   Must be called inside a **relatively positioned** container (the row card); the
+   observer stretches over it, so its visibility is the row's visibility.
+
+   :param load: Rebuilds the row's images. Called when a dropped row scrolls back in.
+   :param unload: Clears the row's images back to their placeholders.
+
+

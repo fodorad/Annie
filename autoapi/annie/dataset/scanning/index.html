@@ -236,9 +236,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -296,7 +298,7 @@
 <p>Dataset scanning: aggregate each video with its annotations into the manifest.</p>
 <p>The scanner turns a <code class="xref py py-class docutils literal notranslate"><span class="pre">SourceRegistry</span></code> into <strong>one row per
 video</strong> (a <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoEntry</span></code>) carrying that video’s raw detections,
-all of its tracks, its resolved main-character track, and any label values from
+all of its tracks, its resolved protagonist track, and any label values from
 CSV label sources. Browse consumes the sorted manifest; the Dataset tab shows the
 overview counts; the Browse filter bar is built from the discovered label columns.</p>
 <p>Because there is no Scan button any more, this runs whenever the set of sources
@@ -306,7 +308,7 @@ changes (add/remove on the Dataset tab). It stays linear in the number of files:
 <li><p>A <code class="docutils literal notranslate"><span class="pre">.vdet</span></code> matches by exact stem; a <code class="docutils literal notranslate"><span class="pre">__track{N}.csv</span></code> matches by the part
 before <code class="docutils literal notranslate"><span class="pre">__track</span></code>. Both fall back to a longest-stem-first prefix scan only on
 a miss.</p></li>
-<li><p>A label/main-character CSV row matches a video by exact key-column value.</p></li>
+<li><p>A label/protagonist CSV row matches a video by exact key-column value.</p></li>
 </ul>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
@@ -363,9 +365,9 @@ a miss.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.scanning.ScanResult.main_char_available">
-<span class="sig-name descname"><span class="pre">main_char_available</span></span><a class="headerlink" href="#annie.dataset.scanning.ScanResult.main_char_available" title="Link to this definition">¶</a></dt>
-<dd><p>Whether main-character assignments were found.</p>
+<dt class="sig sig-object py" id="annie.dataset.scanning.ScanResult.protagonist_available">
+<span class="sig-name descname"><span class="pre">protagonist_available</span></span><a class="headerlink" href="#annie.dataset.scanning.ScanResult.protagonist_available" title="Link to this definition">¶</a></dt>
+<dd><p>Whether protagonist assignments were found.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -382,7 +384,7 @@ a miss.</p></li>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Counts keyed by <code class="docutils literal notranslate"><span class="pre">num_videos</span></code>, <code class="docutils literal notranslate"><span class="pre">num_vdet_files</span></code>, <code class="docutils literal notranslate"><span class="pre">num_track_files</span></code>,
 <code class="docutils literal notranslate"><span class="pre">videos_vdet_and_track</span></code>, <code class="docutils literal notranslate"><span class="pre">videos_with_vdet</span></code>, <code class="docutils literal notranslate"><span class="pre">videos_with_track</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">main_char_available</span></code> (bool).</p>
+and <code class="docutils literal notranslate"><span class="pre">protagonist_available</span></code> (bool).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -429,7 +431,7 @@ ensures <code class="docutils literal notranslate"><span class="pre">X2</span></
 <dd><p>Scan all sources in <code class="docutils literal notranslate"><span class="pre">registry</span></code> into a per-video manifest.</p>
 <p>The video source is the spine: with none configured the manifest is empty.
 Every other source attaches to a video by stem (vdet/track) or key column
-(label/main-character CSV).</p>
+(label/protagonist CSV).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>registry</strong> – The configured data sources.</p>
@@ -447,7 +449,7 @@ than raising.</p>
 <span class="sig-prename descclassname"><span class="pre">annie.dataset.scanning.</span></span><span class="sig-name descname"><span class="pre">scan_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">videos_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vdet_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participants_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.scanning.ScanResult" title="annie.dataset.scanning.ScanResult"><span class="pre">ScanResult</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/scanning.html#scan_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.scanning.scan_dataset" title="Link to this definition">¶</a></dt>
 <dd><p>Scan the classic four MOSEI paths into a per-video manifest (convenience).</p>
 <p>A thin wrapper that assembles a <code class="xref py py-class docutils literal notranslate"><span class="pre">SourceRegistry</span></code> from the
-given folders and main-character file (with the default <code class="docutils literal notranslate"><span class="pre">uuid</span></code>/<code class="docutils literal notranslate"><span class="pre">track_id</span></code>
+given folders and protagonist file (with the default <code class="docutils literal notranslate"><span class="pre">uuid</span></code>/<code class="docutils literal notranslate"><span class="pre">track_id</span></code>
 columns) and delegates to <a class="reference internal" href="#annie.dataset.scanning.build_manifest" title="annie.dataset.scanning.build_manifest"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_manifest()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -455,7 +457,7 @@ columns) and delegates to <a class="reference internal" href="#annie.dataset.sca
 <li><p><strong>videos_dir</strong> – Folder of source videos.</p></li>
 <li><p><strong>vdet_dir</strong> – Folder of <code class="docutils literal notranslate"><span class="pre">.vdet</span></code> files.</p></li>
 <li><p><strong>track_dir</strong> – Folder of <code class="docutils literal notranslate"><span class="pre">__track{N}.csv</span></code> files.</p></li>
-<li><p><strong>participants_file</strong> – Main-character heuristic CSV (<code class="docutils literal notranslate"><span class="pre">uuid,track_id</span></code>).</p></li>
+<li><p><strong>participants_file</strong> – Protagonist heuristic CSV (<code class="docutils literal notranslate"><span class="pre">uuid,track_id</span></code>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -530,7 +532,7 @@ columns) and delegates to <a class="reference internal" href="#annie.dataset.sca
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.entries"><code class="docutils literal notranslate"><span class="pre">ScanResult.entries</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.num_vdet_files"><code class="docutils literal notranslate"><span class="pre">ScanResult.num_vdet_files</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.num_track_files"><code class="docutils literal notranslate"><span class="pre">ScanResult.num_track_files</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.main_char_available"><code class="docutils literal notranslate"><span class="pre">ScanResult.main_char_available</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.protagonist_available"><code class="docutils literal notranslate"><span class="pre">ScanResult.protagonist_available</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.label_columns"><code class="docutils literal notranslate"><span class="pre">ScanResult.label_columns</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.counts"><code class="docutils literal notranslate"><span class="pre">ScanResult.counts</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.label_values"><code class="docutils literal notranslate"><span class="pre">ScanResult.label_values()</span></code></a></li>

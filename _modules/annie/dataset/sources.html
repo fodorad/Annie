@@ -235,9 +235,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -298,7 +300,7 @@
 <span class="sd">* :attr:`SourceKind.CSV` — a label/metadata CSV joined to videos by a chosen</span>
 <span class="sd">  **key column**. A CSV plays one of two roles (:class:`CsvRole`): ``labels``</span>
 <span class="sd">  (its selected value columns become Browse tags/filters; many allowed) or</span>
-<span class="sd">  ``main_character`` (one value column is the active-track id; singleton).</span>
+<span class="sd">  ``protagonist`` (one value column is the active-track id; singleton).</span>
 
 <span class="sd">This module is pure domain — no NiceGUI, no config, no torch. The registry is the</span>
 <span class="sd">single source of truth the scanner (:mod:`annie.scanning`) consumes.</span>
@@ -335,8 +337,13 @@
 
     <span class="c1">#: Value columns become Browse tags and filter facets.</span>
     <span class="n">LABELS</span> <span class="o">=</span> <span class="s2">&quot;labels&quot;</span>
-    <span class="c1">#: One value column holds each video&#39;s active main-character track id.</span>
-    <span class="n">MAIN_CHARACTER</span> <span class="o">=</span> <span class="s2">&quot;main_character&quot;</span></div>
+    <span class="c1">#: One value column holds each video&#39;s active protagonist track id.</span>
+    <span class="n">PROTAGONIST</span> <span class="o">=</span> <span class="s2">&quot;protagonist&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_missing_</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CsvRole</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the pre-rename ``&quot;main_character&quot;`` role stored in older configs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">PROTAGONIST</span> <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;main_character&quot;</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
 
@@ -384,7 +391,7 @@
 <span class="sd">        role: For a CSV source, its :class:`CsvRole`; ignored otherwise.</span>
 <span class="sd">        key_column: For a CSV source, the column joined to the video id.</span>
 <span class="sd">        value_columns: For a CSV source, the selected value columns (label tags,</span>
-<span class="sd">            or a single main-character track-id column).</span>
+<span class="sd">            or a single protagonist track-id column).</span>
 <span class="sd">        column_types: For a CSV source, the chosen data type per value column</span>
 <span class="sd">            (``&quot;str&quot;`` / ``&quot;int&quot;`` / ``&quot;float&quot;``); columns absent here default to str.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -402,9 +409,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">FOLDER_KINDS</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_main_character</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this is the CSV that assigns each video&#39;s main-character track.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">MAIN_CHARACTER</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_protagonist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this is the CSV that assigns each video&#39;s protagonist track.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -415,7 +422,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;A short label for the Dataset source list.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Main character file&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_main_character</span> <span class="k">else</span> <span class="s2">&quot;Label file&quot;</span>
+            <span class="k">return</span> <span class="s2">&quot;Protagonist file&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_protagonist</span> <span class="k">else</span> <span class="s2">&quot;Label file&quot;</span>
         <span class="k">return</span> <span class="n">KIND_LABELS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
 
 <div class="viewcode-block" id="DataSource.count">
@@ -456,7 +463,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SourceRegistry</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An ordered set of data sources with singleton rules.</span>
 
-<span class="sd">    Folder kinds (video/vdet/track) and the main-character CSV are singletons:</span>
+<span class="sd">    Folder kinds (video/vdet/track) and the protagonist CSV are singletons:</span>
 <span class="sd">    adding one replaces any existing source of that role. Label CSVs are</span>
 <span class="sd">    unlimited, keyed by path (re-adding the same file replaces it).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -473,8 +480,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">FOLDER_KINDS</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">source</span><span class="o">.</span><span class="n">is_main_character</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">is_main_character</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">source</span><span class="o">.</span><span class="n">is_protagonist</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">is_protagonist</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># a labels CSV: replace any existing source on the same file</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">path</span> <span class="o">!=</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source</span><span class="p">)</span></div>
@@ -512,13 +519,13 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">main_character</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The main-character CSV source, or ``None``.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_main_character</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">protagonist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The protagonist CSV source, or ``None``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_protagonist</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">label_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;All label CSV sources (excludes the main-character CSV).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;All label CSV sources (excludes the protagonist CSV).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">]</span>
 
     <span class="nd">@property</span>
