@@ -121,7 +121,7 @@ class Event:
 
 
 NO_ACTIVE_TRACK = -1
-"""Sentinel ``track_id`` meaning "no active / main-character track"."""
+"""Sentinel ``track_id`` meaning "no active / protagonist track"."""
 
 
 @dataclass(slots=True)
@@ -138,11 +138,18 @@ class VideoEntry:
         vdet_path: Path to the raw-detection ``.vdet``, or ``None`` if absent.
         track_paths: Paths to the video's ``__track{N}.csv`` files, ordered by track id.
         track_ids: The track indices, aligned with ``track_paths``.
-        active_track_id: The resolved main-character track id, or ``-1`` if none.
+        active_track_id: The resolved protagonist track id, or ``-1`` if none.
         status: One of :data:`RowStatus`.
         labels: Per-video label values gathered from CSV label sources, keyed by
             column name (e.g. ``{"Sentiment": "negative", "Angry": "0.33"}``).
             Drives the Browse label tags and the label filters.
+        row_id: The video's **1-based position in the whole scanned dataset**,
+            assigned once by :mod:`annie.dataset.scanning` over the full sorted
+            manifest. It identifies the sample, not its slot in whatever list is
+            on screen: filtering the Browse tab or queueing a subset into the
+            Annotator leaves each row's number untouched, so "I stopped at 3400"
+            still means something after a restart. ``0`` when unassigned (an entry
+            built by hand rather than by a scan).
     """
 
     video_id: str
@@ -153,6 +160,7 @@ class VideoEntry:
     active_track_id: int = NO_ACTIVE_TRACK
     status: RowStatus = "linked"
     labels: dict[str, str] = field(default_factory=dict)
+    row_id: int = 0
 
     @property
     def has_video(self) -> bool:
@@ -171,7 +179,7 @@ class VideoEntry:
 
     @property
     def has_active_track(self) -> bool:
-        """Whether a valid main-character track is assigned (``active_track_id >= 0``)."""
+        """Whether a valid protagonist track is assigned (``active_track_id >= 0``)."""
         return self.active_track_id >= 0
 
     @property

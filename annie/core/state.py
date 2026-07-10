@@ -7,7 +7,7 @@ re-runs the scan in place, so there is no Scan button.
 
 Sources are **session-only**: the registry is seeded from the ``ANNIE_*``
 environment variables on startup and otherwise lives for the process lifetime.
-Curation (verdicts, notes, annotator selection) and main-character corrections
+Curation (verdicts, notes, annotator selection) and protagonist corrections
 persist independently in SQLite / the ``_manual`` CSV.
 """
 
@@ -36,10 +36,21 @@ class UiSettings:
         browse_row_height: Media height (px) of a Browse row's thumbnail/strip/render.
         annotator_row_height: Max media height (px) of an Annotator row; its boxes
             flex to share the row width and only hit this cap on very wide screens.
+        auto_scroll: Whether reaching the bottom of Browse / Annotator reveals the
+            next page automatically, instead of waiting for a "Show more" click.
+        page_size: How many rows one page reveals, whether auto-scrolled or clicked.
+        embed_ttl_seconds: How long an embedded clip stays on a row before it
+            reverts to its placeholder, freeing the memory the browser holds for it.
+        unload_after_seconds: How long a row may sit off screen before its preview
+            frames are dropped; they are decoded again when it scrolls back.
     """
 
     browse_row_height: int = 135
     annotator_row_height: int = 200
+    auto_scroll: bool = True
+    page_size: int = 10
+    embed_ttl_seconds: int = 60
+    unload_after_seconds: int = 20
 
 
 def _seed_registry() -> SourceRegistry:
@@ -56,7 +67,7 @@ def _seed_registry() -> SourceRegistry:
             DataSource(
                 SourceKind.CSV,
                 Path(settings.participants_file),
-                role=CsvRole.MAIN_CHARACTER,
+                role=CsvRole.PROTAGONIST,
                 key_column=DEFAULT_KEY_COLUMN,
                 value_columns=(DEFAULT_VALUE_COLUMN,),
             )

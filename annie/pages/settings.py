@@ -218,7 +218,7 @@ def render() -> None:
         ui.label("Settings").classes("text-xl font-medium")
 
         with ui.card().classes("w-full"):
-            ui.label("Layout").classes("font-medium")
+            ui.label("Browse & Annotator").classes("font-medium")
             ui.label("Row height sizes every thumbnail, strip frame, and render box.").classes(
                 "text-xs"
             ).style(f"color:{theme.NEUTRAL}")
@@ -250,6 +250,75 @@ def render() -> None:
                 annotator.refresh()
 
             annot_h.on("blur", lambda _: set_annot_height())
+
+            ui.separator()
+
+            # Read live by annie.pages.paging on every sentinel event, so toggling
+            # this takes effect on the open lists without rebuilding them.
+            ui.checkbox(
+                "Auto scroll",
+                value=state.ui.auto_scroll,
+                on_change=lambda e: setattr(state.ui, "auto_scroll", bool(e.value)),
+            )
+            ui.label("Reveal the next rows on reaching the bottom, without clicking.").classes(
+                "text-xs"
+            ).style(f"color:{theme.NEUTRAL}")
+
+            rows_per_load = ui.number(
+                "Rows per load",
+                value=state.ui.page_size,
+                min=1,
+                step=1,
+                precision=0,
+            ).classes("w-64")
+
+            def set_page_size() -> None:
+                state.ui.page_size = max(1, int(rows_per_load.value or state.ui.page_size))
+                rows_per_load.set_value(state.ui.page_size)
+                browse.refresh()
+                annotator.refresh()
+
+            rows_per_load.on("blur", lambda _: set_page_size())
+
+            embed_ttl = ui.number(
+                "Unembed played clips after (seconds)",
+                value=state.ui.embed_ttl_seconds,
+                min=5,
+                step=5,
+                precision=0,
+            ).classes("w-64")
+            ui.label(
+                "A played clip reverts to its placeholder, releasing the video "
+                "buffered in this browser tab."
+            ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+
+            def set_embed_ttl() -> None:
+                state.ui.embed_ttl_seconds = max(
+                    5, int(embed_ttl.value or state.ui.embed_ttl_seconds)
+                )
+                embed_ttl.set_value(state.ui.embed_ttl_seconds)
+
+            embed_ttl.on("blur", lambda _: set_embed_ttl())
+
+            unload_after = ui.number(
+                "Unload off-screen rows after (seconds)",
+                value=state.ui.unload_after_seconds,
+                min=5,
+                step=5,
+                precision=0,
+            ).classes("w-64")
+            ui.label(
+                "A row scrolled well past drops its preview frames and decodes them "
+                "again on the way back. Raise it to trade memory for fewer redecodes."
+            ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+
+            def set_unload_after() -> None:
+                state.ui.unload_after_seconds = max(
+                    5, int(unload_after.value or state.ui.unload_after_seconds)
+                )
+                unload_after.set_value(state.ui.unload_after_seconds)
+
+            unload_after.on("blur", lambda _: set_unload_after())
 
         with ui.card().classes("w-full"):
             ui.label("Review status export / import").classes("font-medium")

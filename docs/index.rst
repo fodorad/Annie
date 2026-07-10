@@ -19,13 +19,13 @@ Highlights
   torchcodec-validated form (uniform audio, constant-frame-rate H.264) with a live
   batch-progress readout.
 - **Dataset tab** — build a dataset from an ordered set of **data sources** (videos
-  folder, vdet/track folders, and any number of label/main-character CSVs); each
+  folder, vdet/track folders, and any number of label/protagonist CSVs); each
   source scans in place — no Scan button — with live counts and per-source
   availability.
 - **Browse tab** — a scrollable, **one-row-per-video** visualizer with a filter
   bar: thumbnail, five-frame strip, on-the-fly annotated render, label tags, and
   good/bad/note review controls.
-- **Annotator tab** — fix the **main-character track** for videos queued from
+- **Annotator tab** — fix the **protagonist track** for videos queued from
   Browse: pick a track, see it re-render, save, and export the corrected
   datasource as CSV.
 - **Settings tab** — row height, render-cache controls, and review-status
@@ -105,7 +105,7 @@ Data model
   ``__track{N}.csv`` follows one face across frames.
 - Each video is aggregated into **one Browse row** carrying its ``.vdet`` and all
   of its tracks — not a per-file fan-out.
-- The active "main character" track resolves **manual ▸ source ▸ -1**; manual
+- The active "protagonist" track resolves **manual ▸ source ▸ -1**; manual
   corrections are written to ``participant_face_track_heuristic_manual.csv`` and
   never overwrite the pristine heuristic file.
 

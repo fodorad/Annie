@@ -89,6 +89,52 @@ class TestConfigIO(unittest.TestCase):
             loaded.label_sources[0].column_types, {"sentiment": "float", "subset": "str"}
         )
 
+    def test_legacy_role_config_loads_as_protagonist(self) -> None:
+        """A config written before the protagonist rename still loads."""
+        cfg_dir = self.tmp / "legacy"
+        cfg_dir.mkdir(parents=True)
+        (cfg_dir / "mc.csv").write_text("uuid,track_id\nv1,0\n", encoding="utf-8")
+        (cfg_dir / "legacy.json").write_text(
+            json.dumps(
+                {
+                    "name": "Legacy",
+                    "sources": [
+                        {
+                            "kind": "csv",
+                            "path": "mc.csv",
+                            "role": "main_character",
+                            "key_column": "uuid",
+                            "value_columns": ["track_id"],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        _name, reg, _db = datasets.load_config(cfg_dir / "legacy.json")
+        protagonist = reg.protagonist
+        assert protagonist is not None
+        self.assertEqual(protagonist.value_columns, ("track_id",))
+        self.assertEqual(reg.label_sources, [])
+
+    def test_legacy_role_config_migrates_on_resave(self) -> None:
+        """Loading a legacy config and saving it writes the new role value."""
+        cfg_dir = self.tmp / "migrate"
+        cfg_dir.mkdir(parents=True)
+        reg = SourceRegistry()
+        reg.add(
+            DataSource(
+                SourceKind.CSV,
+                cfg_dir / "mc.csv",
+                role=CsvRole("main_character"),
+                key_column="uuid",
+                value_columns=("track_id",),
+            )
+        )
+        out = datasets.save_config(cfg_dir / "m.json", reg, "M", relative_to=cfg_dir)
+        raw = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(raw["sources"][0]["role"], "protagonist")
+
     def test_bundled_example_config_is_valid(self) -> None:
         bundled = datasets.bundled_config_dir() / "mosei_mini.json"
         self.assertTrue(bundled.is_file(), "the bundled example config should exist")

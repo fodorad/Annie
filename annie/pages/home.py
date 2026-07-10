@@ -36,7 +36,7 @@ _FEATURES: tuple[tuple[str, str, str, str, str], ...] = (
         theme.VDET_COLOR,
         "Dataset",
         "Compose your dataset from multiple sources: a videos folder, detection "
-        "and track directories, and any number of label or main-character CSVs. "
+        "and track directories, and any number of label or protagonist CSVs. "
         "Coverage metrics update instantly.",
     ),
     (
@@ -53,7 +53,7 @@ _FEATURES: tuple[tuple[str, str, str, str, str], ...] = (
         "edit",
         theme.ACCENT,
         "Annotator",
-        "Review and correct the main character track for each queued video. "
+        "Review and correct the protagonist track for each queued video. "
         "Changes are applied and saved instantly, and a corrected CSV can be "
         "exported at any time.",
     ),
