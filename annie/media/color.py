@@ -14,7 +14,7 @@ Drawing rules (from the design):
 2. **tracks available** — each track gets a **stable colour** keyed by
    ``track_id``, drawn identically on every frame. The palette excludes the two
    reserved colours, blue and green.
-3. **active / main-character track** — always **green**, overriding its palette
+3. **active / protagonist track** — always **green**, overriding its palette
    colour.
 4. each box is labelled with its ``track_id`` as a small number at the top-left.
 """
@@ -33,7 +33,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 BLUE = (0, 0, 255)
 """Raw vdet detections."""
 GREEN = (0, 255, 0)
-"""The active / main-character track."""
+"""The active / protagonist track."""
 
 TRACK_PALETTE: tuple[tuple[int, int, int], ...] = (
     (239, 68, 68),  # red
@@ -58,13 +58,13 @@ track is always the same colour.
 def color_for_track(track_id: int, *, active: bool = False) -> tuple[int, int, int]:
     """Return the stable RGB colour for a track.
 
-    The active (main-character) track short-circuits to :data:`GREEN` before the
+    The active (protagonist) track short-circuits to :data:`GREEN` before the
     palette is consulted; otherwise the colour is a deterministic function of
     ``track_id`` drawn from :data:`TRACK_PALETTE` (never blue or green).
 
     Args:
         track_id: The track index.
-        active: Whether this is the active / main-character track.
+        active: Whether this is the active / protagonist track.
 
     Returns:
         An ``(r, g, b)`` colour tuple.
@@ -132,7 +132,7 @@ def hit_test(
 ) -> int | None:
     """Return the ``track_id`` of the box under a click, or ``None``.
 
-    Used by the main-character correction flow: the click is tested against every
+    Used by the protagonist correction flow: the click is tested against every
     box on the frame. When boxes overlap, the smallest enclosing box wins by
     default (configurable), which makes it possible to select a face nested
     inside a larger one.

@@ -2,7 +2,7 @@
 
 This holds *curation* state per video — a good/bad verdict, an optional note, and
 an "add to annotator" flag — not fine-grained annotation content (that lives in
-the main-character ``_manual`` CSV and, later, per-video JSON). The store is a real
+the protagonist ``_manual`` CSV and, later, per-video JSON). The store is a real
 file (default ``~/.annie/annie.db``) so it survives restarts, and is keyed by
 :attr:`annie.models.VideoEntry.key`.
 

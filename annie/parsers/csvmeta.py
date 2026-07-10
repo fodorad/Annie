@@ -1,4 +1,4 @@
-"""Generic CSV metadata parser for label / main-character sources (domain).
+"""Generic CSV metadata parser for label / protagonist sources (domain).
 
 Unlike the fixed 17-column detection schema (:mod:`annie.parsers.base`), a label
 CSV has an arbitrary shape: the user picks which column joins to the video id (the

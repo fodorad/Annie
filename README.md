@@ -41,9 +41,9 @@ face tracks), but Annie is dataset-agnostic.
 |---|---|
 | **Home** | A landing page (the default) summarising each tab; click a card to jump there. |
 | **Convert** | Re-encode an audio/video dataset to a consistent, **torchcodec-validated** form: uniform audio (format/rate/channels) and constant-frame-rate H.264 video, with explicit audio muxing (or black-frame videos for audio-only). A background batch shows live `X/Y` progress, %, elapsed, and ETA. |
-| **Dataset** | Build the dataset from a list of **data sources** (videos folder, vdet/track folders, and any number of label/main-character CSVs). Add a source and it scans in place — no Scan button — with live counts and an Available/Unavailable chip per source. |
+| **Dataset** | Build the dataset from a list of **data sources** (videos folder, vdet/track folders, and any number of label/protagonist CSVs). Add a source and it scans in place — no Scan button — with live counts and an Available/Unavailable chip per source. |
 | **Browse** | Scrollable, per-video visualizer with an always-visible **filter bar** (name, video/audio/vdet/track presence, review, labels): an ORIGINAL placeholder, five-frame strip, on-the-fly annotated render, media/annotation/label tags, and per-video review (liked by default, dislike, note, "Add to Annotator"). Row height is configurable. |
-| **Annotator** | Greys out until videos are queued from Browse; then shows only those, in taller rows, to fix the **main-character track** — pick a track, see it re-render green, **Save**, and export the corrected datasource as CSV. |
+| **Annotator** | Greys out until videos are queued from Browse; then shows only those, in taller rows, to fix the **protagonist track** — pick a track, see it re-render green, **Save**, and export the corrected datasource as CSV. |
 | **Settings** | Browse/Annotator row height, render-cache TTL, and review-status export/import (CSV/JSON). |
 
 ### Highlights
@@ -60,7 +60,7 @@ face tracks), but Annie is dataset-agnostic.
   with `exact` mode for the annotator and `approximate` for fast scrubbing.
 - **Render-on-demand** — a background job burns annotations into a browser-playable
   clip (libx264 via FFmpeg, audio muxed back); temp clips auto-purge on a TTL.
-- **Main-character correction** — pick the true main character; the fix is written
+- **Protagonist correction** — pick the true protagonist; the fix is written
   to a separate `_manual` file (resolution `manual ▸ source ▸ -1`) so human
   judgement never overwrites the pristine heuristic record, and the resolved
   datasource exports to a standalone CSV.
@@ -164,8 +164,8 @@ nose_x, nose_y, left_mouth_x, left_mouth_y, right_mouth_x, right_mouth_y
 
 - **`.vdet`** — all raw detections for a video; may have several rows per frame.
 - **`{video_id}__track{N}.csv`** — one tracked face across frames (one row/frame).
-- **main-character CSV** — e.g. `participant_face_track_heuristic.csv` with
-  `uuid,track_id`, the active main character per video (`-1` = none). The key and
+- **protagonist CSV** — e.g. `participant_face_track_heuristic.csv` with
+  `uuid,track_id`, the active protagonist per video (`-1` = none). The key and
   track-id columns are chosen when the source is added; manual corrections go to
   the `_manual` sibling.
 - **label CSV** — any CSV; pick a key column (joined to the video id) and value

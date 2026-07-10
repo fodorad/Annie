@@ -1,7 +1,7 @@
 """Build Browse preview images for a video (service; needs the ``media`` extra).
 
 Produces the static thumbnail (clean first frame) and the annotated five-frame
-strip (vdet boxes in blue, the main-character track in green) shown on each Browse
+strip (vdet boxes in blue, the protagonist track in green) shown on each Browse
 row. Decoding is lazy via :mod:`annie.decode`, so importing this module never
 requires torch; call :func:`annie.decode.media_available` before using it.
 """
@@ -20,23 +20,44 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from annie.core.models import VideoEntry
 
 
-def to_data_uri(image: Image.Image) -> str:
-    """Encode a PIL image as a self-contained ``data:`` PNG URI.
+#: Oversampling factor applied to a box's CSS size, so previews stay crisp on
+#: HiDPI/Retina displays without paying for the full decoded frame.
+HIDPI_SCALE = 2
+
+#: WebP quality for preview frames. High enough that the thin overlay boxes stay
+#: clean; low enough that a strip frame costs ~12 KB instead of ~180 KB as PNG.
+_WEBP_QUALITY = 80
+
+
+def to_data_uri(image: Image.Image, box: tuple[int, int] | None = None) -> str:
+    """Encode a PIL image as a self-contained ``data:`` WebP URI.
 
     Embedding the pixels in the element (rather than serving a per-client temp
     file) means a thumbnail/strip frame never produces an orphaned static route
-    that 404s after a reconnect.
+    that 404s after a reconnect. The flip side is that every embedded frame is
+    held in memory twice — server-side in the element's props, and again in the
+    browser tab — for as long as its row is on the page. So the image is first
+    downscaled to the box it will actually be displayed in (times
+    :data:`HIDPI_SCALE`) and encoded as lossy WebP rather than lossless PNG,
+    which cuts a Browse row's payload by roughly 15x.
 
     Args:
         image: The image to encode.
+        box: The ``(width, height)`` CSS size of the element that will show the
+            image. The image is shrunk to fit ``HIDPI_SCALE`` times this,
+            preserving aspect ratio. ``None`` encodes at full resolution.
 
     Returns:
-        A ``data:image/png;base64,…`` string usable as a ``ui.image`` source.
+        A ``data:image/webp;base64,…`` string usable as a ``ui.image`` source.
     """
+    if box is not None:
+        width, height = box
+        image = image.copy()
+        image.thumbnail((width * HIDPI_SCALE, height * HIDPI_SCALE), Image.Resampling.LANCZOS)
     buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
+    image.save(buffer, format="WEBP", quality=_WEBP_QUALITY)
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
-    return f"data:image/png;base64,{encoded}"
+    return f"data:image/webp;base64,{encoded}"
 
 
 def build_preview(entry: VideoEntry, count: int = 5) -> tuple[Image.Image, list[Image.Image], int]:

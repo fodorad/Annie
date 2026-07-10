@@ -39,8 +39,10 @@ from annie.media.preview import build_preview, to_data_uri
 from annie.media.rendering import JobStatus
 from annie.pages import annotator
 from annie.pages.lazy import schedule
+from annie.pages.paging import paged
 from annie.pages.reveal import is_docker, reveal
-from annie.pages.utils import _alive
+from annie.pages.utils import _alive, unembed_after_idle
+from annie.pages.viewport import observe_row
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -49,8 +51,6 @@ if TYPE_CHECKING:
     from annie.core.models import VideoEntry
     from annie.dataset.storage import Verdict
 
-#: Number of Browse rows revealed per "load more" step (initial page size).
-_PAGE_SIZE = 8
 #: Shared CSS for the grey, centred media placeholder boxes (ORIGINAL / render slots).
 _BOX = "border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center"
 #: Whether Annie runs inside Docker. Evaluated once at import — the container
@@ -277,22 +277,29 @@ def _original_box(entry: VideoEntry) -> None:
         .classes("items-center justify-center")
         .style(f"width:{width}px;height:{height}px;{_BOX}")
     )
-    with box:
-        if entry.video_path is None:
+    if entry.video_path is None:
+        with box:
             ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("audio only — no video frames")
+        return
+    video_path = entry.video_path
+
+    def reset() -> None:
+        """Restore the cheap ORIGINAL placeholder, dropping any embedded clip."""
+        box.clear()
+        with box:
+            ui.button("ORIGINAL", icon="play_circle", on_click=play).props("flat dense")
+
+    def play() -> None:
+        if not video_path.exists():
+            logbook.report(f"Video file not found: {video_path}")
+            ui.notify(f"File not found: {video_path.name}", color=theme.DANGER)
             return
-        video_path = entry.video_path
+        box.clear()
+        with box:
+            ui.video(video_path, autoplay=True).style(f"width:{width}px;height:{height}px")
+        unembed_after_idle(box, reset)
 
-        def play() -> None:
-            if not video_path.exists():
-                logbook.report(f"Video file not found: {video_path}")
-                ui.notify(f"File not found: {video_path.name}", color=theme.DANGER)
-                return
-            box.clear()
-            with box:
-                ui.video(video_path, autoplay=True).style(f"width:{width}px;height:{height}px")
-
-        ui.button("ORIGINAL", icon="play_circle", on_click=play).props("flat dense")
+    reset()
 
 
 def _strip() -> list[ui.element]:
@@ -314,25 +321,35 @@ def _render_box(entry: VideoEntry) -> None:
         .style(f"width:{width}px;height:{height}px;{_BOX}")
     )
 
+    def reset() -> None:
+        """Restore the idle render button, dropping any embedded clip."""
+        box.clear()
+        with box:
+            if entry.has_video:
+                ui.button("render", icon="movie", on_click=start_render).props("flat dense")
+            else:
+                ui.icon("movie_filter", color=theme.NEUTRAL).tooltip("no video to render")
+
     def start_render() -> None:
         box.clear()
         with box:
             ui.spinner(size="lg")
         job_id = state.renderer.submit(entry)
-        background_tasks.create(_watch_render(job_id, box, width, height), name="annie-render")
+        background_tasks.create(
+            _watch_render(job_id, box, width, height, reset), name="annie-render"
+        )
 
-    with box:
-        if entry.has_video:
-            ui.button("render", icon="movie", on_click=start_render).props("flat dense")
-        else:
-            ui.icon("movie_filter", color=theme.NEUTRAL).tooltip("no video to render")
+    reset()
 
 
-async def _watch_render(job_id: str, box: ui.element, width: int, height: int) -> None:
+async def _watch_render(
+    job_id: str, box: ui.element, width: int, height: int, restore: Callable[[], None]
+) -> None:
     """Poll a render job from a background task and embed the clip when it's done.
 
     Guards every UI mutation so a body refresh mid-render stops the watcher cleanly
-    instead of raising from a deleted slot.
+    instead of raising from a deleted slot. ``restore`` rebuilds the idle button once
+    the embedded clip has sat idle, so rendered clips do not pile up in the tab.
     """
     while True:
         job = state.renderer.get(job_id)
@@ -347,6 +364,7 @@ async def _watch_render(job_id: str, box: ui.element, width: int, height: int) -
                     ui.video(job.output_path, autoplay=True).style(
                         f"width:{width}px;height:{height}px"
                     )
+                unembed_after_idle(box, restore)
                 return
             if job.status is JobStatus.FAILED:
                 box.clear()
@@ -398,7 +416,7 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
         for slot, frame in zip(strip, frames, strict=False):
             slot.clear()
             with slot:
-                ui.image(to_data_uri(frame)).style(f"width:{sw}px;height:{sh}px")
+                ui.image(to_data_uri(frame, (sw, sh))).style(f"width:{sw}px;height:{sh}px")
     except RuntimeError:
         return  # the row was refreshed away mid-decode
 
@@ -429,10 +447,18 @@ async def _probe_audio(entry: VideoEntry, badges: _RowBadges) -> None:
 
 
 def _row_card(entry: VideoEntry, *, can_decode: bool) -> None:
-    """Render one per-video row as three stacked lines: name+tags, media, controls."""
-    with ui.card().classes("w-full gap-2"):
-        # 1) name, 1em, the reveal icon, 1em, then the tags
+    """Render one per-video row as three stacked lines: name+tags, media, controls.
+
+    The strip frames are dropped once the row has been scrolled well past (see
+    :mod:`annie.pages.viewport`) and decoded again when it returns; the slots keep
+    their fixed size either way, so the page never reflows underneath the reviewer.
+    """
+    with ui.card().classes("w-full gap-2 relative"):
+        # 1) row number, name, 1em, the reveal icon, 1em, then the tags
         with ui.row().classes("items-center gap-0 wrap"):
+            ui.badge(f"#{entry.row_id}", color=theme.NEUTRAL).classes("mr-2").tooltip(
+                "This sample's number in the dataset — type it into 'Jump to row'"
+            )
             ui.label(entry.label).classes("font-medium break-all")
             ui.element("div").style("min-width:1em")
             _reveal_button(entry)
@@ -453,8 +479,21 @@ def _row_card(entry: VideoEntry, *, can_decode: bool) -> None:
         with ui.row().classes("items-center gap-2 wrap"):
             _review_controls(entry)
 
+        if can_decode and entry.has_video:
+            observe_row(
+                load=lambda: schedule(_host(), lambda: _populate(entry, strip, badges)),
+                unload=lambda: _clear_strip(strip),
+            )
+
     if can_decode and entry.has_video:
         schedule(_host(), lambda: _populate(entry, strip, badges))
+
+
+def _clear_strip(strip: list[ui.element]) -> None:
+    """Drop the decoded frames, leaving the grey placeholder slots they started as."""
+    for slot in strip:
+        if _alive(slot):
+            slot.clear()
 
 
 # ── filter bar ───────────────────────────────────────────────────────────────
@@ -670,19 +709,12 @@ def _rows() -> None:
         ui.label("No videos match the filters.").style(f"color:{theme.NEUTRAL}")
         return
 
-    body = ui.column().classes("w-full gap-2")
-    shown = {"n": 0}
-
-    def show_more() -> None:
-        with body:
-            for entry in entries[shown["n"] : shown["n"] + _PAGE_SIZE]:
-                _row_card(entry, can_decode=can_decode)
-        shown["n"] = min(shown["n"] + _PAGE_SIZE, len(entries))
-        more.set_visibility(shown["n"] < len(entries))
-        more.set_text(f"Show more ({len(entries) - shown['n']} left)")
-
-    more = ui.button("Show more", on_click=show_more).props("flat")
-    show_more()
+    paged(
+        entries,
+        lambda entry: _row_card(entry, can_decode=can_decode),
+        row_id=lambda entry: entry.row_id,
+        total_rows=len(state.scan.entries),
+    )
 
 
 def _jump_to_top() -> None:

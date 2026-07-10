@@ -78,7 +78,7 @@ correct version bump is signalled automatically (via release-please).
 fix: skip macOS AppleDouble (._*) files during scan
 feat: add 5-frame strip thumbnails to Browse rows
 feat!: rename scan_dataset(annotations_dir=) -> annotations_root=
-docs: document main-character correction flow
+docs: document protagonist correction flow
 chore: bump torchcodec to 0.12 / torch 2.12
 ```
 

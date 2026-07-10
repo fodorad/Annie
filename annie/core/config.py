@@ -64,7 +64,7 @@ class Settings:
         videos_dir: Folder of source ``.mp4`` files (env ``ANNIE_VIDEOS_DIR``).
         vdet_dir: Folder of raw-detection ``.vdet`` files (env ``ANNIE_VDET_DIR``).
         track_dir: Folder of ``__track{N}.csv`` files (env ``ANNIE_TRACK_DIR``).
-        participants_file: The main-character heuristic CSV (``uuid,track_id``);
+        participants_file: The protagonist heuristic CSV (``uuid,track_id``);
             manual corrections are written to its ``_manual`` sibling
             (env ``ANNIE_PARTICIPANTS_FILE``).
         labels_csv: A labels CSV file to seed as a label source on startup
@@ -98,7 +98,7 @@ class Settings:
         vdet_extension: Suffix identifying a raw-detection file.
         track_glob: Glob identifying derived single-track files.
         render_max_workers: Maximum concurrent render jobs.
-        temp_ttl_seconds: Age after which a rendered clip is swept.
+        temp_ttl_seconds: Age after which a rendered clip is swept (default 3 minutes).
         host: Interface the NiceGUI server binds to.
         port: Port the NiceGUI server listens on.
     """
@@ -136,7 +136,7 @@ class Settings:
     vdet_extension: str = ".vdet"
     track_glob: str = "*__track*.csv"
     render_max_workers: int = field(default_factory=lambda: _env_int("ANNIE_RENDER_WORKERS", 2))
-    temp_ttl_seconds: int = field(default_factory=lambda: _env_int("ANNIE_TEMP_TTL", 900))
+    temp_ttl_seconds: int = field(default_factory=lambda: _env_int("ANNIE_TEMP_TTL", 180))
     host: str = field(default_factory=lambda: os.environ.get("ANNIE_HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: _env_int("ANNIE_PORT", 8080))
 
