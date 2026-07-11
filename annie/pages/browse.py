@@ -35,7 +35,7 @@ from annie.dataset import manipulate
 from annie.dataset.filtering import FilterSpec, apply_filters
 from annie.media import probe
 from annie.media.decode import media_available
-from annie.media.preview import build_preview, to_data_uri
+from annie.media.preview import build_grid_preview, build_preview, to_data_uri
 from annie.media.rendering import JobStatus
 from annie.pages import annotator
 from annie.pages.lazy import schedule
@@ -70,11 +70,15 @@ class _BrowseState:
         spec: The active filter snapshot for this client.
         transforms: Per-label-column transform settings for this client.
         timer_host: The persistent hidden element used as a timer parent at build time.
+        view_mode: ``"detailed"`` (full rows) or ``"grid"`` (Quick selection grid).
+        jump_slot: The View-panel element that :func:`paged` builds the Jump card into.
     """
 
     spec: FilterSpec = field(default_factory=FilterSpec)
     transforms: dict[str, manipulate.Transform] = field(default_factory=dict)
     timer_host: ui.element | None = None
+    view_mode: str = "detailed"
+    jump_slot: ui.element | None = None
 
 
 #: Per-client state registry; cleaned up on disconnect in :func:`render`.
@@ -145,6 +149,12 @@ def _host() -> ui.element:
 def _media_dims() -> tuple[int, int]:
     """Return the ``(width, height)`` in px for every media box (16:9 by height)."""
     height = state.ui.browse_row_height
+    return round(height * 16 / 9), height
+
+
+def _grid_dims() -> tuple[int, int]:
+    """Return the ``(width, height)`` in px for a Quick-selection grid box (16:9)."""
+    height = state.ui.grid_thumb_height
     return round(height * 16 / 9), height
 
 
@@ -496,6 +506,124 @@ def _clear_strip(strip: list[ui.element]) -> None:
             slot.clear()
 
 
+# ── quick-selection grid ─────────────────────────────────────────────────────
+
+
+#: Translucent tint (SUCCESS teal) laid over a selected grid box.
+_GRID_TINT = "rgba(42,157,143,0.22)"
+
+
+def _grid_box(entry: VideoEntry, *, can_decode: bool) -> None:
+    """Render one video as a dense grid box: middle frame, row# badge, select state.
+
+    Clicking the box toggles "Add to Annotator" exactly like the row control does,
+    and its selected state is painted clearly: an inset ring, a tint, and a check
+    badge. The state is read fresh from the store on every (re)build, so returning
+    from the Annotator — where a video may have been dequeued — shows only the videos
+    still queued as selected. The middle frame decodes lazily and is dropped on a
+    short off-screen delay, decoding again when the box scrolls back; the box keeps
+    its fixed size, so nothing reflows.
+    """
+    width, height = _grid_dims()
+    review = state.review_state(entry.key)
+    selected = {"value": review.in_annotator}
+
+    box = (
+        ui.element("div")
+        .classes("relative cursor-pointer")
+        .style(
+            f"width:{width}px;height:{height}px;border-radius:8px;background:#e5e7eb;overflow:hidden"
+        )
+    )
+    with box:
+        slot = ui.element("div").style(
+            "position:absolute;inset:0;display:flex;align-items:center;justify-content:center"
+        )
+        if not entry.has_video:
+            with slot:
+                ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("audio only — no video frames")
+        # The selection ring/tint sits above the frame so it is never hidden by it.
+        overlay = ui.element("div").style(
+            "position:absolute;inset:0;border-radius:8px;pointer-events:none;z-index:3"
+        )
+        check = ui.icon("check_circle", color=theme.SUCCESS).style(
+            "position:absolute;top:2px;right:2px;z-index:5;font-size:22px;"
+            "background:white;border-radius:50%"
+        )
+        ui.badge(f"#{entry.row_id}", color=theme.NEUTRAL).style(
+            "position:absolute;top:2px;left:2px;z-index:5;opacity:0.85"
+        )
+        # The video id, mirrored bottom-left; truncated to the box, full name on hover.
+        ui.badge(entry.label, color=theme.NEUTRAL).style(
+            "position:absolute;bottom:2px;left:2px;z-index:5;opacity:0.85;"
+            "max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+        )
+        ui.tooltip(entry.label).props("delay=400")
+
+        def paint() -> None:
+            if selected["value"]:
+                overlay.style(f"box-shadow:inset 0 0 0 4px {theme.SUCCESS};background:{_GRID_TINT}")
+                check.set_visibility(True)
+            else:
+                overlay.style("box-shadow:none;background:transparent")
+                check.set_visibility(False)
+
+        def toggle() -> None:
+            selected["value"] = not selected["value"]
+            state.store.set_annotate(entry.key, entry.video_id, None, selected["value"])
+            annotator.update_availability()
+            paint()
+
+        box.on("click", lambda: toggle())
+        paint()
+
+        if can_decode and entry.has_video:
+            observe_row(
+                load=lambda: schedule(_host(), lambda: _populate_grid(entry, slot)),
+                unload=lambda: _clear_grid(slot),
+                delay=state.ui.grid_unload_after_seconds,
+            )
+
+    if can_decode and entry.has_video:
+        schedule(_host(), lambda: _populate_grid(entry, slot))
+
+
+async def _populate_grid(entry: VideoEntry, slot: ui.element) -> None:
+    """Decode the middle annotated frame into a grid box (guarded like _populate)."""
+    if not _alive(slot):
+        return
+    try:
+        await slot.client.connected()  # the task may start before the socket connects
+    except Exception:  # noqa: BLE001 - client never connected / already gone
+        return
+
+    width, height = _grid_dims()
+    try:
+        result = await run.io_bound(build_grid_preview, entry)
+    except Exception:  # noqa: BLE001 - a bad/missing file must not break the box
+        return  # leave the grey placeholder in place
+    if result is None:
+        return  # NiceGUI's io_bound yields None while the app is shutting down
+    image, num_frames = result
+    state.frames_cache[entry.key] = num_frames
+    if not _alive(slot):
+        return  # the page was reloaded/closed during the decode
+    try:
+        slot.clear()
+        with slot:
+            ui.image(to_data_uri(image, (width, height))).style(
+                f"width:{width}px;height:{height}px"
+            )
+    except RuntimeError:
+        return  # the box was refreshed away mid-decode
+
+
+def _clear_grid(slot: ui.element) -> None:
+    """Drop a grid box's decoded frame, revealing the grey placeholder box beneath."""
+    if _alive(slot):
+        slot.clear()
+
+
 # ── filter bar ───────────────────────────────────────────────────────────────
 
 
@@ -691,11 +819,37 @@ def _manipulate() -> None:
 # ── body ─────────────────────────────────────────────────────────────────────
 
 
+def _view() -> None:
+    """Build the View panel (open by default): Jump to row, then the mode toggle.
+
+    The Jump card itself is rendered by :func:`paged` into ``jump_slot`` so it stays
+    wired to the live pager; here we only reserve its slot and the Detailed/Grid
+    switch that flips :attr:`_BrowseState.view_mode`.
+    """
+    with ui.expansion("View", icon="visibility", value=True).classes("w-full"):
+        _state().jump_slot = ui.column().classes("w-full gap-0")
+        with ui.row().classes("items-center gap-2"):
+            ui.label("Quick view").classes("text-sm").style(f"color:{theme.NEUTRAL}")
+            toggle = ui.toggle(
+                {"detailed": "Detailed", "grid": "Quick selection"},
+                value=_state().view_mode,
+            ).props("dense")
+
+            def switch(value: str) -> None:
+                _state().view_mode = value
+                _rows.refresh()
+
+            toggle.on_value_change(lambda e: switch(e.value))
+
+
 @ui.refreshable
 def _rows() -> None:
-    """Build the filtered, paged rows."""
+    """Build the filtered, paged rows (detailed) or boxes (grid)."""
     if state.scan is None:
         return
+    slot = _state().jump_slot
+    if slot is not None and _alive(slot):
+        slot.clear()  # covers the empty-results path, where paged() never runs
     can_decode = media_available()
     entries = apply_filters(
         state.scan.entries,
@@ -709,11 +863,24 @@ def _rows() -> None:
         ui.label("No videos match the filters.").style(f"color:{theme.NEUTRAL}")
         return
 
+    if _state().view_mode == "grid":
+        paged(
+            entries,
+            lambda entry: _grid_box(entry, can_decode=can_decode),
+            row_id=lambda entry: entry.row_id,
+            total_rows=len(state.scan.entries),
+            container=lambda: ui.row().classes("w-full gap-2").style("flex-wrap:wrap"),
+            page_size=state.ui.grid_page_size,
+            jump_slot=slot,
+        )
+        return
+
     paged(
         entries,
         lambda entry: _row_card(entry, can_decode=can_decode),
         row_id=lambda entry: entry.row_id,
         total_rows=len(state.scan.entries),
+        jump_slot=slot,
     )
 
 
@@ -743,8 +910,9 @@ def _content() -> None:
             ).classes("text-xs").style(f"color:{theme.WARNING}")
 
         _manipulate()
-        with ui.expansion("Filter", icon="filter_alt", value=True).classes("w-full"):
+        with ui.expansion("Filter", icon="filter_alt", value=False).classes("w-full"):
             _filters()
+        _view()
         _rows()
         _jump_to_top()
 

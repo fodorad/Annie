@@ -97,3 +97,45 @@ def build_preview(entry: VideoEntry, count: int = 5) -> tuple[Image.Image, list[
         for idx, frame in zip(indices, frames, strict=True)
     ]
     return thumbnail, strip, num_frames
+
+
+def build_grid_preview(entry: VideoEntry) -> tuple[Image.Image, int]:
+    """Decode a video's middle (½) frame with its annotations drawn on it.
+
+    The Browse grid view shows a single static frame per video, so this is the fast
+    counterpart to :func:`build_preview`: it decodes only three sample frames in one
+    pass and keeps the middle one. ``"approximate"`` seek is safe here because the
+    middle index — unlike the strip's last frame — never risks the tail overshoot
+    that :func:`annie.media.decode.read_strip` guards against with ``"exact"`` mode.
+
+    Args:
+        entry: The video to preview; ``entry.video_path`` must be set.
+
+    Returns:
+        An ``(image, num_frames)`` pair: the annotated middle frame (vdet blue,
+        active track green) and the video's total frame count.
+
+    Raises:
+        ValueError: If the entry has no video to decode.
+        annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.
+    """
+    if entry.video_path is None:
+        raise ValueError("cannot build a preview for a video-less entry")
+
+    from annie.media import decode  # local import: optional media dependency
+    from annie.media.color import draw_overlay
+
+    indices, frames, num_frames = decode.read_strip(entry.video_path, 3, seek_mode="approximate")
+    if not frames:
+        raise ValueError(f"no frames decoded for {entry.video_path}")
+    vdet_by_frame, tracks_by_id = load_entry_annotations(entry)
+    include = strip_track_ids(entry)
+
+    mid = len(frames) // 2  # of [first, ½, last] the middle sample is the ½ frame
+    image = draw_overlay(
+        frames[mid],
+        merge_frame(indices[mid], vdet_by_frame, tracks_by_id, include),
+        has_tracks=True,
+        active_track_id=entry.active_track_id,
+    )
+    return image, num_frames
