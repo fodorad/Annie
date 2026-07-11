@@ -400,7 +400,9 @@
 
 <div class="viewcode-block" id="observe_row">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/viewport/index.html#annie.pages.viewport.observe_row">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">observe_row</span><span class="p">(</span><span class="n">load</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">unload</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">observe_row</span><span class="p">(</span>
+    <span class="n">load</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">unload</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Watch the enclosing row and drop its images once it sits off screen.</span>
 
 <span class="sd">    Must be called inside a **relatively positioned** container (the row card); the</span>
@@ -409,13 +411,16 @@
 <span class="sd">    Args:</span>
 <span class="sd">        load: Rebuilds the row&#39;s images. Called when a dropped row scrolls back in.</span>
 <span class="sd">        unload: Clears the row&#39;s images back to their placeholders.</span>
+<span class="sd">        delay: How long the row may sit off screen before its images are dropped.</span>
+<span class="sd">            Defaults to :attr:`annie.core.state.UiSettings.unload_after_seconds`; the</span>
+<span class="sd">            Browse grid view passes a shorter value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">observer</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;q-intersection&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;margin=</span><span class="si">{</span><span class="n">_MARGIN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">observer</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;position:absolute;inset:0;pointer-events:none;z-index:-1&quot;</span><span class="p">)</span>
     <span class="n">gate</span> <span class="o">=</span> <span class="n">OffscreenGate</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_expire</span><span class="p">(</span><span class="n">generation</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">unload_after_seconds</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span> <span class="k">if</span> <span class="n">delay</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">unload_after_seconds</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gate</span><span class="o">.</span><span class="n">expire</span><span class="p">(</span><span class="n">generation</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">observer</span><span class="p">):</span>
             <span class="k">return</span>
         <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>

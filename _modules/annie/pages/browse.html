@@ -324,7 +324,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.filtering</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterSpec</span><span class="p">,</span> <span class="n">apply_filters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_preview</span><span class="p">,</span> <span class="n">to_data_uri</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_grid_preview</span><span class="p">,</span> <span class="n">build_preview</span><span class="p">,</span> <span class="n">to_data_uri</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.rendering</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
@@ -359,11 +359,15 @@
 <span class="sd">        spec: The active filter snapshot for this client.</span>
 <span class="sd">        transforms: Per-label-column transform settings for this client.</span>
 <span class="sd">        timer_host: The persistent hidden element used as a timer parent at build time.</span>
+<span class="sd">        view_mode: ``&quot;detailed&quot;`` (full rows) or ``&quot;grid&quot;`` (Quick selection grid).</span>
+<span class="sd">        jump_slot: The View-panel element that :func:`paged` builds the Jump card into.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">spec</span><span class="p">:</span> <span class="n">FilterSpec</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">FilterSpec</span><span class="p">)</span>
     <span class="n">transforms</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">manipulate</span><span class="o">.</span><span class="n">Transform</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">timer_host</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">view_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;detailed&quot;</span>
+    <span class="n">jump_slot</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="c1">#: Per-client state registry; cleaned up on disconnect in :func:`render`.</span>
@@ -434,6 +438,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_media_dims</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``(width, height)`` in px for every media box (16:9 by height).&quot;&quot;&quot;</span>
     <span class="n">height</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">browse_row_height</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">/</span> <span class="mi">9</span><span class="p">),</span> <span class="n">height</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_grid_dims</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``(width, height)`` in px for a Quick-selection grid box (16:9).&quot;&quot;&quot;</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">grid_thumb_height</span>
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">/</span> <span class="mi">9</span><span class="p">),</span> <span class="n">height</span>
 
 
@@ -785,6 +795,124 @@
             <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
 
+<span class="c1"># ── quick-selection grid ─────────────────────────────────────────────────────</span>
+
+
+<span class="c1">#: Translucent tint (SUCCESS teal) laid over a selected grid box.</span>
+<span class="n">_GRID_TINT</span> <span class="o">=</span> <span class="s2">&quot;rgba(42,157,143,0.22)&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_grid_box</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">can_decode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one video as a dense grid box: middle frame, row# badge, select state.</span>
+
+<span class="sd">    Clicking the box toggles &quot;Add to Annotator&quot; exactly like the row control does,</span>
+<span class="sd">    and its selected state is painted clearly: an inset ring, a tint, and a check</span>
+<span class="sd">    badge. The state is read fresh from the store on every (re)build, so returning</span>
+<span class="sd">    from the Annotator — where a video may have been dequeued — shows only the videos</span>
+<span class="sd">    still queued as selected. The middle frame decodes lazily and is dropped on a</span>
+<span class="sd">    short off-screen delay, decoding again when the box scrolls back; the box keeps</span>
+<span class="sd">    its fixed size, so nothing reflows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_grid_dims</span><span class="p">()</span>
+    <span class="n">review</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">review_state</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">review</span><span class="o">.</span><span class="n">in_annotator</span><span class="p">}</span>
+
+    <span class="n">box</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;relative cursor-pointer&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px;border-radius:8px;background:#e5e7eb;overflow:hidden&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
+        <span class="n">slot</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="s2">&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;videocam_off&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;audio only — no video frames&quot;</span><span class="p">)</span>
+        <span class="c1"># The selection ring/tint sits above the frame so it is never hidden by it.</span>
+        <span class="n">overlay</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="s2">&quot;position:absolute;inset:0;border-radius:8px;pointer-events:none;z-index:3&quot;</span>
+        <span class="p">)</span>
+        <span class="n">check</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;check_circle&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="s2">&quot;position:absolute;top:2px;right:2px;z-index:5;font-size:22px;&quot;</span>
+            <span class="s2">&quot;background:white;border-radius:50%&quot;</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;#</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">row_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="s2">&quot;position:absolute;top:2px;left:2px;z-index:5;opacity:0.85&quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># The video id, mirrored bottom-left; truncated to the box, full name on hover.</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="s2">&quot;position:absolute;bottom:2px;left:2px;z-index:5;opacity:0.85;&quot;</span>
+            <span class="s2">&quot;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap&quot;</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;delay=400&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">paint</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]:</span>
+                <span class="n">overlay</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;box-shadow:inset 0 0 0 4px </span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">SUCCESS</span><span class="si">}</span><span class="s2">;background:</span><span class="si">{</span><span class="n">_GRID_TINT</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">check</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">overlay</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;box-shadow:none;background:transparent&quot;</span><span class="p">)</span>
+                <span class="n">check</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">toggle</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_annotate</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+            <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
+            <span class="n">paint</span><span class="p">()</span>
+
+        <span class="n">box</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">toggle</span><span class="p">())</span>
+        <span class="n">paint</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">can_decode</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+            <span class="n">observe_row</span><span class="p">(</span>
+                <span class="n">load</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">schedule</span><span class="p">(</span><span class="n">_host</span><span class="p">(),</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_populate_grid</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">slot</span><span class="p">)),</span>
+                <span class="n">unload</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_clear_grid</span><span class="p">(</span><span class="n">slot</span><span class="p">),</span>
+                <span class="n">delay</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">grid_unload_after_seconds</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">can_decode</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
+        <span class="n">schedule</span><span class="p">(</span><span class="n">_host</span><span class="p">(),</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_populate_grid</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">slot</span><span class="p">))</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_populate_grid</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">slot</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode the middle annotated frame into a grid box (guarded like _populate).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">slot</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">connected</span><span class="p">()</span>  <span class="c1"># the task may start before the socket connects</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - client never connected / already gone</span>
+        <span class="k">return</span>
+
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_grid_dims</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">build_grid_preview</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the box</span>
+        <span class="k">return</span>  <span class="c1"># leave the grey placeholder in place</span>
+    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># NiceGUI&#39;s io_bound yields None while the app is shutting down</span>
+    <span class="n">image</span><span class="p">,</span> <span class="n">num_frames</span> <span class="o">=</span> <span class="n">result</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_frames</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
+        <span class="k">return</span>  <span class="c1"># the page was reloaded/closed during the decode</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">to_data_uri</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)))</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px&quot;</span>
+            <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># the box was refreshed away mid-decode</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clear_grid</span><span class="p">(</span><span class="n">slot</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop a grid box&#39;s decoded frame, revealing the grey placeholder box beneath.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
+        <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+
 <span class="c1"># ── filter bar ───────────────────────────────────────────────────────────────</span>
 
 
@@ -980,11 +1108,37 @@
 <span class="c1"># ── body ─────────────────────────────────────────────────────────────────────</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_view</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the View panel (open by default): Jump to row, then the mode toggle.</span>
+
+<span class="sd">    The Jump card itself is rendered by :func:`paged` into ``jump_slot`` so it stays</span>
+<span class="sd">    wired to the live pager; here we only reserve its slot and the Detailed/Grid</span>
+<span class="sd">    switch that flips :attr:`_BrowseState.view_mode`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">expansion</span><span class="p">(</span><span class="s2">&quot;View&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;visibility&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
+        <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">jump_slot</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-0&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Quick view&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-sm&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">toggle</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;detailed&quot;</span><span class="p">:</span> <span class="s2">&quot;Detailed&quot;</span><span class="p">,</span> <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="s2">&quot;Quick selection&quot;</span><span class="p">},</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">view_mode</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense&quot;</span><span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">switch</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">view_mode</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">_rows</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+            <span class="n">toggle</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">switch</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+
+
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the filtered, paged rows.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the filtered, paged rows (detailed) or boxes (grid).&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>
+    <span class="n">slot</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">jump_slot</span>
+    <span class="k">if</span> <span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
+        <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>  <span class="c1"># covers the empty-results path, where paged() never runs</span>
     <span class="n">can_decode</span> <span class="o">=</span> <span class="n">media_available</span><span class="p">()</span>
     <span class="n">entries</span> <span class="o">=</span> <span class="n">apply_filters</span><span class="p">(</span>
         <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span>
@@ -998,11 +1152,24 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;No videos match the filters.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
+    <span class="k">if</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">view_mode</span> <span class="o">==</span> <span class="s2">&quot;grid&quot;</span><span class="p">:</span>
+        <span class="n">paged</span><span class="p">(</span>
+            <span class="n">entries</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="n">_grid_box</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">can_decode</span><span class="o">=</span><span class="n">can_decode</span><span class="p">),</span>
+            <span class="n">row_id</span><span class="o">=</span><span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">row_id</span><span class="p">,</span>
+            <span class="n">total_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">),</span>
+            <span class="n">container</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;flex-wrap:wrap&quot;</span><span class="p">),</span>
+            <span class="n">page_size</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">grid_page_size</span><span class="p">,</span>
+            <span class="n">jump_slot</span><span class="o">=</span><span class="n">slot</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+
     <span class="n">paged</span><span class="p">(</span>
         <span class="n">entries</span><span class="p">,</span>
         <span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="n">_row_card</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">can_decode</span><span class="o">=</span><span class="n">can_decode</span><span class="p">),</span>
         <span class="n">row_id</span><span class="o">=</span><span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">row_id</span><span class="p">,</span>
         <span class="n">total_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">),</span>
+        <span class="n">jump_slot</span><span class="o">=</span><span class="n">slot</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -1032,8 +1199,9 @@
             <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="n">_manipulate</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">expansion</span><span class="p">(</span><span class="s2">&quot;Filter&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;filter_alt&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">expansion</span><span class="p">(</span><span class="s2">&quot;Filter&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;filter_alt&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
             <span class="n">_filters</span><span class="p">()</span>
+        <span class="n">_view</span><span class="p">()</span>
         <span class="n">_rows</span><span class="p">()</span>
         <span class="n">_jump_to_top</span><span class="p">()</span>
 

@@ -323,6 +323,9 @@ requires torch; call <code class="xref py py-func docutils literal notranslate">
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.build_preview" title="annie.media.preview.build_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_preview</span></code></a>(→ tuple[PIL.Image.Image, ...)</p></td>
 <td><p>Decode a video's strip and draw its annotations.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.build_grid_preview" title="annie.media.preview.build_grid_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_grid_preview</span></code></a>(→ tuple[PIL.Image.Image, int])</p></td>
+<td><p>Decode a video's middle (½) frame with its annotations drawn on it.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -384,6 +387,35 @@ and the video’s total frame count.</p>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>ValueError</strong> – If the entry has no video to decode.</p></li>
 <li><p><strong>annie.decode.MediaUnavailableError</strong> – If the <code class="docutils literal notranslate"><span class="pre">media</span></code> extra is absent.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.preview.build_grid_preview">
+<span class="sig-prename descclassname"><span class="pre">annie.media.preview.</span></span><span class="sig-name descname"><span class="pre">build_grid_preview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/models/index.html#annie.core.models.VideoEntry" title="annie.core.models.VideoEntry"><span class="pre">annie.core.models.VideoEntry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">PIL.Image.Image</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/media/preview.html#build_grid_preview"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.preview.build_grid_preview" title="Link to this definition">¶</a></dt>
+<dd><p>Decode a video’s middle (½) frame with its annotations drawn on it.</p>
+<p>The Browse grid view shows a single static frame per video, so this is the fast
+counterpart to <a class="reference internal" href="#annie.media.preview.build_preview" title="annie.media.preview.build_preview"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_preview()</span></code></a>: it decodes only three sample frames in one
+pass and keeps the middle one. <code class="docutils literal notranslate"><span class="pre">&quot;approximate&quot;</span></code> seek is safe here because the
+middle index — unlike the strip’s last frame — never risks the tail overshoot
+that <a class="reference internal" href="../decode/index.html#annie.media.decode.read_strip" title="annie.media.decode.read_strip"><code class="xref py py-func docutils literal notranslate"><span class="pre">annie.media.decode.read_strip()</span></code></a> guards against with <code class="docutils literal notranslate"><span class="pre">&quot;exact&quot;</span></code> mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>entry</strong> – The video to preview; <code class="docutils literal notranslate"><span class="pre">entry.video_path</span></code> must be set.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the annotated middle frame (vdet blue,
+active track green) and the video’s total frame count.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An <code class="docutils literal notranslate"><span class="pre">(image,</span> <span class="pre">num_frames)</span></code> pair</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the entry has no video to decode.</p></li>
+<li><p><a class="reference internal" href="../decode/index.html#annie.media.decode.MediaUnavailableError" title="annie.media.decode.MediaUnavailableError"><strong>annie.media.decode.MediaUnavailableError</strong></a> – If the <code class="docutils literal notranslate"><span class="pre">media</span></code> extra is absent.</p></li>
 </ul>
 </dd>
 </dl>
@@ -454,6 +486,7 @@ and the video’s total frame count.</p>
 <li><a class="reference internal" href="#annie.media.preview.HIDPI_SCALE"><code class="docutils literal notranslate"><span class="pre">HIDPI_SCALE</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.preview.to_data_uri"><code class="docutils literal notranslate"><span class="pre">to_data_uri()</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.preview.build_preview"><code class="docutils literal notranslate"><span class="pre">build_preview()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.preview.build_grid_preview"><code class="docutils literal notranslate"><span class="pre">build_grid_preview()</span></code></a></li>
 </ul>
 </li>
 </ul>

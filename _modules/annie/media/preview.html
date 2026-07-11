@@ -392,6 +392,51 @@
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">thumbnail</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">num_frames</span></div>
 
+
+
+<div class="viewcode-block" id="build_grid_preview">
+<a class="viewcode-back" href="../../../autoapi/annie/media/preview/index.html#annie.media.preview.build_grid_preview">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_grid_preview</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode a video&#39;s middle (½) frame with its annotations drawn on it.</span>
+
+<span class="sd">    The Browse grid view shows a single static frame per video, so this is the fast</span>
+<span class="sd">    counterpart to :func:`build_preview`: it decodes only three sample frames in one</span>
+<span class="sd">    pass and keeps the middle one. ``&quot;approximate&quot;`` seek is safe here because the</span>
+<span class="sd">    middle index — unlike the strip&#39;s last frame — never risks the tail overshoot</span>
+<span class="sd">    that :func:`annie.media.decode.read_strip` guards against with ``&quot;exact&quot;`` mode.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        entry: The video to preview; ``entry.video_path`` must be set.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An ``(image, num_frames)`` pair: the annotated middle frame (vdet blue,</span>
+<span class="sd">        active track green) and the video&#39;s total frame count.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the entry has no video to decode.</span>
+<span class="sd">        annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot build a preview for a video-less entry&quot;</span><span class="p">)</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>  <span class="c1"># local import: optional media dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.color</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_overlay</span>
+
+    <span class="n">indices</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">num_frames</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">read_strip</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seek_mode</span><span class="o">=</span><span class="s2">&quot;approximate&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">frames</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no frames decoded for </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">vdet_by_frame</span><span class="p">,</span> <span class="n">tracks_by_id</span> <span class="o">=</span> <span class="n">load_entry_annotations</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="n">include</span> <span class="o">=</span> <span class="n">strip_track_ids</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+    <span class="n">mid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># of [first, ½, last] the middle sample is the ½ frame</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">draw_overlay</span><span class="p">(</span>
+        <span class="n">frames</span><span class="p">[</span><span class="n">mid</span><span class="p">],</span>
+        <span class="n">merge_frame</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="n">mid</span><span class="p">],</span> <span class="n">vdet_by_frame</span><span class="p">,</span> <span class="n">tracks_by_id</span><span class="p">,</span> <span class="n">include</span><span class="p">),</span>
+        <span class="n">has_tracks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">active_track_id</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">image</span><span class="p">,</span> <span class="n">num_frames</span></div>
+
 </pre></div>
         </article>
       </div>

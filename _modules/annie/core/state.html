@@ -334,6 +334,12 @@
 <span class="sd">            reverts to its placeholder, freeing the memory the browser holds for it.</span>
 <span class="sd">        unload_after_seconds: How long a row may sit off screen before its preview</span>
 <span class="sd">            frames are dropped; they are decoded again when it scrolls back.</span>
+<span class="sd">        grid_thumb_height: Media height (px) of a Browse **grid** box (Quick</span>
+<span class="sd">            selection view); its width is derived 16:9.</span>
+<span class="sd">        grid_page_size: How many grid boxes one page reveals — larger than</span>
+<span class="sd">            ``page_size`` because a grid box is a single cheap frame.</span>
+<span class="sd">        grid_unload_after_seconds: Off-screen TTL for grid boxes; shorter than</span>
+<span class="sd">            ``unload_after_seconds`` since the grid packs many videos on screen.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">browse_row_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">135</span>
@@ -341,7 +347,10 @@
     <span class="n">auto_scroll</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="n">embed_ttl_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
-    <span class="n">unload_after_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span></div>
+    <span class="n">unload_after_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="n">grid_thumb_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">90</span>
+    <span class="n">grid_page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">grid_unload_after_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span></div>
 
 
 

@@ -377,6 +377,27 @@ reverts to its placeholder, freeing the memory the browser holds for it.</p>
 frames are dropped; they are decoded again when it scrolls back.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.grid_thumb_height">
+<span class="sig-name descname"><span class="pre">grid_thumb_height</span></span><a class="headerlink" href="#annie.core.state.UiSettings.grid_thumb_height" title="Link to this definition">¶</a></dt>
+<dd><p>Media height (px) of a Browse <strong>grid</strong> box (Quick
+selection view); its width is derived 16:9.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.grid_page_size">
+<span class="sig-name descname"><span class="pre">grid_page_size</span></span><a class="headerlink" href="#annie.core.state.UiSettings.grid_page_size" title="Link to this definition">¶</a></dt>
+<dd><p>How many grid boxes one page reveals — larger than
+<code class="docutils literal notranslate"><span class="pre">page_size</span></code> because a grid box is a single cheap frame.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.UiSettings.grid_unload_after_seconds">
+<span class="sig-name descname"><span class="pre">grid_unload_after_seconds</span></span><a class="headerlink" href="#annie.core.state.UiSettings.grid_unload_after_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>Off-screen TTL for grid boxes; shorter than
+<code class="docutils literal notranslate"><span class="pre">unload_after_seconds</span></code> since the grid packs many videos on screen.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -548,6 +569,9 @@ stay fast.</p>
 <li><a class="reference internal" href="#annie.core.state.UiSettings.page_size"><code class="docutils literal notranslate"><span class="pre">UiSettings.page_size</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.UiSettings.embed_ttl_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.embed_ttl_seconds</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.UiSettings.unload_after_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.unload_after_seconds</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.grid_thumb_height"><code class="docutils literal notranslate"><span class="pre">UiSettings.grid_thumb_height</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.grid_page_size"><code class="docutils literal notranslate"><span class="pre">UiSettings.grid_page_size</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.UiSettings.grid_unload_after_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.grid_unload_after_seconds</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#annie.core.state.AppState"><code class="docutils literal notranslate"><span class="pre">AppState</span></code></a><ul>

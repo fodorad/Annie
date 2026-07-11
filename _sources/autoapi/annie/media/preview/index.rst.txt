@@ -29,6 +29,7 @@ Functions
 
    annie.media.preview.to_data_uri
    annie.media.preview.build_preview
+   annie.media.preview.build_grid_preview
 
 
 Module Contents
@@ -73,5 +74,25 @@ Module Contents
 
    :raises ValueError: If the entry has no video to decode.
    :raises annie.decode.MediaUnavailableError: If the ``media`` extra is absent.
+
+
+.. py:function:: build_grid_preview(entry: annie.core.models.VideoEntry) -> tuple[PIL.Image.Image, int]
+
+   Decode a video's middle (½) frame with its annotations drawn on it.
+
+   The Browse grid view shows a single static frame per video, so this is the fast
+   counterpart to :func:`build_preview`: it decodes only three sample frames in one
+   pass and keeps the middle one. ``"approximate"`` seek is safe here because the
+   middle index — unlike the strip's last frame — never risks the tail overshoot
+   that :func:`annie.media.decode.read_strip` guards against with ``"exact"`` mode.
+
+   :param entry: The video to preview; ``entry.video_path`` must be set.
+
+   :returns: the annotated middle frame (vdet blue,
+             active track green) and the video's total frame count.
+   :rtype: An ``(image, num_frames)`` pair
+
+   :raises ValueError: If the entry has no video to decode.
+   :raises annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.
 
 

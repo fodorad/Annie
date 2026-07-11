@@ -94,7 +94,7 @@ Module Contents
 
 
 
-.. py:function:: observe_row(load: collections.abc.Callable[[], None], unload: collections.abc.Callable[[], None]) -> None
+.. py:function:: observe_row(load: collections.abc.Callable[[], None], unload: collections.abc.Callable[[], None], *, delay: float | None = None) -> None
 
    Watch the enclosing row and drop its images once it sits off screen.
 
@@ -103,5 +103,8 @@ Module Contents
 
    :param load: Rebuilds the row's images. Called when a dropped row scrolls back in.
    :param unload: Clears the row's images back to their placeholders.
+   :param delay: How long the row may sit off screen before its images are dropped.
+                 Defaults to :attr:`annie.core.state.UiSettings.unload_after_seconds`; the
+                 Browse grid view passes a shorter value.
 
 
