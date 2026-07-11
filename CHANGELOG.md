@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0](https://github.com/fodorad/Annie/compare/v1.1.0...v1.2.0) (2026-07-11)
+
+
+### Features
+
+* **browse:** add quick-selection grid view for fast annotation review ([#18](https://github.com/fodorad/Annie/issues/18)) ([6f4f4e0](https://github.com/fodorad/Annie/commit/6f4f4e0f298c07eeb9b28c6e6f1f9778f6c4a2cf))
+
 ## [1.1.0](https://github.com/fodorad/Annie/compare/v1.0.2...v1.1.0) (2026-07-10)
 
 
