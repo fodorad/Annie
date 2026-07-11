@@ -43,6 +43,12 @@ class UiSettings:
             reverts to its placeholder, freeing the memory the browser holds for it.
         unload_after_seconds: How long a row may sit off screen before its preview
             frames are dropped; they are decoded again when it scrolls back.
+        grid_thumb_height: Media height (px) of a Browse **grid** box (Quick
+            selection view); its width is derived 16:9.
+        grid_page_size: How many grid boxes one page reveals — larger than
+            ``page_size`` because a grid box is a single cheap frame.
+        grid_unload_after_seconds: Off-screen TTL for grid boxes; shorter than
+            ``unload_after_seconds`` since the grid packs many videos on screen.
     """
 
     browse_row_height: int = 135
@@ -51,6 +57,9 @@ class UiSettings:
     page_size: int = 10
     embed_ttl_seconds: int = 60
     unload_after_seconds: int = 20
+    grid_thumb_height: int = 90
+    grid_page_size: int = 60
+    grid_unload_after_seconds: float = 5.0
 
 
 def _seed_registry() -> SourceRegistry:
