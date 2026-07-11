@@ -97,7 +97,9 @@ class OffscreenGate:
         return True
 
 
-def observe_row(load: Callable[[], None], unload: Callable[[], None]) -> None:
+def observe_row(
+    load: Callable[[], None], unload: Callable[[], None], *, delay: float | None = None
+) -> None:
     """Watch the enclosing row and drop its images once it sits off screen.
 
     Must be called inside a **relatively positioned** container (the row card); the
@@ -106,13 +108,16 @@ def observe_row(load: Callable[[], None], unload: Callable[[], None]) -> None:
     Args:
         load: Rebuilds the row's images. Called when a dropped row scrolls back in.
         unload: Clears the row's images back to their placeholders.
+        delay: How long the row may sit off screen before its images are dropped.
+            Defaults to :attr:`annie.core.state.UiSettings.unload_after_seconds`; the
+            Browse grid view passes a shorter value.
     """
     observer = ui.element("q-intersection").props(f"margin={_MARGIN}")
     observer.style("position:absolute;inset:0;pointer-events:none;z-index:-1")
     gate = OffscreenGate()
 
     async def _expire(generation: int) -> None:
-        await asyncio.sleep(state.ui.unload_after_seconds)
+        await asyncio.sleep(delay if delay is not None else state.ui.unload_after_seconds)
         if not gate.expire(generation) or not _alive(observer):
             return
         with contextlib.suppress(RuntimeError):

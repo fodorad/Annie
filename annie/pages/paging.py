@@ -126,6 +126,9 @@ def paged[T](
     row_id: Callable[[T], int],
     total_rows: int,
     actions: Callable[[], None] | None = None,
+    container: Callable[[], ui.element] | None = None,
+    page_size: int | None = None,
+    jump_slot: ui.element | None = None,
 ) -> None:
     """Render ``entries`` one page at a time, with jump, auto-scroll, and a button.
 
@@ -138,9 +141,19 @@ def paged[T](
             accepts any dataset row id even when the view is filtered.
         actions: Builds extra controls at the end of the jump row, for list-wide
             operations that belong next to it (the Annotator's "Clear all").
+        container: Factory for the element newly revealed rows are built into.
+            Defaults to a vertical column; the Browse grid view passes a wrapping
+            row so its boxes flow into a grid.
+        page_size: Rows revealed per page. Defaults to
+            :attr:`annie.core.state.UiSettings.page_size`; the grid view reveals more.
+        jump_slot: Where to build the "Jump to row" card. When given, it is rendered
+            into that (pre-existing, persistent) element — e.g. the Browse View
+            panel — instead of inline above the rows. The slot is cleared first, so a
+            re-paged list never stacks duplicate jump cards.
     """
     pager = Pager(len(entries))
     row_ids = [row_id(entry) for entry in entries]
+    reveal = page_size if page_size is not None else state.ui.page_size
 
     def restart(target: int) -> None:
         """Re-page from dataset row id ``target``, discarding the rendered rows."""
@@ -156,13 +169,18 @@ def paged[T](
             parts.append(f"Showing from row #{row_ids[pager.start]} — earlier rows hidden.")
         return "  ".join(parts)
 
-    _jump_section(total_rows, restart, caption, actions)
+    if jump_slot is not None:
+        jump_slot.clear()
+        with jump_slot:
+            _jump_section(total_rows, restart, caption, actions)
+    else:
+        _jump_section(total_rows, restart, caption, actions)
 
-    body = ui.column().classes("w-full gap-2")
+    body = (container or (lambda: ui.column().classes("w-full gap-2")))()
 
     def show_more() -> None:
         with body:
-            for entry in entries[pager.advance(state.ui.page_size)]:
+            for entry in entries[pager.advance(reveal)]:
                 render_row(entry)
         more.set_text(f"Show more ({pager.remaining} left)")
         more.set_visibility(not pager.exhausted)
