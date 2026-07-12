@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 import time
 import unittest
 from pathlib import Path
 
 from annie.core.models import VideoEntry
-from annie.media.rendering import JobStatus, RenderService
+from annie.media.rendering import JobStatus, RenderJob, RenderService
 
 
 def _wait_for(service: RenderService, job_id: str, *, timeout: float = 5.0) -> None:
@@ -83,6 +84,30 @@ class TestRenderService(unittest.TestCase):
         self.assertIsNone(service.get(job_id))
         assert output is not None
         self.assertFalse(output.exists())
+
+    def test_sweep_reclaims_untracked_orphan_clips(self) -> None:
+        # A clip left by a previous process / a refreshed-away row has no tracking job.
+        service = self._service(lambda r, o: o.write_bytes(b"x"))
+        service.ttl_seconds = 10
+        orphan = service.temp_dir / "orphan.mp4"
+        orphan.write_bytes(b"x")
+        os.utime(orphan, (time.time() - 10_000, time.time() - 10_000))
+
+        self.assertEqual(service.sweep(now=time.time()), 1)
+        self.assertFalse(orphan.exists())
+
+    def test_sweep_never_deletes_a_running_jobs_output(self) -> None:
+        service = self._service(lambda r, o: o.write_bytes(b"x"))
+        service.ttl_seconds = 10
+        # Simulate an in-flight render whose (old-looking) output must be protected.
+        job = RenderJob(job_id="run1", row_key="k", status=JobStatus.RUNNING)
+        service._jobs["run1"] = job  # noqa: SLF001 - exercising the running-job guard
+        out = service.temp_dir / "run1.mp4"
+        out.write_bytes(b"x")
+        os.utime(out, (time.time() - 10_000, time.time() - 10_000))
+
+        self.assertEqual(service.sweep(now=time.time() + 10_000), 0)
+        self.assertTrue(out.exists())
 
     def test_jobs_snapshot(self) -> None:
         service = self._service(lambda r, o: o.write_bytes(b"x"))

@@ -13,6 +13,7 @@ the frames are re-rendered so the new active track shows green.
 
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -30,9 +31,64 @@ from annie.parsers.participants import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from annie.core.models import FrameAnnotation
 
-__all__ = ["export_corrected", "hit_test_frame", "resolve_active_track", "set_active_track"]
+__all__ = [
+    "export_corrected",
+    "export_active_tracks",
+    "hit_test_frame",
+    "manual_sibling",
+    "resolve_active_track",
+    "set_active_track",
+]
+
+
+def manual_sibling(heuristic_path: str | Path) -> Path:
+    """The ``_manual`` CSV path for a protagonist source, next to the heuristic file.
+
+    ``protagonist_track_heuristic.csv`` → ``protagonist_track_manual.csv``; any other
+    name gets a ``_manual`` suffix. This is where the Annotator exports its
+    DB-stored corrections.
+
+    Args:
+        heuristic_path: The protagonist source CSV.
+
+    Returns:
+        The sibling manual-corrections CSV path.
+    """
+    path = Path(heuristic_path)
+    stem = path.stem
+    name = stem.replace("heuristic", "manual") if "heuristic" in stem else f"{stem}_manual"
+    return path.with_name(f"{name}{path.suffix}")
+
+
+def export_active_tracks(
+    out_path: str | Path,
+    mapping: Mapping[str, int],
+    key_column: str = DEFAULT_KEY_COLUMN,
+    value_column: str = DEFAULT_VALUE_COLUMN,
+) -> Path:
+    """Write a ``video_id -> track_id`` correction mapping as a two-column CSV.
+
+    Args:
+        out_path: Destination CSV path (parent directories are created).
+        mapping: The corrections to write, keyed by video id.
+        key_column: Header for the video-id column.
+        value_column: Header for the track-id column.
+
+    Returns:
+        The path written.
+    """
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow([key_column, value_column])
+        for video_id, track_id in sorted(mapping.items()):
+            writer.writerow([video_id, track_id])
+    return out
 
 
 def _participants_file(heuristic_file: str | Path | None) -> Path:

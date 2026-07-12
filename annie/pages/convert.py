@@ -277,11 +277,6 @@ def _video_section(audio_out: ui.input) -> None:
 def render() -> None:
     """Build the Convert tab body."""
     with ui.column().classes("w-full gap-3"):
-        ui.label("Convert").classes("text-xl font-medium")
-        ui.label(
-            "Re-encode audio/video to a consistent, torchcodec-validated form so previews, "
-            "renders, and downstream loaders never hit broken seeking."
-        ).classes("text-sm").style(f"color:{theme.NEUTRAL}")
         audio_out = _audio_section()
         _video_section(audio_out)
         _build_progress()

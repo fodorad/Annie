@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0](https://github.com/fodorad/Annie/compare/v1.0.2...v1.1.0) (2026-07-10)
+
+
+### Features
+
+* add autoscroll, paging, and preview/storage performance improvements ([ab90c23](https://github.com/fodorad/Annie/commit/ab90c232122543584015fefc294fd48a73d4071f))
+* add autoscroll, paging, and preview/storage performance improvements ([#15](https://github.com/fodorad/Annie/issues/15)) ([643160c](https://github.com/fodorad/Annie/commit/643160c8f7c60458839bdd185b1056a6c59386ce))
+
 ## [1.0.2](https://github.com/fodorad/Annie/compare/v1.0.1...v1.0.2) (2026-07-03)
 
 

@@ -164,7 +164,7 @@ nose_x, nose_y, left_mouth_x, left_mouth_y, right_mouth_x, right_mouth_y
 
 - **`.vdet`** — all raw detections for a video; may have several rows per frame.
 - **`{video_id}__track{N}.csv`** — one tracked face across frames (one row/frame).
-- **protagonist CSV** — e.g. `participant_face_track_heuristic.csv` with
+- **protagonist CSV** — e.g. `protagonist_track_heuristic.csv` with
   `uuid,track_id`, the active protagonist per video (`-1` = none). The key and
   track-id columns are chosen when the source is added; manual corrections go to
   the `_manual` sibling.
@@ -187,10 +187,11 @@ equivalent to manually adding sources on the Dataset tab, but saves time during
 development when you always work with the same dataset.
 
 ```bash
-export ANNIE_VIDEOS_DIR=/path/to/videos
-export ANNIE_VDET_DIR=/path/to/vdets
-export ANNIE_TRACK_DIR=/path/to/tracks
-export ANNIE_PARTICIPANTS_FILE=/path/to/participant_face_track_heuristic.csv
+export ANNIE_VIDEO_DIR=/path/to/video
+export ANNIE_VDET_DIR=/path/to/vdet
+export ANNIE_TRACK_DIR=/path/to/track
+export ANNIE_PROTAGONIST_CSV=/path/to/protagonist_track_heuristic.csv
+export ANNIE_LABEL_CSV=/path/to/label.csv
 make run
 ```
 

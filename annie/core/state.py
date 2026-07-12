@@ -16,6 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from annie.core import logbook
 from annie.core.config import settings
 from annie.dataset.filtering import ReviewState
 from annie.dataset.manipulate import detect_type
@@ -139,6 +140,24 @@ class AppState:
         self.audio_cache.clear()
         self.frames_cache.clear()
         self.scan = build_manifest(self.registry)
+        self._apply_active_track_overrides()
+
+    def _apply_active_track_overrides(self) -> None:
+        """Layer this session's protagonist corrections over the scanned heuristic.
+
+        Manual track choices are stored in the review DB (not the source CSV), so a
+        corrected video shows its chosen protagonist after any re-scan or restart on
+        the same database, while uncorrected videos keep their heuristic value.
+        """
+        if self.scan is None:
+            return
+        overrides = self.store.active_tracks()
+        if not overrides:
+            return
+        for entry in self.scan.entries:
+            override = overrides.get(entry.key)
+            if override is not None:
+                entry.active_track_id = override
 
     def set_store(self, db_path: Path) -> None:
         """Replace the active review store with one backed by ``db_path``.
@@ -152,6 +171,8 @@ class AppState:
             db_path: Absolute path to the SQLite file to open.
         """
         self.store = ReviewStore(db_path)
+        # The session log is paired with its DB — keep their names in lockstep.
+        logbook.LOG.retarget(db_path)
 
     def review_state(self, key: str) -> ReviewState:
         """Return the filtering-facing review state for a video (default liked).

@@ -85,10 +85,11 @@ Quick start
 
 .. code-block:: bash
 
-   export ANNIE_VIDEOS_DIR=/path/to/videos
-   export ANNIE_VDET_DIR=/path/to/vdets
-   export ANNIE_TRACK_DIR=/path/to/tracks
-   export ANNIE_PARTICIPANTS_FILE=/path/to/participant_face_track_heuristic.csv
+   export ANNIE_VIDEO_DIR=/path/to/video
+   export ANNIE_VDET_DIR=/path/to/vdet
+   export ANNIE_TRACK_DIR=/path/to/track
+   export ANNIE_PROTAGONIST_CSV=/path/to/protagonist_track_heuristic.csv
+   export ANNIE_LABEL_CSV=/path/to/label.csv
    annie                             # opens http://127.0.0.1:8080
 
 Every setting has a matching ``ANNIE_*`` variable (see :mod:`annie.core.config`);

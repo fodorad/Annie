@@ -6,7 +6,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from annie.pages.fsbrowse import list_files, list_subdirectories, parent_of, resolve_start_dir
+from annie.pages.fsbrowse import (
+    list_files,
+    list_subdirectories,
+    parent_of,
+    resolve_start_dir,
+    scan_entries,
+)
 
 
 class TestResolveStartDir(unittest.TestCase):
@@ -78,6 +84,31 @@ class TestListFiles(unittest.TestCase):
 
     def test_missing_directory_returns_empty(self) -> None:
         self.assertEqual(list_files(self.tmp / "nope"), [])
+
+
+class TestScanEntries(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "dir_b").mkdir()
+        (self.tmp / "Dir_a").mkdir()
+        (self.tmp / "note.txt").write_text("x", encoding="utf-8")
+        (self.tmp / "data.csv").write_text("x", encoding="utf-8")
+
+    def test_folder_mode_skips_files_entirely(self) -> None:
+        # The picker's whole point when choosing a folder: never read/render files.
+        subdirs, files = scan_entries(self.tmp, want_files=False)
+        self.assertEqual([p.name for p in subdirs], ["Dir_a", "dir_b"])
+        self.assertEqual(files, [])
+
+    def test_file_mode_returns_both_sorted(self) -> None:
+        subdirs, files = scan_entries(self.tmp, want_files=True)
+        self.assertEqual([p.name for p in subdirs], ["Dir_a", "dir_b"])
+        self.assertEqual([p.name for p in files], ["data.csv", "note.txt"])
+
+    def test_suffix_filter_applies_only_to_files(self) -> None:
+        subdirs, files = scan_entries(self.tmp, want_files=True, suffixes=(".csv",))
+        self.assertEqual([p.name for p in subdirs], ["Dir_a", "dir_b"])
+        self.assertEqual([p.name for p in files], ["data.csv"])
 
 
 if __name__ == "__main__":
