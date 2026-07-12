@@ -61,9 +61,7 @@ class TestCorrectionService(unittest.TestCase):
 
     def test_manual_sibling_names_the_manual_csv(self) -> None:
         heuristic = self.tmp / "protagonist_track_heuristic.csv"
-        self.assertEqual(
-            corrections.manual_sibling(heuristic).name, "protagonist_track_manual.csv"
-        )
+        self.assertEqual(corrections.manual_sibling(heuristic).name, "protagonist_track_manual.csv")
         self.assertEqual(corrections.manual_sibling(self.tmp / "foo.csv").name, "foo_manual.csv")
 
     def test_export_active_tracks_writes_sorted_two_column_csv(self) -> None:
