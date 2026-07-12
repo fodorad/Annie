@@ -14,7 +14,11 @@ selection via a per-client :class:`_DatasetState` keyed by
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import os
+import re
+import shutil
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 from nicegui import context, run, ui
@@ -23,11 +27,21 @@ from annie.core import logbook, theme
 from annie.core.config import settings
 from annie.core.state import _seed_registry, state
 from annie.dataset import datasets
-from annie.dataset.sources import KIND_ICONS, KIND_LABELS, DataSource, SourceKind, SourceRegistry
+from annie.dataset.manipulate import detect_type
+from annie.dataset.sources import (
+    KIND_ICONS,
+    KIND_LABELS,
+    CsvRole,
+    DataSource,
+    SourceKind,
+    SourceRegistry,
+)
 from annie.pages import annotator, browse
 from annie.pages.csv_dialog import configure_csv
 from annie.pages.folder_picker import pick_directory, pick_file
 from annie.pages.utils import notify_detached
+from annie.parsers.csvmeta import read_header, read_rows
+from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
 
 # ── per-client state ──────────────────────────────────────────────────────────
 
@@ -40,11 +54,22 @@ class _DatasetState:
         scanning: Whether a rescan is in progress for this client.
         db_mode: ``"session"`` (fresh per-startup DB) or ``"existing"`` (pinned file).
         db_path_custom: The user-typed or config-embedded DB path when mode is ``"existing"``.
+        config_value: The active config selector value, so "Add data source" knows
+            whether to seed the picker from the ANNIE_* env dirs ([ENV vars] config)
+            or open at home / the last-selected parent (New config).
+        session_db_path: The session-mode DB file (renamable); tracked separately
+            from ``db_path_custom`` so switching modes restores each side's choice.
     """
 
     scanning: bool = False
     db_mode: str = "existing" if settings.db_path_is_explicit else "session"
     db_path_custom: str = str(settings.db_path) if settings.db_path_is_explicit else ""
+    config_value: str = field(
+        default_factory=lambda: _ENV_CONFIG if _has_env_sources() else _NEW_CONFIG
+    )
+    session_db_path: str = field(
+        default_factory=lambda: "" if settings.db_path_is_explicit else str(settings.db_path)
+    )
 
 
 #: Per-client state registry; cleaned up on disconnect in :func:`render`.
@@ -164,6 +189,7 @@ async def _new_config() -> None:
     state.frames_cache.clear()
     ds.db_mode = "session"
     ds.db_path_custom = ""
+    ds.session_db_path = str(settings.db_path)
     state.set_store(settings.db_path)
     await _apply_changes()
     _persistence_section.refresh()
@@ -178,6 +204,7 @@ async def _env_config() -> None:
     state.frames_cache.clear()
     ds.db_mode = "existing" if settings.db_path_is_explicit else "session"
     ds.db_path_custom = str(settings.db_path) if settings.db_path_is_explicit else ""
+    ds.session_db_path = "" if settings.db_path_is_explicit else str(settings.db_path)
     state.set_store(settings.db_path)
     await _apply_changes()
     _persistence_section.refresh()
@@ -235,6 +262,8 @@ def _config_section() -> None:
 
     async def on_select(e: object) -> None:
         value = getattr(e, "value", None)
+        if value:
+            _ds().config_value = value  # remember for the picker's default directory
         if value == _NEW_CONFIG:
             await _new_config()
         elif value == _ENV_CONFIG:
@@ -262,25 +291,170 @@ async def _load_from_file() -> None:
 
 async def _add_kind(kind: SourceKind) -> None:
     """Run the add flow for a chosen source kind."""
+    # In the [ENV vars] config, seed the picker from the ANNIE_* dirs; otherwise (New
+    # config, loaded configs) open at home first, then beside the siblings of the last
+    # pick (see annie.pages.folder_picker), rather than jumping into an env data dir.
+    in_env = _ds().config_value == _ENV_CONFIG
     if kind is SourceKind.CSV:
-        chosen = await pick_file(settings.participants_file or settings.labels_csv)
+        start = (settings.participants_file or settings.labels_csv) if in_env else None
+        chosen = await pick_file(start)
         if not chosen:
             return
         source = await configure_csv(chosen, _video_stems())
         if source is None:
             return
     else:
-        start = {
-            SourceKind.VIDEO: settings.videos_dir,
-            SourceKind.VDET: settings.vdet_dir,
-            SourceKind.TRACK: settings.track_dir,
-        }.get(kind)
+        start = (
+            {
+                SourceKind.VIDEO: settings.videos_dir,
+                SourceKind.VDET: settings.vdet_dir,
+                SourceKind.TRACK: settings.track_dir,
+            }.get(kind)
+            if in_env
+            else None
+        )
         chosen = await pick_directory(start)
         if not chosen:
             return
         source = DataSource(kind, Path(chosen))
     state.registry.add(source)
+    if kind is SourceKind.VIDEO:
+        await _offer_sibling_sources(Path(chosen))
     await _apply_changes()
+
+
+# ── auto-fill related sources beside a chosen videos folder ──────────────────
+
+
+#: Conventional sibling names Annie looks for next to a videos folder. Protagonist
+#: prefers the manually-corrected CSV over the heuristic one; a labels CSV may be
+#: named ``label.csv`` or ``labels.csv``.
+_VDET_DIRNAME = "vdet"
+_TRACK_DIRNAME = "track"
+_PROTAGONIST_NAMES = ("protagonist_track_manual.csv", "protagonist_track_heuristic.csv")
+_LABEL_NAMES = ("label.csv", "labels.csv")
+
+
+@dataclass
+class _Candidate:
+    """One auto-detected sibling source offered for auto-fill."""
+
+    label: str
+    source: DataSource
+
+
+def _label_source(csv_path: Path) -> DataSource | None:
+    """Build a labels CSV source with the same defaults as env-seeding.
+
+    The first column is the key (joins to the video id) and every other column is a
+    value column, with its type sniffed from a sample of rows. ``None`` if the CSV
+    has no usable header/value columns.
+    """
+    header = read_header(csv_path)
+    if not header:
+        return None
+    key = header[0]
+    values = tuple(col for col in header if col != key)
+    if not values:
+        return None
+    rows = read_rows(csv_path)[:500]
+    column_types: dict[str, str] = {
+        col: detect_type(row.get(col, "") for row in rows) for col in values
+    }
+    return DataSource(
+        SourceKind.CSV,
+        csv_path,
+        role=CsvRole.LABELS,
+        key_column=key,
+        value_columns=values,
+        column_types=column_types,
+    )
+
+
+def _detect_sibling_sources(video_dir: Path) -> list[_Candidate]:
+    """Find conventional vdet/track/protagonist/label siblings of ``video_dir``.
+
+    Looks in the videos folder's parent directory and skips anything a source of
+    that role already covers. Reads CSV headers/rows, so callers run it off the
+    event loop (see :func:`_offer_sibling_sources`).
+    """
+    parent = video_dir.parent
+    existing = {s.kind for s in state.registry.sources}
+    has_protagonist = any(s.is_protagonist for s in state.registry.sources)
+    label_paths = {
+        s.path for s in state.registry.sources if s.kind is SourceKind.CSV and not s.is_protagonist
+    }
+    candidates: list[_Candidate] = []
+
+    vdet = parent / _VDET_DIRNAME
+    if SourceKind.VDET not in existing and vdet.is_dir():
+        candidates.append(
+            _Candidate(f"Vdet folder — {vdet.name}/", DataSource(SourceKind.VDET, vdet))
+        )
+
+    track = parent / _TRACK_DIRNAME
+    if SourceKind.TRACK not in existing and track.is_dir():
+        candidates.append(
+            _Candidate(f"Track folder — {track.name}/", DataSource(SourceKind.TRACK, track))
+        )
+
+    if not has_protagonist:
+        for name in _PROTAGONIST_NAMES:
+            path = parent / name
+            if path.is_file():
+                source = DataSource(
+                    SourceKind.CSV,
+                    path,
+                    role=CsvRole.PROTAGONIST,
+                    key_column=DEFAULT_KEY_COLUMN,
+                    value_columns=(DEFAULT_VALUE_COLUMN,),
+                )
+                candidates.append(_Candidate(f"Protagonist CSV — {name}", source))
+                break  # a manual CSV supersedes the heuristic one
+
+    for name in _LABEL_NAMES:
+        path = parent / name
+        if path.is_file() and path not in label_paths:
+            source = _label_source(path)
+            if source is not None:
+                candidates.append(_Candidate(f"Label CSV — {name}", source))
+            break
+
+    return candidates
+
+
+async def _offer_sibling_sources(video_dir: Path) -> None:
+    """Offer to auto-fill vdet/track/protagonist/label sources found beside the videos.
+
+    A quality-of-life step after adding a videos folder: if Annie recognises the
+    conventional sibling files/folders, it asks once whether to add them, so the user
+    doesn't have to pick each path by hand.
+    """
+    candidates = await run.io_bound(_detect_sibling_sources, video_dir)
+    if not candidates:
+        return
+
+    with ui.dialog() as dialog, ui.card().classes("w-[32rem] max-w-full gap-3"):
+        ui.label("Auto-fill related sources?").classes("text-lg font-medium")
+        ui.label(f"Annie found these next to the videos folder in {video_dir.parent}:").classes(
+            "text-sm"
+        ).style(f"color:{theme.NEUTRAL}")
+        boxes = [(ui.checkbox(c.label, value=True), c) for c in candidates]
+        with ui.row().classes("w-full justify-end gap-2"):
+            ui.button("Skip", on_click=lambda: dialog.submit(False)).props("flat")
+            ui.button(
+                "Fill selected", icon="auto_awesome", on_click=lambda: dialog.submit(True)
+            ).props("unelevated")
+
+    if not await dialog:
+        return
+    added = 0
+    for box, candidate in boxes:
+        if box.value:
+            state.registry.add(candidate.source)
+            added += 1
+    if added:
+        ui.notify(f"Added {added} related source(s)", color=theme.PRIMARY)
 
 
 async def _remove(source: DataSource) -> None:
@@ -378,72 +552,205 @@ def _source_list() -> None:
 # ── persistence block ─────────────────────────────────────────────────────────
 
 
+#: Matches the auto-generated ``annie_<timestamp>.db`` session-DB filename.
+_ANNIE_DB_RE = re.compile(r"^annie_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.db$")
+
+
+def _fresh_session_db_path() -> Path:
+    """A brand-new timestamped session-DB path under the sessions directory."""
+    return settings.sessions_dir / f"annie_{datetime.now():%Y-%m-%d_%H-%M-%S}.db"
+
+
+def _session_dbs() -> list[Path]:
+    """List ``*.db`` files in the sessions directory for the "use existing" picker.
+
+    Renamed databases come first (they are the ones a user deliberately named),
+    then the auto-generated ``annie_<timestamp>.db`` files; both groups newest-first
+    by modification time.
+    """
+    try:
+        with os.scandir(settings.sessions_dir) as it:
+            found = [
+                (entry.name, Path(entry.path), entry.stat().st_mtime)
+                for entry in it
+                if entry.is_file() and entry.name.endswith(".db") and not entry.name.startswith(".")
+            ]
+    except (PermissionError, OSError):
+        return []
+    renamed = sorted(
+        (t for t in found if not _ANNIE_DB_RE.match(t[0])), key=lambda t: t[2], reverse=True
+    )
+    auto = sorted((t for t in found if _ANNIE_DB_RE.match(t[0])), key=lambda t: t[2], reverse=True)
+    return [path for _name, path, _mtime in (*renamed, *auto)]
+
+
 async def _on_db_mode_change(mode: str) -> None:
-    """Switch between session-DB and existing-DB modes."""
+    """Switch between session-DB and existing-DB modes, applying that side's DB."""
     ds = _ds()
     ds.db_mode = mode
     if mode == "session":
-        state.set_store(settings.db_path)
+        if not ds.session_db_path:
+            ds.session_db_path = str(_fresh_session_db_path())
+        state.set_store(Path(ds.session_db_path))
+    elif ds.db_path_custom:
+        state.set_store(Path(ds.db_path_custom))
     _persistence_section.refresh()
 
 
-async def _apply_db_path(path_str: str) -> None:
-    """Open an existing DB at ``path_str`` and switch the store to it."""
+def _new_session_db() -> None:
+    """Create and switch to a fresh timestamped session DB (a clean default)."""
+    ds = _ds()
+    fresh = _fresh_session_db_path()
+    ds.db_mode = "session"
+    ds.session_db_path = str(fresh)
+    state.set_store(fresh)
+    ui.notify(f"New session DB: {fresh.name}", color=theme.PRIMARY)
+    _persistence_section.refresh()
+
+
+def _rename_session_db(new_str: str) -> None:
+    """Rename the current session DB file, moving its data to the new path."""
+    ds = _ds()
+    new_str = new_str.strip()
+    if not new_str:
+        ui.notify("Enter a name for the session DB.", color=theme.WARNING)
+        return
+    new = Path(new_str).expanduser()
+    if new.suffix != ".db":
+        new = new.with_suffix(".db")
+    current = Path(ds.session_db_path) if ds.session_db_path else None
+    if current is not None and new == current:
+        return
+    if new.exists():
+        ui.notify(f"A database already exists at {new}", color=theme.DANGER)
+        return
+    try:
+        new.parent.mkdir(parents=True, exist_ok=True)
+        if current is not None and current.exists():
+            shutil.move(str(current), str(new))
+    except OSError as exc:
+        ui.notify(f"Could not rename DB: {exc}", color=theme.DANGER)
+        return
+    ds.session_db_path = str(new)
+    state.set_store(new)  # (re)creates the file if the move was a no-op
+    ui.notify(f"Renamed session DB to {new.name}", color=theme.PRIMARY)
+    _persistence_section.refresh()
+
+
+def _select_existing_db(path: Path) -> None:
+    """Load a DB chosen from the sessions list (auto-applies, no Apply step)."""
+    ds = _ds()
+    ds.db_mode = "existing"
+    ds.db_path_custom = str(path)
+    state.set_store(path)
+    ui.notify(f"Review DB: {path.name}", color=theme.PRIMARY)
+    _persistence_section.refresh()
+
+
+def _apply_db_path(path_str: str) -> None:
+    """Open an existing DB at ``path_str`` and switch the store to it (on blur/Enter)."""
     ds = _ds()
     path_str = path_str.strip()
-    if not path_str:
-        ui.notify("Enter a database file path.", color=theme.WARNING)
+    if not path_str or path_str == ds.db_path_custom:
         return
     ds.db_path_custom = path_str
     state.set_store(Path(path_str))
-    ui.notify(f"Review DB: {path_str}", color=theme.PRIMARY)
+    ui.notify(f"Review DB: {Path(path_str).name}", color=theme.PRIMARY)
     _persistence_section.refresh()
 
 
 async def _pick_db_file() -> None:
-    """Open a file picker to select an existing DB, then apply it."""
-    ds = _ds()
+    """Open a file picker to select an existing DB, then apply it automatically."""
     chosen = await pick_file(settings.sessions_dir)
     if chosen:
-        ds.db_mode = "existing"
-        ds.db_path_custom = str(chosen)
-        state.set_store(Path(chosen))
-        _persistence_section.refresh()
+        _select_existing_db(Path(chosen))
 
 
 @ui.refreshable
 def _persistence_section() -> None:
-    """Persistence block: choose between a fresh session DB or a pinned existing file."""
+    """Persistence block: a fresh session DB (renamable) or a pinned existing file.
+
+    Layout puts the mode buttons first, then the path controls: in session mode an
+    editable name plus a "New" button for a fresh timestamped DB; in existing mode an
+    editable/browsable path plus a newest-first list of session databases. Selecting,
+    browsing, or editing a path applies immediately — there is no separate Apply step.
+    """
     ds = _ds()
-    with ui.card().classes("w-full"):
-        with ui.column().classes("w-full gap-3"):
-            with ui.row().classes("items-center gap-2"):
-                ui.icon("storage", color=theme.PRIMARY)
-                ui.label("Persistence").classes("text-lg font-medium")
+    active = state.store.db_path
+    with ui.card().classes("w-full"), ui.column().classes("w-full gap-3"):
+        with ui.row().classes("items-center gap-2"):
+            ui.icon("storage", color=theme.PRIMARY)
+            ui.label("Persistence").classes("text-lg font-medium")
 
-            ui.label(f"Active DB: {state.store.db_path}").classes("text-xs break-all").style(
-                f"color:{theme.NEUTRAL}"
-            )
+        ui.toggle(
+            {"session": "New session DB", "existing": "Use existing DB"},
+            value=ds.db_mode,
+            on_change=lambda e: _on_db_mode_change(e.value),
+        )
 
-            ui.toggle(
-                {"session": "New session DB", "existing": "Use existing DB"},
-                value=ds.db_mode,
-                on_change=lambda e: _on_db_mode_change(e.value),
-            )
+        if ds.db_mode == "session":
+            _session_db_controls(ds)
+        else:
+            _existing_db_controls(ds, active)
 
-            if ds.db_mode == "existing":
-                with ui.row().classes("w-full items-center gap-2"):
-                    path_input = (
-                        ui.input("Database file path", value=ds.db_path_custom)
-                        .classes("flex-grow")
-                        .props("dense outlined")
-                    )
-                    ui.button(icon="folder_open", on_click=_pick_db_file).props(
-                        "flat dense"
-                    ).tooltip("Browse for a .db file")
-                    ui.button(
-                        "Apply", icon="check", on_click=lambda: _apply_db_path(path_input.value)
-                    ).props("unelevated dense")
+        ui.label(f"Active DB: {active}").classes("text-xs break-all").style(
+            f"color:{theme.NEUTRAL}"
+        )
+
+
+def _session_db_controls(ds: _DatasetState) -> None:
+    """Editable session-DB name + a button to spin up a fresh timestamped DB."""
+    with ui.row().classes("w-full items-center gap-2"):
+        name_input = (
+            ui.input("Session DB path", value=ds.session_db_path)
+            .classes("flex-grow")
+            .props("dense outlined")
+            .tooltip("Rename the current session DB — its data moves with it")
+        )
+        name_input.on("keydown.enter", lambda: _rename_session_db(name_input.value))
+        ui.button("Rename", icon="drive_file_rename_outline").props("outline dense").on_click(
+            lambda: _rename_session_db(name_input.value)
+        )
+        ui.button(icon="add", on_click=_new_session_db).props("unelevated dense").tooltip(
+            "Create a fresh timestamped session DB"
+        )
+
+
+def _existing_db_controls(ds: _DatasetState, active: Path) -> None:
+    """Editable/browsable DB path plus a newest-first list of session databases."""
+    with ui.row().classes("w-full items-center gap-2"):
+        path_input = (
+            ui.input("Database file path", value=ds.db_path_custom)
+            .classes("flex-grow")
+            .props("dense outlined")
+        )
+        path_input.on("blur", lambda: _apply_db_path(path_input.value))
+        path_input.on("keydown.enter", lambda: _apply_db_path(path_input.value))
+        ui.button(icon="folder_open", on_click=_pick_db_file).props("flat dense").tooltip(
+            "Browse for a .db file"
+        )
+
+    dbs = _session_dbs()
+    if not dbs:
+        return
+    ui.label("Session databases").classes("text-xs").style(f"color:{theme.NEUTRAL}")
+    with ui.column().classes("w-full gap-0 max-h-48 overflow-auto"):
+        for path in dbs:
+            _session_db_row(path, is_active=path == active)
+
+
+def _session_db_row(path: Path, *, is_active: bool) -> None:
+    """One clickable database row in the "use existing" list (active one highlighted)."""
+    row = ui.row().classes("w-full items-center gap-2 cursor-pointer p-1 rounded hover:bg-gray-200")
+    row.on("click", lambda: _select_existing_db(path))
+    with row:
+        ui.icon(
+            "check_circle" if is_active else "database",
+            color=theme.SUCCESS if is_active else theme.NEUTRAL,
+        )
+        label = ui.label(path.name).classes("text-sm break-all")
+        if is_active:
+            label.classes("font-medium")
 
 
 def render() -> None:
@@ -453,7 +760,6 @@ def render() -> None:
     client.on_disconnect(lambda: _dataset_state.pop(client.id, None))
 
     with ui.column().classes("w-full gap-4"):
-        ui.label("Dataset").classes("text-xl font-medium")
         _config_section()
         _metric_cards()
         _source_list()

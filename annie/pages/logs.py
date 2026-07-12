@@ -116,8 +116,7 @@ def _table() -> None:
 def render() -> None:
     """Build the Log tab body."""
     with ui.column().classes("w-full gap-3"):
-        with ui.row().classes("w-full items-center justify-between"):
-            ui.label("Log").classes("text-xl font-medium")
+        with ui.row().classes("w-full items-center justify-end"):
             ui.button("Refresh", icon="refresh", on_click=_table.refresh).props("flat")
 
         with ui.row().classes("items-center gap-3 wrap"):

@@ -61,18 +61,18 @@ class Settings:
     """User-facing configuration, resolved once at import time.
 
     Attributes:
-        videos_dir: Folder of source ``.mp4`` files (env ``ANNIE_VIDEOS_DIR``).
+        videos_dir: Folder of source ``.mp4`` files (env ``ANNIE_VIDEO_DIR``).
         vdet_dir: Folder of raw-detection ``.vdet`` files (env ``ANNIE_VDET_DIR``).
         track_dir: Folder of ``__track{N}.csv`` files (env ``ANNIE_TRACK_DIR``).
-        participants_file: The protagonist heuristic CSV (``uuid,track_id``);
-            manual corrections are written to its ``_manual`` sibling
-            (env ``ANNIE_PARTICIPANTS_FILE``).
+        participants_file: The protagonist heuristic CSV (``uuid,track_id``); the
+            Annotator's Export writes corrections to its ``_manual`` sibling
+            (env ``ANNIE_PROTAGONIST_CSV``).
         labels_csv: A labels CSV file to seed as a label source on startup
-            (env ``ANNIE_LABELS_CSV``).
-        labels_key: The key column in :attr:`labels_csv` (env ``ANNIE_LABELS_KEY``);
+            (env ``ANNIE_LABEL_CSV``).
+        labels_key: The key column in :attr:`labels_csv` (env ``ANNIE_LABEL_KEY``);
             auto-detected from the header when omitted.
         labels_values: Comma-separated value columns from :attr:`labels_csv`
-            (env ``ANNIE_LABELS_VALUES``); defaults to all non-key columns.
+            (env ``ANNIE_LABEL_VALUES``); defaults to all non-key columns.
         db_path: SQLite file for this session's review status (good/bad/notes). Defaults
             to a per-session timestamped file; set ``ANNIE_DB_PATH`` to pin a persistent
             path instead.
@@ -103,18 +103,18 @@ class Settings:
         port: Port the NiceGUI server listens on.
     """
 
-    videos_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_VIDEOS_DIR"))
+    videos_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_VIDEO_DIR"))
     vdet_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_VDET_DIR"))
     track_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_TRACK_DIR"))
     participants_file: Path | None = field(
-        default_factory=lambda: _env_path("ANNIE_PARTICIPANTS_FILE")
+        default_factory=lambda: _env_path("ANNIE_PROTAGONIST_CSV")
     )
-    labels_csv: Path | None = field(default_factory=lambda: _env_path("ANNIE_LABELS_CSV"))
+    labels_csv: Path | None = field(default_factory=lambda: _env_path("ANNIE_LABEL_CSV"))
     labels_key: str | None = field(
-        default_factory=lambda: os.environ.get("ANNIE_LABELS_KEY", "").strip() or None
+        default_factory=lambda: os.environ.get("ANNIE_LABEL_KEY", "").strip() or None
     )
     labels_values: tuple[str, ...] | None = field(
-        default_factory=lambda: _env_tuple("ANNIE_LABELS_VALUES")
+        default_factory=lambda: _env_tuple("ANNIE_LABEL_VALUES")
     )
     db_path: Path = field(default_factory=_default_db_path)
     db_path_is_explicit: bool = field(default_factory=lambda: bool(_env_path("ANNIE_DB_PATH")))

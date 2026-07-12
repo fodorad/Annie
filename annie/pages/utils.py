@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from nicegui import ui
 
+from annie.core.config import settings
 from annie.core.state import state
 from annie.pages.lazy import schedule
 
@@ -15,6 +16,16 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nicegui import Client
+
+
+def render_embed_ttl() -> float:
+    """Idle-revert delay for an embedded *rendered* clip.
+
+    Capped at the temp-dir sweep TTL so a rendered clip's ``ui.video`` always reverts
+    to its placeholder no later than the periodic sweep deletes the underlying file —
+    the element never points at a clip that has been reclaimed from disk.
+    """
+    return min(state.ui.embed_ttl_seconds, settings.temp_ttl_seconds)
 
 
 def notify_detached(client: Client, message: str, *, color: str) -> None:
@@ -38,14 +49,15 @@ def notify_detached(client: Client, message: str, *, color: str) -> None:
         ui.notify(message, color=color)
 
 
-def unembed_after_idle(box: ui.element, restore: Callable[[], None]) -> None:
+def unembed_after_idle(
+    box: ui.element, restore: Callable[[], None], *, ttl: float | None = None
+) -> None:
     """Swap an embedded clip back to its placeholder once it has sat idle.
 
     An embedded ``ui.video`` keeps its clip buffered in the browser tab (and its
     element alive server-side) for as long as the row is on the page. A reviewer
     who plays a dozen clips while scrolling never gets that memory back. So each
-    embed schedules its own reversal: after
-    :attr:`annie.core.state.UiSettings.embed_ttl_seconds`, ``restore`` rebuilds the
+    embed schedules its own reversal: after ``ttl`` seconds, ``restore`` rebuilds the
     cheap placeholder and the clip is dropped.
 
     The wait runs via :func:`annie.pages.lazy.schedule`, so a row refreshed away
@@ -55,10 +67,14 @@ def unembed_after_idle(box: ui.element, restore: Callable[[], None]) -> None:
     Args:
         box: The container holding the embedded clip.
         restore: Rebuilds the placeholder content inside ``box``. Must clear it.
+        ttl: Idle seconds before reverting. Defaults to
+            :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass
+            :func:`render_embed_ttl` so they never outlive the temp-dir sweep.
     """
+    delay = ttl if ttl is not None else state.ui.embed_ttl_seconds
 
     async def _revert() -> None:
-        await asyncio.sleep(state.ui.embed_ttl_seconds)
+        await asyncio.sleep(delay)
         if not _alive(box):
             return  # the row was refreshed or the page closed while we waited
         with contextlib.suppress(RuntimeError):

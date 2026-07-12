@@ -215,8 +215,6 @@ def _maintenance_section() -> None:
 def render() -> None:
     """Build the Settings tab body."""
     with ui.column().classes("w-full gap-3"):
-        ui.label("Settings").classes("text-xl font-medium")
-
         with ui.card().classes("w-full"):
             ui.label("Browse & Annotator").classes("font-medium")
             ui.label("Row height sizes every thumbnail, strip frame, and render box.").classes(

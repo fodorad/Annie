@@ -41,7 +41,7 @@ from annie.pages import annotator
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.reveal import is_docker, reveal
-from annie.pages.utils import _alive, unembed_after_idle
+from annie.pages.utils import _alive, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
 
 if TYPE_CHECKING:
@@ -374,7 +374,7 @@ async def _watch_render(
                     ui.video(job.output_path, autoplay=True).style(
                         f"width:{width}px;height:{height}px"
                     )
-                unembed_after_idle(box, restore)
+                unembed_after_idle(box, restore, ttl=render_embed_ttl())
                 return
             if job.status is JobStatus.FAILED:
                 box.clear()
@@ -897,8 +897,6 @@ def _jump_to_top() -> None:
 def _content() -> None:
     """Build the Browse body: gate, Manipulate, Filter, rows, and jump-to-top."""
     with ui.column().classes("w-full gap-3"):
-        ui.label("Browse").classes("text-xl font-medium")
-
         if not state.registry.has_video:
             ui.label("Add a videos folder on the Dataset tab to browse.").style(
                 f"color:{theme.NEUTRAL}"

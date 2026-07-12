@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+import logging
 import tempfile
 import unittest
 from pathlib import Path
 
 from annie.core.logbook import LogBook, report_exception
+
+
+def _reset_events_logger() -> None:
+    """Drop any file handler left on the shared ``annie.events`` logger by a prior test."""
+    logger = logging.getLogger("annie.events")
+    for handler in list(logger.handlers):
+        logger.removeHandler(handler)
+        handler.close()
 
 
 class TestLogBook(unittest.TestCase):
@@ -45,12 +54,34 @@ class TestLogBook(unittest.TestCase):
         self.assertIn("ERROR: boom", text)
         self.assertIn("stack line 2", text)
 
-    def test_attach_file_writes_dated_log(self) -> None:
+    def test_attach_file_names_log_after_the_db(self) -> None:
+        _reset_events_logger()
         tmp = Path(tempfile.mkdtemp())
-        path = self.book.attach_file(tmp)
-        self.assertTrue(path.name.startswith("Annie_") and path.suffix == ".log")
+        path = self.book.attach_file(tmp, "annie_2026-01-02_09-00-00")
+        self.assertEqual(path.name, "annie_2026-01-02_09-00-00.log")  # same stem as the DB
         self.book.add("error", "to-file")
         self.assertIn("to-file", path.read_text(encoding="utf-8"))
+
+    def test_retarget_renames_log_and_keeps_content(self) -> None:
+        _reset_events_logger()
+        tmp = Path(tempfile.mkdtemp())
+        self.book.attach_file(tmp, "annie_ts")
+        self.book.add("error", "before-rename")
+
+        new = self.book.retarget(tmp.parent / "sessions" / "my_review.db")
+
+        assert new is not None
+        self.assertEqual(new.name, "my_review.log")  # follows the DB stem
+        self.assertEqual(new.parent, tmp)  # stays in the log dir
+        self.assertFalse((tmp / "annie_ts.log").exists())  # old file moved, not orphaned
+        self.book.add("error", "after-rename")
+        content = new.read_text(encoding="utf-8")
+        self.assertIn("before-rename", content)  # content carried across
+        self.assertIn("after-rename", content)
+
+    def test_retarget_without_attached_file_is_noop(self) -> None:
+        _reset_events_logger()
+        self.assertIsNone(LogBook().retarget("/tmp/whatever.db"))
 
 
 class TestReportException(unittest.TestCase):

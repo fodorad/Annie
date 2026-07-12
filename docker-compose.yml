@@ -12,13 +12,13 @@ services:
 
       # ── Data directories from your HDDs ──────────────────────────────────────
       # Set matching variables in .env, then uncomment the lines you need.
-      # The participants directory must NOT be read-only: manual corrections are
-      # written as a sibling CSV next to the participants file.
+      # The protagonist directory must NOT be read-only: the Annotator's Export
+      # writes the corrected CSV as a sibling next to the protagonist file.
       #
-      # - "${ANNIE_VIDEOS_DIR}:/data/videos:ro"
-      # - "${ANNIE_VDET_DIR}:/data/vdets:ro"
-      # - "${ANNIE_TRACK_DIR}:/data/tracks:ro"
-      # - "${ANNIE_PARTICIPANTS_DIR}:/data/participants"
+      # - "${ANNIE_VIDEO_DIR}:/data/video:ro"
+      # - "${ANNIE_VDET_DIR}:/data/vdet:ro"
+      # - "${ANNIE_TRACK_DIR}:/data/track:ro"
+      # - "${ANNIE_PROTAGONIST_DIR}:/data/protagonist"
     environment:
       ANNIE_HOST: "0.0.0.0"
       ANNIE_PORT: "${ANNIE_PORT:-8080}"
@@ -28,8 +28,8 @@ services:
 
       # Container-side paths (fixed). Uncomment each line together with the
       # matching volume mount above.
-      # ANNIE_VIDEOS_DIR: /data/videos
-      # ANNIE_VDET_DIR: /data/vdets
-      # ANNIE_TRACK_DIR: /data/tracks
-      # ANNIE_PARTICIPANTS_FILE: /data/participants/${ANNIE_PARTICIPANTS_FILE_NAME:-participant_face_track_heuristic.csv}
+      # ANNIE_VIDEO_DIR: /data/video
+      # ANNIE_VDET_DIR: /data/vdet
+      # ANNIE_TRACK_DIR: /data/track
+      # ANNIE_PROTAGONIST_CSV: /data/protagonist/${ANNIE_PROTAGONIST_CSV_NAME:-protagonist_track_heuristic.csv}
     restart: unless-stopped
