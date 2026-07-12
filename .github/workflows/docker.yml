@@ -29,8 +29,11 @@ jobs:
         id: meta
         # workflow_dispatch → the input tag; workflow_run for a tag push →
         # head_branch is the tag name (e.g. v1.0.0). `version` strips the leading v.
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          tag="${{ github.event.inputs.tag || github.event.workflow_run.head_branch }}"
+          tag="${INPUT_TAG:-$HEAD_BRANCH}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 
