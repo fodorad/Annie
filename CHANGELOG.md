@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0](https://github.com/fodorad/Annie/compare/v1.2.0...v1.3.0) (2026-07-12)
+
+
+### Features
+
+* grid view, session DB/log pairing, sibling auto-fill, path & env renames ([be81980](https://github.com/fodorad/Annie/commit/be81980f61ca006ded58ad417d5ffd4ef6e3b202))
+* quick-selection grid, session DB/log pairing, sibling auto-fill, path & env renames ([44814d9](https://github.com/fodorad/Annie/commit/44814d9b8ece05cc87927e82e9f524edce50822d))
+
+
+### Bug Fixes
+
+* ruff ([bf2ea61](https://github.com/fodorad/Annie/commit/bf2ea6150926d2d5784a7dc09fe58a8285b0c8be))
+
 ## [1.2.0](https://github.com/fodorad/Annie/compare/v1.1.0...v1.2.0) (2026-07-11)
 
 
