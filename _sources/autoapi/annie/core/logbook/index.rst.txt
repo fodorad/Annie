@@ -12,8 +12,10 @@ annie.core.logbook
    miss. The log book gives them one home:
 
    * every event is appended to an in-memory ring buffer the **Log tab** reads, and
-   * mirrored to a per-session file (``Annie_YYYY-MM-DD_HH-MM-SS.log``) so each
-     startup gets its own log and multiple same-day runs stay distinct.
+   * mirrored to a per-session file **named after the session database** (e.g.
+     ``annie_2026-01-02_09-00-00.log`` beside ``…/sessions/annie_…​.db``) so a session's
+     log and its review DB are paired; renaming the DB renames the log (see
+     :meth:`LogBook.retarget`), keeping their names in lockstep.
 
    The store is event-sourced: each event has a monotonic ``seq`` so a per-client
    poller can fetch only what is new (for toasts) without re-rendering everything. It
@@ -105,13 +107,31 @@ Module Contents
    :param capacity: Maximum number of events kept in memory (oldest dropped).
 
 
-   .. py:method:: attach_file(log_dir: str | pathlib.Path) -> pathlib.Path
+   .. py:method:: attach_file(log_dir: str | pathlib.Path, name: str) -> pathlib.Path
 
-      Mirror events to ``<log_dir>/Annie_<date>_<time>.log`` and return the file path.
+      Mirror events to ``<log_dir>/<name>.log`` and return the file path.
 
-      :param log_dir: Directory to write the dated log file into (created if needed).
+      :param log_dir: Directory to write the log file into (created if needed).
+      :param name: Base filename (no suffix) — the session database's stem, so the log
+                   and its review DB share a name and can be found together.
 
       :returns: The log file path.
+
+
+
+   .. py:method:: retarget(db_path: str | pathlib.Path) -> pathlib.Path | None
+
+      Rename the active log file to match a (renamed) session database.
+
+      The log and its review DB are paired session data, so when the DB is renamed
+      the log follows: the current log file's **content moves** to
+      ``<logs_dir>/<db_stem>.log`` and the file handler re-points there. If a log by
+      that name already exists (e.g. switching to a previously used DB), events are
+      appended to it rather than clobbering it.
+
+      :param db_path: The new active database path; its stem names the log.
+
+      :returns: The new log path, or ``None`` if no log file is attached yet.
 
 
 

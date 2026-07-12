@@ -336,7 +336,7 @@ rather than touching the environment directly.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.videos_dir">
 <span class="sig-name descname"><span class="pre">videos_dir</span></span><a class="headerlink" href="#annie.core.config.Settings.videos_dir" title="Link to this definition">¶</a></dt>
-<dd><p>Folder of source <code class="docutils literal notranslate"><span class="pre">.mp4</span></code> files (env <code class="docutils literal notranslate"><span class="pre">ANNIE_VIDEOS_DIR</span></code>).</p>
+<dd><p>Folder of source <code class="docutils literal notranslate"><span class="pre">.mp4</span></code> files (env <code class="docutils literal notranslate"><span class="pre">ANNIE_VIDEO_DIR</span></code>).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -354,22 +354,22 @@ rather than touching the environment directly.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.participants_file">
 <span class="sig-name descname"><span class="pre">participants_file</span></span><a class="headerlink" href="#annie.core.config.Settings.participants_file" title="Link to this definition">¶</a></dt>
-<dd><p>The protagonist heuristic CSV (<code class="docutils literal notranslate"><span class="pre">uuid,track_id</span></code>);
-manual corrections are written to its <code class="docutils literal notranslate"><span class="pre">_manual</span></code> sibling
-(env <code class="docutils literal notranslate"><span class="pre">ANNIE_PARTICIPANTS_FILE</span></code>).</p>
+<dd><p>The protagonist heuristic CSV (<code class="docutils literal notranslate"><span class="pre">uuid,track_id</span></code>); the
+Annotator’s Export writes corrections to its <code class="docutils literal notranslate"><span class="pre">_manual</span></code> sibling
+(env <code class="docutils literal notranslate"><span class="pre">ANNIE_PROTAGONIST_CSV</span></code>).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.labels_csv">
 <span class="sig-name descname"><span class="pre">labels_csv</span></span><a class="headerlink" href="#annie.core.config.Settings.labels_csv" title="Link to this definition">¶</a></dt>
 <dd><p>A labels CSV file to seed as a label source on startup
-(env <code class="docutils literal notranslate"><span class="pre">ANNIE_LABELS_CSV</span></code>).</p>
+(env <code class="docutils literal notranslate"><span class="pre">ANNIE_LABEL_CSV</span></code>).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.labels_key">
 <span class="sig-name descname"><span class="pre">labels_key</span></span><a class="headerlink" href="#annie.core.config.Settings.labels_key" title="Link to this definition">¶</a></dt>
-<dd><p>The key column in <a class="reference internal" href="#annie.core.config.Settings.labels_csv" title="annie.core.config.Settings.labels_csv"><code class="xref py py-attr docutils literal notranslate"><span class="pre">labels_csv</span></code></a> (env <code class="docutils literal notranslate"><span class="pre">ANNIE_LABELS_KEY</span></code>);
+<dd><p>The key column in <a class="reference internal" href="#annie.core.config.Settings.labels_csv" title="annie.core.config.Settings.labels_csv"><code class="xref py py-attr docutils literal notranslate"><span class="pre">labels_csv</span></code></a> (env <code class="docutils literal notranslate"><span class="pre">ANNIE_LABEL_KEY</span></code>);
 auto-detected from the header when omitted.</p>
 </dd></dl>
 
@@ -377,7 +377,7 @@ auto-detected from the header when omitted.</p>
 <dt class="sig sig-object py" id="annie.core.config.Settings.labels_values">
 <span class="sig-name descname"><span class="pre">labels_values</span></span><a class="headerlink" href="#annie.core.config.Settings.labels_values" title="Link to this definition">¶</a></dt>
 <dd><p>Comma-separated value columns from <a class="reference internal" href="#annie.core.config.Settings.labels_csv" title="annie.core.config.Settings.labels_csv"><code class="xref py py-attr docutils literal notranslate"><span class="pre">labels_csv</span></code></a>
-(env <code class="docutils literal notranslate"><span class="pre">ANNIE_LABELS_VALUES</span></code>); defaults to all non-key columns.</p>
+(env <code class="docutils literal notranslate"><span class="pre">ANNIE_LABEL_VALUES</span></code>); defaults to all non-key columns.</p>
 </dd></dl>
 
 <dl class="py attribute">

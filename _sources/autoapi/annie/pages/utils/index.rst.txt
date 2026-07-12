@@ -14,12 +14,22 @@ Functions
 
 .. autoapisummary::
 
+   annie.pages.utils.render_embed_ttl
    annie.pages.utils.notify_detached
    annie.pages.utils.unembed_after_idle
 
 
 Module Contents
 ---------------
+
+.. py:function:: render_embed_ttl() -> float
+
+   Idle-revert delay for an embedded *rendered* clip.
+
+   Capped at the temp-dir sweep TTL so a rendered clip's ``ui.video`` always reverts
+   to its placeholder no later than the periodic sweep deletes the underlying file —
+   the element never points at a clip that has been reclaimed from disk.
+
 
 .. py:function:: notify_detached(client: nicegui.Client, message: str, *, color: str) -> None
 
@@ -39,15 +49,14 @@ Module Contents
    :param color: The toast colour.
 
 
-.. py:function:: unembed_after_idle(box: nicegui.ui.element, restore: collections.abc.Callable[[], None]) -> None
+.. py:function:: unembed_after_idle(box: nicegui.ui.element, restore: collections.abc.Callable[[], None], *, ttl: float | None = None) -> None
 
    Swap an embedded clip back to its placeholder once it has sat idle.
 
    An embedded ``ui.video`` keeps its clip buffered in the browser tab (and its
    element alive server-side) for as long as the row is on the page. A reviewer
    who plays a dozen clips while scrolling never gets that memory back. So each
-   embed schedules its own reversal: after
-   :attr:`annie.core.state.UiSettings.embed_ttl_seconds`, ``restore`` rebuilds the
+   embed schedules its own reversal: after ``ttl`` seconds, ``restore`` rebuilds the
    cheap placeholder and the clip is dropped.
 
    The wait runs via :func:`annie.pages.lazy.schedule`, so a row refreshed away
@@ -56,5 +65,8 @@ Module Contents
 
    :param box: The container holding the embedded clip.
    :param restore: Rebuilds the placeholder content inside ``box``. Must clear it.
+   :param ttl: Idle seconds before reverting. Defaults to
+               :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass
+               :func:`render_embed_ttl` so they never outlive the temp-dir sweep.
 
 

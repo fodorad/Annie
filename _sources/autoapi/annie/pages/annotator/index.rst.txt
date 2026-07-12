@@ -14,8 +14,9 @@ annie.pages.annotator
    * the thumbnail and five-frame strip show the current protagonist track in green
      (click the thumbnail to play the original clip);
    * picking a different track in the **Protagonist** selector re-renders the strip
-     immediately and **auto-saves** the choice to the ``_manual`` CSV — there is no
-     Save button; selection *is* the save;
+     immediately and **saves the choice to this session's review database** — there is
+     no Save button; selection *is* the save. The source ``_manual`` CSV is *not*
+     touched here — that is what the **Export corrected CSV** button is for;
    * the option matching the value in the source CSV is marked ``(default)`` so it is
      obvious which track the heuristic chose;
    * a **render** box burns the full clip with the chosen track green so the choice can
@@ -28,7 +29,8 @@ annie.pages.annotator
    Rows are revealed a page at a time (see :mod:`annie.pages.paging`), which also keeps
    the tab from decoding five frames for every queued video the moment it opens.
 
-   The corrected datasource can be exported to a standalone CSV at any time.
+   **Export corrected CSV** writes the session's protagonist corrections to the
+   ``_manual`` CSV beside the heuristic source (see :func:`annie.dataset.corrections`).
 
 
 

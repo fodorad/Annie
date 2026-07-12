@@ -301,10 +301,13 @@
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.utils.notify_detached" title="annie.pages.utils.notify_detached"><code class="xref py py-obj docutils literal notranslate"><span class="pre">notify_detached</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.utils.render_embed_ttl" title="annie.pages.utils.render_embed_ttl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_embed_ttl</span></code></a>(→ float)</p></td>
+<td><p>Idle-revert delay for an embedded <em>rendered</em> clip.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.utils.notify_detached" title="annie.pages.utils.notify_detached"><code class="xref py py-obj docutils literal notranslate"><span class="pre">notify_detached</span></code></a>(→ None)</p></td>
 <td><p>Toast from a handler that tore down the slot it was invoked in.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.utils.unembed_after_idle" title="annie.pages.utils.unembed_after_idle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unembed_after_idle</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.utils.unembed_after_idle" title="annie.pages.utils.unembed_after_idle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unembed_after_idle</span></code></a>(→ None)</p></td>
 <td><p>Swap an embedded clip back to its placeholder once it has sat idle.</p></td>
 </tr>
 </tbody>
@@ -313,6 +316,15 @@
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.utils.render_embed_ttl">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.utils.</span></span><span class="sig-name descname"><span class="pre">render_embed_ttl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/utils.html#render_embed_ttl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.utils.render_embed_ttl" title="Link to this definition">¶</a></dt>
+<dd><p>Idle-revert delay for an embedded <em>rendered</em> clip.</p>
+<p>Capped at the temp-dir sweep TTL so a rendered clip’s <code class="docutils literal notranslate"><span class="pre">ui.video</span></code> always reverts
+to its placeholder no later than the periodic sweep deletes the underlying file —
+the element never points at a clip that has been reclaimed from disk.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.utils.notify_detached">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.utils.</span></span><span class="sig-name descname"><span class="pre">notify_detached</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">nicegui.Client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/utils.html#notify_detached"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.utils.notify_detached" title="Link to this definition">¶</a></dt>
@@ -337,13 +349,12 @@ any refresh, so the toast survives the teardown that caused it.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.utils.unembed_after_idle">
-<span class="sig-prename descclassname"><span class="pre">annie.pages.utils.</span></span><span class="sig-name descname"><span class="pre">unembed_after_idle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">nicegui.ui.element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/utils.html#unembed_after_idle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.utils.unembed_after_idle" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.pages.utils.</span></span><span class="sig-name descname"><span class="pre">unembed_after_idle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">nicegui.ui.element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/utils.html#unembed_after_idle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.utils.unembed_after_idle" title="Link to this definition">¶</a></dt>
 <dd><p>Swap an embedded clip back to its placeholder once it has sat idle.</p>
 <p>An embedded <code class="docutils literal notranslate"><span class="pre">ui.video</span></code> keeps its clip buffered in the browser tab (and its
 element alive server-side) for as long as the row is on the page. A reviewer
 who plays a dozen clips while scrolling never gets that memory back. So each
-embed schedules its own reversal: after
-<a class="reference internal" href="../../core/state/index.html#annie.core.state.UiSettings.embed_ttl_seconds" title="annie.core.state.UiSettings.embed_ttl_seconds"><code class="xref py py-attr docutils literal notranslate"><span class="pre">annie.core.state.UiSettings.embed_ttl_seconds</span></code></a>, <code class="docutils literal notranslate"><span class="pre">restore</span></code> rebuilds the
+embed schedules its own reversal: after <code class="docutils literal notranslate"><span class="pre">ttl</span></code> seconds, <code class="docutils literal notranslate"><span class="pre">restore</span></code> rebuilds the
 cheap placeholder and the clip is dropped.</p>
 <p>The wait runs via <a class="reference internal" href="../lazy/index.html#annie.pages.lazy.schedule" title="annie.pages.lazy.schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">annie.pages.lazy.schedule()</span></code></a>, so a row refreshed away
 mid-wait has no parent slot to be deleted; <code class="docutils literal notranslate"><span class="pre">restore</span></code> is skipped when the box
@@ -353,6 +364,9 @@ no longer exists.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>box</strong> – The container holding the embedded clip.</p></li>
 <li><p><strong>restore</strong> – Rebuilds the placeholder content inside <code class="docutils literal notranslate"><span class="pre">box</span></code>. Must clear it.</p></li>
+<li><p><strong>ttl</strong> – Idle seconds before reverting. Defaults to
+<a class="reference internal" href="../../core/state/index.html#annie.core.state.UiSettings.embed_ttl_seconds" title="annie.core.state.UiSettings.embed_ttl_seconds"><code class="xref py py-attr docutils literal notranslate"><span class="pre">annie.core.state.UiSettings.embed_ttl_seconds</span></code></a>; rendered clips pass
+<a class="reference internal" href="#annie.pages.utils.render_embed_ttl" title="annie.pages.utils.render_embed_ttl"><code class="xref py py-func docutils literal notranslate"><span class="pre">render_embed_ttl()</span></code></a> so they never outlive the temp-dir sweep.</p></li>
 </ul>
 </dd>
 </dl>
@@ -419,6 +433,7 @@ no longer exists.</p>
 <li><a class="reference internal" href="#">annie.pages.utils</a><ul>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.pages.utils.render_embed_ttl"><code class="docutils literal notranslate"><span class="pre">render_embed_ttl()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.utils.notify_detached"><code class="docutils literal notranslate"><span class="pre">notify_detached()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.utils.unembed_after_idle"><code class="docutils literal notranslate"><span class="pre">unembed_after_idle()</span></code></a></li>
 </ul>

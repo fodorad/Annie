@@ -296,6 +296,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 
@@ -341,6 +342,58 @@
 
 
 
+<div class="viewcode-block" id="scan_entries">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/fsbrowse/index.html#annie.pages.fsbrowse.scan_entries">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scan_entries</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">want_files</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">suffixes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">show_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List a directory&#39;s subfolders (and optionally files) in a single pass.</span>
+
+<span class="sd">    Uses :func:`os.scandir`, whose entries carry the file type read straight from the</span>
+<span class="sd">    directory itself, so classifying each child as a folder or file costs no extra</span>
+<span class="sd">    ``stat`` syscall on the common case. This matters on large or slow (external /</span>
+<span class="sd">    networked) drives, where the old one-``stat``-per-entry approach could freeze the</span>
+<span class="sd">    picker for many seconds. Unreadable directories yield empty lists rather than</span>
+<span class="sd">    raising, so a permission error never breaks the picker.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: The directory to list.</span>
+<span class="sd">        want_files: Also collect files (skipped entirely when ``False``).</span>
+<span class="sd">        suffixes: Lower-case dotted suffixes to keep among files, or ``None`` for all.</span>
+<span class="sd">        show_hidden: Include dot-prefixed entries when ``True``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A ``(subdirs, files)`` pair, each sorted by lower-cased name; ``files`` is</span>
+<span class="sd">        empty when ``want_files`` is ``False``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">subdirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">scandir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">it</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">show_hidden</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                        <span class="n">subdirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="n">want_files</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                        <span class="n">child</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">suffixes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">suffixes</span><span class="p">:</span>
+                            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># a single unreadable entry must not abort the listing</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">PermissionError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">subdirs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">subdirs</span><span class="p">,</span> <span class="n">files</span></div>
+
+
+
 <div class="viewcode-block" id="list_subdirectories">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/fsbrowse/index.html#annie.pages.fsbrowse.list_subdirectories">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_subdirectories</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">show_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
@@ -357,16 +410,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The child directories, sorted by lower-cased name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">child</span>
-            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">show_hidden</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
-        <span class="p">]</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">PermissionError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">child</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">scan_entries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">want_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_hidden</span><span class="o">=</span><span class="n">show_hidden</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
 
@@ -388,18 +432,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The child files, sorted by lower-cased name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">child</span>
-            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
-            <span class="ow">and</span> <span class="p">(</span><span class="n">show_hidden</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
-            <span class="ow">and</span> <span class="p">(</span><span class="n">suffixes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">suffixes</span><span class="p">)</span>
-        <span class="p">]</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">PermissionError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">child</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">scan_entries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">want_files</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="n">suffixes</span><span class="p">,</span> <span class="n">show_hidden</span><span class="o">=</span><span class="n">show_hidden</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span></div>
 
 </pre></div>
         </article>

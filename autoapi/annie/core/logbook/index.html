@@ -301,8 +301,10 @@ batch, NiceGUI’s own callbacks) used to escape to the terminal and were easy t
 miss. The log book gives them one home:</p>
 <ul class="simple">
 <li><p>every event is appended to an in-memory ring buffer the <strong>Log tab</strong> reads, and</p></li>
-<li><p>mirrored to a per-session file (<code class="docutils literal notranslate"><span class="pre">Annie_YYYY-MM-DD_HH-MM-SS.log</span></code>) so each
-startup gets its own log and multiple same-day runs stay distinct.</p></li>
+<li><p>mirrored to a per-session file <strong>named after the session database</strong> (e.g.
+<code class="docutils literal notranslate"><span class="pre">annie_2026-01-02_09-00-00.log</span></code> beside <code class="docutils literal notranslate"><span class="pre">…/sessions/annie_…​.db</span></code>) so a session’s
+log and its review DB are paired; renaming the DB renames the log (see
+<a class="reference internal" href="#annie.core.logbook.LogBook.retarget" title="annie.core.logbook.LogBook.retarget"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LogBook.retarget()</span></code></a>), keeping their names in lockstep.</p></li>
 </ul>
 <p>The store is event-sourced: each event has a monotonic <code class="docutils literal notranslate"><span class="pre">seq</span></code> so a per-client
 poller can fetch only what is new (for toasts) without re-rendering everything. It
@@ -420,14 +422,37 @@ is pure stdlib and thread-safe, so render/convert worker threads can report too.
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.core.logbook.LogBook.attach_file">
-<span class="sig-name descname"><span class="pre">attach_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/logbook.html#LogBook.attach_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.logbook.LogBook.attach_file" title="Link to this definition">¶</a></dt>
-<dd><p>Mirror events to <code class="docutils literal notranslate"><span class="pre">&lt;log_dir&gt;/Annie_&lt;date&gt;_&lt;time&gt;.log</span></code> and return the file path.</p>
+<span class="sig-name descname"><span class="pre">attach_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/logbook.html#LogBook.attach_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.logbook.LogBook.attach_file" title="Link to this definition">¶</a></dt>
+<dd><p>Mirror events to <code class="docutils literal notranslate"><span class="pre">&lt;log_dir&gt;/&lt;name&gt;.log</span></code> and return the file path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>log_dir</strong> – Directory to write the dated log file into (created if needed).</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_dir</strong> – Directory to write the log file into (created if needed).</p></li>
+<li><p><strong>name</strong> – Base filename (no suffix) — the session database’s stem, so the log
+and its review DB share a name and can be found together.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The log file path.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.core.logbook.LogBook.retarget">
+<span class="sig-name descname"><span class="pre">retarget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/logbook.html#LogBook.retarget"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.logbook.LogBook.retarget" title="Link to this definition">¶</a></dt>
+<dd><p>Rename the active log file to match a (renamed) session database.</p>
+<p>The log and its review DB are paired session data, so when the DB is renamed
+the log follows: the current log file’s <strong>content moves</strong> to
+<code class="docutils literal notranslate"><span class="pre">&lt;logs_dir&gt;/&lt;db_stem&gt;.log</span></code> and the file handler re-points there. If a log by
+that name already exists (e.g. switching to a previously used DB), events are
+appended to it rather than clobbering it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>db_path</strong> – The new active database path; its stem names the log.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The new log path, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no log file is attached yet.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -601,6 +626,7 @@ is pure stdlib and thread-safe, so render/convert worker threads can report too.
 </li>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook"><code class="docutils literal notranslate"><span class="pre">LogBook</span></code></a><ul>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook.attach_file"><code class="docutils literal notranslate"><span class="pre">LogBook.attach_file()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.logbook.LogBook.retarget"><code class="docutils literal notranslate"><span class="pre">LogBook.retarget()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook.add"><code class="docutils literal notranslate"><span class="pre">LogBook.add()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook.events"><code class="docutils literal notranslate"><span class="pre">LogBook.events()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook.since"><code class="docutils literal notranslate"><span class="pre">LogBook.since()</span></code></a></li>

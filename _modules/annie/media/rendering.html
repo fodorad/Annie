@@ -491,26 +491,40 @@
 <div class="viewcode-block" id="RenderService.sweep">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.sweep">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete finished clips older than the TTL and forget their jobs.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete rendered clips whose file is older than the TTL; forget their jobs.</span>
+
+<span class="sd">        File-based (by modification time) rather than job-based, so it also reclaims</span>
+<span class="sd">        clips orphaned by a page refresh or disconnect — where the job is still</span>
+<span class="sd">        tracked but the UI element that showed it is gone — and any ``.mp4`` left by a</span>
+<span class="sd">        previous process. A running job&#39;s output is never touched.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            now: Override for the current epoch time (for testing).</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The number of jobs swept.</span>
+<span class="sd">            The number of clip files deleted.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ttl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ttl_seconds</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ttl_seconds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_ttl_seconds</span>
         <span class="n">cutoff</span> <span class="o">=</span> <span class="p">(</span><span class="n">now</span> <span class="k">if</span> <span class="n">now</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">-</span> <span class="n">ttl</span>
-        <span class="n">swept</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">deleted</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">):</span>
-                <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">)</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">created_at</span> <span class="o">&lt;</span> <span class="n">cutoff</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                        <span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
-                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span>
-                    <span class="n">swept</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">swept</span></div>
+            <span class="n">running</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">.mp4&quot;</span>
+                <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temp_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;.mp4&quot;</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">running</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">expired</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span> <span class="o">&lt;</span> <span class="n">cutoff</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">expired</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">deleted</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">deleted</span></div>
 
 
 <div class="viewcode-block" id="RenderService.clear_all">

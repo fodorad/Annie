@@ -297,6 +297,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 
@@ -304,6 +305,19 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+
+<div class="viewcode-block" id="render_embed_ttl">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.render_embed_ttl">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_embed_ttl</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Idle-revert delay for an embedded *rendered* clip.</span>
+
+<span class="sd">    Capped at the temp-dir sweep TTL so a rendered clip&#39;s ``ui.video`` always reverts</span>
+<span class="sd">    to its placeholder no later than the periodic sweep deletes the underlying file —</span>
+<span class="sd">    the element never points at a clip that has been reclaimed from disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_ttl_seconds</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="notify_detached">
@@ -332,14 +346,15 @@
 
 <div class="viewcode-block" id="unembed_after_idle">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.unembed_after_idle">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">restore</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unembed_after_idle</span><span class="p">(</span>
+    <span class="n">box</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">restore</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">ttl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Swap an embedded clip back to its placeholder once it has sat idle.</span>
 
 <span class="sd">    An embedded ``ui.video`` keeps its clip buffered in the browser tab (and its</span>
 <span class="sd">    element alive server-side) for as long as the row is on the page. A reviewer</span>
 <span class="sd">    who plays a dozen clips while scrolling never gets that memory back. So each</span>
-<span class="sd">    embed schedules its own reversal: after</span>
-<span class="sd">    :attr:`annie.core.state.UiSettings.embed_ttl_seconds`, ``restore`` rebuilds the</span>
+<span class="sd">    embed schedules its own reversal: after ``ttl`` seconds, ``restore`` rebuilds the</span>
 <span class="sd">    cheap placeholder and the clip is dropped.</span>
 
 <span class="sd">    The wait runs via :func:`annie.pages.lazy.schedule`, so a row refreshed away</span>
@@ -349,10 +364,14 @@
 <span class="sd">    Args:</span>
 <span class="sd">        box: The container holding the embedded clip.</span>
 <span class="sd">        restore: Rebuilds the placeholder content inside ``box``. Must clear it.</span>
+<span class="sd">        ttl: Idle seconds before reverting. Defaults to</span>
+<span class="sd">            :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass</span>
+<span class="sd">            :func:`render_embed_ttl` so they never outlive the temp-dir sweep.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">ttl</span> <span class="k">if</span> <span class="n">ttl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_revert</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">box</span><span class="p">):</span>
             <span class="k">return</span>  <span class="c1"># the row was refreshed or the page closed while we waited</span>
         <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>

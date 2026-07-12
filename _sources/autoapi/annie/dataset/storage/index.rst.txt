@@ -7,11 +7,11 @@ annie.dataset.storage
 
    SQLite-backed review-status store (Browse tab curation state).
 
-   This holds *curation* state per video — a good/bad verdict, an optional note, and
-   an "add to annotator" flag — not fine-grained annotation content (that lives in
-   the protagonist ``_manual`` CSV and, later, per-video JSON). The store is a real
-   file (default ``~/.annie/annie.db``) so it survives restarts, and is keyed by
-   :attr:`annie.models.VideoEntry.key`.
+   This holds *curation* state per video — a good/bad verdict, an optional note, an
+   "add to annotator" flag, and the protagonist-track correction — plus, on export,
+   the protagonist ``_manual`` CSV. The store is a real file (by default a per-session
+   ``~/.annie/sessions/annie_<timestamp>.db``; pin one with ``ANNIE_DB_PATH``) so it
+   survives restarts, and is keyed by :attr:`annie.models.VideoEntry.key`.
 
    Every video is **liked (good) by default**: a row only exists once the user
    interacts, and the UI treats "no row" as good. The store is exportable to CSV/JSON
@@ -71,6 +71,11 @@ Module Contents
 
       Whether the video is queued for the Annotator tab.
 
+   .. attribute:: active_track
+
+      The session's protagonist-track override, or ``None`` if the
+      reviewer has not corrected this video (the heuristic value then stands).
+
    .. attribute:: updated_at
 
       ISO-8601 UTC timestamp of the last change.
@@ -118,13 +123,13 @@ Module Contents
 
 
 
-   .. py:method:: upsert(row_key: str, video_id: str, annotation_suffix: str | None, *, verdict: Verdict | None = None, note: str | None = None, annotate: bool | None = None) -> ReviewRecord
+   .. py:method:: upsert(row_key: str, video_id: str, annotation_suffix: str | None, *, verdict: Verdict | None = None, note: str | None = None, annotate: bool | None = None, active_track: int | None = None) -> ReviewRecord
 
       Insert or update a review row, preserving fields left as ``None``.
 
-      Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` keeps any
-      existing value, so the good/bad toggle, the note, and the annotator flag
-      update independently.
+      Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` /
+      ``active_track=None`` keeps any existing value, so the good/bad toggle, the
+      note, the annotator flag, and the protagonist correction update independently.
 
       :param row_key: Stable row identity (primary key).
       :param video_id: The video id, stored for export/grouping.
@@ -132,6 +137,8 @@ Module Contents
       :param verdict: New verdict, or ``None`` to leave unchanged.
       :param note: New note, or ``None`` to leave unchanged.
       :param annotate: New annotator flag, or ``None`` to leave unchanged.
+      :param active_track: New protagonist-track override, or ``None`` to leave
+                           unchanged.
 
       :returns: The resulting :class:`ReviewRecord`.
 
@@ -160,6 +167,31 @@ Module Contents
       :param value: Whether the video is queued for the Annotator tab.
 
       :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: set_active_track(row_key: str, video_id: str, annotation_suffix: str | None, track_id: int) -> ReviewRecord
+
+      Persist the reviewer's protagonist-track correction for a video.
+
+      The choice lives only in this session's database; the ``_manual`` CSV is
+      written separately by the Annotator's "Export corrected CSV" action.
+
+      :param row_key: Stable row identity.
+      :param video_id: The video id.
+      :param annotation_suffix: The annotation suffix, or ``None``.
+      :param track_id: The chosen active track index.
+
+      :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: active_tracks() -> dict[str, int]
+
+      Return every stored protagonist override as ``row_key -> track_id``.
+
+      :returns: A mapping of row key to corrected track index for the rows a reviewer
+                has changed this session (rows without an override are omitted).
 
 
 

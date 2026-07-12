@@ -20,6 +20,7 @@ Functions
 
    annie.pages.fsbrowse.resolve_start_dir
    annie.pages.fsbrowse.parent_of
+   annie.pages.fsbrowse.scan_entries
    annie.pages.fsbrowse.list_subdirectories
    annie.pages.fsbrowse.list_files
 
@@ -46,6 +47,26 @@ Module Contents
    :param path: The current directory.
 
    :returns: The parent :class:`~pathlib.Path`, or ``None`` at the root.
+
+
+.. py:function:: scan_entries(path: str | pathlib.Path, *, want_files: bool, suffixes: tuple[str, Ellipsis] | None = None, show_hidden: bool = False) -> tuple[list[pathlib.Path], list[pathlib.Path]]
+
+   List a directory's subfolders (and optionally files) in a single pass.
+
+   Uses :func:`os.scandir`, whose entries carry the file type read straight from the
+   directory itself, so classifying each child as a folder or file costs no extra
+   ``stat`` syscall on the common case. This matters on large or slow (external /
+   networked) drives, where the old one-``stat``-per-entry approach could freeze the
+   picker for many seconds. Unreadable directories yield empty lists rather than
+   raising, so a permission error never breaks the picker.
+
+   :param path: The directory to list.
+   :param want_files: Also collect files (skipped entirely when ``False``).
+   :param suffixes: Lower-case dotted suffixes to keep among files, or ``None`` for all.
+   :param show_hidden: Include dot-prefixed entries when ``True``.
+
+   :returns: A ``(subdirs, files)`` pair, each sorted by lower-cased name; ``files`` is
+             empty when ``want_files`` is ``False``.
 
 
 .. py:function:: list_subdirectories(path: str | pathlib.Path, *, show_hidden: bool = False) -> list[pathlib.Path]

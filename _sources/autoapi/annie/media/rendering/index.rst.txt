@@ -170,11 +170,16 @@ Module Contents
 
    .. py:method:: sweep(*, now: float | None = None) -> int
 
-      Delete finished clips older than the TTL and forget their jobs.
+      Delete rendered clips whose file is older than the TTL; forget their jobs.
+
+      File-based (by modification time) rather than job-based, so it also reclaims
+      clips orphaned by a page refresh or disconnect — where the job is still
+      tracked but the UI element that showed it is gone — and any ``.mp4`` left by a
+      previous process. A running job's output is never touched.
 
       :param now: Override for the current epoch time (for testing).
 
-      :returns: The number of jobs swept.
+      :returns: The number of clip files deleted.
 
 
 

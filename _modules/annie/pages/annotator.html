@@ -296,8 +296,9 @@
 <span class="sd">* the thumbnail and five-frame strip show the current protagonist track in green</span>
 <span class="sd">  (click the thumbnail to play the original clip);</span>
 <span class="sd">* picking a different track in the **Protagonist** selector re-renders the strip</span>
-<span class="sd">  immediately and **auto-saves** the choice to the ``_manual`` CSV — there is no</span>
-<span class="sd">  Save button; selection *is* the save;</span>
+<span class="sd">  immediately and **saves the choice to this session&#39;s review database** — there is</span>
+<span class="sd">  no Save button; selection *is* the save. The source ``_manual`` CSV is *not*</span>
+<span class="sd">  touched here — that is what the **Export corrected CSV** button is for;</span>
 <span class="sd">* the option matching the value in the source CSV is marked ``(default)`` so it is</span>
 <span class="sd">  obvious which track the heuristic chose;</span>
 <span class="sd">* a **render** box burns the full clip with the chosen track green so the choice can</span>
@@ -310,7 +311,8 @@
 <span class="sd">Rows are revealed a page at a time (see :mod:`annie.pages.paging`), which also keeps</span>
 <span class="sd">the tab from decoding five frames for every queued video the moment it opens.</span>
 
-<span class="sd">The corrected datasource can be exported to a standalone CSV at any time.</span>
+<span class="sd">**Export corrected CSV** writes the session&#39;s protagonist corrections to the</span>
+<span class="sd">``_manual`` CSV beside the heuristic source (see :func:`annie.dataset.corrections`).</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -330,7 +332,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.rendering</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.paging</span><span class="w"> </span><span class="kn">import</span> <span class="n">paged</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">notify_detached</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">notify_detached</span><span class="p">,</span> <span class="n">render_embed_ttl</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.viewport</span><span class="w"> </span><span class="kn">import</span> <span class="n">observe_row</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_participants</span>
 
@@ -427,25 +429,28 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export the resolved protagonist datasource next to its source file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export this session&#39;s protagonist corrections as the ``_manual`` CSV.</span>
+
+<span class="sd">    Corrections live in the session database; this writes them to the manual CSV</span>
+<span class="sd">    next to the protagonist (heuristic) source, on demand.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">_protagonist_source</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Add a protagonist CSV on the Dataset tab first.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span> <span class="o">=</span> <span class="n">resolved</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_resolved</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">corrections</span><span class="o">.</span><span class="n">export_corrected</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exported corrected protagonist CSV to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_persist</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">track_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto-save a protagonist choice to the ``_manual`` CSV, if a source exists.&quot;&quot;&quot;</span>
-    <span class="n">resolved</span> <span class="o">=</span> <span class="n">_protagonist_source</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Add a protagonist CSV on the Dataset tab to save changes.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+    <span class="n">overrides</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">active_tracks</span><span class="p">()</span>  <span class="c1"># row_key (== video id) -&gt; track id</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">overrides</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;No protagonist corrections to export yet.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="k">return</span>
-    <span class="n">path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span> <span class="o">=</span> <span class="n">resolved</span>
-    <span class="n">corrections</span><span class="o">.</span><span class="n">set_active_track</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="n">track_id</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">corrections</span><span class="o">.</span><span class="n">manual_sibling</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">corrections</span><span class="o">.</span><span class="n">export_active_tracks</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">overrides</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span><span class="si">}</span><span class="s2"> correction(s) to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_persist</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">track_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save a protagonist choice to the session DB (never autosaves the manual CSV).&quot;&quot;&quot;</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_active_track</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">track_id</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_populate</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">thumb</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">strip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -538,7 +543,7 @@
                 <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
                 <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
                     <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_IMG</span><span class="p">)</span>
-                <span class="n">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">restore</span><span class="p">)</span>
+                <span class="n">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">restore</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="n">render_embed_ttl</span><span class="p">())</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">:</span>
                 <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -712,7 +717,7 @@
             <span class="k">def</span><span class="w"> </span><span class="nf">on_pick</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;track&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                 <span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="n">_persist</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>  <span class="c1"># auto-save; no Save button</span>
+                <span class="n">_persist</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>  <span class="c1"># save to the session DB; Export writes the CSV</span>
                 <span class="n">repopulate</span><span class="p">()</span>  <span class="c1"># redraw the strip with the new green track</span>
                 <span class="n">reset_render</span><span class="p">()</span>  <span class="c1"># the rendered clip is now stale</span>
 
@@ -732,8 +737,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Annotator body from the queued videos.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center justify-between&quot;</span><span class="p">):</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Annotator&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xl font-medium&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center justify-end&quot;</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Export corrected CSV&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;download&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_export</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
 
         <span class="n">entries</span> <span class="o">=</span> <span class="n">_queued_entries</span><span class="p">()</span>

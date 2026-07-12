@@ -306,6 +306,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
@@ -318,15 +319,44 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">logs</span> <span class="k">as</span> <span class="n">logs_page</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">settings_page</span>
 
-<span class="c1">#: The tab bar, in display order: ``(page id, Tabler icon, label)`` per tab.</span>
+<span class="c1">#: The tab bar, in display order: ``(page id, Tabler icon, label, overview)`` per tab.</span>
+<span class="c1">#: The overview is shown as a hover tooltip on the tab button (so each page body no</span>
+<span class="c1">#: longer repeats its own title/description).</span>
 <span class="n">_TABS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">(</span><span class="s2">&quot;home&quot;</span><span class="p">,</span> <span class="s2">&quot;home&quot;</span><span class="p">,</span> <span class="s2">&quot;Home&quot;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;convert&quot;</span><span class="p">,</span> <span class="s2">&quot;autorenew&quot;</span><span class="p">,</span> <span class="s2">&quot;Convert&quot;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;folder&quot;</span><span class="p">,</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;browse&quot;</span><span class="p">,</span> <span class="s2">&quot;grid_view&quot;</span><span class="p">,</span> <span class="s2">&quot;Browse&quot;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;annotator&quot;</span><span class="p">,</span> <span class="s2">&quot;edit&quot;</span><span class="p">,</span> <span class="s2">&quot;Annotator&quot;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="s2">&quot;receipt_long&quot;</span><span class="p">,</span> <span class="s2">&quot;Log&quot;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;settings&quot;</span><span class="p">,</span> <span class="s2">&quot;settings&quot;</span><span class="p">,</span> <span class="s2">&quot;Settings&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;home&quot;</span><span class="p">,</span> <span class="s2">&quot;home&quot;</span><span class="p">,</span> <span class="s2">&quot;Home&quot;</span><span class="p">,</span> <span class="s2">&quot;Overview of Annie and quick links to get started.&quot;</span><span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;convert&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;autorenew&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Convert&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Re-encode audio/video to a consistent, torchcodec-validated form so previews, &quot;</span>
+        <span class="s2">&quot;renders, and downstream loaders never hit broken seeking.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;dataset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;folder&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Dataset&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Build the dataset from data sources (videos, vdet, tracks, CSVs), pick a review &quot;</span>
+        <span class="s2">&quot;database, and watch live metrics.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;browse&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;grid_view&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Browse&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Scroll, filter, and review every sample; queue videos for the Annotator.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;annotator&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;edit&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Annotator&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Correct the protagonist track and add temporal event annotations on queued videos.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="s2">&quot;receipt_long&quot;</span><span class="p">,</span> <span class="s2">&quot;Log&quot;</span><span class="p">,</span> <span class="s2">&quot;Live application logs and error toasts.&quot;</span><span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;settings&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;settings&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Settings&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Tune UI preferences: row heights, paging, auto-scroll, and off-screen unload timing.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">)</span>
 
 <span class="c1"># The fixed header&#39;s width tracks the viewport. Without this, switching from a</span>
@@ -350,8 +380,10 @@
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Annie&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-1 items-center justify-center&quot;</span><span class="p">):</span>
             <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tabs</span><span class="p">()</span> <span class="k">as</span> <span class="n">tabs</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">_TABS</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">overview</span> <span class="ow">in</span> <span class="n">_TABS</span><span class="p">:</span>
                     <span class="n">tab</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">icon</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="n">tab</span><span class="p">:</span>
+                        <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">overview</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;delay=1000&quot;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;annotator&quot;</span><span class="p">:</span>
                         <span class="n">annotator</span><span class="o">.</span><span class="n">set_tab</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-1 items-center justify-end&quot;</span><span class="p">):</span>
@@ -401,17 +433,46 @@
 
 
 
+<span class="c1">#: Floor for the render-sweep cadence, so a tiny TTL can&#39;t busy-spin the loop.</span>
+<span class="n">_MIN_SWEEP_INTERVAL_SECONDS</span> <span class="o">=</span> <span class="mi">15</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_sweep_render_clips</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Periodically reclaim rendered clips older than the (settable) temp TTL.</span>
+
+<span class="sd">    Runs once per process for the app&#39;s lifetime. The cadence tracks</span>
+<span class="sd">    :attr:`annie.core.config.Settings.temp_ttl_seconds` live, so changing the TTL on</span>
+<span class="sd">    the Settings tab takes effect on the next cycle. Rendered clips revert their UI</span>
+<span class="sd">    element at :func:`annie.pages.utils.render_embed_ttl` (also capped by the TTL), so</span>
+<span class="sd">    the sweep never deletes a file a visible ``ui.video`` still points at.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">_MIN_SWEEP_INTERVAL_SECONDS</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_ttl_seconds</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">sweep</span><span class="p">()</span>
+
+
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../autoapi/annie/app/index.html#annie.app.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Console-script / module entry point: register the page and run the server.&quot;&quot;&quot;</span>
-    <span class="n">log_path</span> <span class="o">=</span> <span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">attach_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">logs_dir</span><span class="p">)</span>
+    <span class="c1"># Name the log after the active session DB so the two are paired (and renaming</span>
+    <span class="c1"># the DB later renames the log too — see LogBook.retarget / AppState.set_store).</span>
+    <span class="n">log_path</span> <span class="o">=</span> <span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">attach_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">logs_dir</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">stem</span><span class="p">)</span>
     <span class="c1"># Create the persistent config dir up front so the Save/Load pickers open</span>
     <span class="c1"># inside the auto-discovered directory (e.g. /annie-home/configs in Docker).</span>
     <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">config_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">config_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_exception</span><span class="p">(</span><span class="k">lambda</span> <span class="n">exc</span><span class="p">:</span> <span class="n">logbook</span><span class="o">.</span><span class="n">report_exception</span><span class="p">(</span><span class="s2">&quot;Unhandled exception&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">))</span>
     <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annie started — logging to </span><span class="si">{</span><span class="n">log_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">)</span>
+    <span class="c1"># Rendered clips are throwaway scratch, regenerated on demand and never tracked</span>
+    <span class="c1"># across restarts — so any left in the temp dir are orphans from a previous run</span>
+    <span class="c1"># (often a killed process that skipped its own cleanup). Reclaim them at startup.</span>
+    <span class="n">_jobs</span><span class="p">,</span> <span class="n">freed</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">clear_all</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">freed</span><span class="p">:</span>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cleared </span><span class="si">{</span><span class="n">freed</span><span class="si">}</span><span class="s2"> leftover rendered clip(s) from </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
         <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span>
             <span class="s2">&quot;Media extra not installed — frame thumbnails and rendered clips unavailable. &quot;</span>
@@ -419,6 +480,7 @@
             <span class="n">level</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)))</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_sweep_render_clips</span><span class="p">()))</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_shutdown</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_shutdown</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>

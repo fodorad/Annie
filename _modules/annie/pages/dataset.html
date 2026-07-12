@@ -303,7 +303,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">context</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
@@ -312,11 +316,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">_seed_registry</span><span class="p">,</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">KIND_ICONS</span><span class="p">,</span> <span class="n">KIND_LABELS</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">,</span> <span class="n">SourceKind</span><span class="p">,</span> <span class="n">SourceRegistry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.manipulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">detect_type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KIND_ICONS</span><span class="p">,</span>
+    <span class="n">KIND_LABELS</span><span class="p">,</span>
+    <span class="n">CsvRole</span><span class="p">,</span>
+    <span class="n">DataSource</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="p">,</span>
+    <span class="n">SourceRegistry</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_csv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">notify_detached</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_header</span><span class="p">,</span> <span class="n">read_rows</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span> <span class="n">DEFAULT_VALUE_COLUMN</span>
 
 <span class="c1"># ── per-client state ──────────────────────────────────────────────────────────</span>
 
@@ -329,11 +343,22 @@
 <span class="sd">        scanning: Whether a rescan is in progress for this client.</span>
 <span class="sd">        db_mode: ``&quot;session&quot;`` (fresh per-startup DB) or ``&quot;existing&quot;`` (pinned file).</span>
 <span class="sd">        db_path_custom: The user-typed or config-embedded DB path when mode is ``&quot;existing&quot;``.</span>
+<span class="sd">        config_value: The active config selector value, so &quot;Add data source&quot; knows</span>
+<span class="sd">            whether to seed the picker from the ANNIE_* env dirs ([ENV vars] config)</span>
+<span class="sd">            or open at home / the last-selected parent (New config).</span>
+<span class="sd">        session_db_path: The session-mode DB file (renamable); tracked separately</span>
+<span class="sd">            from ``db_path_custom`` so switching modes restores each side&#39;s choice.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">scanning</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">db_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;session&quot;</span>
     <span class="n">db_path_custom</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">config_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_ENV_CONFIG</span> <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">()</span> <span class="k">else</span> <span class="n">_NEW_CONFIG</span>
+    <span class="p">)</span>
+    <span class="n">session_db_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="p">)</span>
 
 
 <span class="c1">#: Per-client state registry; cleaned up on disconnect in :func:`render`.</span>
@@ -453,6 +478,7 @@
     <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;session&quot;</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
@@ -467,6 +493,7 @@
     <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;session&quot;</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
@@ -524,6 +551,8 @@
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_select</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">_ds</span><span class="p">()</span><span class="o">.</span><span class="n">config_value</span> <span class="o">=</span> <span class="n">value</span>  <span class="c1"># remember for the picker&#39;s default directory</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">_NEW_CONFIG</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">_new_config</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="n">_ENV_CONFIG</span><span class="p">:</span>
@@ -551,25 +580,170 @@
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_add_kind</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="n">SourceKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the add flow for a chosen source kind.&quot;&quot;&quot;</span>
+    <span class="c1"># In the [ENV vars] config, seed the picker from the ANNIE_* dirs; otherwise (New</span>
+    <span class="c1"># config, loaded configs) open at home first, then beside the siblings of the last</span>
+    <span class="c1"># pick (see annie.pages.folder_picker), rather than jumping into an env data dir.</span>
+    <span class="n">in_env</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span><span class="o">.</span><span class="n">config_value</span> <span class="o">==</span> <span class="n">_ENV_CONFIG</span>
     <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span>
-        <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">participants_file</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">labels_csv</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">participants_file</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">labels_csv</span><span class="p">)</span> <span class="k">if</span> <span class="n">in_env</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">configure_csv</span><span class="p">(</span><span class="n">chosen</span><span class="p">,</span> <span class="n">_video_stems</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">videos_dir</span><span class="p">,</span>
-            <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">vdet_dir</span><span class="p">,</span>
-            <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">track_dir</span><span class="p">,</span>
-        <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">videos_dir</span><span class="p">,</span>
+                <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">vdet_dir</span><span class="p">,</span>
+                <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">track_dir</span><span class="p">,</span>
+            <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">in_env</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_directory</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
     <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">_offer_sibling_sources</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+
+
+<span class="c1"># ── auto-fill related sources beside a chosen videos folder ──────────────────</span>
+
+
+<span class="c1">#: Conventional sibling names Annie looks for next to a videos folder. Protagonist</span>
+<span class="c1">#: prefers the manually-corrected CSV over the heuristic one; a labels CSV may be</span>
+<span class="c1">#: named ``label.csv`` or ``labels.csv``.</span>
+<span class="n">_VDET_DIRNAME</span> <span class="o">=</span> <span class="s2">&quot;vdet&quot;</span>
+<span class="n">_TRACK_DIRNAME</span> <span class="o">=</span> <span class="s2">&quot;track&quot;</span>
+<span class="n">_PROTAGONIST_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;protagonist_track_manual.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;protagonist_track_heuristic.csv&quot;</span><span class="p">)</span>
+<span class="n">_LABEL_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;label.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;labels.csv&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Candidate</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One auto-detected sibling source offered for auto-fill.&quot;&quot;&quot;</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_label_source</span><span class="p">(</span><span class="n">csv_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a labels CSV source with the same defaults as env-seeding.</span>
+
+<span class="sd">    The first column is the key (joins to the video id) and every other column is a</span>
+<span class="sd">    value column, with its type sniffed from a sample of rows. ``None`` if the CSV</span>
+<span class="sd">    has no usable header/value columns.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">if</span> <span class="n">col</span> <span class="o">!=</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>
+    <span class="n">column_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">col</span><span class="p">:</span> <span class="n">detect_type</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">values</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">DataSource</span><span class="p">(</span>
+        <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+        <span class="n">csv_path</span><span class="p">,</span>
+        <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">,</span>
+        <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">value_columns</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
+        <span class="n">column_types</span><span class="o">=</span><span class="n">column_types</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_detect_sibling_sources</span><span class="p">(</span><span class="n">video_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Candidate</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find conventional vdet/track/protagonist/label siblings of ``video_dir``.</span>
+
+<span class="sd">    Looks in the videos folder&#39;s parent directory and skips anything a source of</span>
+<span class="sd">    that role already covers. Reads CSV headers/rows, so callers run it off the</span>
+<span class="sd">    event loop (see :func:`_offer_sibling_sources`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">video_dir</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">existing</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">}</span>
+    <span class="n">has_protagonist</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">is_protagonist</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+    <span class="n">label_paths</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">is_protagonist</span>
+    <span class="p">}</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Candidate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">vdet</span> <span class="o">=</span> <span class="n">parent</span> <span class="o">/</span> <span class="n">_VDET_DIRNAME</span>
+    <span class="k">if</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing</span> <span class="ow">and</span> <span class="n">vdet</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">_Candidate</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vdet folder — </span><span class="si">{</span><span class="n">vdet</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">,</span> <span class="n">vdet</span><span class="p">))</span>
+        <span class="p">)</span>
+
+    <span class="n">track</span> <span class="o">=</span> <span class="n">parent</span> <span class="o">/</span> <span class="n">_TRACK_DIRNAME</span>
+    <span class="k">if</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing</span> <span class="ow">and</span> <span class="n">track</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">_Candidate</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Track folder — </span><span class="si">{</span><span class="n">track</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">,</span> <span class="n">track</span><span class="p">))</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_protagonist</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_PROTAGONIST_NAMES</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">parent</span> <span class="o">/</span> <span class="n">name</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span>
+                    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+                    <span class="n">path</span><span class="p">,</span>
+                    <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">,</span>
+                    <span class="n">key_column</span><span class="o">=</span><span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
+                    <span class="n">value_columns</span><span class="o">=</span><span class="p">(</span><span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,),</span>
+                <span class="p">)</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_Candidate</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protagonist CSV — </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">))</span>
+                <span class="k">break</span>  <span class="c1"># a manual CSV supersedes the heuristic one</span>
+
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_LABEL_NAMES</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">parent</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">label_paths</span><span class="p">:</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">_label_source</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_Candidate</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Label CSV — </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">))</span>
+            <span class="k">break</span>
+
+    <span class="k">return</span> <span class="n">candidates</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_offer_sibling_sources</span><span class="p">(</span><span class="n">video_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Offer to auto-fill vdet/track/protagonist/label sources found beside the videos.</span>
+
+<span class="sd">    A quality-of-life step after adding a videos folder: if Annie recognises the</span>
+<span class="sd">    conventional sibling files/folders, it asks once whether to add them, so the user</span>
+<span class="sd">    doesn&#39;t have to pick each path by hand.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">_detect_sibling_sources</span><span class="p">,</span> <span class="n">video_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-[32rem] max-w-full gap-3&quot;</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Auto-fill related sources?&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Annie found these next to the videos folder in </span><span class="si">{</span><span class="n">video_dir</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+            <span class="s2">&quot;text-sm&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">boxes</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full justify-end gap-2&quot;</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Skip&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+                <span class="s2">&quot;Fill selected&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;auto_awesome&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;unelevated&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="k">await</span> <span class="n">dialog</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">added</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">box</span><span class="p">,</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">boxes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">added</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">added</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added </span><span class="si">{</span><span class="n">added</span><span class="si">}</span><span class="s2"> related source(s)&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_remove</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -667,72 +841,205 @@
 <span class="c1"># ── persistence block ─────────────────────────────────────────────────────────</span>
 
 
+<span class="c1">#: Matches the auto-generated ``annie_&lt;timestamp&gt;.db`` session-DB filename.</span>
+<span class="n">_ANNIE_DB_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^annie_\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">\.db$&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fresh_session_db_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A brand-new timestamped session-DB path under the sessions directory.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">sessions_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;annie_</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="si">:</span><span class="s2">%Y-%m-%d_%H-%M-%S</span><span class="si">}</span><span class="s2">.db&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_session_dbs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List ``*.db`` files in the sessions directory for the &quot;use existing&quot; picker.</span>
+
+<span class="sd">    Renamed databases come first (they are the ones a user deliberately named),</span>
+<span class="sd">    then the auto-generated ``annie_&lt;timestamp&gt;.db`` files; both groups newest-first</span>
+<span class="sd">    by modification time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">scandir</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">sessions_dir</span><span class="p">)</span> <span class="k">as</span> <span class="n">it</span><span class="p">:</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">path</span><span class="p">),</span> <span class="n">entry</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">it</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.db&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+            <span class="p">]</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">PermissionError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">renamed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">found</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">_ANNIE_DB_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">auto</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">found</span> <span class="k">if</span> <span class="n">_ANNIE_DB_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">_name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">_mtime</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="n">renamed</span><span class="p">,</span> <span class="o">*</span><span class="n">auto</span><span class="p">)]</span>
+
+
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_on_db_mode_change</span><span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Switch between session-DB and existing-DB modes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Switch between session-DB and existing-DB modes, applying that side&#39;s DB.&quot;&quot;&quot;</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="n">mode</span>
     <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;session&quot;</span><span class="p">:</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span><span class="p">:</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_fresh_session_db_path</span><span class="p">())</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">))</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_apply_db_path</span><span class="p">(</span><span class="n">path_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open an existing DB at ``path_str`` and switch the store to it.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_new_session_db</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create and switch to a fresh timestamped session DB (a clean default).&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">fresh</span> <span class="o">=</span> <span class="n">_fresh_session_db_path</span><span class="p">()</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;session&quot;</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;New session DB: </span><span class="si">{</span><span class="n">fresh</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rename_session_db</span><span class="p">(</span><span class="n">new_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rename the current session DB file, moving its data to the new path.&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">new_str</span> <span class="o">=</span> <span class="n">new_str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">new_str</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Enter a name for the session DB.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">new</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">new_str</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">new</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;.db&quot;</span><span class="p">:</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">new</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.db&quot;</span><span class="p">)</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">new</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">new</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A database already exists at </span><span class="si">{</span><span class="n">new</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">current</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not rename DB: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>  <span class="c1"># (re)creates the file if the move was a no-op</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Renamed session DB to </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_select_existing_db</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a DB chosen from the sessions list (auto-applies, no Apply step).&quot;&quot;&quot;</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span>
+    <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Review DB: </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_db_path</span><span class="p">(</span><span class="n">path_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open an existing DB at ``path_str`` and switch the store to it (on blur/Enter).&quot;&quot;&quot;</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
     <span class="n">path_str</span> <span class="o">=</span> <span class="n">path_str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">path_str</span><span class="p">:</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">&quot;Enter a database file path.&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path_str</span> <span class="ow">or</span> <span class="n">path_str</span> <span class="o">==</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="n">path_str</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path_str</span><span class="p">))</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Review DB: </span><span class="si">{</span><span class="n">path_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Review DB: </span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">path_str</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_pick_db_file</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open a file picker to select an existing DB, then apply it.&quot;&quot;&quot;</span>
-    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open a file picker to select an existing DB, then apply it automatically.&quot;&quot;&quot;</span>
     <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">sessions_dir</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
-        <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">&quot;existing&quot;</span>
-        <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
-        <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="n">_select_existing_db</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
 
 
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_persistence_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistence block: choose between a fresh session DB or a pinned existing file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistence block: a fresh session DB (renamable) or a pinned existing file.</span>
+
+<span class="sd">    Layout puts the mode buttons first, then the path controls: in session mode an</span>
+<span class="sd">    editable name plus a &quot;New&quot; button for a fresh timestamped DB; in existing mode an</span>
+<span class="sd">    editable/browsable path plus a newest-first list of session databases. Selecting,</span>
+<span class="sd">    browsing, or editing a path applies immediately — there is no separate Apply step.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;storage&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Persistence&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
+    <span class="n">active</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">db_path</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;items-center gap-2&quot;</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;storage&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Persistence&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
 
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active DB: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs break-all&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;New session DB&quot;</span><span class="p">,</span> <span class="s2">&quot;existing&quot;</span><span class="p">:</span> <span class="s2">&quot;Use existing DB&quot;</span><span class="p">},</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span><span class="p">,</span>
+            <span class="n">on_change</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">_on_db_mode_change</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+        <span class="p">)</span>
 
-            <span class="n">ui</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span>
-                <span class="p">{</span><span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;New session DB&quot;</span><span class="p">,</span> <span class="s2">&quot;existing&quot;</span><span class="p">:</span> <span class="s2">&quot;Use existing DB&quot;</span><span class="p">},</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span><span class="p">,</span>
-                <span class="n">on_change</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">_on_db_mode_change</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
-            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">==</span> <span class="s2">&quot;session&quot;</span><span class="p">:</span>
+            <span class="n">_session_db_controls</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_existing_db_controls</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">active</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">==</span> <span class="s2">&quot;existing&quot;</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2&quot;</span><span class="p">):</span>
-                    <span class="n">path_input</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;Database file path&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-grow&quot;</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;folder_open&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_pick_db_file</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-                        <span class="s2">&quot;flat dense&quot;</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;Browse for a .db file&quot;</span><span class="p">)</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-                        <span class="s2">&quot;Apply&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;check&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_apply_db_path</span><span class="p">(</span><span class="n">path_input</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;unelevated dense&quot;</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active DB: </span><span class="si">{</span><span class="n">active</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs break-all&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_session_db_controls</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">_DatasetState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Editable session-DB name + a button to spin up a fresh timestamped DB.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2&quot;</span><span class="p">):</span>
+        <span class="n">name_input</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;Session DB path&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-grow&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;Rename the current session DB — its data moves with it&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">name_input</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;keydown.enter&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_rename_session_db</span><span class="p">(</span><span class="n">name_input</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Rename&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;drive_file_rename_outline&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;outline dense&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">_rename_session_db</span><span class="p">(</span><span class="n">name_input</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_new_session_db</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;unelevated dense&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+            <span class="s2">&quot;Create a fresh timestamped session DB&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_existing_db_controls</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">_DatasetState</span><span class="p">,</span> <span class="n">active</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Editable/browsable DB path plus a newest-first list of session databases.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2&quot;</span><span class="p">):</span>
+        <span class="n">path_input</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">&quot;Database file path&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;flex-grow&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">path_input</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;blur&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_apply_db_path</span><span class="p">(</span><span class="n">path_input</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">path_input</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;keydown.enter&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_apply_db_path</span><span class="p">(</span><span class="n">path_input</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;folder_open&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_pick_db_file</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+            <span class="s2">&quot;Browse for a .db file&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">dbs</span> <span class="o">=</span> <span class="n">_session_dbs</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dbs</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Session databases&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-0 max-h-48 overflow-auto&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">dbs</span><span class="p">:</span>
+            <span class="n">_session_db_row</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="n">path</span> <span class="o">==</span> <span class="n">active</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_session_db_row</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_active</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One clickable database row in the &quot;use existing&quot; list (active one highlighted).&quot;&quot;&quot;</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2 cursor-pointer p-1 rounded hover:bg-gray-200&quot;</span><span class="p">)</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_select_existing_db</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">row</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span>
+            <span class="s2">&quot;check_circle&quot;</span> <span class="k">if</span> <span class="n">is_active</span> <span class="k">else</span> <span class="s2">&quot;database&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">SUCCESS</span> <span class="k">if</span> <span class="n">is_active</span> <span class="k">else</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-sm break-all&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_active</span><span class="p">:</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="render">
@@ -744,7 +1051,6 @@
     <span class="n">client</span><span class="o">.</span><span class="n">on_disconnect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_dataset_state</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-4&quot;</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Dataset&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xl font-medium&quot;</span><span class="p">)</span>
         <span class="n">_config_section</span><span class="p">()</span>
         <span class="n">_metric_cards</span><span class="p">()</span>
         <span class="n">_source_list</span><span class="p">()</span>

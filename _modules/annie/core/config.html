@@ -352,18 +352,18 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;User-facing configuration, resolved once at import time.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        videos_dir: Folder of source ``.mp4`` files (env ``ANNIE_VIDEOS_DIR``).</span>
+<span class="sd">        videos_dir: Folder of source ``.mp4`` files (env ``ANNIE_VIDEO_DIR``).</span>
 <span class="sd">        vdet_dir: Folder of raw-detection ``.vdet`` files (env ``ANNIE_VDET_DIR``).</span>
 <span class="sd">        track_dir: Folder of ``__track{N}.csv`` files (env ``ANNIE_TRACK_DIR``).</span>
-<span class="sd">        participants_file: The protagonist heuristic CSV (``uuid,track_id``);</span>
-<span class="sd">            manual corrections are written to its ``_manual`` sibling</span>
-<span class="sd">            (env ``ANNIE_PARTICIPANTS_FILE``).</span>
+<span class="sd">        participants_file: The protagonist heuristic CSV (``uuid,track_id``); the</span>
+<span class="sd">            Annotator&#39;s Export writes corrections to its ``_manual`` sibling</span>
+<span class="sd">            (env ``ANNIE_PROTAGONIST_CSV``).</span>
 <span class="sd">        labels_csv: A labels CSV file to seed as a label source on startup</span>
-<span class="sd">            (env ``ANNIE_LABELS_CSV``).</span>
-<span class="sd">        labels_key: The key column in :attr:`labels_csv` (env ``ANNIE_LABELS_KEY``);</span>
+<span class="sd">            (env ``ANNIE_LABEL_CSV``).</span>
+<span class="sd">        labels_key: The key column in :attr:`labels_csv` (env ``ANNIE_LABEL_KEY``);</span>
 <span class="sd">            auto-detected from the header when omitted.</span>
 <span class="sd">        labels_values: Comma-separated value columns from :attr:`labels_csv`</span>
-<span class="sd">            (env ``ANNIE_LABELS_VALUES``); defaults to all non-key columns.</span>
+<span class="sd">            (env ``ANNIE_LABEL_VALUES``); defaults to all non-key columns.</span>
 <span class="sd">        db_path: SQLite file for this session&#39;s review status (good/bad/notes). Defaults</span>
 <span class="sd">            to a per-session timestamped file; set ``ANNIE_DB_PATH`` to pin a persistent</span>
 <span class="sd">            path instead.</span>
@@ -394,18 +394,18 @@
 <span class="sd">        port: Port the NiceGUI server listens on.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">videos_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_VIDEOS_DIR&quot;</span><span class="p">))</span>
+    <span class="n">videos_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_VIDEO_DIR&quot;</span><span class="p">))</span>
     <span class="n">vdet_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_VDET_DIR&quot;</span><span class="p">))</span>
     <span class="n">track_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_TRACK_DIR&quot;</span><span class="p">))</span>
     <span class="n">participants_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_PARTICIPANTS_FILE&quot;</span><span class="p">)</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_PROTAGONIST_CSV&quot;</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">labels_csv</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_LABELS_CSV&quot;</span><span class="p">))</span>
+    <span class="n">labels_csv</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_LABEL_CSV&quot;</span><span class="p">))</span>
     <span class="n">labels_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ANNIE_LABELS_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ANNIE_LABEL_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
     <span class="p">)</span>
     <span class="n">labels_values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_tuple</span><span class="p">(</span><span class="s2">&quot;ANNIE_LABELS_VALUES&quot;</span><span class="p">)</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_tuple</span><span class="p">(</span><span class="s2">&quot;ANNIE_LABEL_VALUES&quot;</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">_default_db_path</span><span class="p">)</span>
     <span class="n">db_path_is_explicit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_env_path</span><span class="p">(</span><span class="s2">&quot;ANNIE_DB_PATH&quot;</span><span class="p">)))</span>

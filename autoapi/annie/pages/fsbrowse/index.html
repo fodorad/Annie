@@ -310,10 +310,13 @@ picker dialog (<code class="docutils literal notranslate"><span class="pre">anni
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.parent_of" title="annie.pages.fsbrowse.parent_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent_of</span></code></a>(→ pathlib.Path | None)</p></td>
 <td><p>Return the parent directory, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if already at the filesystem root.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.list_subdirectories" title="annie.pages.fsbrowse.list_subdirectories"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_subdirectories</span></code></a>(→ list[pathlib.Path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.scan_entries" title="annie.pages.fsbrowse.scan_entries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_entries</span></code></a>(→ tuple[list[pathlib.Path], ...)</p></td>
+<td><p>List a directory's subfolders (and optionally files) in a single pass.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.list_subdirectories" title="annie.pages.fsbrowse.list_subdirectories"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_subdirectories</span></code></a>(→ list[pathlib.Path])</p></td>
 <td><p>List immediate subdirectories of <code class="docutils literal notranslate"><span class="pre">path</span></code>, sorted case-insensitively.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.list_files" title="annie.pages.fsbrowse.list_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_files</span></code></a>(→ list[pathlib.Path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.list_files" title="annie.pages.fsbrowse.list_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_files</span></code></a>(→ list[pathlib.Path])</p></td>
 <td><p>List immediate files of <code class="docutils literal notranslate"><span class="pre">path</span></code>, sorted case-insensitively.</p></td>
 </tr>
 </tbody>
@@ -348,6 +351,32 @@ existing ancestor, else the user’s home directory.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The parent <code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> at the root.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.fsbrowse.scan_entries">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.fsbrowse.</span></span><span class="sig-name descname"><span class="pre">scan_entries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">want_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_hidden</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/fsbrowse.html#scan_entries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.fsbrowse.scan_entries" title="Link to this definition">¶</a></dt>
+<dd><p>List a directory’s subfolders (and optionally files) in a single pass.</p>
+<p>Uses <code class="xref py py-func docutils literal notranslate"><span class="pre">os.scandir()</span></code>, whose entries carry the file type read straight from the
+directory itself, so classifying each child as a folder or file costs no extra
+<code class="docutils literal notranslate"><span class="pre">stat</span></code> syscall on the common case. This matters on large or slow (external /
+networked) drives, where the old one-<code class="docutils literal notranslate"><span class="pre">stat</span></code>-per-entry approach could freeze the
+picker for many seconds. Unreadable directories yield empty lists rather than
+raising, so a permission error never breaks the picker.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – The directory to list.</p></li>
+<li><p><strong>want_files</strong> – Also collect files (skipped entirely when <code class="docutils literal notranslate"><span class="pre">False</span></code>).</p></li>
+<li><p><strong>suffixes</strong> – Lower-case dotted suffixes to keep among files, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for all.</p></li>
+<li><p><strong>show_hidden</strong> – Include dot-prefixed entries when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">(subdirs,</span> <span class="pre">files)</span></code> pair, each sorted by lower-cased name; <code class="docutils literal notranslate"><span class="pre">files</span></code> is
+empty when <code class="docutils literal notranslate"><span class="pre">want_files</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -455,6 +484,7 @@ result (e.g. <code class="docutils literal notranslate"><span class="pre">(&quot
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.resolve_start_dir"><code class="docutils literal notranslate"><span class="pre">resolve_start_dir()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.parent_of"><code class="docutils literal notranslate"><span class="pre">parent_of()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.fsbrowse.scan_entries"><code class="docutils literal notranslate"><span class="pre">scan_entries()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.list_subdirectories"><code class="docutils literal notranslate"><span class="pre">list_subdirectories()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.list_files"><code class="docutils literal notranslate"><span class="pre">list_files()</span></code></a></li>
 </ul>

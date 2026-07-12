@@ -330,7 +330,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.paging</span><span class="w"> </span><span class="kn">import</span> <span class="n">paged</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.reveal</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_docker</span><span class="p">,</span> <span class="n">reveal</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">render_embed_ttl</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.viewport</span><span class="w"> </span><span class="kn">import</span> <span class="n">observe_row</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -663,7 +663,7 @@
                     <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;width:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">px;height:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">px&quot;</span>
                     <span class="p">)</span>
-                <span class="n">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">restore</span><span class="p">)</span>
+                <span class="n">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">restore</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="n">render_embed_ttl</span><span class="p">())</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">:</span>
                 <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -1186,8 +1186,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Browse body: gate, Manipulate, Filter, rows, and jump-to-top.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-3&quot;</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Browse&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xl font-medium&quot;</span><span class="p">)</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Add a videos folder on the Dataset tab to browse.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span>

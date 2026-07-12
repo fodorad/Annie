@@ -296,11 +296,11 @@
           <section id="module-annie.dataset.storage">
 <span id="annie-dataset-storage"></span><h1>annie.dataset.storage<a class="headerlink" href="#module-annie.dataset.storage" title="Link to this heading">¶</a></h1>
 <p>SQLite-backed review-status store (Browse tab curation state).</p>
-<p>This holds <em>curation</em> state per video — a good/bad verdict, an optional note, and
-an “add to annotator” flag — not fine-grained annotation content (that lives in
-the protagonist <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV and, later, per-video JSON). The store is a real
-file (default <code class="docutils literal notranslate"><span class="pre">~/.annie/annie.db</span></code>) so it survives restarts, and is keyed by
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">annie.models.VideoEntry.key</span></code>.</p>
+<p>This holds <em>curation</em> state per video — a good/bad verdict, an optional note, an
+“add to annotator” flag, and the protagonist-track correction — plus, on export,
+the protagonist <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV. The store is a real file (by default a per-session
+<code class="docutils literal notranslate"><span class="pre">~/.annie/sessions/annie_&lt;timestamp&gt;.db</span></code>; pin one with <code class="docutils literal notranslate"><span class="pre">ANNIE_DB_PATH</span></code>) so it
+survives restarts, and is keyed by <code class="xref py py-attr docutils literal notranslate"><span class="pre">annie.models.VideoEntry.key</span></code>.</p>
 <p>Every video is <strong>liked (good) by default</strong>: a row only exists once the user
 interacts, and the UI treats “no row” as good. The store is exportable to CSV/JSON
 in one call and importable via upsert, so a reviewer’s curation travels with them.</p>
@@ -380,6 +380,13 @@ in one call and importable via upsert, so a reviewer’s curation travels with t
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewRecord.active_track">
+<span class="sig-name descname"><span class="pre">active_track</span></span><a class="headerlink" href="#annie.dataset.storage.ReviewRecord.active_track" title="Link to this definition">¶</a></dt>
+<dd><p>The session’s protagonist-track override, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the
+reviewer has not corrected this video (the heuristic value then stands).</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewRecord.updated_at">
 <span class="sig-name descname"><span class="pre">updated_at</span></span><a class="headerlink" href="#annie.dataset.storage.ReviewRecord.updated_at" title="Link to this definition">¶</a></dt>
 <dd><p>ISO-8601 UTC timestamp of the last change.</p>
@@ -442,11 +449,11 @@ created as needed.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.upsert">
-<span class="sig-name descname"><span class="pre">upsert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verdict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.dataset.storage.Verdict" title="annie.dataset.storage.Verdict"><span class="pre">Verdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.upsert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.upsert" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">upsert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verdict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.dataset.storage.Verdict" title="annie.dataset.storage.Verdict"><span class="pre">Verdict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_track</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.upsert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.upsert" title="Link to this definition">¶</a></dt>
 <dd><p>Insert or update a review row, preserving fields left as <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-<p>Passing <code class="docutils literal notranslate"><span class="pre">verdict=None</span></code> / <code class="docutils literal notranslate"><span class="pre">note=None</span></code> / <code class="docutils literal notranslate"><span class="pre">annotate=None</span></code> keeps any
-existing value, so the good/bad toggle, the note, and the annotator flag
-update independently.</p>
+<p>Passing <code class="docutils literal notranslate"><span class="pre">verdict=None</span></code> / <code class="docutils literal notranslate"><span class="pre">note=None</span></code> / <code class="docutils literal notranslate"><span class="pre">annotate=None</span></code> /
+<code class="docutils literal notranslate"><span class="pre">active_track=None</span></code> keeps any existing value, so the good/bad toggle, the
+note, the annotator flag, and the protagonist correction update independently.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -456,6 +463,8 @@ update independently.</p>
 <li><p><strong>verdict</strong> – New verdict, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to leave unchanged.</p></li>
 <li><p><strong>note</strong> – New note, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to leave unchanged.</p></li>
 <li><p><strong>annotate</strong> – New annotator flag, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to leave unchanged.</p></li>
+<li><p><strong>active_track</strong> – New protagonist-track override, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to leave
+unchanged.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -498,6 +507,39 @@ update independently.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The updated <a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReviewRecord</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.set_active_track">
+<span class="sig-name descname"><span class="pre">set_active_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.set_active_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.set_active_track" title="Link to this definition">¶</a></dt>
+<dd><p>Persist the reviewer’s protagonist-track correction for a video.</p>
+<p>The choice lives only in this session’s database; the <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV is
+written separately by the Annotator’s “Export corrected CSV” action.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row_key</strong> – Stable row identity.</p></li>
+<li><p><strong>video_id</strong> – The video id.</p></li>
+<li><p><strong>annotation_suffix</strong> – The annotation suffix, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>track_id</strong> – The chosen active track index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated <a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReviewRecord</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.active_tracks">
+<span class="sig-name descname"><span class="pre">active_tracks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.active_tracks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.active_tracks" title="Link to this definition">¶</a></dt>
+<dd><p>Return every stored protagonist override as <code class="docutils literal notranslate"><span class="pre">row_key</span> <span class="pre">-&gt;</span> <span class="pre">track_id</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A mapping of row key to corrected track index for the rows a reviewer
+has changed this session (rows without an override are omitted).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -646,6 +688,7 @@ update independently.</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewRecord.verdict"><code class="docutils literal notranslate"><span class="pre">ReviewRecord.verdict</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewRecord.note"><code class="docutils literal notranslate"><span class="pre">ReviewRecord.note</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewRecord.annotate"><code class="docutils literal notranslate"><span class="pre">ReviewRecord.annotate</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewRecord.active_track"><code class="docutils literal notranslate"><span class="pre">ReviewRecord.active_track</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewRecord.updated_at"><code class="docutils literal notranslate"><span class="pre">ReviewRecord.updated_at</span></code></a></li>
 </ul>
 </li>
@@ -656,6 +699,8 @@ update independently.</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.upsert"><code class="docutils literal notranslate"><span class="pre">ReviewStore.upsert()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_verdict"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_verdict()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_annotate"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_annotate()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_active_track"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_active_track()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.active_tracks"><code class="docutils literal notranslate"><span class="pre">ReviewStore.active_tracks()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.annotator_keys"><code class="docutils literal notranslate"><span class="pre">ReviewStore.annotator_keys()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_note"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_note()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_json"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_json()</span></code></a></li>

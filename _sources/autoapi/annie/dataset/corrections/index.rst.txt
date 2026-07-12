@@ -24,6 +24,8 @@ Functions
 
 .. autoapisummary::
 
+   annie.dataset.corrections.manual_sibling
+   annie.dataset.corrections.export_active_tracks
    annie.dataset.corrections.resolve_active_track
    annie.dataset.corrections.set_active_track
    annie.dataset.corrections.export_corrected
@@ -32,6 +34,31 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:function:: manual_sibling(heuristic_path: str | pathlib.Path) -> pathlib.Path
+
+   The ``_manual`` CSV path for a protagonist source, next to the heuristic file.
+
+   ``protagonist_track_heuristic.csv`` → ``protagonist_track_manual.csv``; any other
+   name gets a ``_manual`` suffix. This is where the Annotator exports its
+   DB-stored corrections.
+
+   :param heuristic_path: The protagonist source CSV.
+
+   :returns: The sibling manual-corrections CSV path.
+
+
+.. py:function:: export_active_tracks(out_path: str | pathlib.Path, mapping: collections.abc.Mapping[str, int], key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> pathlib.Path
+
+   Write a ``video_id -> track_id`` correction mapping as a two-column CSV.
+
+   :param out_path: Destination CSV path (parent directories are created).
+   :param mapping: The corrections to write, keyed by video id.
+   :param key_column: Header for the video-id column.
+   :param value_column: Header for the track-id column.
+
+   :returns: The path written.
+
 
 .. py:function:: resolve_active_track(uuid: str, heuristic_file: str | pathlib.Path | None = None, key_column: str = DEFAULT_KEY_COLUMN, value_column: str = DEFAULT_VALUE_COLUMN) -> int
 

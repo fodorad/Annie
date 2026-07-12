@@ -303,8 +303,9 @@ each video:</p>
 <li><p>the thumbnail and five-frame strip show the current protagonist track in green
 (click the thumbnail to play the original clip);</p></li>
 <li><p>picking a different track in the <strong>Protagonist</strong> selector re-renders the strip
-immediately and <strong>auto-saves</strong> the choice to the <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV — there is no
-Save button; selection <em>is</em> the save;</p></li>
+immediately and <strong>saves the choice to this session’s review database</strong> — there is
+no Save button; selection <em>is</em> the save. The source <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV is <em>not</em>
+touched here — that is what the <strong>Export corrected CSV</strong> button is for;</p></li>
 <li><p>the option matching the value in the source CSV is marked <code class="docutils literal notranslate"><span class="pre">(default)</span></code> so it is
 obvious which track the heuristic chose;</p></li>
 <li><p>a <strong>render</strong> box burns the full clip with the chosen track green so the choice can
@@ -316,7 +317,8 @@ flag is cleared.</p></li>
 </ul>
 <p>Rows are revealed a page at a time (see <a class="reference internal" href="../paging/index.html#module-annie.pages.paging" title="annie.pages.paging"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.pages.paging</span></code></a>), which also keeps
 the tab from decoding five frames for every queued video the moment it opens.</p>
-<p>The corrected datasource can be exported to a standalone CSV at any time.</p>
+<p><strong>Export corrected CSV</strong> writes the session’s protagonist corrections to the
+<code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV beside the heuristic source (see <a class="reference internal" href="../../dataset/corrections/index.html#module-annie.dataset.corrections" title="annie.dataset.corrections"><code class="xref py py-func docutils literal notranslate"><span class="pre">annie.dataset.corrections()</span></code></a>).</p>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">

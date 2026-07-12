@@ -503,13 +503,17 @@ dir.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.media.rendering.RenderService.sweep">
 <span class="sig-name descname"><span class="pre">sweep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">now</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/rendering.html#RenderService.sweep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.rendering.RenderService.sweep" title="Link to this definition">¶</a></dt>
-<dd><p>Delete finished clips older than the TTL and forget their jobs.</p>
+<dd><p>Delete rendered clips whose file is older than the TTL; forget their jobs.</p>
+<p>File-based (by modification time) rather than job-based, so it also reclaims
+clips orphaned by a page refresh or disconnect — where the job is still
+tracked but the UI element that showed it is gone — and any <code class="docutils literal notranslate"><span class="pre">.mp4</span></code> left by a
+previous process. A running job’s output is never touched.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>now</strong> – Override for the current epoch time (for testing).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The number of jobs swept.</p>
+<dd class="field-even"><p>The number of clip files deleted.</p>
 </dd>
 </dl>
 </dd></dl>

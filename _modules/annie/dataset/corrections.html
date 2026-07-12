@@ -302,6 +302,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
@@ -319,9 +320,70 @@
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrameAnnotation</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;export_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;hit_test_frame&quot;</span><span class="p">,</span> <span class="s2">&quot;resolve_active_track&quot;</span><span class="p">,</span> <span class="s2">&quot;set_active_track&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;export_corrected&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;export_active_tracks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hit_test_frame&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;manual_sibling&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resolve_active_track&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;set_active_track&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="manual_sibling">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/corrections/index.html#annie.dataset.corrections.manual_sibling">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">manual_sibling</span><span class="p">(</span><span class="n">heuristic_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``_manual`` CSV path for a protagonist source, next to the heuristic file.</span>
+
+<span class="sd">    ``protagonist_track_heuristic.csv`` → ``protagonist_track_manual.csv``; any other</span>
+<span class="sd">    name gets a ``_manual`` suffix. This is where the Annotator exports its</span>
+<span class="sd">    DB-stored corrections.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        heuristic_path: The protagonist source CSV.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The sibling manual-corrections CSV path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">heuristic_path</span><span class="p">)</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;heuristic&quot;</span><span class="p">,</span> <span class="s2">&quot;manual&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;heuristic&quot;</span> <span class="ow">in</span> <span class="n">stem</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">_manual&quot;</span>
+    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="export_active_tracks">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/corrections/index.html#annie.dataset.corrections.export_active_tracks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_active_tracks</span><span class="p">(</span>
+    <span class="n">out_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
+    <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a ``video_id -&gt; track_id`` correction mapping as a two-column CSV.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        out_path: Destination CSV path (parent directories are created).</span>
+<span class="sd">        mapping: The corrections to write, keyed by video id.</span>
+<span class="sd">        key_column: Header for the video-id column.</span>
+<span class="sd">        value_column: Header for the track-id column.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The path written.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">video_id</span><span class="p">,</span> <span class="n">track_id</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="n">video_id</span><span class="p">,</span> <span class="n">track_id</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_participants_file</span><span class="p">(</span><span class="n">heuristic_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>

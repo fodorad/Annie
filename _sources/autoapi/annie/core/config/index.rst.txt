@@ -43,7 +43,7 @@ Module Contents
 
    .. attribute:: videos_dir
 
-      Folder of source ``.mp4`` files (env ``ANNIE_VIDEOS_DIR``).
+      Folder of source ``.mp4`` files (env ``ANNIE_VIDEO_DIR``).
 
    .. attribute:: vdet_dir
 
@@ -55,24 +55,24 @@ Module Contents
 
    .. attribute:: participants_file
 
-      The protagonist heuristic CSV (``uuid,track_id``);
-      manual corrections are written to its ``_manual`` sibling
-      (env ``ANNIE_PARTICIPANTS_FILE``).
+      The protagonist heuristic CSV (``uuid,track_id``); the
+      Annotator's Export writes corrections to its ``_manual`` sibling
+      (env ``ANNIE_PROTAGONIST_CSV``).
 
    .. attribute:: labels_csv
 
       A labels CSV file to seed as a label source on startup
-      (env ``ANNIE_LABELS_CSV``).
+      (env ``ANNIE_LABEL_CSV``).
 
    .. attribute:: labels_key
 
-      The key column in :attr:`labels_csv` (env ``ANNIE_LABELS_KEY``);
+      The key column in :attr:`labels_csv` (env ``ANNIE_LABEL_KEY``);
       auto-detected from the header when omitted.
 
    .. attribute:: labels_values
 
       Comma-separated value columns from :attr:`labels_csv`
-      (env ``ANNIE_LABELS_VALUES``); defaults to all non-key columns.
+      (env ``ANNIE_LABEL_VALUES``); defaults to all non-key columns.
 
    .. attribute:: db_path
 
