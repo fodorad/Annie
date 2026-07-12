@@ -5,8 +5,10 @@ batch, NiceGUI's own callbacks) used to escape to the terminal and were easy to
 miss. The log book gives them one home:
 
 * every event is appended to an in-memory ring buffer the **Log tab** reads, and
-* mirrored to a per-session file (``Annie_YYYY-MM-DD_HH-MM-SS.log``) so each
-  startup gets its own log and multiple same-day runs stay distinct.
+* mirrored to a per-session file **named after the session database** (e.g.
+  ``annie_2026-01-02_09-00-00.log`` beside ``…/sessions/annie_…​.db``) so a session's
+  log and its review DB are paired; renaming the DB renames the log (see
+  :meth:`LogBook.retarget`), keeping their names in lockstep.
 
 The store is event-sourced: each event has a monotonic ``seq`` so a per-client
 poller can fetch only what is new (for toasts) without re-rendering everything. It
@@ -15,6 +17,7 @@ is pure stdlib and thread-safe, so render/convert worker threads can report too.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import traceback
@@ -74,18 +77,20 @@ class LogBook:
         self._logger: logging.Logger | None = None
         self.log_path: Path | None = None
 
-    def attach_file(self, log_dir: str | Path) -> Path:
-        """Mirror events to ``<log_dir>/Annie_<date>_<time>.log`` and return the file path.
+    def attach_file(self, log_dir: str | Path, name: str) -> Path:
+        """Mirror events to ``<log_dir>/<name>.log`` and return the file path.
 
         Args:
-            log_dir: Directory to write the dated log file into (created if needed).
+            log_dir: Directory to write the log file into (created if needed).
+            name: Base filename (no suffix) — the session database's stem, so the log
+                and its review DB share a name and can be found together.
 
         Returns:
             The log file path.
         """
         directory = Path(log_dir)
         directory.mkdir(parents=True, exist_ok=True)
-        path = directory / f"Annie_{datetime.now():%Y-%m-%d_%H-%M-%S}.log"
+        path = directory / f"{name}.log"
         logger = logging.getLogger("annie.events")
         logger.setLevel(logging.INFO)
         logger.propagate = False  # keep it out of the root/console handlers
@@ -96,6 +101,39 @@ class LogBook:
         self._logger = logger
         self.log_path = path
         return path
+
+    def retarget(self, db_path: str | Path) -> Path | None:
+        """Rename the active log file to match a (renamed) session database.
+
+        The log and its review DB are paired session data, so when the DB is renamed
+        the log follows: the current log file's **content moves** to
+        ``<logs_dir>/<db_stem>.log`` and the file handler re-points there. If a log by
+        that name already exists (e.g. switching to a previously used DB), events are
+        appended to it rather than clobbering it.
+
+        Args:
+            db_path: The new active database path; its stem names the log.
+
+        Returns:
+            The new log path, or ``None`` if no log file is attached yet.
+        """
+        if self._logger is None or self.log_path is None:
+            return None
+        new_path = self.log_path.parent / f"{Path(db_path).stem}.log"
+        if new_path == self.log_path:
+            return self.log_path
+        for handler in list(self._logger.handlers):
+            if isinstance(handler, logging.FileHandler):
+                self._logger.removeHandler(handler)
+                handler.close()
+        with contextlib.suppress(OSError):
+            if self.log_path.exists() and not new_path.exists():
+                self.log_path.rename(new_path)  # carry the existing content across
+        handler = logging.FileHandler(new_path, encoding="utf-8")  # append mode
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        self._logger.addHandler(handler)
+        self.log_path = new_path
+        return new_path
 
     def add(self, level: str, message: str, details: str = "") -> LogEvent:
         """Record an event (and mirror it to the file, if attached).

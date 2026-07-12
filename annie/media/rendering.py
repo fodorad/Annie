@@ -183,26 +183,40 @@ class RenderService:
             return list(self._jobs.values())
 
     def sweep(self, *, now: float | None = None) -> int:
-        """Delete finished clips older than the TTL and forget their jobs.
+        """Delete rendered clips whose file is older than the TTL; forget their jobs.
+
+        File-based (by modification time) rather than job-based, so it also reclaims
+        clips orphaned by a page refresh or disconnect — where the job is still
+        tracked but the UI element that showed it is gone — and any ``.mp4`` left by a
+        previous process. A running job's output is never touched.
 
         Args:
             now: Override for the current epoch time (for testing).
 
         Returns:
-            The number of jobs swept.
+            The number of clip files deleted.
         """
         ttl = self.ttl_seconds if self.ttl_seconds is not None else settings.temp_ttl_seconds
         cutoff = (now if now is not None else time.time()) - ttl
-        swept = 0
+        deleted = 0
         with self._lock:
-            for job_id in list(self._jobs):
-                job = self._jobs[job_id]
-                if job.status in (JobStatus.DONE, JobStatus.FAILED) and job.created_at < cutoff:
-                    if job.output_path is not None and job.output_path.exists():
-                        job.output_path.unlink()
-                    del self._jobs[job_id]
-                    swept += 1
-        return swept
+            running = {
+                f"{job_id}.mp4"
+                for job_id, job in self._jobs.items()
+                if job.status is JobStatus.RUNNING
+            }
+            for f in list(self.temp_dir.iterdir()):
+                if f.suffix != ".mp4" or f.name in running:
+                    continue
+                try:
+                    expired = f.stat().st_mtime < cutoff
+                except OSError:
+                    continue
+                if expired:
+                    f.unlink(missing_ok=True)
+                    self._jobs.pop(f.stem, None)
+                    deleted += 1
+        return deleted
 
     def clear_all(self) -> tuple[int, int]:
         """Delete every finished clip and forget all non-running jobs.

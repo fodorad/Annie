@@ -143,6 +143,35 @@ class TestReviewStore(unittest.TestCase):
         store.set_annotate("v::", "v", None, True)
         self.assertEqual(store.annotator_keys(), {"v::"})
 
+    def test_active_track_only_lists_overridden_rows(self) -> None:
+        self.store.set_active_track("a", "a", None, 3)
+        self.store.set_active_track("b", "b", None, 7)
+        self.store.set_active_track("b", "b", None, 2)  # a later choice wins
+        self.store.set_verdict("c", "c", None, "bad")  # no override → not listed
+        self.assertEqual(self.store.active_tracks(), {"a": 3, "b": 2})
+
+    def test_active_track_survives_other_writes(self) -> None:
+        self.store.set_active_track("a", "a", None, 5)
+        self.store.set_verdict("a", "a", None, "bad")  # unrelated field
+        self.store.set_annotate("a", "a", None, True)
+        self.assertEqual(self.store.active_tracks(), {"a": 5})
+
+    def test_migrates_legacy_database_without_active_track(self) -> None:
+        legacy = self.tmp / "legacy_no_active.db"
+        with sqlite3.connect(legacy) as conn:
+            conn.execute(
+                "CREATE TABLE review (row_key TEXT PRIMARY KEY, video_id TEXT NOT NULL, "
+                "annotation_suffix TEXT, verdict TEXT, note TEXT NOT NULL DEFAULT '', "
+                "annotate INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL)"
+            )
+            conn.execute(
+                "INSERT INTO review VALUES ('v::', 'v', NULL, 'good', '', 0, '2020-01-01T00:00:00')"
+            )
+        store = ReviewStore(legacy)  # opening adds the active_track column
+        self.assertEqual(store.active_tracks(), {})
+        store.set_active_track("v::", "v", None, 4)
+        self.assertEqual(store.active_tracks(), {"v::": 4})
+
 
 if __name__ == "__main__":
     unittest.main()

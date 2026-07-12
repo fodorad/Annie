@@ -28,7 +28,7 @@ class TestConfig(unittest.TestCase):
     def test_settings_reads_env_overrides(self) -> None:
         with mock.patch.dict(
             os.environ,
-            {"ANNIE_VIDEOS_DIR": "/tmp/vids", "ANNIE_PORT": "9999"},
+            {"ANNIE_VIDEO_DIR": "/tmp/vids", "ANNIE_PORT": "9999"},
         ):
             settings = Settings()
         self.assertEqual(settings.videos_dir, Path("/tmp/vids"))

@@ -7,8 +7,9 @@ each video:
 * the thumbnail and five-frame strip show the current protagonist track in green
   (click the thumbnail to play the original clip);
 * picking a different track in the **Protagonist** selector re-renders the strip
-  immediately and **auto-saves** the choice to the ``_manual`` CSV — there is no
-  Save button; selection *is* the save;
+  immediately and **saves the choice to this session's review database** — there is
+  no Save button; selection *is* the save. The source ``_manual`` CSV is *not*
+  touched here — that is what the **Export corrected CSV** button is for;
 * the option matching the value in the source CSV is marked ``(default)`` so it is
   obvious which track the heuristic chose;
 * a **render** box burns the full clip with the chosen track green so the choice can
@@ -21,7 +22,8 @@ each video:
 Rows are revealed a page at a time (see :mod:`annie.pages.paging`), which also keeps
 the tab from decoding five frames for every queued video the moment it opens.
 
-The corrected datasource can be exported to a standalone CSV at any time.
+**Export corrected CSV** writes the session's protagonist corrections to the
+``_manual`` CSV beside the heuristic source (see :func:`annie.dataset.corrections`).
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ from annie.media.preview import build_preview, to_data_uri
 from annie.media.rendering import JobStatus
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
-from annie.pages.utils import _alive, notify_detached, unembed_after_idle
+from annie.pages.utils import _alive, notify_detached, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
 from annie.parsers.participants import load_participants
 
@@ -129,25 +131,28 @@ def _protagonist_source() -> tuple[Path, str, str] | None:
 
 
 def _export() -> None:
-    """Export the resolved protagonist datasource next to its source file."""
+    """Export this session's protagonist corrections as the ``_manual`` CSV.
+
+    Corrections live in the session database; this writes them to the manual CSV
+    next to the protagonist (heuristic) source, on demand.
+    """
     resolved = _protagonist_source()
     if resolved is None:
         ui.notify("Add a protagonist CSV on the Dataset tab first.", color=theme.WARNING)
         return
     path, key_column, value_column = resolved
-    out = path.with_name(f"{path.stem}_resolved{path.suffix}")
-    corrections.export_corrected(out, path, key_column, value_column)
-    ui.notify(f"Exported corrected protagonist CSV to {out}", color=theme.PRIMARY)
-
-
-def _persist(video_id: str, track_id: int) -> None:
-    """Auto-save a protagonist choice to the ``_manual`` CSV, if a source exists."""
-    resolved = _protagonist_source()
-    if resolved is None:
-        ui.notify("Add a protagonist CSV on the Dataset tab to save changes.", color=theme.WARNING)
+    overrides = state.store.active_tracks()  # row_key (== video id) -> track id
+    if not overrides:
+        ui.notify("No protagonist corrections to export yet.", color=theme.WARNING)
         return
-    path, key_column, value_column = resolved
-    corrections.set_active_track(video_id, track_id, path, key_column, value_column)
+    out = corrections.manual_sibling(path)
+    corrections.export_active_tracks(out, overrides, key_column, value_column)
+    ui.notify(f"Exported {len(overrides)} correction(s) to {out}", color=theme.PRIMARY)
+
+
+def _persist(entry: VideoEntry, track_id: int) -> None:
+    """Save a protagonist choice to the session DB (never autosaves the manual CSV)."""
+    state.store.set_active_track(entry.key, entry.video_id, None, track_id)
 
 
 async def _populate(entry: VideoEntry, thumb: ui.element, strip: list[ui.element]) -> None:
@@ -240,7 +245,7 @@ async def _watch_render(job_id: str, box: ui.element, restore: Callable[[], None
                 box.clear()
                 with box:
                     ui.video(job.output_path, autoplay=True).style(_IMG)
-                unembed_after_idle(box, restore)
+                unembed_after_idle(box, restore, ttl=render_embed_ttl())
                 return
             if job.status is JobStatus.FAILED:
                 box.clear()
@@ -414,7 +419,7 @@ def _row_card(entry: VideoEntry, *, can_decode: bool, default_tid: int) -> None:
             def on_pick(value: int) -> None:
                 selected["track"] = value
                 entry.active_track_id = value
-                _persist(entry.video_id, value)  # auto-save; no Save button
+                _persist(entry, value)  # save to the session DB; Export writes the CSV
                 repopulate()  # redraw the strip with the new green track
                 reset_render()  # the rendered clip is now stale
 
@@ -434,8 +439,7 @@ def _row_card(entry: VideoEntry, *, can_decode: bool, default_tid: int) -> None:
 def _content() -> None:
     """Build the Annotator body from the queued videos."""
     with ui.column().classes("w-full gap-3"):
-        with ui.row().classes("w-full items-center justify-between"):
-            ui.label("Annotator").classes("text-xl font-medium")
+        with ui.row().classes("w-full items-center justify-end"):
             ui.button("Export corrected CSV", icon="download", on_click=_export).props("flat")
 
         entries = _queued_entries()

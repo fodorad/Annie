@@ -7,15 +7,15 @@
     },
     {
       "kind": "vdet",
-      "path": "../example/mosei_mini/vdets"
+      "path": "../example/mosei_mini/vdet"
     },
     {
       "kind": "track",
-      "path": "../example/mosei_mini/tracks"
+      "path": "../example/mosei_mini/track"
     },
     {
       "kind": "csv",
-      "path": "../example/mosei_mini/participant_face_track_heuristic.csv",
+      "path": "../example/mosei_mini/protagonist_track_heuristic.csv",
       "role": "protagonist",
       "key_column": "uuid",
       "value_columns": [

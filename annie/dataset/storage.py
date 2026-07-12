@@ -1,10 +1,10 @@
 """SQLite-backed review-status store (Browse tab curation state).
 
-This holds *curation* state per video — a good/bad verdict, an optional note, and
-an "add to annotator" flag — not fine-grained annotation content (that lives in
-the protagonist ``_manual`` CSV and, later, per-video JSON). The store is a real
-file (default ``~/.annie/annie.db``) so it survives restarts, and is keyed by
-:attr:`annie.models.VideoEntry.key`.
+This holds *curation* state per video — a good/bad verdict, an optional note, an
+"add to annotator" flag, and the protagonist-track correction — plus, on export,
+the protagonist ``_manual`` CSV. The store is a real file (by default a per-session
+``~/.annie/sessions/annie_<timestamp>.db``; pin one with ``ANNIE_DB_PATH``) so it
+survives restarts, and is keyed by :attr:`annie.models.VideoEntry.key`.
 
 Every video is **liked (good) by default**: a row only exists once the user
 interacts, and the UI treats "no row" as good. The store is exportable to CSV/JSON
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS review (
     verdict            TEXT,
     note               TEXT NOT NULL DEFAULT '',
     annotate           INTEGER NOT NULL DEFAULT 0,
+    active_track       INTEGER,
     updated_at         TEXT NOT NULL
 );
 """
@@ -53,6 +54,8 @@ class ReviewRecord:
         verdict: ``"good"``, ``"bad"``, or ``None`` if untouched (treated as good).
         note: Free-text reviewer note (empty string when none).
         annotate: Whether the video is queued for the Annotator tab.
+        active_track: The session's protagonist-track override, or ``None`` if the
+            reviewer has not corrected this video (the heuristic value then stands).
         updated_at: ISO-8601 UTC timestamp of the last change.
     """
 
@@ -62,6 +65,7 @@ class ReviewRecord:
     verdict: Verdict | None
     note: str
     annotate: bool
+    active_track: int | None
     updated_at: str
 
 
@@ -97,6 +101,8 @@ class ReviewStore:
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(review)")}
         if "annotate" not in columns:
             conn.execute("ALTER TABLE review ADD COLUMN annotate INTEGER NOT NULL DEFAULT 0")
+        if "active_track" not in columns:
+            conn.execute("ALTER TABLE review ADD COLUMN active_track INTEGER")
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -167,12 +173,13 @@ class ReviewStore:
         verdict: Verdict | None = None,
         note: str | None = None,
         annotate: bool | None = None,
+        active_track: int | None = None,
     ) -> ReviewRecord:
         """Insert or update a review row, preserving fields left as ``None``.
 
-        Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` keeps any
-        existing value, so the good/bad toggle, the note, and the annotator flag
-        update independently.
+        Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` /
+        ``active_track=None`` keeps any existing value, so the good/bad toggle, the
+        note, the annotator flag, and the protagonist correction update independently.
 
         Args:
             row_key: Stable row identity (primary key).
@@ -181,6 +188,8 @@ class ReviewStore:
             verdict: New verdict, or ``None`` to leave unchanged.
             note: New note, or ``None`` to leave unchanged.
             annotate: New annotator flag, or ``None`` to leave unchanged.
+            active_track: New protagonist-track override, or ``None`` to leave
+                unchanged.
 
         Returns:
             The resulting :class:`ReviewRecord`.
@@ -191,6 +200,9 @@ class ReviewStore:
         new_annotate = (
             (existing.annotate if existing else False) if annotate is None else bool(annotate)
         )
+        new_active = (
+            (existing.active_track if existing else None) if active_track is None else active_track
+        )
         record = ReviewRecord(
             row_key=row_key,
             video_id=video_id,
@@ -198,21 +210,24 @@ class ReviewStore:
             verdict=new_verdict,
             note=new_note,
             annotate=new_annotate,
+            active_track=new_active,
             updated_at=_now(),
         )
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO review
-                    (row_key, video_id, annotation_suffix, verdict, note, annotate, updated_at)
+                    (row_key, video_id, annotation_suffix, verdict, note, annotate,
+                     active_track, updated_at)
                 VALUES (:row_key, :video_id, :annotation_suffix, :verdict, :note,
-                        :annotate, :updated_at)
+                        :annotate, :active_track, :updated_at)
                 ON CONFLICT(row_key) DO UPDATE SET
                     video_id          = excluded.video_id,
                     annotation_suffix = excluded.annotation_suffix,
                     verdict           = excluded.verdict,
                     note              = excluded.note,
                     annotate          = excluded.annotate,
+                    active_track      = excluded.active_track,
                     updated_at        = excluded.updated_at
                 """,
                 asdict(record),
@@ -237,14 +252,18 @@ class ReviewStore:
         existing = self.get(row_key)
         note = existing.note if existing else ""
         annotate = existing.annotate if existing else False
-        record = ReviewRecord(row_key, video_id, annotation_suffix, verdict, note, annotate, _now())
+        active = existing.active_track if existing else None
+        record = ReviewRecord(
+            row_key, video_id, annotation_suffix, verdict, note, annotate, active, _now()
+        )
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO review
-                    (row_key, video_id, annotation_suffix, verdict, note, annotate, updated_at)
+                    (row_key, video_id, annotation_suffix, verdict, note, annotate,
+                     active_track, updated_at)
                 VALUES (:row_key, :video_id, :annotation_suffix, :verdict, :note,
-                        :annotate, :updated_at)
+                        :annotate, :active_track, :updated_at)
                 ON CONFLICT(row_key) DO UPDATE SET
                     verdict    = excluded.verdict,
                     updated_at = excluded.updated_at
@@ -268,6 +287,38 @@ class ReviewStore:
             The updated :class:`ReviewRecord`.
         """
         return self.upsert(row_key, video_id, annotation_suffix, annotate=value)
+
+    def set_active_track(
+        self, row_key: str, video_id: str, annotation_suffix: str | None, track_id: int
+    ) -> ReviewRecord:
+        """Persist the reviewer's protagonist-track correction for a video.
+
+        The choice lives only in this session's database; the ``_manual`` CSV is
+        written separately by the Annotator's "Export corrected CSV" action.
+
+        Args:
+            row_key: Stable row identity.
+            video_id: The video id.
+            annotation_suffix: The annotation suffix, or ``None``.
+            track_id: The chosen active track index.
+
+        Returns:
+            The updated :class:`ReviewRecord`.
+        """
+        return self.upsert(row_key, video_id, annotation_suffix, active_track=track_id)
+
+    def active_tracks(self) -> dict[str, int]:
+        """Return every stored protagonist override as ``row_key -> track_id``.
+
+        Returns:
+            A mapping of row key to corrected track index for the rows a reviewer
+            has changed this session (rows without an override are omitted).
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT row_key, active_track FROM review WHERE active_track IS NOT NULL"
+            ).fetchall()
+        return {row["row_key"]: int(row["active_track"]) for row in rows}
 
     def annotator_keys(self) -> set[str]:
         """Return the row keys flagged for the Annotator tab.
@@ -329,6 +380,7 @@ class ReviewStore:
             "verdict",
             "note",
             "annotate",
+            "active_track",
             "updated_at",
         ]
         with out.open("w", newline="", encoding="utf-8") as handle:
@@ -355,6 +407,11 @@ class ReviewStore:
                 verdict = "good"
             elif raw_verdict == "bad":
                 verdict = "bad"
+            raw_active = raw.get("active_track")
+            try:
+                active_track = int(str(raw_active)) if raw_active not in (None, "") else None
+            except (TypeError, ValueError):
+                active_track = None
             self.upsert(
                 str(raw["row_key"]),
                 str(raw["video_id"]),
@@ -362,6 +419,7 @@ class ReviewStore:
                 verdict=verdict,
                 note=str(raw.get("note") or ""),
                 annotate=_truthy(raw.get("annotate")),
+                active_track=active_track,
             )
             count += 1
         return count
@@ -383,5 +441,6 @@ def _record_from_row(row: sqlite3.Row) -> ReviewRecord:
         verdict=row["verdict"],
         note=row["note"],
         annotate=bool(row["annotate"]),
+        active_track=row["active_track"],
         updated_at=row["updated_at"],
     )

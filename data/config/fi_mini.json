@@ -7,15 +7,15 @@
     },
     {
       "kind": "vdet",
-      "path": "../example/fi_mini/vdets"
+      "path": "../example/fi_mini/vdet"
     },
     {
       "kind": "track",
-      "path": "../example/fi_mini/tracks"
+      "path": "../example/fi_mini/track"
     },
     {
       "kind": "csv",
-      "path": "../example/fi_mini/participant_face_track_heuristic.csv",
+      "path": "../example/fi_mini/protagonist_track_heuristic.csv",
       "role": "protagonist",
       "key_column": "uuid",
       "value_columns": [
