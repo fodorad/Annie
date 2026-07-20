@@ -41,10 +41,12 @@ face tracks), but Annie is dataset-agnostic.
 |---|---|
 | **Home** | A landing page (the default) summarising each tab; click a card to jump there. |
 | **Convert** | Re-encode an audio/video dataset to a consistent, **torchcodec-validated** form: uniform audio (format/rate/channels) and constant-frame-rate H.264 video, with explicit audio muxing (or black-frame videos for audio-only). A background batch shows live `X/Y` progress, %, elapsed, and ETA. |
-| **Dataset** | Build the dataset from a list of **data sources** (videos folder, vdet/track folders, and any number of label/protagonist CSVs). Add a source and it scans in place — no Scan button — with live counts and an Available/Unavailable chip per source. |
-| **Browse** | Scrollable, per-video visualizer with an always-visible **filter bar** (name, video/audio/vdet/track presence, review, labels): an ORIGINAL placeholder, five-frame strip, on-the-fly annotated render, media/annotation/label tags, and per-video review (liked by default, dislike, note, "Add to Annotator"). Row height is configurable. |
-| **Annotator** | Greys out until videos are queued from Browse; then shows only those, in taller rows, to fix the **protagonist track** — pick a track, see it re-render green, **Save**, and export the corrected datasource as CSV. |
+| **Dataset** | Build the dataset from a list of **data sources** (videos folder, vdet/track folders, and any number of label/protagonist/segmentation CSVs). Add a source and it scans in place — no Scan button — with live counts and an Available/Unavailable chip per source, plus a **Tasks** panel showing which Annotator task each source set makes ready. |
+| **Browse** | Scrollable, per-video visualizer with an always-visible **filter bar** (name, video/audio/vdet/track presence, review, labels): an ORIGINAL placeholder, five-frame strip, on-the-fly annotated render, and media/annotation/label tags. A **read-only viewer** — clicking a row *selects* it (a check tick) for the Annotator rather than recording review. Row height is configurable. |
+| **Annotator** | The supervision surface, offering only the tasks whose sources are ready: **Protagonist review** (correct the active track and export a `_manual` CSV), **Curation** (like/dislike/note per video), and **Segment review** (accept/drop per-clip segments of long videos, comparing competing start/end bands, exported as two files). |
 | **Settings** | Browse/Annotator row height, render-cache TTL, and review-status export/import (CSV/JSON). |
+
+See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-screen walkthroughs of the main flows.
 
 ### Highlights
 
@@ -64,6 +66,10 @@ face tracks), but Annie is dataset-agnostic.
   to a separate `_manual` file (resolution `manual ▸ source ▸ -1`) so human
   judgement never overwrites the pristine heuristic record, and the resolved
   datasource exports to a standalone CSV.
+- **Segment review** — for a long video cut into per-clip segments, accept or drop
+  each clip while comparing competing start/end bands (e.g. a `cut` prediction vs a
+  `GT` reference) side by side; decisions persist for resumable passes and export as
+  separate accepted / dropped CSVs.
 
 ## Installation
 
@@ -170,6 +176,9 @@ nose_x, nose_y, left_mouth_x, left_mouth_y, right_mouth_x, right_mouth_y
   the `_manual` sibling.
 - **label CSV** — any CSV; pick a key column (joined to the video id) and value
   columns to surface as Browse tags and filter facets.
+- **segmentation CSV** — e.g. `review_band.csv`; one row per clip keyed by
+  `video_id` + `segment_id`, with one or more named start/end **bands** (in seconds)
+  and an optional `video_path` column. Drives the Annotator's Segment-review task.
 
 ## Development
 

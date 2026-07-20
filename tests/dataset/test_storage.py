@@ -156,6 +156,138 @@ class TestReviewStore(unittest.TestCase):
         self.store.set_annotate("a", "a", None, True)
         self.assertEqual(self.store.active_tracks(), {"a": 5})
 
+    def test_set_annotate_many_queues_every_video(self) -> None:
+        written = self.store.set_annotate_many([("a", "a"), ("b", "b"), ("c", "c")], value=True)
+        self.assertEqual(written, 3)
+        self.assertEqual(self.store.annotator_keys(), {"a", "b", "c"})
+
+        self.store.set_annotate_many([("a", "a"), ("b", "b")], value=False)
+        self.assertEqual(self.store.annotator_keys(), {"c"})
+
+    def test_set_annotate_many_preserves_other_fields(self) -> None:
+        self.store.set_verdict("a", "a", None, "bad")
+        self.store.set_note("a", "a", None, "shaky")
+        self.store.set_active_track("a", "a", None, 3)
+
+        self.store.set_annotate_many([("a", "a")], value=True)
+
+        record = self.store.get("a")
+        assert record is not None
+        self.assertEqual((record.verdict, record.note, record.active_track), ("bad", "shaky", 3))
+        self.assertTrue(record.annotate)
+
+    def test_set_annotate_many_with_no_videos(self) -> None:
+        self.assertEqual(self.store.set_annotate_many([], value=True), 0)
+        self.assertEqual(self.store.annotator_keys(), set())
+
+    def test_set_and_get_decision(self) -> None:
+        self.store.set_decision("227426_15", "227426", "accept")
+        record = self.store.get("227426_15")
+        assert record is not None
+        self.assertEqual(record.decision, "accept")
+
+    def test_decision_only_lists_decided_rows(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.set_decision("b_1", "b", "drop")
+        self.store.set_verdict("c_2", "c", None, "good")  # no decision → not listed
+        self.assertEqual(self.store.decisions(), {"a_0": "accept", "b_1": "drop"})
+
+    def test_list_by_decision(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.set_decision("b_1", "b", "drop")
+        self.store.set_decision("c_2", "c", "accept")
+        accepted = self.store.list_by_decision("accept")
+        self.assertEqual({r.row_key for r in accepted}, {"a_0", "c_2"})
+
+    def test_decision_can_be_changed(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.set_decision("a_0", "a", "drop")  # reviewer flips it
+        self.assertEqual(self.store.decisions(), {"a_0": "drop"})
+
+    def test_clear_decision_returns_a_clip_to_undecided(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.clear_decision("a_0")
+        # Gone from the decided set, so the progress bar and jump-to-undecided see it.
+        self.assertEqual(self.store.decisions(), {})
+        record = self.store.get("a_0")
+        assert record is not None
+        self.assertIsNone(record.decision)
+
+    def test_clear_decision_keeps_the_rows_other_fields(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.set_note("a_0", "a", None, "clean cut")
+        self.store.clear_decision("a_0")
+        record = self.store.get("a_0")
+        assert record is not None
+        self.assertIsNone(record.decision)
+        self.assertEqual(record.note, "clean cut")  # only the verdict is dropped
+
+    def test_set_verdict_preserves_a_stored_decision(self) -> None:
+        """Curating a clip's good/bad verdict must not disturb its accept/drop.
+
+        The two are independent axes on one row. This holds today via the ``ON CONFLICT``
+        branch, which simply does not touch ``decision``; the guard matters because
+        ``set_verdict`` builds a full ``ReviewRecord`` carrying the existing decision
+        forward, so it reads as though the INSERT persists it. Anyone extending that
+        conflict clause would otherwise have to notice the mismatch unaided.
+        """
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.set_verdict("a_0", "a", None, "bad")
+        record = self.store.get("a_0")
+        assert record is not None
+        self.assertEqual(record.verdict, "bad")
+        self.assertEqual(record.decision, "accept")
+
+    def test_set_verdict_on_a_fresh_row_leaves_the_decision_null(self) -> None:
+        self.store.set_verdict("fresh", "a", None, "good")
+        record = self.store.get("fresh")
+        assert record is not None
+        self.assertIsNone(record.decision)
+
+    def test_clear_decision_on_an_undecided_row_is_a_no_op(self) -> None:
+        self.store.clear_decision("never_seen")
+        self.assertEqual(self.store.decisions(), {})
+        self.assertIsNone(self.store.get("never_seen"))
+
+    def test_decision_survives_other_writes(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        self.store.set_note("a_0", "a", None, "clean cut")
+        record = self.store.get("a_0")
+        assert record is not None
+        self.assertEqual(record.decision, "accept")
+        self.assertEqual(record.note, "clean cut")
+
+    def test_export_includes_decision(self) -> None:
+        self.store.set_decision("a_0", "a", "accept")
+        data = json.loads(self.store.export_json(self.tmp / "o.json").read_text("utf-8"))
+        self.assertEqual(data[0]["decision"], "accept")
+        self.assertIn("decision", self.store.export_csv(self.tmp / "o.csv").read_text("utf-8"))
+
+    def test_import_round_trips_decision(self) -> None:
+        self.store.set_decision("a_0", "a", "drop")
+        exported = json.loads(self.store.export_json(self.tmp / "o.json").read_text("utf-8"))
+        fresh = ReviewStore(self.tmp / "fresh_dec.db")
+        fresh.import_records(exported)
+        self.assertEqual(fresh.decisions(), {"a_0": "drop"})
+
+    def test_migrates_legacy_database_without_decision(self) -> None:
+        legacy = self.tmp / "legacy_no_decision.db"
+        with sqlite3.connect(legacy) as conn:
+            conn.execute(
+                "CREATE TABLE review (row_key TEXT PRIMARY KEY, video_id TEXT NOT NULL, "
+                "annotation_suffix TEXT, verdict TEXT, note TEXT NOT NULL DEFAULT '', "
+                "annotate INTEGER NOT NULL DEFAULT 0, active_track INTEGER, "
+                "updated_at TEXT NOT NULL)"
+            )
+            conn.execute(
+                "INSERT INTO review VALUES "
+                "('v::', 'v', NULL, 'good', '', 0, NULL, '2020-01-01T00:00:00')"
+            )
+        store = ReviewStore(legacy)  # opening adds the decision column
+        self.assertEqual(store.decisions(), {})
+        store.set_decision("a_0", "a", "accept")
+        self.assertEqual(store.decisions(), {"a_0": "accept"})
+
     def test_migrates_legacy_database_without_active_track(self) -> None:
         legacy = self.tmp / "legacy_no_active.db"
         with sqlite3.connect(legacy) as conn:

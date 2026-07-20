@@ -49,6 +49,25 @@ DANGER = "#d90429"
 NEUTRAL = "#676D78"
 """Grey — totals, secondary text."""
 
+# ── Segment-review decision colours ───────────────────────────────────────────
+# The accept/drop buttons and the decided-row border highlight. Kept together and
+# muted (darker than the vivid status colours) so they read as a deliberate verdict;
+# change these two to restyle the whole Segment-review decision affordance.
+DECISION_ACCEPT = "#1b6b52"
+"""Dark green — an accepted clip (button + row-border highlight)."""
+DECISION_DROP = "#8b1e2d"
+"""Dark red — a dropped clip (button + row-border highlight)."""
+DECISION_UNDECIDED = "#676D78"
+"""Grey — the "Undecided" reset button; a clip with no verdict carries no highlight."""
+
+DECISION_ACCEPT_TINT = "#e8f3ef"
+"""Pale green fill behind an accepted clip — the lighter inside of its green border."""
+DECISION_DROP_TINT = "#f9eaec"
+"""Pale red fill behind a dropped clip — the lighter inside of its red border."""
+
+ROW_BORDER = "1px solid #d5d9df"
+"""The light border every Browse/Annotator row card carries, so its extent is visible."""
+
 VDET_COLOR = "#1d3557"
 """Navy blue — vdet-related metrics."""
 TRACK_COLOR = "#40916c"

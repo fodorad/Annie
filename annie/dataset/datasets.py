@@ -19,7 +19,13 @@ from pathlib import Path
 
 from annie.core.config import settings
 from annie.dataset.manipulate import detect_type
-from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry
+from annie.dataset.sources import (
+    CsvRole,
+    DataSource,
+    SegmentationBand,
+    SourceKind,
+    SourceRegistry,
+)
 from annie.parsers.csvmeta import read_rows
 
 
@@ -144,6 +150,10 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
                 column_types = declared_types
             else:
                 column_types = _auto_detect_column_types(resolved, value_columns)
+            bands = tuple(
+                SegmentationBand(b["name"], b["start_column"], b["end_column"])
+                for b in entry.get("bands", [])
+            )
             registry.add(
                 DataSource(
                     kind,
@@ -152,6 +162,8 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
                     key_column=entry.get("key_column"),
                     value_columns=value_columns,
                     column_types=column_types,
+                    segment_column=entry.get("segment_column"),
+                    bands=bands,
                 )
             )
         else:
@@ -159,7 +171,14 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
     db_path: Path | None = None
     if "db" in data:
         raw_db = Path(data["db"])
-        db_path = (raw_db if raw_db.is_absolute() else base / raw_db).resolve()
+        if raw_db.is_absolute():
+            db_path = raw_db.resolve()
+        elif raw_db.parent == Path():
+            # A bare filename (e.g. "annie_fi_mini.db") lives under ANNIE_HOME, so the
+            # same config reopens the same DB regardless of where the config is stored.
+            db_path = (settings.annie_home / raw_db).resolve()
+        else:
+            db_path = (base / raw_db).resolve()
     return str(data.get("name") or file.stem), registry, db_path
 
 
@@ -198,11 +217,24 @@ def to_config_dict(
             entry["value_columns"] = list(source.value_columns)
             if source.column_types:
                 entry["column_types"] = dict(source.column_types)
+            if source.is_segmentation:
+                entry["segment_column"] = source.segment_column
+                entry["bands"] = [
+                    {"name": b.name, "start_column": b.start_column, "end_column": b.end_column}
+                    for b in source.bands
+                ]
         sources.append(entry)
     result: dict = {"name": name, "sources": sources}
     if db_path is not None:
         db = Path(db_path)
-        if base is not None:
+        # Both sides are resolved before comparing: callers pass a resolved DB path, so an
+        # unresolved home (a test assigning the field, a symlinked ANNIE_HOME) would other-
+        # wise miss and pin a machine-specific absolute path into a portable config.
+        if db.resolve().parent == settings.annie_home.resolve():
+            # A DB directly under ANNIE_HOME is stored as a bare filename, so it reopens
+            # from ANNIE_HOME wherever the config file itself ends up living.
+            result["db"] = db.name
+        elif base is not None:
             try:
                 result["db"] = os.path.relpath(db, base)
             except ValueError:

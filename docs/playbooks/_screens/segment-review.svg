@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 514" font-family="-apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="Annotator tab in Segment review mode showing one clip with two bands and accept/drop">
+  <rect width="900" height="514" fill="#f4f5f7"/>
+  <!-- header -->
+  <rect width="900" height="48" fill="#006d77"/>
+  <text x="24" y="30" fill="#ffffff" font-size="18" font-weight="600">Annie</text>
+  <g font-size="14" fill="#cde8ea">
+    <text x="360" y="30">Dataset</text>
+    <text x="450" y="30">Browse</text>
+    <text x="530" y="30" fill="#ffffff" font-weight="600">Annotator</text>
+  </g>
+
+  <!-- task switch -->
+  <text x="24" y="82" font-size="13" font-weight="600" fill="#1c2430">Task</text>
+  <rect x="64" y="70" width="128" height="26" rx="13" fill="#006d77"/>
+  <text x="78" y="87" font-size="12" fill="#ffffff">Segment review</text>
+  <text x="212" y="87" font-size="12" fill="#676D78">Curation</text>
+
+  <!-- single always-open toolbar: progress · shortcut legend · export -->
+  <rect x="24" y="108" width="852" height="56" rx="6" fill="#ffffff" stroke="#e2e5ea"/>
+  <text x="40" y="128" font-size="11" fill="#676D78">34 / 160 clips decided</text>
+  <rect x="40" y="136" width="220" height="6" rx="3" fill="#e2e5ea"/>
+  <rect x="40" y="136" width="47" height="6" rx="3" fill="#006d77"/>
+  <text x="292" y="141" font-size="11" fill="#676D78">[←]/[→] step · [space] next undecided · [a] accept · [s] undecided · [d] drop</text>
+  <rect x="784" y="124" width="76" height="24" rx="4" fill="#ffffff" stroke="#006d77"/>
+  <text x="800" y="140" font-size="11" fill="#006d77">⤓ Export</text>
+
+  <!-- clip card -->
+  <rect x="24" y="176" width="852" height="308" rx="8" fill="#ffffff" stroke="#e2e5ea"/>
+  <rect x="40" y="192" width="60" height="22" rx="11" fill="#676D78"/>
+  <text x="52" y="207" font-size="11" fill="#ffffff">35 / 160</text>
+  <text x="112" y="208" font-size="14" font-weight="600" fill="#1c2430">227426_15</text>
+
+  <!-- band: cut -->
+  <text x="40" y="244" font-size="13" font-weight="600" fill="#1c2430">cut: 73.59–77.90s</text>
+  <g>
+    <rect x="40"  y="252" width="86" height="48" rx="4" fill="#20303a"/>
+    <rect x="132" y="252" width="86" height="48" rx="4" fill="#2c4250"/>
+    <rect x="224" y="252" width="86" height="48" rx="4" fill="#3a5566"/>
+    <rect x="316" y="252" width="86" height="48" rx="4" fill="#48697d"/>
+    <rect x="408" y="252" width="86" height="48" rx="4" fill="#567d94"/>
+  </g>
+  <!-- band: GT -->
+  <text x="516" y="244" font-size="13" font-weight="600" fill="#1c2430">GT: 74.63–77.61s</text>
+  <g>
+    <rect x="516" y="252" width="66" height="48" rx="4" fill="#22323c"/>
+    <rect x="586" y="252" width="66" height="48" rx="4" fill="#324a5a"/>
+    <rect x="656" y="252" width="66" height="48" rx="4" fill="#3f5f72"/>
+    <rect x="726" y="252" width="66" height="48" rx="4" fill="#4d7488"/>
+    <rect x="796" y="252" width="64" height="48" rx="4" fill="#5b8a9f"/>
+  </g>
+
+  <!-- tags -->
+  <g font-size="11">
+    <rect x="40"  y="316" width="118" height="22" rx="11" fill="#676D78"/><text x="50" y="331" fill="#ffffff">shift_sec: -1.04</text>
+    <rect x="166" y="316" width="150" height="22" rx="11" fill="#676D78"/><text x="176" y="331" fill="#ffffff">xml_roberta_sim: 0.699</text>
+    <rect x="324" y="316" width="120" height="22" rx="11" fill="#676D78"/><text x="334" y="331" fill="#ffffff">norm_wer: 0.667</text>
+  </g>
+  <text x="40" y="362" font-size="11" fill="#676D78">gt_text: "Few special features on this one,"</text>
+  <text x="40" y="380" font-size="11" fill="#676D78">whisperx_text: "A few special features on this one. A"</text>
+
+  <!-- decision bar: the three verdicts centred, step controls bottom-right -->
+  <rect x="316" y="408" width="108" height="40" rx="6" fill="#1b6b52"/>
+  <text x="342" y="433" font-size="14" fill="#ffffff" font-weight="600">✓ Accept</text>
+  <rect x="436" y="408" width="126" height="40" rx="6" fill="#676D78"/>
+  <text x="456" y="433" font-size="14" fill="#ffffff" font-weight="600">− Undecided</text>
+  <rect x="574" y="408" width="96" height="40" rx="6" fill="#8b1e2d"/>
+  <text x="600" y="433" font-size="14" fill="#ffffff" font-weight="600">✕ Drop</text>
+  <circle cx="772" cy="428" r="18" fill="#eef0f3"/><text x="766" y="434" font-size="16" fill="#676D78">‹</text>
+  <circle cx="812" cy="428" r="18" fill="#eef0f3"/><text x="803" y="433" font-size="13" fill="#676D78">␣</text>
+  <circle cx="852" cy="428" r="18" fill="#eef0f3"/><text x="846" y="434" font-size="16" fill="#676D78">›</text>
+</svg>

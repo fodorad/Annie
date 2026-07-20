@@ -10,6 +10,7 @@ tracks), but Annie is dataset-agnostic.
    :maxdepth: 2
    :caption: Contents
 
+   playbooks/index
    autoapi/index
 
 Highlights
@@ -23,13 +24,18 @@ Highlights
   source scans in place — no Scan button — with live counts and per-source
   availability.
 - **Browse tab** — a scrollable, **one-row-per-video** visualizer with a filter
-  bar: thumbnail, five-frame strip, on-the-fly annotated render, label tags, and
-  good/bad/note review controls.
-- **Annotator tab** — fix the **protagonist track** for videos queued from
-  Browse: pick a track, see it re-render, save, and export the corrected
-  datasource as CSV.
+  bar: thumbnail, five-frame strip, on-the-fly annotated render, and label tags. It
+  is a **read-only viewer**; clicking a row *selects* it (a check tick) for the
+  Annotator rather than recording supervision.
+- **Annotator tab** — the supervision surface, offering only the tasks whose sources
+  are present: **Protagonist review** (correct the active track), **Curation**
+  (like/dislike/note), and **Segment review** (accept/drop per-clip segments of long
+  videos, comparing competing start/end bands, exported as two files). See the
+  :doc:`playbooks/index`.
 - **Settings tab** — row height, render-cache controls, and review-status
   export/import.
+
+See the :doc:`playbooks/index` for screen-by-screen walkthroughs of the main flows.
 
 Screenshots
 -----------

@@ -1,5 +1,6 @@
 {
   "name": "[Example] CMU-MOSEI Mini",
+  "db": "annie_mosei_mini.db",
   "sources": [
     {
       "kind": "video",

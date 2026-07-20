@@ -31,10 +31,12 @@ from annie.dataset.manipulate import detect_type
 from annie.dataset.sources import (
     KIND_ICONS,
     KIND_LABELS,
+    TASK_LABELS,
     CsvRole,
     DataSource,
     SourceKind,
     SourceRegistry,
+    task_readiness,
 )
 from annie.pages import annotator, browse
 from annie.pages.csv_dialog import configure_csv
@@ -52,7 +54,11 @@ class _DatasetState:
 
     Attributes:
         scanning: Whether a rescan is in progress for this client.
-        db_mode: ``"session"`` (fresh per-startup DB) or ``"existing"`` (pinned file).
+        db_mode: How the active DB may be edited — ``"session"`` means Annie created it
+            as a throwaway, so retyping its path *renames* it (the data moves with it);
+            ``"existing"`` means it is a named DB (env, example, or config-pinned) that
+            a retyped path merely *switches away from*, never moves. The Persistence
+            block shows no mode switch — this only decides what an edit means.
         db_path_custom: The user-typed or config-embedded DB path when mode is ``"existing"``.
         config_value: The active config selector value, so "Add data source" knows
             whether to seed the picker from the ANNIE_* env dirs ([ENV vars] config)
@@ -62,8 +68,11 @@ class _DatasetState:
     """
 
     scanning: bool = False
-    db_mode: str = "existing" if settings.db_path_is_explicit else "session"
-    db_path_custom: str = str(settings.db_path) if settings.db_path_is_explicit else ""
+    # The startup DB is always a *named* one (ANNIE_DB_PATH, or the stable annie_env.db),
+    # so it is never renamed out from under whatever points at it; only "New config" and
+    # the ＋ button mint throwaway session DBs.
+    db_mode: str = "existing"
+    db_path_custom: str = str(settings.db_path)
     config_value: str = field(
         default_factory=lambda: _ENV_CONFIG if _has_env_sources() else _NEW_CONFIG
     )
@@ -108,6 +117,7 @@ async def _apply_changes() -> None:
         ds.scanning = False
     _metric_cards.refresh()
     _source_list.refresh()
+    _task_sections.refresh()
     browse.refresh()
     annotator.update_availability()
 
@@ -182,15 +192,21 @@ async def _load_config_path(path: str | Path) -> None:
 
 
 async def _new_config() -> None:
-    """Reset the dataset to a blank slate: no sources, fresh session DB."""
+    """Reset the dataset to a blank slate: no sources, fresh timestamped session DB.
+
+    A brand-new config gets a *throwaway* database, not the stable ``annie_env.db``:
+    only the env config and saved/example configs own a named, reloadable DB. Renaming
+    the path in the Persistence box is what promotes this throwaway into a kept one.
+    """
     ds = _ds()
     state.registry = SourceRegistry()
     state.audio_cache.clear()
     state.frames_cache.clear()
+    fresh = _fresh_session_db_path()
     ds.db_mode = "session"
     ds.db_path_custom = ""
-    ds.session_db_path = str(settings.db_path)
-    state.set_store(settings.db_path)
+    ds.session_db_path = str(fresh)
+    state.set_store(fresh)
     await _apply_changes()
     _persistence_section.refresh()
     ui.notify("New config", color=theme.PRIMARY)
@@ -202,13 +218,32 @@ async def _env_config() -> None:
     state.registry = _seed_registry()
     state.audio_cache.clear()
     state.frames_cache.clear()
-    ds.db_mode = "existing" if settings.db_path_is_explicit else "session"
-    ds.db_path_custom = str(settings.db_path) if settings.db_path_is_explicit else ""
-    ds.session_db_path = "" if settings.db_path_is_explicit else str(settings.db_path)
+    # The env DB is a named, reloadable database (ANNIE_DB_PATH or annie_env.db), never
+    # a throwaway — so it is pinned, not renamable.
+    ds.db_mode = "existing"
+    ds.db_path_custom = str(settings.db_path)
+    ds.session_db_path = ""
     state.set_store(settings.db_path)
     await _apply_changes()
     _persistence_section.refresh()
     ui.notify("Loaded from environment variables", color=theme.PRIMARY)
+
+
+def _config_slug(name: str) -> str:
+    """Turn a config display name into a filesystem-safe stem for its files.
+
+    Lower-cased, non-alphanumeric runs collapsed to a single underscore, trimmed.
+    Falls back to ``"dataset"`` when nothing usable remains, so the config and its
+    ``annie_<stem>.db`` always get a valid, predictable name.
+
+    Args:
+        name: The user-entered config name.
+
+    Returns:
+        A safe stem, e.g. ``"My Dataset!"`` → ``"my_dataset"``.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+    return slug or "dataset"
 
 
 async def _save_current() -> None:
@@ -241,10 +276,17 @@ async def _save_current() -> None:
         return
 
     ds = _ds()
-    out = Path(folder) / "annie_dataset.json"
-    db_to_save = Path(ds.db_path_custom) if ds.db_mode == "existing" and ds.db_path_custom else None
+    stem = _config_slug(config_name)
+    out = Path(folder) / f"{stem}.json"
+    # Always pin a config-owned DB under ANNIE_HOME so this dataset reopens against the
+    # same review database every time, and switch the live store to it now.
+    db_to_save = (settings.annie_home / f"annie_{stem}.db").resolve()
     datasets.save_config(out, state.registry, config_name, relative_to=folder, db_path=db_to_save)
-    ui.notify(f"Saved '{config_name}' to {out}", color=theme.PRIMARY)
+    ds.db_mode = "existing"
+    ds.db_path_custom = str(db_to_save)
+    state.set_store(db_to_save)
+    _persistence_section.refresh()
+    ui.notify(f"Saved '{config_name}' → {out.name} (DB: {db_to_save.name})", color=theme.PRIMARY)
 
 
 @ui.refreshable
@@ -549,6 +591,39 @@ def _source_list() -> None:
                 rescan_btn.props(add="loading")
 
 
+@ui.refreshable
+def _task_sections() -> None:
+    """Show, per supervision task, which sources it needs and whether they're present.
+
+    This mirrors the Annotator's task switch: a task is offered there exactly when
+    it is *ready* here, so the Dataset tab makes it obvious what a given task expects.
+    """
+    with ui.column().classes("w-full gap-2"):
+        ui.label("Tasks").classes("text-lg font-medium")
+        ui.label("What each Annotator task needs — a task is offered once it is ready.").classes(
+            "text-xs"
+        ).style(f"color:{theme.NEUTRAL}")
+        for readiness in task_readiness(state.registry):
+            with ui.card().classes("w-full"), ui.row().classes("w-full items-center gap-3 no-wrap"):
+                ready = readiness.ready
+                ui.icon(
+                    "check_circle" if ready else "radio_button_unchecked",
+                    color=theme.AVAILABLE if ready else theme.NEUTRAL,
+                )
+                with ui.column().classes("gap-0 flex-grow min-w-0"):
+                    ui.label(TASK_LABELS[readiness.task]).classes("font-medium")
+                    with ui.row().classes("items-center gap-2 flex-wrap"):
+                        for req in readiness.requirements:
+                            ui.badge(
+                                req.label,
+                                color=theme.AVAILABLE if req.present else theme.UNAVAILABLE,
+                            ).tooltip("present" if req.present else "missing")
+                ui.badge(
+                    "Ready" if ready else "Not ready",
+                    color=theme.AVAILABLE if ready else theme.NEUTRAL,
+                )
+
+
 # ── persistence block ─────────────────────────────────────────────────────────
 
 
@@ -584,19 +659,6 @@ def _session_dbs() -> list[Path]:
     return [path for _name, path, _mtime in (*renamed, *auto)]
 
 
-async def _on_db_mode_change(mode: str) -> None:
-    """Switch between session-DB and existing-DB modes, applying that side's DB."""
-    ds = _ds()
-    ds.db_mode = mode
-    if mode == "session":
-        if not ds.session_db_path:
-            ds.session_db_path = str(_fresh_session_db_path())
-        state.set_store(Path(ds.session_db_path))
-    elif ds.db_path_custom:
-        state.set_store(Path(ds.db_path_custom))
-    _persistence_section.refresh()
-
-
 def _new_session_db() -> None:
     """Create and switch to a fresh timestamped session DB (a clean default)."""
     ds = _ds()
@@ -618,15 +680,16 @@ def _rename_session_db(new_str: str) -> None:
     new = Path(new_str).expanduser()
     if new.suffix != ".db":
         new = new.with_suffix(".db")
-    current = Path(ds.session_db_path) if ds.session_db_path else None
-    if current is not None and new == current:
+    # The live store is the truth about which file is open; session_db_path can lag it.
+    current = state.store.db_path
+    if new == current:
         return
     if new.exists():
         ui.notify(f"A database already exists at {new}", color=theme.DANGER)
         return
     try:
         new.parent.mkdir(parents=True, exist_ok=True)
-        if current is not None and current.exists():
+        if current.exists():
             shutil.move(str(current), str(new))
     except OSError as exc:
         ui.notify(f"Could not rename DB: {exc}", color=theme.DANGER)
@@ -648,14 +711,32 @@ def _select_existing_db(path: Path) -> None:
 
 
 def _apply_db_path(path_str: str) -> None:
-    """Open an existing DB at ``path_str`` and switch the store to it (on blur/Enter)."""
+    """Apply an edited DB path on blur/Enter — renaming a session DB, else opening it.
+
+    The single path box means one edit has two sensible readings, resolved by what the
+    current DB *is*:
+
+    * a **session** DB (one Annie created as a throwaway) is *renamed* — the file moves
+      to the new path so the review state written so far comes along, which is how a
+      timestamped default becomes a deliberately named database;
+    * anything else (a config-pinned or env DB) is left alone and the new path is simply
+      **opened**, since silently moving a database a config points at would break it.
+    """
     ds = _ds()
     path_str = path_str.strip()
-    if not path_str or path_str == ds.db_path_custom:
+    if not path_str:
         return
-    ds.db_path_custom = path_str
-    state.set_store(Path(path_str))
-    ui.notify(f"Review DB: {Path(path_str).name}", color=theme.PRIMARY)
+    new = Path(path_str).expanduser()
+    if new.suffix != ".db":
+        new = new.with_suffix(".db")
+    if new == state.store.db_path:
+        return
+    if ds.db_mode == "session":
+        _rename_session_db(str(new))
+        return
+    ds.db_path_custom = str(new)
+    state.set_store(new)
+    ui.notify(f"Review DB: {new.name}", color=theme.PRIMARY)
     _persistence_section.refresh()
 
 
@@ -668,12 +749,16 @@ async def _pick_db_file() -> None:
 
 @ui.refreshable
 def _persistence_section() -> None:
-    """Persistence block: a fresh session DB (renamable) or a pinned existing file.
+    """Persistence block: the active review-DB path, plus browse / new-DB actions.
 
-    Layout puts the mode buttons first, then the path controls: in session mode an
-    editable name plus a "New" button for a fresh timestamped DB; in existing mode an
-    editable/browsable path plus a newest-first list of session databases. Selecting,
-    browsing, or editing a path applies immediately — there is no separate Apply step.
+    The DB *path* is the whole story, so it leads: one text box holding the active
+    database, an "available"/"new file" tag telling the user whether that path already
+    holds a database, and two quiet icon buttons beside it — browse for an existing
+    ``.db``, or spin up a fresh timestamped session DB. Editing the path and pressing
+    Enter (or clicking away) applies immediately: an existing file is opened, and a
+    session DB Annie created is *renamed* (its data moves with it). There is no
+    "session vs existing" mode switch — a config-pinned or env DB simply shows its own
+    named path here, and a brand-new config shows a timestamped throwaway.
     """
     ds = _ds()
     active = state.store.db_path
@@ -682,58 +767,54 @@ def _persistence_section() -> None:
             ui.icon("storage", color=theme.PRIMARY)
             ui.label("Persistence").classes("text-lg font-medium")
 
-        ui.toggle(
-            {"session": "New session DB", "existing": "Use existing DB"},
-            value=ds.db_mode,
-            on_change=lambda e: _on_db_mode_change(e.value),
+        _db_path_controls(ds, active)
+        _session_db_list(active)
+
+
+def _db_path_controls(ds: _DatasetState, active: Path) -> None:
+    """The active-DB path box with an availability tag, browse, and new-DB buttons."""
+    with ui.row().classes("w-full items-center gap-2"):
+        path_input = (
+            ui.input("Review database", value=str(active))
+            .classes("flex-grow")
+            .props("dense outlined")
+            .tooltip(
+                "The database this dataset's review state is saved to. Edit and press "
+                "Enter to open another file — or to rename the current session DB."
+            )
+        )
+        path_input.on("blur", lambda: _apply_db_path(path_input.value))
+        path_input.on("keydown.enter", lambda: _apply_db_path(path_input.value))
+
+        exists = active.exists()
+        ui.badge(
+            "available" if exists else "new file",
+            color=theme.AVAILABLE if exists else theme.NEUTRAL,
+        ).tooltip(
+            "A database already exists at this path"
+            if exists
+            else "No file here yet — it is created on the first review"
         )
 
-        if ds.db_mode == "session":
-            _session_db_controls(ds)
-        else:
-            _existing_db_controls(ds, active)
+        ui.button(icon="folder_open", on_click=_pick_db_file).props("flat dense").tooltip(
+            "Browse for an existing .db file"
+        )
+        ui.button(icon="add", on_click=_new_session_db).props("flat dense").tooltip(
+            "Create a fresh timestamped session DB (rename it in the box above)"
+        )
 
-        ui.label(f"Active DB: {active}").classes("text-xs break-all").style(
+    if ds.db_mode == "session":
+        ui.label("Rename this session DB by editing the path above.").classes("text-xs").style(
             f"color:{theme.NEUTRAL}"
         )
 
 
-def _session_db_controls(ds: _DatasetState) -> None:
-    """Editable session-DB name + a button to spin up a fresh timestamped DB."""
-    with ui.row().classes("w-full items-center gap-2"):
-        name_input = (
-            ui.input("Session DB path", value=ds.session_db_path)
-            .classes("flex-grow")
-            .props("dense outlined")
-            .tooltip("Rename the current session DB — its data moves with it")
-        )
-        name_input.on("keydown.enter", lambda: _rename_session_db(name_input.value))
-        ui.button("Rename", icon="drive_file_rename_outline").props("outline dense").on_click(
-            lambda: _rename_session_db(name_input.value)
-        )
-        ui.button(icon="add", on_click=_new_session_db).props("unelevated dense").tooltip(
-            "Create a fresh timestamped session DB"
-        )
-
-
-def _existing_db_controls(ds: _DatasetState, active: Path) -> None:
-    """Editable/browsable DB path plus a newest-first list of session databases."""
-    with ui.row().classes("w-full items-center gap-2"):
-        path_input = (
-            ui.input("Database file path", value=ds.db_path_custom)
-            .classes("flex-grow")
-            .props("dense outlined")
-        )
-        path_input.on("blur", lambda: _apply_db_path(path_input.value))
-        path_input.on("keydown.enter", lambda: _apply_db_path(path_input.value))
-        ui.button(icon="folder_open", on_click=_pick_db_file).props("flat dense").tooltip(
-            "Browse for a .db file"
-        )
-
+def _session_db_list(active: Path) -> None:
+    """The newest-first list of session databases, click one to switch to it."""
     dbs = _session_dbs()
     if not dbs:
         return
-    ui.label("Session databases").classes("text-xs").style(f"color:{theme.NEUTRAL}")
+    ui.label("Recent session databases").classes("text-xs").style(f"color:{theme.NEUTRAL}")
     with ui.column().classes("w-full gap-0 max-h-48 overflow-auto"):
         for path in dbs:
             _session_db_row(path, is_active=path == active)
@@ -763,6 +844,7 @@ def render() -> None:
         _config_section()
         _metric_cards()
         _source_list()
+        _task_sections()
         _persistence_section()
 
     # When the app starts, the initial scan runs in the background (see annie.app).

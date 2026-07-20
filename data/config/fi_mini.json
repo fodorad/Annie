@@ -1,5 +1,6 @@
 {
   "name": "[Example] First Impression V2 Mini",
+  "db": "annie_fi_mini.db",
   "sources": [
     {
       "kind": "video",

@@ -1,10 +1,11 @@
 """Browse filtering (service): pure predicates over the manifest.
 
 The Browse tab's always-visible filter bar narrows the per-video manifest by
-annotation coverage, review verdict, notes, annotator selection, and label
-values. The logic lives here — independent of NiceGUI and SQLite — so it is
-unit-tested directly: the UI supplies a :class:`ReviewState` per row (read from
-the store) and a :class:`FilterSpec` built from the controls.
+annotation coverage, review verdict, notes, annotator selection, label values, and
+an explicit id list loaded from a CSV column. The logic lives here — independent of
+NiceGUI and SQLite — so it is unit-tested directly: the UI supplies a
+:class:`ReviewState` per row (read from the store) and a :class:`FilterSpec` built
+from the controls.
 
 Facets combine with **AND**; within a single label column the selected values
 combine with **OR** (e.g. Sentiment in {negative, neutral}).
@@ -66,6 +67,11 @@ class FilterSpec:
         has_note: keep only videos with a non-empty note.
         in_annotator: keep only videos queued for the Annotator.
         labels: per-column allowed value sets (OR within a column, AND across).
+        id_list: keep only videos whose id is in this set — the ids read from a CSV
+            column (see :func:`~annie.parsers.csvmeta.distinct_column_values`).
+            ``None`` means the facet is off; an empty set is never set by the UI.
+        id_source: the name of the CSV the ``id_list`` came from (for display).
+        id_column: the CSV column the ids were read from (for display).
     """
 
     name_prefix: str = ""
@@ -79,6 +85,9 @@ class FilterSpec:
     has_note: bool = False
     in_annotator: bool = False
     labels: dict[str, set[str]] = field(default_factory=dict)
+    id_list: set[str] | None = None
+    id_source: str = ""
+    id_column: str = ""
 
     @property
     def is_active(self) -> bool:
@@ -94,6 +103,7 @@ class FilterSpec:
             or self.has_note
             or self.in_annotator
             or any(self.labels.values())
+            or self.id_list is not None
         )
 
 
@@ -167,6 +177,8 @@ def matches(
     get_label = label_of or (lambda e, column: e.labels.get(column))
     prefix = spec.name_prefix.strip().lower()
     if prefix and not entry.video_id.lower().startswith(prefix):
+        return False
+    if spec.id_list is not None and entry.video_id not in spec.id_list:
         return False
     if not _presence_ok(entry.has_video, spec.video):
         return False

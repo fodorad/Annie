@@ -15,7 +15,13 @@ from PIL import Image
 
 from annie.core.models import VideoEntry
 from annie.media.decode import media_available
-from annie.media.preview import HIDPI_SCALE, build_grid_preview, to_data_uri
+from annie.media.preview import (
+    HIDPI_SCALE,
+    band_frame_indices,
+    build_band_strip,
+    build_grid_preview,
+    to_data_uri,
+)
 
 _PREFIX = "data:image/webp;base64,"
 
@@ -56,6 +62,28 @@ def _noisy(width: int, height: int) -> Image.Image:
         ]
     )
     return image
+
+
+class TestBandFrameIndices(unittest.TestCase):
+    def test_samples_span_inclusive_of_both_ends(self) -> None:
+        # 2s..4s at 10 fps → frames 20..40; 5 samples evenly spaced.
+        indices = band_frame_indices(2.0, 4.0, fps=10.0, num_frames=100, count=5)
+        self.assertEqual(indices, [20, 25, 30, 35, 40])
+
+    def test_clamps_to_available_frames(self) -> None:
+        indices = band_frame_indices(0.0, 100.0, fps=10.0, num_frames=30, count=5)
+        self.assertEqual(indices[0], 0)
+        self.assertEqual(indices[-1], 29)  # never past the last frame
+        self.assertTrue(all(0 <= i <= 29 for i in indices))
+
+    def test_degenerate_span_collapses_to_single_frame(self) -> None:
+        self.assertEqual(band_frame_indices(3.0, 3.0, fps=10.0, num_frames=100), [30])
+        # reversed span is treated as degenerate, not an error
+        self.assertEqual(band_frame_indices(4.0, 2.0, fps=10.0, num_frames=100), [40])
+
+    def test_zero_fps_or_no_frames_yields_nothing(self) -> None:
+        self.assertEqual(band_frame_indices(1.0, 2.0, fps=0.0, num_frames=100), [])
+        self.assertEqual(band_frame_indices(1.0, 2.0, fps=10.0, num_frames=0), [])
 
 
 class TestToDataUri(unittest.TestCase):
@@ -118,6 +146,37 @@ class TestBuildGridPreview(unittest.TestCase):
     def test_rejects_a_video_less_entry(self) -> None:
         with self.assertRaises(ValueError):
             build_grid_preview(VideoEntry("no-video"))
+
+
+@unittest.skipUnless(
+    media_available() and shutil.which("ffmpeg"), "needs the media extra and ffmpeg"
+)
+class TestBuildBandStrip(unittest.TestCase):
+    """The Segment-review strip decodes the raw frames of one band's time span."""
+
+    def test_decodes_frames_within_the_requested_span(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        clip = _make_clip(tmp, _LEVELS)  # 5 frames at 5 fps → spans 0.0..1.0s
+
+        # 0.4..0.8s at 5 fps → frames 2..4; 3 samples land on 2, 3, 4 (levels 110/160/210).
+        frames = build_band_strip(clip, 0.4, 0.8, count=3)
+
+        self.assertEqual(len(frames), 3)
+        means = [float(np.asarray(f.convert("L")).mean()) for f in frames]
+        for mean, level in zip(means, _LEVELS[2:5], strict=True):
+            self.assertAlmostEqual(mean, level, delta=8)
+
+    def test_full_span_covers_first_and_last_frame(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        clip = _make_clip(tmp, _LEVELS)
+
+        frames = build_band_strip(clip, 0.0, 1.0, count=5)
+
+        self.assertEqual(len(frames), 5)
+        first = float(np.asarray(frames[0].convert("L")).mean())
+        last = float(np.asarray(frames[-1].convert("L")).mean())
+        self.assertAlmostEqual(first, _LEVELS[0], delta=8)
+        self.assertAlmostEqual(last, _LEVELS[-1], delta=8)
 
 
 if __name__ == "__main__":
