@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0](https://github.com/fodorad/Annie/compare/v1.3.0...v1.4.0) (2026-07-20)
+
+
+### Features
+
+* segment review task, browse manipulation, and per-config review databases ([#26](https://github.com/fodorad/Annie/issues/26)) ([818dd07](https://github.com/fodorad/Annie/commit/818dd075ff69c9435d6db52e6b9b1eb6d83f4882))
+
 ## [1.3.0](https://github.com/fodorad/Annie/compare/v1.2.0...v1.3.0) (2026-07-12)
 
 
