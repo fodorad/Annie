@@ -1,0 +1,69 @@
+annie.media.clipping
+====================
+
+.. py:module:: annie.media.clipping
+
+.. autoapi-nested-parse::
+
+   Cut a browser-playable sub-clip of a video for one segment band (service).
+
+   The Segment-review task lets a reviewer watch a band's exact ``[start, end)`` span
+   before accepting or dropping it. :func:`cut_clip` re-encodes that span to a small MP4
+   the browser can play inline. The cut is **frame-accurate** — the input seek is placed
+   *after* ``-i`` and the stream is re-encoded (libx264) rather than stream-copied — so the
+   embedded clip lines up with the preview strip's boundaries instead of snapping to the
+   nearest keyframe.
+
+   Cuts land in a ``clips/`` subdirectory of :attr:`~annie.core.config.Settings.temp_dir`
+   and are cached by ``(video, start, end)`` so re-opening a band does not re-cut. The
+   command mirrors :func:`annie.media.rendering.burn_clip`'s web-friendly encode
+   (preview-grade CRF + faststart muxing).
+
+   The subdirectory is what keeps a cut alive: the render sweeper deletes any ``.mp4``
+   sitting *directly* in ``temp_dir`` once it is older than the TTL (three minutes by
+   default), and it protects only in-flight render jobs — a band clip is neither a job nor
+   refreshed while it plays, so a reviewer studying one card for a few minutes would have
+   had the file unlinked out from under the embedded player. The sweeper's ``iterdir()``
+   scan does not recurse, so clips in ``clips/`` are simply out of its reach.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.media.clipping.clips_dir
+   annie.media.clipping.cut_clip
+
+
+Module Contents
+---------------
+
+.. py:function:: clips_dir() -> pathlib.Path
+
+   The directory band cuts are written to (``<temp_dir>/clips``).
+
+   Resolved at call time rather than import time so a test or a runtime settings change
+   that repoints :attr:`~annie.core.config.Settings.temp_dir` is honoured.
+
+   :returns: The clips directory path (not created — :func:`cut_clip` makes it on demand).
+
+
+.. py:function:: cut_clip(video_path: str | pathlib.Path, start: float, end: float) -> pathlib.Path
+
+   Cut ``[start, end)`` of ``video_path`` to a browser-playable MP4 (frame-accurate).
+
+   The result is cached by ``(video, start, end)``: a cached file that still exists is
+   returned as-is, so re-opening the same band never re-encodes.
+
+   :param video_path: The long source video the band belongs to.
+   :param start: Span start, in seconds.
+   :param end: Span end, in seconds (must be greater than ``start``).
+
+   :returns: The path to the cut clip, under :func:`clips_dir`.
+
+   :raises ValueError: If ``end`` is not strictly after ``start``.
+   :raises RuntimeError: If the ffmpeg subprocess fails.
+
+

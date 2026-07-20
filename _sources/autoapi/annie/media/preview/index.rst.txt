@@ -28,8 +28,10 @@ Functions
 .. autoapisummary::
 
    annie.media.preview.to_data_uri
+   annie.media.preview.band_frame_indices
    annie.media.preview.build_preview
    annie.media.preview.build_grid_preview
+   annie.media.preview.build_band_strip
 
 
 Module Contents
@@ -58,6 +60,25 @@ Module Contents
                preserving aspect ratio. ``None`` encodes at full resolution.
 
    :returns: A ``data:image/webp;base64,…`` string usable as a ``ui.image`` source.
+
+
+.. py:function:: band_frame_indices(start_sec: float, end_sec: float, fps: float, num_frames: int, count: int = 5) -> list[int]
+
+   Evenly sample ``count`` frame indices across the span ``[start_sec, end_sec)``.
+
+   Converts the band's seconds to frame indices via ``fps`` and picks ``count``
+   positions spread across the span (inclusive of both ends when ``count > 1``), so a
+   clip's preview strip shows that span rather than the whole video. Indices are
+   clamped into ``[0, num_frames - 1]`` and a degenerate or reversed span collapses to
+   the single start frame.
+
+   :param start_sec: Span start, in seconds.
+   :param end_sec: Span end, in seconds.
+   :param fps: Frames per second of the source video.
+   :param num_frames: Total frame count, used to clamp indices.
+   :param count: Number of frames to sample.
+
+   :returns: ``count`` (or fewer, when the span is a single frame) frame indices, ascending.
 
 
 .. py:function:: build_preview(entry: annie.core.models.VideoEntry, count: int = 5) -> tuple[PIL.Image.Image, list[PIL.Image.Image], int]
@@ -93,6 +114,25 @@ Module Contents
    :rtype: An ``(image, num_frames)`` pair
 
    :raises ValueError: If the entry has no video to decode.
+   :raises annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.
+
+
+.. py:function:: build_band_strip(video_path: str | pathlib.Path, start_sec: float, end_sec: float, count: int = 5) -> list[PIL.Image.Image]
+
+   Decode a plain strip spanning one band's ``[start_sec, end_sec)`` window.
+
+   Used by the Segment-review task to preview a clip's span. Unlike
+   :func:`build_preview` this draws no track/vdet overlay — the reviewer is judging the
+   temporal cut, so the raw frames of the span are what matters — and it decodes only
+   the sampled frames of that span rather than the whole video.
+
+   :param video_path: The long video the clip belongs to.
+   :param start_sec: Span start, in seconds.
+   :param end_sec: Span end, in seconds.
+   :param count: Number of frames to sample across the span.
+
+   :returns: The sampled span frames as RGB images (empty if nothing could be decoded).
+
    :raises annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.
 
 

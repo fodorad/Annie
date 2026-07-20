@@ -10,6 +10,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/annie/media/clipping/index
    /autoapi/annie/media/color/index
    /autoapi/annie/media/compose/index
    /autoapi/annie/media/convert/index

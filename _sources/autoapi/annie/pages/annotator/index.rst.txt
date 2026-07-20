@@ -5,18 +5,37 @@ annie.pages.annotator
 
 .. autoapi-nested-parse::
 
-   Annotator tab — focused protagonist review for the queued videos.
+   Annotator tab — the supervision surface, one task at a time.
 
-   The tab is greyed out until at least one video is checked "Add to Annotator" on
-   the Browse tab. Opening it shows only those queued videos, in responsive rows. For
+   The Annotator is where the reviewer *inputs* supervision (Browse is a read-only
+   viewer). Which tasks it offers is driven by the sources present on the Dataset tab
+   (see :func:`annie.dataset.sources.task_readiness`): a **task switch** at the top lists
+   only the *ready* tasks, and switching one rebuilds the work area below. Every task
+   persists to the same session review database. The tasks are:
+
+   * **Protagonist review** (needs a protagonist CSV) — the original per-video track
+     correction, described below;
+   * **Curation** (needs only videos) — like/dislike plus a note per queued video, the
+     supervision that used to live on Browse rows;
+   * **Segment review** (needs a segmentation CSV) — accept/drop over the clips of long
+     videos, one clip at a time: its passthrough tags on top, a lazy-embed ORIGINAL video,
+     then one row per competing start/end band (aligned span facts, span frames, and an
+     on-demand clip cut of that exact span). A top toolbar carries progress, the shortcut
+     legend, and Export; Accept / Undecided / Drop and the step controls close the card, and
+     a decision paints it with a coloured border and a lighter wash of the same hue.
+
+   The tab is greyed out until at least one video is queued *or* a queue-free task (segment
+   review) is ready. The protagonist task shows the queued videos in bordered rows; for
    each video:
 
-   * the thumbnail and five-frame strip show the current protagonist track in green
-     (click the thumbnail to play the original clip);
+   * an **ORIGINAL** placeholder embeds and plays the clip on click (like Browse), so it is
+     obvious a video starts — while the **five-frame strip** shows the current protagonist
+     track in green;
    * picking a different track in the **Protagonist** selector re-renders the strip
      immediately and **saves the choice to this session's review database** — there is
      no Save button; selection *is* the save. The source ``_manual`` CSV is *not*
-     touched here — that is what the **Export corrected CSV** button is for;
+     touched here — that is what the **Export corrected CSV** button (in the jump toolbar)
+     is for;
    * the option matching the value in the source CSV is marked ``(default)`` so it is
      obvious which track the heuristic chose;
    * a **render** box burns the full clip with the chosen track green so the choice can
@@ -29,8 +48,9 @@ annie.pages.annotator
    Rows are revealed a page at a time (see :mod:`annie.pages.paging`), which also keeps
    the tab from decoding five frames for every queued video the moment it opens.
 
-   **Export corrected CSV** writes the session's protagonist corrections to the
-   ``_manual`` CSV beside the heuristic source (see :func:`annie.dataset.corrections`).
+   **Export corrected CSV** (in the jump toolbar) writes the session's protagonist
+   corrections to the ``_manual`` CSV beside the heuristic source (see
+   :func:`annie.dataset.corrections`).
 
 
 
@@ -56,7 +76,7 @@ Module Contents
 
 .. py:function:: sync_tab() -> None
 
-   Enable the tab only when at least one video is queued (safe at build time).
+   Enable the tab when a video is queued or a queue-free task is ready.
 
 
 .. py:function:: update_availability() -> None

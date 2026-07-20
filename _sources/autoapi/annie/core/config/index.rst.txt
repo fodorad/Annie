@@ -34,8 +34,31 @@ Classes
    annie.core.config.Settings
 
 
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.core.config.annie_home
+
+
 Module Contents
 ---------------
+
+.. py:function:: annie_home() -> pathlib.Path
+
+   The Annie home directory (env ``ANNIE_HOME``), defaulting to ``~/.annie``.
+
+   Config-pinned review databases (``annie_<config-stem>.db``) live directly here, so a
+   saved dataset always reopens against the same DB regardless of where the config file
+   is stored.
+
+   The path is **resolved**, because it is compared against resolved DB paths to decide
+   whether a config may store its database as a portable bare filename (see
+   :func:`annie.dataset.datasets.to_config_dict`). An unresolved home would fail that
+   comparison whenever it contains a symlink — which is the default on macOS, where
+   ``/tmp`` links to ``/private/tmp`` — silently pinning an absolute path instead.
+
 
 .. py:class:: Settings
 
@@ -77,13 +100,19 @@ Module Contents
    .. attribute:: db_path
 
       SQLite file for this session's review status (good/bad/notes). Defaults
-      to a per-session timestamped file; set ``ANNIE_DB_PATH`` to pin a persistent
-      path instead.
+      to ``<ANNIE_HOME>/annie_env.db`` (a stable per-environment database); set
+      ``ANNIE_DB_PATH`` to pin a different path. Loading a saved config switches
+      this to the config's own ``annie_<stem>.db``.
 
    .. attribute:: db_path_is_explicit
 
       ``True`` when ``ANNIE_DB_PATH`` was set, so the UI can
       show "existing DB" mode instead of "new session DB" mode on startup.
+
+   .. attribute:: annie_home
+
+      The Annie home directory (env ``ANNIE_HOME``, default ``~/.annie``);
+      config-pinned review databases live directly here.
 
    .. attribute:: logs_dir
 

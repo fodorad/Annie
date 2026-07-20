@@ -80,6 +80,14 @@ Module Contents
 
       Decimal places for the ``round`` transform (default 2).
 
+   .. attribute:: show_original
+
+      Display the *untransformed* value on the sample rows while the
+      filter still matches on the transformed one. This separates the two jobs a
+      transform does: ``threshold ≥ 0`` on a ``[-3, 3]`` sentiment makes a clean
+      two-way filter facet, but the reviewer usually still wants to read the real
+      ``1.83`` on the row. Purely a display flag — filtering never consults it.
+
 
 .. py:function:: transforms_for(col_type: ColumnType) -> tuple[TransformKind, Ellipsis]
 

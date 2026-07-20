@@ -25,6 +25,7 @@ Attributes
 .. autoapisummary::
 
    annie.dataset.storage.Verdict
+   annie.dataset.storage.Decision
 
 
 Classes
@@ -42,6 +43,10 @@ Module Contents
 .. py:data:: Verdict
 
    A review verdict. ``None`` (no row) is treated as ``"good"`` by the UI.
+
+.. py:data:: Decision
+
+   A Segment-review decision on a clip. ``None`` means the clip is not yet reviewed.
 
 .. py:class:: ReviewRecord
 
@@ -75,6 +80,11 @@ Module Contents
 
       The session's protagonist-track override, or ``None`` if the
       reviewer has not corrected this video (the heuristic value then stands).
+
+   .. attribute:: decision
+
+      The Segment-review accept/drop for a clip row, or ``None`` if the
+      clip is not (or not a) Segment-review sample.
 
    .. attribute:: updated_at
 
@@ -123,13 +133,14 @@ Module Contents
 
 
 
-   .. py:method:: upsert(row_key: str, video_id: str, annotation_suffix: str | None, *, verdict: Verdict | None = None, note: str | None = None, annotate: bool | None = None, active_track: int | None = None) -> ReviewRecord
+   .. py:method:: upsert(row_key: str, video_id: str, annotation_suffix: str | None, *, verdict: Verdict | None = None, note: str | None = None, annotate: bool | None = None, active_track: int | None = None, decision: Decision | None = None) -> ReviewRecord
 
       Insert or update a review row, preserving fields left as ``None``.
 
       Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` /
-      ``active_track=None`` keeps any existing value, so the good/bad toggle, the
-      note, the annotator flag, and the protagonist correction update independently.
+      ``active_track=None`` / ``decision=None`` keeps any existing value, so the
+      good/bad toggle, the note, the annotator flag, the protagonist correction,
+      and the Segment-review accept/drop update independently.
 
       :param row_key: Stable row identity (primary key).
       :param video_id: The video id, stored for export/grouping.
@@ -139,6 +150,7 @@ Module Contents
       :param annotate: New annotator flag, or ``None`` to leave unchanged.
       :param active_track: New protagonist-track override, or ``None`` to leave
                            unchanged.
+      :param decision: New Segment-review decision, or ``None`` to leave unchanged.
 
       :returns: The resulting :class:`ReviewRecord`.
 
@@ -167,6 +179,23 @@ Module Contents
       :param value: Whether the video is queued for the Annotator tab.
 
       :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: set_annotate_many(videos: collections.abc.Iterable[tuple[str, str]], value: bool) -> int
+
+      Set the "add to annotator" flag for many videos in one transaction.
+
+      Backs Browse's "Add all to Annotator" action: calling :meth:`set_annotate`
+      per video would open a connection and commit for each one, which is slow on
+      a large filtered selection. Only the ``annotate`` column is written, so any
+      stored verdict, note, or protagonist correction survives; videos with no row
+      yet get one with the defaults (liked, no note).
+
+      :param videos: ``(row_key, video_id)`` pairs to update.
+      :param value: Whether the videos are queued for the Annotator tab.
+
+      :returns: The number of videos written.
 
 
 
@@ -200,6 +229,54 @@ Module Contents
       Return the row keys flagged for the Annotator tab.
 
       :returns: The set of ``row_key`` values whose ``annotate`` flag is set.
+
+
+
+   .. py:method:: set_decision(row_key: str, video_id: str, decision: Decision) -> ReviewRecord
+
+      Persist a Segment-review accept/drop decision for a clip.
+
+      The clip is keyed by its composite ``{video_id}_{segment_id}`` ``row_key``,
+      so re-opening the source resumes a half-finished pass from the database.
+
+      :param row_key: The clip identity (``{video_id}_{segment_id}``).
+      :param video_id: The parent video id, stored for export/grouping.
+      :param decision: ``"accept"`` or ``"drop"``.
+
+      :returns: The updated :class:`ReviewRecord`.
+
+
+
+   .. py:method:: clear_decision(row_key: str) -> None
+
+      Return a clip to the *undecided* state, dropping any accept/drop.
+
+      This is the "Undecided" escape hatch in Segment review: a misclick or a changed
+      mind must be able to put a clip back into the undecided pool that the progress
+      bar counts and "jump to next undecided" walks. It cannot go through
+      :meth:`upsert`, where ``decision=None`` means "leave unchanged" — this writes the
+      ``NULL`` explicitly. A clip that was never decided is left untouched.
+
+      :param row_key: The clip identity (``{video_id}_{segment_id}``).
+
+
+
+   .. py:method:: decisions() -> dict[str, Decision]
+
+      Return every stored Segment-review decision as ``row_key -> decision``.
+
+      :returns: A mapping of clip key to ``"accept"``/``"drop"`` for the clips a
+                reviewer has decided (undecided clips are omitted).
+
+
+
+   .. py:method:: list_by_decision(decision: Decision) -> list[ReviewRecord]
+
+      Return all records with the given Segment-review decision.
+
+      :param decision: ``"accept"`` or ``"drop"``.
+
+      :returns: Matching review records ordered by row key (the accepted or dropped set).
 
 
 

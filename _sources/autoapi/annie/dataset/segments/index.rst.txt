@@ -1,0 +1,144 @@
+annie.dataset.segments
+======================
+
+.. py:module:: annie.dataset.segments
+
+.. autoapi-nested-parse::
+
+   Segment-review domain: clips of long videos and their accept/drop export.
+
+   A segmentation CSV (:attr:`annie.dataset.sources.CsvRole.SEGMENTATION`) has one row
+   per **clip** — a span of a longer video identified by ``{video_id}_{segment_id}``.
+   Each row may carry several competing start/end **bands** (e.g. a ground-truth span and
+   a WhisperX forced-alignment span) that the Annotator renders side by side so the
+   reviewer can accept or drop the clip. This module turns those rows into
+   :class:`SegmentClip` records and writes the reviewer's decisions to two files — the
+   accepted set and the dropped set — keyed by clip.
+
+   Pure domain: no NiceGUI, no torch. The Annotator's Segment-review task consumes it.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.segments.ClipBand
+   annie.dataset.segments.SegmentClip
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.segments.clip_key
+   annie.dataset.segments.next_undecided_index
+   annie.dataset.segments.load_segment_clips
+   annie.dataset.segments.export_decision_sets
+
+
+Module Contents
+---------------
+
+.. py:function:: clip_key(video_id: str, segment_id: str) -> str
+
+   Return the composite clip identity ``{video_id}_{segment_id}``.
+
+   ``segment_id`` may already carry a leading underscore (``review_band.csv`` stores
+   it as ``"_15"``); the separator is not doubled in that case.
+
+   :param video_id: The parent video id.
+   :param segment_id: The segment id, with or without a leading underscore.
+
+   :returns: The clip key, e.g. ``"227426_15"``.
+
+
+.. py:function:: next_undecided_index(clips: list[SegmentClip], decisions: collections.abc.Mapping[str, annie.dataset.storage.Decision], start: int) -> int | None
+
+   Find the next clip after ``start`` with no accept/drop decision yet.
+
+   The search wraps: it scans from ``start + 1`` to the end, then from the beginning up
+   to and including ``start``, so pressing "jump to next undecided" cycles through the
+   whole backlog regardless of where the cursor sits. Returns ``None`` when every clip is
+   decided — the caller disables the jump control in that case.
+
+   :param clips: The loaded clips, in review order.
+   :param decisions: Clip key → decision for the clips already decided.
+   :param start: The current clip index the jump starts from.
+
+   :returns: The index of the next undecided clip, or ``None`` if all are decided.
+
+
+.. py:class:: ClipBand
+
+   One resolved start/end span of a clip, in seconds.
+
+   .. attribute:: name
+
+      The band's label (e.g. ``"GT"``, ``"cut"``).
+
+   .. attribute:: start
+
+      Start time in seconds.
+
+   .. attribute:: end
+
+      End time in seconds.
+
+
+.. py:class:: SegmentClip
+
+   One reviewable clip of a long video.
+
+   .. attribute:: key
+
+      The composite ``{video_id}_{segment_id}`` review key.
+
+   .. attribute:: video_id
+
+      The parent video id (the media all bands share).
+
+   .. attribute:: segment_id
+
+      The segment id as written in the CSV.
+
+   .. attribute:: bands
+
+      The resolved start/end spans to compare, in file order.
+
+   .. attribute:: tags
+
+      The remaining (non-span) value columns, shown read-only as tags.
+
+
+.. py:function:: load_segment_clips(source: annie.dataset.sources.DataSource) -> list[SegmentClip]
+
+   Load a segmentation CSV into clip records, one per usable row.
+
+   A row is kept when at least one band parses; bands whose start or end cannot be
+   read as a number are dropped, and a row with no valid band at all is skipped.
+
+   :param source: A :attr:`~annie.dataset.sources.CsvRole.SEGMENTATION` data source with
+                  its ``key_column``, ``segment_column``, and ``bands`` configured. The clip's
+                  video is resolved from the scanned videos folder by ``video_id``.
+
+   :returns: The clips in file order.
+
+
+.. py:function:: export_decision_sets(clips: list[SegmentClip], decisions: collections.abc.Mapping[str, annie.dataset.storage.Decision], accepted_path: str | pathlib.Path, dropped_path: str | pathlib.Path) -> tuple[pathlib.Path, pathlib.Path]
+
+   Write the accepted clips and dropped clips to two separate CSV files.
+
+   Each file carries the clip key, the video/segment ids, and the clip's passthrough
+   tag columns. Undecided clips (no entry in ``decisions``) appear in neither file.
+
+   :param clips: All clips loaded for the source (defines row order and tag columns).
+   :param decisions: The ``clip_key -> "accept"/"drop"`` map from the review store.
+   :param accepted_path: Destination for the accepted set.
+   :param dropped_path: Destination for the dropped set.
+
+   :returns: The ``(accepted_path, dropped_path)`` written.
+
+

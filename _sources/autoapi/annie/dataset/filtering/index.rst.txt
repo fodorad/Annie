@@ -8,10 +8,11 @@ annie.dataset.filtering
    Browse filtering (service): pure predicates over the manifest.
 
    The Browse tab's always-visible filter bar narrows the per-video manifest by
-   annotation coverage, review verdict, notes, annotator selection, and label
-   values. The logic lives here — independent of NiceGUI and SQLite — so it is
-   unit-tested directly: the UI supplies a :class:`ReviewState` per row (read from
-   the store) and a :class:`FilterSpec` built from the controls.
+   annotation coverage, review verdict, notes, annotator selection, label values, and
+   an explicit id list loaded from a CSV column. The logic lives here — independent of
+   NiceGUI and SQLite — so it is unit-tested directly: the UI supplies a
+   :class:`ReviewState` per row (read from the store) and a :class:`FilterSpec` built
+   from the controls.
 
    Facets combine with **AND**; within a single label column the selected values
    combine with **OR** (e.g. Sentiment in {negative, neutral}).
@@ -144,6 +145,20 @@ Module Contents
    .. attribute:: labels
 
       per-column allowed value sets (OR within a column, AND across).
+
+   .. attribute:: id_list
+
+      keep only videos whose id is in this set — the ids read from a CSV
+      column (see :func:`~annie.parsers.csvmeta.distinct_column_values`).
+      ``None`` means the facet is off; an empty set is never set by the UI.
+
+   .. attribute:: id_source
+
+      the name of the CSV the ``id_list`` came from (for display).
+
+   .. attribute:: id_column
+
+      the CSV column the ids were read from (for display).
 
 
    .. py:property:: is_active

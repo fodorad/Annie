@@ -7,17 +7,27 @@ annie.pages.browse
 
    Browse tab — the scrollable, per-video dataset visualizer (main view).
 
-   Browse is a pure consumer of the cached scan manifest and only populates once a
-   videos folder is configured. An always-visible **filter bar** (not part of the
-   scroll) narrows the list by name prefix, video/audio/vdet/track presence, review
-   verdict, notes, annotator selection, and any label-column values. Each row is three
-   stacked lines:
+   Browse is a **read-only viewer**: it presents samples and lets the reviewer *select*
+   which ones to send to the Annotator, but it no longer records supervision (verdicts
+   and notes moved to the Annotator's Curation task). It is a pure consumer of the cached
+   scan manifest and only populates once a videos folder is configured. An always-visible
+   **filter bar** (not part of the scroll) narrows the list by name prefix,
+   video/audio/vdet/track presence, review verdict, notes, annotator selection, any
+   label-column values, and an explicit **id list read from a CSV column** (the loaded
+   file is named on the Filter header while the filter is active) — the verdict/note
+   facets still filter on curation gathered elsewhere. The View panel can queue the whole
+   filtered list into the Annotator in one click. Each bordered row is two stacked lines
+   plus a selection corner:
 
    1. the video id, a "Show at location" icon, and the media/annotation/label **tags**
       (``video`` / ``audio`` / ``#frames`` / ``vdet`` / ``N track`` / ``main`` / labels);
    2. an **ORIGINAL** placeholder (click to embed the clip), the annotated **five-frame
-      strip**, and a **render** box (burn the full annotated clip and embed it);
-   3. the review controls (liked by default, dislike, note, "Add to Annotator").
+      strip**, and a **render** box (burn the full annotated clip and embed it).
+
+   The **top-right corner** holds the selection control: a faint ``check_circle`` that
+   brightens on hover and becomes a solid tick with a teal row border when the video is
+   queued for the Annotator. Only that corner selects — clicking the reveal button or a
+   media box never toggles the queue.
 
    Row height is a Settings-tab preference. Frames decode and audio is probed lazily
    in background tasks; the body refreshes when the tab is opened or sources change.

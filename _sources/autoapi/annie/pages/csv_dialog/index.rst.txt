@@ -5,13 +5,18 @@ annie.pages.csv_dialog
 
 .. autoapi-nested-parse::
 
-   CSV source configuration dialog (UI).
+   CSV configuration dialogs (UI).
 
-   After the user picks a CSV file, this modal lets them describe how it joins to the
-   dataset: its **role** (label tags vs the protagonist track), the **key column**
-   that matches the video id (auto-suggested), and the **value columns** to surface.
-   It returns a fully-formed :class:`~annie.sources.DataSource`, or ``None`` if
-   cancelled.
+   Two modals, both opened after the user has picked a CSV file:
+
+   * :func:`configure_csv` (Dataset tab) — describe how the file joins to the dataset:
+     its **role** (label tags vs the protagonist track), the **key column** that matches
+     the video id (auto-suggested), and the **value columns** to surface. It returns a
+     fully-formed :class:`~annie.sources.DataSource`.
+   * :func:`select_id_column` (Browse tab) — pick the column holding the video ids to
+     restrict the Browse list to.
+
+   Both return ``None`` if cancelled.
 
 
 
@@ -21,6 +26,7 @@ Functions
 .. autoapisummary::
 
    annie.pages.csv_dialog.configure_csv
+   annie.pages.csv_dialog.select_id_column
 
 
 Module Contents
@@ -36,5 +42,23 @@ Module Contents
    :param video_stems: Known video stems, used to auto-suggest the key column.
 
    :returns: A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.
+
+
+.. py:function:: select_id_column(path: str | pathlib.Path, video_stems: collections.abc.Iterable[str]) -> tuple[str, list[str]] | None
+   :async:
+
+
+   Open the id-column modal for a CSV that supplies a Browse id filter.
+
+   The user picks which column holds the video ids; the column is auto-suggested by
+   matching its values against the known video stems, and the dialog reports how many
+   of the ids actually exist in the dataset before the filter is applied.
+
+   :param path: The chosen CSV file.
+   :param video_stems: Known video stems, used to auto-suggest the id column and to
+                       report the overlap.
+
+   :returns: The ``(column, ids)`` pair — the ids distinct and in file order — or ``None``
+             if cancelled or if the CSV has no header.
 
 

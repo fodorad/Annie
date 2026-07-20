@@ -70,6 +70,21 @@ Module Contents
       The label-column names available for tags/filters.
 
 
+   .. py:property:: by_video_id
+      :type: dict[str, annie.core.models.VideoEntry]
+
+
+      The manifest indexed by ``video_id``, built once on first access.
+
+      Callers that resolve a video by id inside a re-rendered UI (the Segment-review
+      task does it on every keystroke) would otherwise walk the whole manifest per
+      lookup. Where two entries share a ``video_id`` — the same video with different
+      annotation suffixes — the first in manifest order wins, matching the behaviour of
+      the linear ``next(...)`` search this replaced.
+
+      :returns: A mapping of video id to its first :class:`~annie.core.models.VideoEntry`.
+
+
    .. py:property:: counts
       :type: dict[str, int | bool]
 

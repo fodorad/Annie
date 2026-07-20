@@ -32,6 +32,12 @@ Attributes
    annie.core.theme.WARNING
    annie.core.theme.DANGER
    annie.core.theme.NEUTRAL
+   annie.core.theme.DECISION_ACCEPT
+   annie.core.theme.DECISION_DROP
+   annie.core.theme.DECISION_UNDECIDED
+   annie.core.theme.DECISION_ACCEPT_TINT
+   annie.core.theme.DECISION_DROP_TINT
+   annie.core.theme.ROW_BORDER
    annie.core.theme.VDET_COLOR
    annie.core.theme.TRACK_COLOR
    annie.core.theme.AVAILABLE
@@ -102,6 +108,42 @@ Module Contents
 
 
    Grey — totals, secondary text.
+
+.. py:data:: DECISION_ACCEPT
+   :value: '#1b6b52'
+
+
+   Dark green — an accepted clip (button + row-border highlight).
+
+.. py:data:: DECISION_DROP
+   :value: '#8b1e2d'
+
+
+   Dark red — a dropped clip (button + row-border highlight).
+
+.. py:data:: DECISION_UNDECIDED
+   :value: '#676D78'
+
+
+   Grey — the "Undecided" reset button; a clip with no verdict carries no highlight.
+
+.. py:data:: DECISION_ACCEPT_TINT
+   :value: '#e8f3ef'
+
+
+   Pale green fill behind an accepted clip — the lighter inside of its green border.
+
+.. py:data:: DECISION_DROP_TINT
+   :value: '#f9eaec'
+
+
+   Pale red fill behind a dropped clip — the lighter inside of its red border.
+
+.. py:data:: ROW_BORDER
+   :value: '1px solid #d5d9df'
+
+
+   The light border every Browse/Annotator row card carries, so its extent is visible.
 
 .. py:data:: VDET_COLOR
    :value: '#1d3557'

@@ -28,6 +28,7 @@ Functions
    annie.parsers.csvmeta.count_rows
    annie.parsers.csvmeta.suggest_key_column
    annie.parsers.csvmeta.load_value_map
+   annie.parsers.csvmeta.distinct_column_values
    annie.parsers.csvmeta.distinct_values
 
 
@@ -88,6 +89,19 @@ Module Contents
 
    :returns: Mapping from the (stripped) key value to a dict of the selected column
              values. Rows with an empty key are skipped; later rows win on a key clash.
+
+
+.. py:function:: distinct_column_values(rows: list[dict[str, str]], column: str) -> list[str]
+
+   Return the distinct non-empty values of one column, in first-seen order.
+
+   Used by the Browse id-list filter: a CSV supplies the set of video ids to keep,
+   and the order is preserved so the preview shows them as the file lists them.
+
+   :param rows: Dict rows as returned by :func:`read_rows`.
+   :param column: The column to collect.
+
+   :returns: The distinct stripped values of ``column``, empties excluded.
 
 
 .. py:function:: distinct_values(value_map: dict[str, dict[str, str]], column: str) -> list[str]
