@@ -168,6 +168,24 @@ class TestApplyFilters(unittest.TestCase):
         ]
         self.assertEqual(kept, ["A"])
 
+    def test_apply_filters_id_list(self) -> None:
+        entries = [_entry("A"), _entry("B"), _entry("C")]
+        spec = FilterSpec(id_list={"C", "A", "missing"})
+
+        kept = [e.video_id for e in apply_filters(entries, spec, lambda _k: ReviewState())]
+        self.assertEqual(kept, ["A", "C"])  # manifest order, unknown ids ignored
+
+    def test_id_list_combines_with_other_facets(self) -> None:
+        entries = [_entry("A", vdet=True), _entry("B"), _entry("C")]
+        spec = FilterSpec(id_list={"A", "B"}, vdet="has")
+
+        kept = [e.video_id for e in apply_filters(entries, spec, lambda _k: ReviewState())]
+        self.assertEqual(kept, ["A"])
+
+    def test_id_list_is_a_facet(self) -> None:
+        self.assertFalse(FilterSpec().is_active)
+        self.assertTrue(FilterSpec(id_list={"A"}).is_active)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -37,6 +37,33 @@ class TestConfig(unittest.TestCase):
     def test_default_extensions(self) -> None:
         self.assertIn(".mp4", Settings().video_extensions)
 
+    def test_db_defaults_to_annie_env_db_under_home(self) -> None:
+        with (
+            mock.patch.dict(os.environ, {"ANNIE_HOME": "/tmp/annie_home"}, clear=False),
+            mock.patch.dict(os.environ, {}, clear=False),
+        ):
+            os.environ.pop("ANNIE_DB_PATH", None)
+            settings = Settings()
+        # ANNIE_HOME is resolved, so the expectation is too: on macOS /tmp is itself a
+        # symlink to /private/tmp. That resolution is deliberate — config-pinned DB paths
+        # are compared against this home to decide whether they can be stored portably.
+        self.assertEqual(settings.db_path, Path("/tmp/annie_home/annie_env.db").resolve())
+        self.assertFalse(settings.db_path_is_explicit)
+
+    def test_annie_home_is_resolved(self) -> None:
+        with mock.patch.dict(os.environ, {"ANNIE_HOME": "/tmp/annie_home"}, clear=False):
+            settings = Settings()
+        self.assertEqual(settings.annie_home, Path("/tmp/annie_home").resolve())
+        # logs/sessions/tmp all hang off the same resolved home.
+        self.assertEqual(settings.logs_dir.parent, settings.annie_home)
+        self.assertEqual(settings.sessions_dir.parent, settings.annie_home)
+
+    def test_explicit_db_path_wins(self) -> None:
+        with mock.patch.dict(os.environ, {"ANNIE_DB_PATH": "/tmp/pinned.db"}):
+            settings = Settings()
+        self.assertEqual(settings.db_path, Path("/tmp/pinned.db"))
+        self.assertTrue(settings.db_path_is_explicit)
+
 
 class TestTheme(unittest.TestCase):
     def test_status_color_mapping(self) -> None:

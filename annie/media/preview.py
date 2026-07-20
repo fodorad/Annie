@@ -17,6 +17,8 @@ from PIL import Image
 from annie.media.compose import load_entry_annotations, merge_frame, strip_track_ids
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
+    from pathlib import Path
+
     from annie.core.models import VideoEntry
 
 
@@ -58,6 +60,38 @@ def to_data_uri(image: Image.Image, box: tuple[int, int] | None = None) -> str:
     image.save(buffer, format="WEBP", quality=_WEBP_QUALITY)
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
     return f"data:image/webp;base64,{encoded}"
+
+
+def band_frame_indices(
+    start_sec: float, end_sec: float, fps: float, num_frames: int, count: int = 5
+) -> list[int]:
+    """Evenly sample ``count`` frame indices across the span ``[start_sec, end_sec)``.
+
+    Converts the band's seconds to frame indices via ``fps`` and picks ``count``
+    positions spread across the span (inclusive of both ends when ``count > 1``), so a
+    clip's preview strip shows that span rather than the whole video. Indices are
+    clamped into ``[0, num_frames - 1]`` and a degenerate or reversed span collapses to
+    the single start frame.
+
+    Args:
+        start_sec: Span start, in seconds.
+        end_sec: Span end, in seconds.
+        fps: Frames per second of the source video.
+        num_frames: Total frame count, used to clamp indices.
+        count: Number of frames to sample.
+
+    Returns:
+        ``count`` (or fewer, when the span is a single frame) frame indices, ascending.
+    """
+    if num_frames <= 0 or fps <= 0 or count <= 0:
+        return []
+    last = num_frames - 1
+    start_frame = max(0, min(last, round(start_sec * fps)))
+    end_frame = max(0, min(last, round(end_sec * fps)))
+    if end_frame <= start_frame or count == 1:
+        return [start_frame]
+    span = end_frame - start_frame
+    return [start_frame + round(span * i / (count - 1)) for i in range(count)]
 
 
 def build_preview(entry: VideoEntry, count: int = 5) -> tuple[Image.Image, list[Image.Image], int]:
@@ -139,3 +173,35 @@ def build_grid_preview(entry: VideoEntry) -> tuple[Image.Image, int]:
         active_track_id=entry.active_track_id,
     )
     return image, num_frames
+
+
+def build_band_strip(
+    video_path: str | Path, start_sec: float, end_sec: float, count: int = 5
+) -> list[Image.Image]:
+    """Decode a plain strip spanning one band's ``[start_sec, end_sec)`` window.
+
+    Used by the Segment-review task to preview a clip's span. Unlike
+    :func:`build_preview` this draws no track/vdet overlay — the reviewer is judging the
+    temporal cut, so the raw frames of the span are what matters — and it decodes only
+    the sampled frames of that span rather than the whole video.
+
+    Args:
+        video_path: The long video the clip belongs to.
+        start_sec: Span start, in seconds.
+        end_sec: Span end, in seconds.
+        count: Number of frames to sample across the span.
+
+    Returns:
+        The sampled span frames as RGB images (empty if nothing could be decoded).
+
+    Raises:
+        annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.
+    """
+    from annie.media import decode  # local import: optional media dependency
+
+    meta = decode.video_metadata(video_path)
+    indices = band_frame_indices(start_sec, end_sec, meta.fps, meta.num_frames, count)
+    if not indices:
+        return []
+    frames = decode.read_frames(video_path, indices, seek_mode="approximate")
+    return [Image.fromarray(frame).convert("RGB") for frame in frames]

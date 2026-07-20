@@ -23,6 +23,7 @@ from annie.core.state import state
 from annie.dataset.scanning import ScanResult
 from annie.dataset.storage import ReviewStore
 from annie.pages import annotator
+from tests.pages._nicegui import quiet_slow_callback_warnings, ui_client
 
 
 def _reraise(exc: BaseException) -> None:
@@ -37,6 +38,7 @@ class TestDequeueDoesNotUseADeletedSlot(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self._saved_loop = core.loop
         core.loop = asyncio.get_running_loop()
+        quiet_slow_callback_warnings()
 
     async def asyncTearDown(self) -> None:
         core.loop = self._saved_loop
@@ -91,13 +93,13 @@ class TestDequeueDoesNotUseADeletedSlot(unittest.IsolatedAsyncioTestCase):
         The last click empties the queue, taking the ``update_availability`` branch;
         the earlier two take the ``card.delete()`` branch that originally crashed.
         """
-        with ui.column() as root:
+        with ui_client(), ui.column() as root:
             for entry in state.scan.entries:
                 annotator._row_card(entry, can_decode=False, default_tid=-1)  # noqa: SLF001
 
-        for expected_remaining in (2, 1, 0):
-            self.assertTrue(self._click_first_x(root))
-            self.assertEqual(len(state.store.annotator_keys()), expected_remaining)
+            for expected_remaining in (2, 1, 0):
+                self.assertTrue(self._click_first_x(root))
+                self.assertEqual(len(state.store.annotator_keys()), expected_remaining)
 
 
 if __name__ == "__main__":

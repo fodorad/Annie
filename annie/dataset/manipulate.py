@@ -48,11 +48,17 @@ class Transform:
         kind: The transform to apply.
         threshold: The cut for the ``threshold`` transform.
         digits: Decimal places for the ``round`` transform (default 2).
+        show_original: Display the *untransformed* value on the sample rows while the
+            filter still matches on the transformed one. This separates the two jobs a
+            transform does: ``threshold ≥ 0`` on a ``[-3, 3]`` sentiment makes a clean
+            two-way filter facet, but the reviewer usually still wants to read the real
+            ``1.83`` on the row. Purely a display flag — filtering never consults it.
     """
 
     kind: TransformKind = "none"
     threshold: float = 1.0
     digits: int = 2
+    show_original: bool = False
 
 
 def transforms_for(col_type: ColumnType) -> tuple[TransformKind, ...]:

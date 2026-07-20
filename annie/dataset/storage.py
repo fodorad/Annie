@@ -28,7 +28,12 @@ if TYPE_CHECKING:
 Verdict = Literal["good", "bad"]
 """A review verdict. ``None`` (no row) is treated as ``"good"`` by the UI."""
 
+Decision = Literal["accept", "drop"]
+"""A Segment-review decision on a clip. ``None`` means the clip is not yet reviewed."""
+
 #: DDL for the single ``review`` table, created on first connection (idempotent).
+#: ``row_key`` is free-form text, so segment rows key on ``{video_id}_{segment_id}``
+#: without a schema change; ``decision`` carries the Segment-review accept/drop.
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS review (
     row_key            TEXT PRIMARY KEY,
@@ -38,6 +43,7 @@ CREATE TABLE IF NOT EXISTS review (
     note               TEXT NOT NULL DEFAULT '',
     annotate           INTEGER NOT NULL DEFAULT 0,
     active_track       INTEGER,
+    decision           TEXT,
     updated_at         TEXT NOT NULL
 );
 """
@@ -56,6 +62,8 @@ class ReviewRecord:
         annotate: Whether the video is queued for the Annotator tab.
         active_track: The session's protagonist-track override, or ``None`` if the
             reviewer has not corrected this video (the heuristic value then stands).
+        decision: The Segment-review accept/drop for a clip row, or ``None`` if the
+            clip is not (or not a) Segment-review sample.
         updated_at: ISO-8601 UTC timestamp of the last change.
     """
 
@@ -66,6 +74,7 @@ class ReviewRecord:
     note: str
     annotate: bool
     active_track: int | None
+    decision: Decision | None
     updated_at: str
 
 
@@ -103,6 +112,8 @@ class ReviewStore:
             conn.execute("ALTER TABLE review ADD COLUMN annotate INTEGER NOT NULL DEFAULT 0")
         if "active_track" not in columns:
             conn.execute("ALTER TABLE review ADD COLUMN active_track INTEGER")
+        if "decision" not in columns:
+            conn.execute("ALTER TABLE review ADD COLUMN decision TEXT")
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -174,12 +185,14 @@ class ReviewStore:
         note: str | None = None,
         annotate: bool | None = None,
         active_track: int | None = None,
+        decision: Decision | None = None,
     ) -> ReviewRecord:
         """Insert or update a review row, preserving fields left as ``None``.
 
         Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` /
-        ``active_track=None`` keeps any existing value, so the good/bad toggle, the
-        note, the annotator flag, and the protagonist correction update independently.
+        ``active_track=None`` / ``decision=None`` keeps any existing value, so the
+        good/bad toggle, the note, the annotator flag, the protagonist correction,
+        and the Segment-review accept/drop update independently.
 
         Args:
             row_key: Stable row identity (primary key).
@@ -190,6 +203,7 @@ class ReviewStore:
             annotate: New annotator flag, or ``None`` to leave unchanged.
             active_track: New protagonist-track override, or ``None`` to leave
                 unchanged.
+            decision: New Segment-review decision, or ``None`` to leave unchanged.
 
         Returns:
             The resulting :class:`ReviewRecord`.
@@ -203,6 +217,7 @@ class ReviewStore:
         new_active = (
             (existing.active_track if existing else None) if active_track is None else active_track
         )
+        new_decision = (existing.decision if existing else None) if decision is None else decision
         record = ReviewRecord(
             row_key=row_key,
             video_id=video_id,
@@ -211,6 +226,7 @@ class ReviewStore:
             note=new_note,
             annotate=new_annotate,
             active_track=new_active,
+            decision=new_decision,
             updated_at=_now(),
         )
         with self._connect() as conn:
@@ -218,9 +234,9 @@ class ReviewStore:
                 """
                 INSERT INTO review
                     (row_key, video_id, annotation_suffix, verdict, note, annotate,
-                     active_track, updated_at)
+                     active_track, decision, updated_at)
                 VALUES (:row_key, :video_id, :annotation_suffix, :verdict, :note,
-                        :annotate, :active_track, :updated_at)
+                        :annotate, :active_track, :decision, :updated_at)
                 ON CONFLICT(row_key) DO UPDATE SET
                     video_id          = excluded.video_id,
                     annotation_suffix = excluded.annotation_suffix,
@@ -228,6 +244,7 @@ class ReviewStore:
                     note              = excluded.note,
                     annotate          = excluded.annotate,
                     active_track      = excluded.active_track,
+                    decision          = excluded.decision,
                     updated_at        = excluded.updated_at
                 """,
                 asdict(record),
@@ -253,17 +270,18 @@ class ReviewStore:
         note = existing.note if existing else ""
         annotate = existing.annotate if existing else False
         active = existing.active_track if existing else None
+        decision = existing.decision if existing else None
         record = ReviewRecord(
-            row_key, video_id, annotation_suffix, verdict, note, annotate, active, _now()
+            row_key, video_id, annotation_suffix, verdict, note, annotate, active, decision, _now()
         )
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO review
                     (row_key, video_id, annotation_suffix, verdict, note, annotate,
-                     active_track, updated_at)
+                     active_track, decision, updated_at)
                 VALUES (:row_key, :video_id, :annotation_suffix, :verdict, :note,
-                        :annotate, :active_track, :updated_at)
+                        :annotate, :active_track, :decision, :updated_at)
                 ON CONFLICT(row_key) DO UPDATE SET
                     verdict    = excluded.verdict,
                     updated_at = excluded.updated_at
@@ -287,6 +305,44 @@ class ReviewStore:
             The updated :class:`ReviewRecord`.
         """
         return self.upsert(row_key, video_id, annotation_suffix, annotate=value)
+
+    def set_annotate_many(self, videos: Iterable[tuple[str, str]], value: bool) -> int:
+        """Set the "add to annotator" flag for many videos in one transaction.
+
+        Backs Browse's "Add all to Annotator" action: calling :meth:`set_annotate`
+        per video would open a connection and commit for each one, which is slow on
+        a large filtered selection. Only the ``annotate`` column is written, so any
+        stored verdict, note, or protagonist correction survives; videos with no row
+        yet get one with the defaults (liked, no note).
+
+        Args:
+            videos: ``(row_key, video_id)`` pairs to update.
+            value: Whether the videos are queued for the Annotator tab.
+
+        Returns:
+            The number of videos written.
+        """
+        now = _now()
+        rows = [
+            {"row_key": key, "video_id": video_id, "annotate": bool(value), "updated_at": now}
+            for key, video_id in videos
+        ]
+        if not rows:
+            return 0
+        with self._connect() as conn:
+            conn.executemany(
+                """
+                INSERT INTO review
+                    (row_key, video_id, annotation_suffix, verdict, note, annotate,
+                     active_track, updated_at)
+                VALUES (:row_key, :video_id, NULL, 'good', '', :annotate, NULL, :updated_at)
+                ON CONFLICT(row_key) DO UPDATE SET
+                    annotate   = excluded.annotate,
+                    updated_at = excluded.updated_at
+                """,
+                rows,
+            )
+        return len(rows)
 
     def set_active_track(
         self, row_key: str, video_id: str, annotation_suffix: str | None, track_id: int
@@ -329,6 +385,68 @@ class ReviewStore:
         with self._connect() as conn:
             rows = conn.execute("SELECT row_key FROM review WHERE annotate = 1").fetchall()
         return {row["row_key"] for row in rows}
+
+    def set_decision(self, row_key: str, video_id: str, decision: Decision) -> ReviewRecord:
+        """Persist a Segment-review accept/drop decision for a clip.
+
+        The clip is keyed by its composite ``{video_id}_{segment_id}`` ``row_key``,
+        so re-opening the source resumes a half-finished pass from the database.
+
+        Args:
+            row_key: The clip identity (``{video_id}_{segment_id}``).
+            video_id: The parent video id, stored for export/grouping.
+            decision: ``"accept"`` or ``"drop"``.
+
+        Returns:
+            The updated :class:`ReviewRecord`.
+        """
+        return self.upsert(row_key, video_id, None, decision=decision)
+
+    def clear_decision(self, row_key: str) -> None:
+        """Return a clip to the *undecided* state, dropping any accept/drop.
+
+        This is the "Undecided" escape hatch in Segment review: a misclick or a changed
+        mind must be able to put a clip back into the undecided pool that the progress
+        bar counts and "jump to next undecided" walks. It cannot go through
+        :meth:`upsert`, where ``decision=None`` means "leave unchanged" — this writes the
+        ``NULL`` explicitly. A clip that was never decided is left untouched.
+
+        Args:
+            row_key: The clip identity (``{video_id}_{segment_id}``).
+        """
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE review SET decision = NULL, updated_at = ? WHERE row_key = ?",
+                (_now(), row_key),
+            )
+
+    def decisions(self) -> dict[str, Decision]:
+        """Return every stored Segment-review decision as ``row_key -> decision``.
+
+        Returns:
+            A mapping of clip key to ``"accept"``/``"drop"`` for the clips a
+            reviewer has decided (undecided clips are omitted).
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT row_key, decision FROM review WHERE decision IS NOT NULL"
+            ).fetchall()
+        return {row["row_key"]: row["decision"] for row in rows}
+
+    def list_by_decision(self, decision: Decision) -> list[ReviewRecord]:
+        """Return all records with the given Segment-review decision.
+
+        Args:
+            decision: ``"accept"`` or ``"drop"``.
+
+        Returns:
+            Matching review records ordered by row key (the accepted or dropped set).
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM review WHERE decision = ? ORDER BY row_key", (decision,)
+            ).fetchall()
+        return [_record_from_row(row) for row in rows]
 
     def set_note(
         self, row_key: str, video_id: str, annotation_suffix: str | None, note: str
@@ -381,6 +499,7 @@ class ReviewStore:
             "note",
             "annotate",
             "active_track",
+            "decision",
             "updated_at",
         ]
         with out.open("w", newline="", encoding="utf-8") as handle:
@@ -412,6 +531,10 @@ class ReviewStore:
                 active_track = int(str(raw_active)) if raw_active not in (None, "") else None
             except (TypeError, ValueError):
                 active_track = None
+            raw_decision = str(raw.get("decision") or "")
+            decision: Decision | None = (
+                "accept" if raw_decision == "accept" else "drop" if raw_decision == "drop" else None
+            )
             self.upsert(
                 str(raw["row_key"]),
                 str(raw["video_id"]),
@@ -420,6 +543,7 @@ class ReviewStore:
                 note=str(raw.get("note") or ""),
                 annotate=_truthy(raw.get("annotate")),
                 active_track=active_track,
+                decision=decision,
             )
             count += 1
         return count
@@ -442,5 +566,6 @@ def _record_from_row(row: sqlite3.Row) -> ReviewRecord:
         note=row["note"],
         annotate=bool(row["annotate"]),
         active_track=row["active_track"],
+        decision=row["decision"],
         updated_at=row["updated_at"],
     )

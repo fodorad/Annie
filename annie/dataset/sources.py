@@ -45,11 +45,33 @@ class CsvRole(StrEnum):
     LABELS = "labels"
     #: One value column holds each video's active protagonist track id.
     PROTAGONIST = "protagonist"
+    #: Rows are per-clip segments of a long video, reviewed (accept/drop) in the
+    #: Annotator's Segment-review task. See :class:`SegmentationBand`.
+    SEGMENTATION = "segmentation"
 
     @classmethod
     def _missing_(cls, value: object) -> CsvRole | None:
         """Resolve the pre-rename ``"main_character"`` role stored in older configs."""
         return cls.PROTAGONIST if value == "main_character" else None
+
+
+@dataclass(slots=True, frozen=True)
+class SegmentationBand:
+    """A named start/end column pair defining one segmentation of a clip.
+
+    A segmentation CSV may carry several competing segmentations of the same clip
+    (e.g. a ground-truth span and a WhisperX forced-alignment span); each is one
+    band, rendered side by side in the Segment-review task for comparison.
+
+    Attributes:
+        name: Human label shown beside the band's preview (e.g. ``"GT"``, ``"cut"``).
+        start_column: CSV column holding the band's start time, in seconds.
+        end_column: CSV column holding the band's end time, in seconds.
+    """
+
+    name: str
+    start_column: str
+    end_column: str
 
 
 FOLDER_KINDS: tuple[SourceKind, ...] = (SourceKind.VIDEO, SourceKind.VDET, SourceKind.TRACK)
@@ -97,6 +119,13 @@ class DataSource:
             or a single protagonist track-id column).
         column_types: For a CSV source, the chosen data type per value column
             (``"str"`` / ``"int"`` / ``"float"``); columns absent here default to str.
+        segment_column: For a :attr:`CsvRole.SEGMENTATION` CSV, the column that tells
+            apart the several rows sharing one ``key_column`` value: the two combine
+            into the clip identity ``{video_id}_{segment_id}`` that each accept/drop is
+            saved under. ``None`` for other roles.
+        bands: For a :attr:`CsvRole.SEGMENTATION` CSV, the ordered start/end column
+            pairs to render and compare (see :class:`SegmentationBand`). Empty
+            otherwise.
     """
 
     kind: SourceKind
@@ -105,6 +134,8 @@ class DataSource:
     key_column: str | None = None
     value_columns: tuple[str, ...] = ()
     column_types: dict[str, str] = field(default_factory=dict)
+    segment_column: str | None = None
+    bands: tuple[SegmentationBand, ...] = ()
 
     @property
     def is_folder(self) -> bool:
@@ -117,6 +148,11 @@ class DataSource:
         return self.kind is SourceKind.CSV and self.role is CsvRole.PROTAGONIST
 
     @property
+    def is_segmentation(self) -> bool:
+        """Whether this CSV holds per-clip segments for the Segment-review task."""
+        return self.kind is SourceKind.CSV and self.role is CsvRole.SEGMENTATION
+
+    @property
     def available(self) -> bool:
         """Whether the source path currently exists (folder for folders, file for CSV)."""
         return self.path.is_dir() if self.is_folder else self.path.is_file()
@@ -125,7 +161,11 @@ class DataSource:
     def label(self) -> str:
         """A short label for the Dataset source list."""
         if self.kind is SourceKind.CSV:
-            return "Protagonist file" if self.is_protagonist else "Label file"
+            if self.is_protagonist:
+                return "Protagonist file"
+            if self.is_segmentation:
+                return "Segmentation file"
+            return "Label file"
         return KIND_LABELS[self.kind]
 
     def count(self) -> int:
@@ -177,7 +217,7 @@ class SourceRegistry:
             self.sources = [s for s in self.sources if s.kind != source.kind]
         elif source.is_protagonist:
             self.sources = [s for s in self.sources if not s.is_protagonist]
-        else:  # a labels CSV: replace any existing source on the same file
+        else:  # a labels or segmentation CSV: replace any existing source on the same file
             self.sources = [s for s in self.sources if s.path != source.path]
         self.sources.append(source)
 
@@ -213,8 +253,13 @@ class SourceRegistry:
 
     @property
     def label_sources(self) -> list[DataSource]:
-        """All label CSV sources (excludes the protagonist CSV)."""
+        """All label CSV sources (excludes the protagonist and segmentation CSVs)."""
         return [s for s in self.sources if s.kind is SourceKind.CSV and s.role is CsvRole.LABELS]
+
+    @property
+    def segmentation_sources(self) -> list[DataSource]:
+        """All segmentation CSV sources (drive the Segment-review task)."""
+        return [s for s in self.sources if s.is_segmentation]
 
     @property
     def has_video(self) -> bool:
@@ -228,3 +273,83 @@ class SourceRegistry:
         offered = [k for k in FOLDER_KINDS if k not in present]
         offered.append(SourceKind.CSV)  # CSVs are always addable
         return offered
+
+
+class TaskKind(StrEnum):
+    """A supervision task the Annotator can offer, driven by the sources present."""
+
+    #: Keep/drop plus notes on whole videos (needs only videos).
+    CURATION = "curation"
+    #: Correct each video's protagonist track (needs a protagonist CSV).
+    PROTAGONIST = "protagonist"
+    #: Accept/drop per-clip segments of long videos (needs a segmentation CSV).
+    SEGMENT_REVIEW = "segment_review"
+
+
+TASK_LABELS: dict[TaskKind, str] = {
+    TaskKind.CURATION: "Curation",
+    TaskKind.PROTAGONIST: "Protagonist review",
+    TaskKind.SEGMENT_REVIEW: "Segment review",
+}
+"""Human label per task, for the Dataset task-wise sections and the Annotator switch."""
+
+
+@dataclass(slots=True, frozen=True)
+class TaskRequirement:
+    """One prerequisite for a task, and whether the registry satisfies it.
+
+    Attributes:
+        label: Human name of the required source (e.g. ``"videos"``).
+        present: Whether an available source satisfying it is configured.
+    """
+
+    label: str
+    present: bool
+
+
+@dataclass(slots=True, frozen=True)
+class TaskReadiness:
+    """Whether a task's sources are all present, with the per-requirement detail.
+
+    Attributes:
+        task: The :class:`TaskKind`.
+        requirements: Each prerequisite and its present/absent state, in order.
+    """
+
+    task: TaskKind
+    requirements: tuple[TaskRequirement, ...]
+
+    @property
+    def ready(self) -> bool:
+        """Whether every requirement is satisfied (the Annotator may offer the task)."""
+        return all(req.present for req in self.requirements)
+
+
+def task_readiness(registry: SourceRegistry) -> list[TaskReadiness]:
+    """Report, per task, which required sources are present in ``registry``.
+
+    This is the single source of truth behind both the Dataset tab's task-wise
+    readiness sections and the Annotator's decision of which tasks to offer.
+
+    Args:
+        registry: The configured sources.
+
+    Returns:
+        One :class:`TaskReadiness` per :class:`TaskKind`, requirements in order.
+    """
+    has_video = registry.has_video
+    protagonist = registry.protagonist
+    has_protagonist = protagonist is not None and protagonist.available
+    has_segmentation = any(s.available for s in registry.segmentation_sources)
+    video_req = TaskRequirement("videos", has_video)
+    return [
+        TaskReadiness(TaskKind.CURATION, (video_req,)),
+        TaskReadiness(
+            TaskKind.PROTAGONIST,
+            (video_req, TaskRequirement("protagonist CSV", has_protagonist)),
+        ),
+        TaskReadiness(
+            TaskKind.SEGMENT_REVIEW,
+            (video_req, TaskRequirement("segmentation CSV", has_segmentation)),
+        ),
+    ]

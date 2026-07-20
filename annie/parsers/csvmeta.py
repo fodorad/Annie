@@ -135,6 +135,27 @@ def load_value_map(
     return mapping
 
 
+def distinct_column_values(rows: list[dict[str, str]], column: str) -> list[str]:
+    """Return the distinct non-empty values of one column, in first-seen order.
+
+    Used by the Browse id-list filter: a CSV supplies the set of video ids to keep,
+    and the order is preserved so the preview shows them as the file lists them.
+
+    Args:
+        rows: Dict rows as returned by :func:`read_rows`.
+        column: The column to collect.
+
+    Returns:
+        The distinct stripped values of ``column``, empties excluded.
+    """
+    seen: dict[str, None] = {}
+    for row in rows:
+        value = (row.get(column) or "").strip()
+        if value:
+            seen.setdefault(value, None)
+    return list(seen)
+
+
 def distinct_values(value_map: dict[str, dict[str, str]], column: str) -> list[str]:
     """Return the sorted distinct non-empty values of ``column`` across a map.
 

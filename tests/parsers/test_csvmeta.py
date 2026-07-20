@@ -8,9 +8,11 @@ from pathlib import Path
 
 from annie.parsers.csvmeta import (
     count_rows,
+    distinct_column_values,
     distinct_values,
     load_value_map,
     read_header,
+    read_rows,
     suggest_key_column,
 )
 from tests.fixtures import write_table
@@ -66,6 +68,12 @@ class TestCsvMeta(unittest.TestCase):
     def test_distinct_values(self) -> None:
         mapping = load_value_map(self.path, "uuid", ("Sentiment",))
         self.assertEqual(distinct_values(mapping, "Sentiment"), ["negative", "positive"])
+
+    def test_distinct_column_values_keeps_file_order_and_drops_blanks(self) -> None:
+        rows = read_rows(self.path) + [{"uuid": " A ", "Sentiment": ""}, {"uuid": "", "Angry": "1"}]
+        self.assertEqual(distinct_column_values(rows, "uuid"), ["A", "B", "C"])
+        self.assertEqual(distinct_column_values(rows, "Sentiment"), ["negative", "positive"])
+        self.assertEqual(distinct_column_values(rows, "nope"), [])
 
 
 if __name__ == "__main__":

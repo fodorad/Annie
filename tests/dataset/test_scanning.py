@@ -6,7 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from annie.dataset.scanning import build_manifest, resolve_video_stem, scan_dataset
+from annie.core.models import VideoEntry
+from annie.dataset.scanning import ScanResult, build_manifest, resolve_video_stem, scan_dataset
 from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry
 from tests.fixtures import (
     write_appledouble_junk,
@@ -32,6 +33,35 @@ class TestResolveVideoStem(unittest.TestCase):
 
     def test_no_match_returns_none(self) -> None:
         self.assertIsNone(resolve_video_stem("ghost__track0", ["vid"]))
+
+
+class TestByVideoId(unittest.TestCase):
+    """The ``video_id`` index behind the Segment-review task's per-keystroke lookup."""
+
+    @staticmethod
+    def _result(video_ids: list[str]) -> ScanResult:
+        return ScanResult(entries=[VideoEntry(video_id=vid) for vid in video_ids])
+
+    def test_indexes_every_entry_by_id(self) -> None:
+        result = self._result(["a", "b", "c"])
+        self.assertEqual(sorted(result.by_video_id), ["a", "b", "c"])
+        self.assertIs(result.by_video_id["b"], result.entries[1])
+
+    def test_missing_id_is_absent(self) -> None:
+        self.assertNotIn("ghost", self._result(["a"]).by_video_id)
+
+    def test_duplicate_ids_keep_the_first_in_manifest_order(self) -> None:
+        # One video may appear under several annotation suffixes; the linear next(...)
+        # search this replaced returned the first match, so the index must agree.
+        result = self._result(["dup", "dup"])
+        self.assertIs(result.by_video_id["dup"], result.entries[0])
+
+    def test_index_is_built_once_and_reused(self) -> None:
+        result = self._result(["a"])
+        self.assertIs(result.by_video_id, result.by_video_id)
+
+    def test_empty_manifest_yields_an_empty_index(self) -> None:
+        self.assertEqual(ScanResult().by_video_id, {})
 
 
 class TestScanDataset(unittest.TestCase):

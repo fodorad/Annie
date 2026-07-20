@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 
 
@@ -41,19 +40,34 @@ def _env_tuple(name: str) -> tuple[str, ...] | None:
     return tuple(col.strip() for col in raw.split(",") if col.strip())
 
 
+def annie_home() -> Path:
+    """The Annie home directory (env ``ANNIE_HOME``), defaulting to ``~/.annie``.
+
+    Config-pinned review databases (``annie_<config-stem>.db``) live directly here, so a
+    saved dataset always reopens against the same DB regardless of where the config file
+    is stored.
+
+    The path is **resolved**, because it is compared against resolved DB paths to decide
+    whether a config may store its database as a portable bare filename (see
+    :func:`annie.dataset.datasets.to_config_dict`). An unresolved home would fail that
+    comparison whenever it contains a symlink — which is the default on macOS, where
+    ``/tmp`` links to ``/private/tmp`` — silently pinning an absolute path instead.
+    """
+    return (_env_path("ANNIE_HOME") or (Path.home() / ".annie")).resolve()
+
+
 def _default_db_path() -> Path:
     """Resolve the SQLite path for this session.
 
     Priority:
     1. ``ANNIE_DB_PATH`` — explicit persistent path (any valid file path).
-    2. Otherwise: a per-session timestamped file under ``<ANNIE_HOME>/sessions/``
-       so every restart starts with a fresh review state by default.
+    2. Otherwise: ``<ANNIE_HOME>/annie_env.db`` — a single, stable review database for
+       environment-seeded sessions, so decisions persist and reload consistently.
     """
     explicit = _env_path("ANNIE_DB_PATH")
     if explicit is not None:
         return explicit
-    home = _env_path("ANNIE_HOME") or (Path.home() / ".annie")
-    return home / "sessions" / f"annie_{datetime.now():%Y-%m-%d_%H-%M-%S}.db"
+    return annie_home() / "annie_env.db"
 
 
 @dataclass(slots=True)
@@ -74,10 +88,13 @@ class Settings:
         labels_values: Comma-separated value columns from :attr:`labels_csv`
             (env ``ANNIE_LABEL_VALUES``); defaults to all non-key columns.
         db_path: SQLite file for this session's review status (good/bad/notes). Defaults
-            to a per-session timestamped file; set ``ANNIE_DB_PATH`` to pin a persistent
-            path instead.
+            to ``<ANNIE_HOME>/annie_env.db`` (a stable per-environment database); set
+            ``ANNIE_DB_PATH`` to pin a different path. Loading a saved config switches
+            this to the config's own ``annie_<stem>.db``.
         db_path_is_explicit: ``True`` when ``ANNIE_DB_PATH`` was set, so the UI can
             show "existing DB" mode instead of "new session DB" mode on startup.
+        annie_home: The Annie home directory (env ``ANNIE_HOME``, default ``~/.annie``);
+            config-pinned review databases live directly here.
         logs_dir: Directory that receives per-session log files
             (``<ANNIE_HOME>/logs``).
         sessions_dir: Directory that receives per-session SQLite databases
@@ -118,17 +135,10 @@ class Settings:
     )
     db_path: Path = field(default_factory=_default_db_path)
     db_path_is_explicit: bool = field(default_factory=lambda: bool(_env_path("ANNIE_DB_PATH")))
-    logs_dir: Path = field(
-        default_factory=lambda: (_env_path("ANNIE_HOME") or (Path.home() / ".annie")) / "logs"
-    )
-    sessions_dir: Path = field(
-        default_factory=lambda: (_env_path("ANNIE_HOME") or (Path.home() / ".annie")) / "sessions"
-    )
+    logs_dir: Path = field(default_factory=lambda: annie_home() / "logs")
+    sessions_dir: Path = field(default_factory=lambda: annie_home() / "sessions")
     temp_dir: Path = field(
-        default_factory=lambda: (
-            _env_path("ANNIE_TEMP_DIR")
-            or (_env_path("ANNIE_HOME") or (Path.home() / ".annie")) / "tmp"
-        )
+        default_factory=lambda: _env_path("ANNIE_TEMP_DIR") or annie_home() / "tmp"
     )
     config_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_CONFIG_DIR"))
     data_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_DATA_DIR"))
@@ -139,6 +149,7 @@ class Settings:
     temp_ttl_seconds: int = field(default_factory=lambda: _env_int("ANNIE_TEMP_TTL", 180))
     host: str = field(default_factory=lambda: os.environ.get("ANNIE_HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: _env_int("ANNIE_PORT", 8080))
+    annie_home: Path = field(default_factory=annie_home)
 
 
 settings = Settings()

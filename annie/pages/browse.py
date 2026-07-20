@@ -1,16 +1,26 @@
 """Browse tab — the scrollable, per-video dataset visualizer (main view).
 
-Browse is a pure consumer of the cached scan manifest and only populates once a
-videos folder is configured. An always-visible **filter bar** (not part of the
-scroll) narrows the list by name prefix, video/audio/vdet/track presence, review
-verdict, notes, annotator selection, and any label-column values. Each row is three
-stacked lines:
+Browse is a **read-only viewer**: it presents samples and lets the reviewer *select*
+which ones to send to the Annotator, but it no longer records supervision (verdicts
+and notes moved to the Annotator's Curation task). It is a pure consumer of the cached
+scan manifest and only populates once a videos folder is configured. An always-visible
+**filter bar** (not part of the scroll) narrows the list by name prefix,
+video/audio/vdet/track presence, review verdict, notes, annotator selection, any
+label-column values, and an explicit **id list read from a CSV column** (the loaded
+file is named on the Filter header while the filter is active) — the verdict/note
+facets still filter on curation gathered elsewhere. The View panel can queue the whole
+filtered list into the Annotator in one click. Each bordered row is two stacked lines
+plus a selection corner:
 
 1. the video id, a "Show at location" icon, and the media/annotation/label **tags**
    (``video`` / ``audio`` / ``#frames`` / ``vdet`` / ``N track`` / ``main`` / labels);
 2. an **ORIGINAL** placeholder (click to embed the clip), the annotated **five-frame
-   strip**, and a **render** box (burn the full annotated clip and embed it);
-3. the review controls (liked by default, dislike, note, "Add to Annotator").
+   strip**, and a **render** box (burn the full annotated clip and embed it).
+
+The **top-right corner** holds the selection control: a faint ``check_circle`` that
+brightens on hover and becomes a solid tick with a teal row border when the video is
+queued for the Annotator. Only that corner selects — clicking the reveal button or a
+media box never toggles the queue.
 
 Row height is a Settings-tab preference. Frames decode and audio is probed lazily
 in background tasks; the body refreshes when the tab is opened or sources change.
@@ -25,6 +35,7 @@ import asyncio
 import contextlib
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from nicegui import background_tasks, context, run, ui
@@ -38,6 +49,8 @@ from annie.media.decode import media_available
 from annie.media.preview import build_grid_preview, build_preview, to_data_uri
 from annie.media.rendering import JobStatus
 from annie.pages import annotator
+from annie.pages.csv_dialog import select_id_column
+from annie.pages.folder_picker import pick_file
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.reveal import is_docker, reveal
@@ -46,10 +59,8 @@ from annie.pages.viewport import observe_row
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
     from annie.core.models import VideoEntry
-    from annie.dataset.storage import Verdict
 
 #: Shared CSS for the grey, centred media placeholder boxes (ORIGINAL / render slots).
 _BOX = "border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center"
@@ -104,7 +115,12 @@ def _column_type(column: str) -> manipulate.ColumnType:
 
 
 def _effective_label(entry: VideoEntry, column: str) -> str | None:
-    """A label value after its column transform (Manipulate); ``None`` if absent."""
+    """A label value after its column transform (Manipulate); ``None`` if absent.
+
+    This is the **filtering** view of a label: it always reflects the transform, which is
+    what makes the filter facets (e.g. the two sides of a ``threshold ≥ 0``) meaningful.
+    What the row *shows* can differ — see :func:`_display_label`.
+    """
     raw = entry.labels.get(column)
     if raw is None:
         return None
@@ -112,6 +128,20 @@ def _effective_label(entry: VideoEntry, column: str) -> str | None:
     if transform is None or transform.kind == "none":
         return raw
     return manipulate.apply_transform(raw, _column_type(column), transform)
+
+
+def _display_label(entry: VideoEntry, column: str) -> str | None:
+    """The label value to show on a row's tag; ``None`` if absent.
+
+    Same as :func:`_effective_label` unless the column's transform has
+    ``show_original`` set, in which case the raw value is shown while the filter keeps
+    matching on the transformed one — so a reviewer can threshold a float column into a
+    clean facet and still read the real number on each sample.
+    """
+    transform = _state().transforms.get(column)
+    if transform is not None and transform.show_original:
+        return entry.labels.get(column)
+    return _effective_label(entry, column)
 
 
 def _effective_values(column: str) -> list[str]:
@@ -203,44 +233,65 @@ def _tags(entry: VideoEntry) -> _RowBadges:
         ui.badge(f"main: track{entry.active_track_id}", color=theme.SUCCESS)
     columns = state.scan.label_columns if state.scan is not None else []
     for column in columns:
-        value = _effective_label(entry, column)
+        value = _display_label(entry, column)
         if value:
             ui.badge(f"{column}: {value}", color=theme.LABEL_COLOR)
     return badges
 
 
-def _review_controls(entry: VideoEntry) -> None:
-    """Draw the (default-liked) verdict toggle, note, and annotator checkbox."""
-    review = state.review_state(entry.key)
-    verdict = {"value": review.verdict}
+def _selection_control(entry: VideoEntry, card: ui.card) -> None:
+    """Add a top-right **selection corner** that queues the row for the Annotator.
 
-    like = ui.button(icon="thumb_up").props("flat dense")
-    dislike = ui.button(icon="thumb_down").props("flat dense")
+    Browse is a read-only viewer: the only state it writes is the *selection* — whether
+    a video is queued for the Annotator. Selection lives in a small top-right corner
+    (not the whole row), so clicking the reveal button or a media box never toggles it.
+    The corner shows a **faint** ``check_circle`` as an affordance ("click here to
+    select"), brightens on hover, and becomes a solid tick with a teal row border when
+    selected.
+
+    Args:
+        entry: The video the row represents.
+        card: The row's card element, whose border reflects the selected state.
+    """
+    review = state.review_state(entry.key)
+    selected = {"value": review.in_annotator}
+
+    corner = (
+        ui.element("div")
+        .classes("cursor-pointer")
+        .style(
+            "position:absolute;top:0;right:0;width:52px;height:52px;z-index:6;"
+            "display:flex;align-items:flex-start;justify-content:flex-end;padding:6px"
+        )
+        .tooltip("Select this video for the Annotator")
+    )
+    with corner:
+        check = ui.icon("check_circle").style("font-size:26px;border-radius:50%")
 
     def paint() -> None:
-        liked = verdict["value"] == "good"
-        like.props(f"color={'positive' if liked else 'grey-5'}")
-        dislike.props(f"color={'negative' if not liked else 'grey-5'}")
+        if selected["value"]:
+            card.style(f"border:2px solid {theme.SUCCESS};background:{_GRID_TINT}")
+            check.style("font-size:26px;border-radius:50%;color:" + theme.SUCCESS + ";opacity:1")
+        else:
+            card.style(f"border:{theme.ROW_BORDER};background:transparent")
+            # Faint by default; the hover rule below lifts the opacity as an affordance.
+            check.style(f"font-size:26px;border-radius:50%;color:{theme.NEUTRAL};opacity:0.28")
 
-    def set_verdict(value: Verdict) -> None:
-        verdict["value"] = value
-        state.store.set_verdict(entry.key, entry.video_id, None, value)
+    def toggle() -> None:
+        selected["value"] = not selected["value"]
+        state.store.set_annotate(entry.key, entry.video_id, None, selected["value"])
+        annotator.update_availability()
         paint()
 
-    like.on_click(lambda: set_verdict("good"))
-    dislike.on_click(lambda: set_verdict("bad"))
+    def hover(opacity: str) -> None:
+        # Only the faint (unselected) tick brightens on hover; a selected tick stays solid.
+        if not selected["value"]:
+            check.style(f"opacity:{opacity}")
+
+    corner.on("mouseenter", lambda: hover("0.7"))
+    corner.on("mouseleave", lambda: hover("0.28"))
+    corner.on("click", lambda: toggle())
     paint()
-
-    note = ui.input("note", value=review.note).props("dense")
-    note.on("blur", lambda _: state.store.set_note(entry.key, entry.video_id, None, note.value))
-
-    def toggle_annotator(value: bool) -> None:
-        state.store.set_annotate(entry.key, entry.video_id, None, value)
-        annotator.update_availability()
-
-    ui.checkbox(
-        "Add to Annotator", value=review.in_annotator, on_change=lambda e: toggle_annotator(e.value)
-    ).props("dense")
 
 
 def _reveal_target(entry: VideoEntry) -> Path | None:
@@ -255,7 +306,8 @@ def _reveal_target(entry: VideoEntry) -> Path | None:
 def _reveal_button(entry: VideoEntry) -> None:
     """Draw the icon-only "Show at location" button (reveals the file in the OS)."""
     target = _reveal_target(entry)
-    button = ui.button(icon="folder_open").props("flat dense round")
+    # ``@click.stop`` keeps a reveal click from bubbling to the header's selection toggle.
+    button = ui.button(icon="folder_open").props("flat dense round @click.stop")
     with button:
         label = "Copy path to clipboard" if _IS_DOCKER else "Show at location"
         ui.tooltip(label).props("delay=600")
@@ -463,8 +515,10 @@ def _row_card(entry: VideoEntry, *, can_decode: bool) -> None:
     :mod:`annie.pages.viewport`) and decoded again when it returns; the slots keep
     their fixed size either way, so the page never reflows underneath the reviewer.
     """
-    with ui.card().classes("w-full gap-2 relative"):
-        # 1) row number, name, 1em, the reveal icon, 1em, then the tags
+    with ui.card().classes("w-full gap-2 relative").style(f"border:{theme.ROW_BORDER}") as card:
+        # 1) row number, name, 1em, the reveal icon, 1em, then the tags. Selection is the
+        #    top-right corner only (see _selection_control), so nothing on this line — the
+        #    reveal button, the media boxes below — toggles the queue by accident.
         with ui.row().classes("items-center gap-0 wrap"):
             ui.badge(f"#{entry.row_id}", color=theme.NEUTRAL).classes("mr-2").tooltip(
                 "This sample's number in the dataset — type it into 'Jump to row'"
@@ -485,9 +539,8 @@ def _row_card(entry: VideoEntry, *, can_decode: bool) -> None:
             strip = _strip()
             _render_box(entry)
 
-        # 3) the review controls
-        with ui.row().classes("items-center gap-2 wrap"):
-            _review_controls(entry)
+        # 3) the top-right selection corner (faint tick → solid + teal border when queued)
+        _selection_control(entry, card)
 
         if can_decode and entry.has_video:
             observe_row(
@@ -638,16 +691,23 @@ def _frames_preset() -> str:
 
 
 def _frames_filter(on_change: Callable[[], None]) -> None:
-    """Build the ``# frames`` facet: presets plus a typed threshold ``X``."""
+    """Build the ``# frames`` facet: presets plus a typed threshold ``X``.
+
+    Empty means off, matching every other facet box; the presets are the only choices.
+    """
     spec = _state().spec
-    options = {
-        "any": "# frames: any",
-        "lt25": "< 25",
-        "gt250": "> 250",
-        "ltx": "< X",
-        "gtx": "> X",
-    }
-    preset = ui.select(options, value=_frames_preset()).props("dense outlined")
+    options = {"lt25": "< 25", "gt250": "> 250", "ltx": "< X", "gtx": "> X"}
+    current = _frames_preset()
+    preset = (
+        ui.select(
+            options,
+            value=None if current == "any" else current,
+            label="# frames",
+            clearable=True,
+        )
+        .props("dense outlined")
+        .classes("min-w-[9rem]")
+    )
     x_box = ui.number("X", value=spec.frames_threshold or 100, min=0, step=1).classes("w-24")
 
     def apply() -> None:
@@ -662,7 +722,7 @@ def _frames_filter(on_change: Callable[[], None]) -> None:
             s.frames, s.frames_threshold = "lt", x
         elif mode == "gtx":
             s.frames, s.frames_threshold = "gt", x
-        else:
+        else:  # cleared → the facet is off
             s.frames = "any"
         x_box.set_visibility(mode in ("ltx", "gtx"))
         on_change()
@@ -670,6 +730,91 @@ def _frames_filter(on_change: Callable[[], None]) -> None:
     preset.on_value_change(lambda _e: apply())
     x_box.on_value_change(lambda _e: apply())
     x_box.set_visibility(preset.value in ("ltx", "gtx"))
+
+
+def _video_stems() -> set[str]:
+    """The scanned video ids, used to auto-suggest an id column and report overlap."""
+    if state.scan is None:
+        return set()
+    return {e.video_id for e in state.scan.entries}
+
+
+async def _load_id_csv() -> None:
+    """Pick a CSV, choose its id column, and restrict Browse to those ids."""
+    chosen = await pick_file()
+    if not chosen:
+        return
+    picked = await select_id_column(chosen, _video_stems())
+    if picked is None:
+        return
+    column, ids = picked
+    spec = _state().spec
+    spec.id_list = set(ids)
+    spec.id_source = Path(chosen).name
+    spec.id_column = column
+    ui.notify(f"Filtering by {len(spec.id_list)} ids from {spec.id_source}", color=theme.PRIMARY)
+    _content.refresh()  # the Filter header caption reflects the active id list
+
+
+def _clear_id_csv() -> None:
+    """Drop the CSV id filter, leaving the other facets untouched."""
+    spec = _state().spec
+    spec.id_list = None
+    spec.id_source = ""
+    spec.id_column = ""
+    _content.refresh()
+
+
+def _id_csv_control() -> None:
+    """The "Ids from CSV" button, or the active-filter chip once a CSV is loaded."""
+    spec = _state().spec
+    if spec.id_list is None:
+        ui.button("Ids from CSV…", icon="upload_file", on_click=_load_id_csv).props(
+            "outline dense"
+        ).tooltip("List only the videos whose id appears in a column of a CSV file")
+        return
+    with ui.row().classes("items-center gap-1"):
+        ui.badge(
+            f"{spec.id_source} · {spec.id_column} · {len(spec.id_list)} ids",
+            color=theme.PRIMARY,
+        ).tooltip("Browse lists only these ids — click ✕ to drop the CSV filter")
+        ui.button(icon="close", on_click=_clear_id_csv).props("flat dense round size=sm").tooltip(
+            "Remove the CSV id filter"
+        )
+
+
+def _facet_select(
+    attr: str, label: str, options: dict[str, str], on_change: Callable[[], None]
+) -> ui.select:
+    """One scalar facet dropdown: empty means *off*, like the label-column selects.
+
+    The facets share a single idiom — an unset box filters nothing, and clearing a box
+    turns it back off — rather than offering an explicit "any" option that reads as a
+    third choice when it really means "no choice". ``"any"`` remains the *stored* off
+    value (see :class:`~annie.dataset.filtering.FilterSpec`), so clearing maps back to it.
+
+    Args:
+        attr: The :class:`~annie.dataset.filtering.FilterSpec` attribute to drive.
+        label: The floating label for the box.
+        options: The real choices, excluding the "off" state.
+        on_change: Called after the spec is updated, to re-run the filter.
+
+    Returns:
+        The select element, so a caller can attach a tooltip.
+    """
+    current = getattr(_state().spec, attr)
+    select = (
+        ui.select(
+            options,
+            value=None if current == "any" else current,
+            label=label,
+            clearable=True,
+        )
+        .props("dense outlined")
+        .classes("min-w-[9rem]")
+    )
+    select.on_value_change(lambda e: (_set(attr, e.value or "any"), on_change()))
+    return select
 
 
 @ui.refreshable
@@ -689,39 +834,25 @@ def _filters() -> None:
         )
         name.on_value_change(lambda e: (_set("name_prefix", e.value or ""), on_change()))
 
-        video = ui.select(
-            {"any": "video: any", "has": "has video", "missing": "no video"},
-            value=spec.video,
-        ).props("dense outlined")
-        video.on_value_change(lambda e: (_set("video", e.value), on_change()))
+        _facet_select("video", "video", {"has": "has video", "missing": "no video"}, on_change)
 
-        audio = ui.select(
-            {"any": "audio: any", "has": "has audio", "missing": "no audio"},
-            value=spec.audio,
-        ).props("dense outlined")
+        audio = _facet_select(
+            "audio", "audio", {"has": "has audio", "missing": "no audio"}, on_change
+        )
         with audio:
             ui.tooltip("Audio is probed as rows are viewed").props("delay=600")
-        audio.on_value_change(lambda e: (_set("audio", e.value), on_change()))
 
-        vdet = ui.select(
-            {"any": "vdet: any", "has": "has vdet", "missing": "no vdet"},
-            value=spec.vdet,
-        ).props("dense outlined")
-        vdet.on_value_change(lambda e: (_set("vdet", e.value), on_change()))
-
-        tracks = ui.select(
-            {"any": "tracks: any", "none": "0 tracks", "one": "1 track", "multi": "2+ tracks"},
-            value=spec.tracks,
-        ).props("dense outlined")
-        tracks.on_value_change(lambda e: (_set("tracks", e.value), on_change()))
+        _facet_select("vdet", "vdet", {"has": "has vdet", "missing": "no vdet"}, on_change)
+        _facet_select(
+            "tracks",
+            "tracks",
+            {"none": "0 tracks", "one": "1 track", "multi": "2+ tracks"},
+            on_change,
+        )
 
         _frames_filter(on_change)
 
-        review = ui.select(
-            {"any": "review: any", "liked": "liked", "disliked": "disliked"},
-            value=spec.review,
-        ).props("dense outlined")
-        review.on_value_change(lambda e: (_set("review", e.value), on_change()))
+        _facet_select("review", "review", {"liked": "liked", "disliked": "disliked"}, on_change)
 
         note = ui.checkbox("has note", value=spec.has_note)
         note.on_value_change(lambda e: (_set("has_note", e.value), on_change()))
@@ -745,6 +876,7 @@ def _filters() -> None:
             )
             sel.on_value_change(lambda e, c=column: (_set_label(c, e.value), on_change()))
 
+        _id_csv_control()
         ui.button("Clear", icon="clear", on_click=_clear).props("flat")
 
 
@@ -768,7 +900,12 @@ def _clear() -> None:
 
 
 def _manip_row(column: str) -> None:
-    """One Manipulate row: column · type · transform · threshold / digits."""
+    """One Manipulate row: column · type · transform · threshold / digits · show original.
+
+    The transform always drives the *filter* facets; the "show original" box only decides
+    what the sample rows display, so a column can be filtered on ``≥ 0`` while the rows
+    still show the underlying float.
+    """
     col_type = _column_type(column)
     current = _state().transforms.get(column, manipulate.Transform())
     with ui.row().classes("items-center gap-2 wrap"):
@@ -784,6 +921,12 @@ def _manip_row(column: str) -> None:
             "w-24"
         )
         digits_box.set_visibility(current.kind == "round")
+        original_box = (
+            ui.checkbox("show original", value=current.show_original)
+            .props("dense")
+            .tooltip("Show the raw value on the rows; the filter still uses the transform")
+        )
+        original_box.set_visibility(current.kind != "none")
 
         def apply() -> None:
             kind = kind_sel.value
@@ -791,9 +934,11 @@ def _manip_row(column: str) -> None:
                 kind=kind,
                 threshold=float(x_box.value or 0),
                 digits=int(digits_box.value if digits_box.value is not None else 2),
+                show_original=bool(original_box.value),
             )
             x_box.set_visibility(kind == "threshold")
             digits_box.set_visibility(kind == "round")
+            original_box.set_visibility(kind != "none")
             _state().spec.labels.pop(column, None)  # facet values changed; reset filter
             _filters.refresh()
             _rows.refresh()
@@ -801,17 +946,32 @@ def _manip_row(column: str) -> None:
         kind_sel.on_value_change(lambda _e: apply())
         x_box.on_value_change(lambda _e: apply())
         digits_box.on_value_change(lambda _e: apply())
+        original_box.on_value_change(lambda _e: apply())
+
+
+#: Quasar accordion group shared by the Manipulate / Filter / View panels, so opening
+#: one closes the others — the three are wide control surfaces and stacking them all
+#: open pushes the sample rows off screen.
+_PANEL_GROUP = "browse-panels"
 
 
 def _manipulate() -> None:
-    """Build the per-column transform controls (collapsed by default)."""
+    """Build the per-column transform controls (collapsed by default).
+
+    A transform reshapes a label column's values into something easier to browse by —
+    rounding a float, thresholding it into two sides, reducing it to a sign — and the
+    filter facets below are built from the result. Each column can independently keep
+    showing its original value on the rows (see :func:`_display_label`).
+    """
     columns = state.scan.label_columns if state.scan is not None else []
     if not columns:
         return
-    with ui.expansion("Manipulate", icon="tune").classes("w-full"):
-        ui.label("Transform a label column's value for its tag and filter.").classes(
-            "text-xs"
-        ).style(f"color:{theme.NEUTRAL}")
+    with ui.expansion("Manipulate", icon="tune", value=False, group=_PANEL_GROUP).classes("w-full"):
+        ui.label(
+            "Transform a label column to build better filter options — e.g. round a "
+            "float, or threshold it into two sides. Tick 'show original' to keep the "
+            "untransformed value on the rows."
+        ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
         for column in columns:
             _manip_row(column)
 
@@ -819,16 +979,43 @@ def _manipulate() -> None:
 # ── body ─────────────────────────────────────────────────────────────────────
 
 
+def _filtered_entries() -> list[VideoEntry]:
+    """The manifest entries passing this client's filter, in manifest order."""
+    if state.scan is None:
+        return []
+    return apply_filters(
+        state.scan.entries,
+        _state().spec,
+        state.review_state,
+        state.audio_cache.get,
+        state.frames_cache.get,
+        _effective_label,
+    )
+
+
+def _add_all_to_annotator() -> None:
+    """Queue every video the filter currently keeps for the Annotator, in one write."""
+    entries = _filtered_entries()
+    if not entries:
+        ui.notify("No videos match the filters.", color=theme.WARNING)
+        return
+    written = state.store.set_annotate_many(((e.key, e.video_id) for e in entries), value=True)
+    annotator.update_availability()
+    _rows.refresh()  # repaint the grid's selection rings / the rows' checkboxes
+    ui.notify(f"Added {written} video(s) to the Annotator", color=theme.PRIMARY)
+
+
 def _view() -> None:
-    """Build the View panel (open by default): Jump to row, then the mode toggle.
+    """Build the View panel (collapsed by default): Jump to row, then the mode toggle.
 
     The Jump card itself is rendered by :func:`paged` into ``jump_slot`` so it stays
-    wired to the live pager; here we only reserve its slot and the Detailed/Grid
-    switch that flips :attr:`_BrowseState.view_mode`.
+    wired to the live pager; here we only reserve its slot, the Detailed/Grid switch
+    that flips :attr:`_BrowseState.view_mode`, and the bulk "Add all to Annotator"
+    action, which applies to the *filtered* list — not the whole dataset.
     """
-    with ui.expansion("View", icon="visibility", value=True).classes("w-full"):
+    with ui.expansion("View", icon="visibility", value=False, group=_PANEL_GROUP).classes("w-full"):
         _state().jump_slot = ui.column().classes("w-full gap-0")
-        with ui.row().classes("items-center gap-2"):
+        with ui.row().classes("items-center gap-2 wrap"):
             ui.label("Quick view").classes("text-sm").style(f"color:{theme.NEUTRAL}")
             toggle = ui.toggle(
                 {"detailed": "Detailed", "grid": "Quick selection"},
@@ -841,6 +1028,10 @@ def _view() -> None:
 
             toggle.on_value_change(lambda e: switch(e.value))
 
+            ui.button(
+                "Add all to Annotator", icon="playlist_add", on_click=_add_all_to_annotator
+            ).props("outline dense").tooltip("Queue every video matching the current filter")
+
 
 @ui.refreshable
 def _rows() -> None:
@@ -851,14 +1042,7 @@ def _rows() -> None:
     if slot is not None and _alive(slot):
         slot.clear()  # covers the empty-results path, where paged() never runs
     can_decode = media_available()
-    entries = apply_filters(
-        state.scan.entries,
-        _state().spec,
-        state.review_state,
-        state.audio_cache.get,
-        state.frames_cache.get,
-        _effective_label,
-    )
+    entries = _filtered_entries()
     if not entries:
         ui.label("No videos match the filters.").style(f"color:{theme.NEUTRAL}")
         return
@@ -908,7 +1092,14 @@ def _content() -> None:
             ).classes("text-xs").style(f"color:{theme.WARNING}")
 
         _manipulate()
-        with ui.expansion("Filter", icon="filter_alt", value=False).classes("w-full"):
+        # The caption keeps a CSV id filter visible while the panel is collapsed.
+        spec = _state().spec
+        caption = (
+            f"ids from {spec.id_source} ({len(spec.id_list)})" if spec.id_list is not None else None
+        )
+        with ui.expansion(
+            "Filter", icon="filter_alt", value=False, caption=caption, group=_PANEL_GROUP
+        ).classes("w-full"):
             _filters()
         _view()
         _rows()

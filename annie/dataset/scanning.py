@@ -83,6 +83,28 @@ class ScanResult:
     protagonist_available: bool = False
     label_columns: list[str] = field(default_factory=list)
     label_column_types: dict[str, str] = field(default_factory=dict)
+    #: Lazily-built ``video_id -> entry`` index; see :attr:`by_video_id`.
+    _by_video_id: dict[str, VideoEntry] | None = field(default=None, repr=False, compare=False)
+
+    @property
+    def by_video_id(self) -> dict[str, VideoEntry]:
+        """The manifest indexed by ``video_id``, built once on first access.
+
+        Callers that resolve a video by id inside a re-rendered UI (the Segment-review
+        task does it on every keystroke) would otherwise walk the whole manifest per
+        lookup. Where two entries share a ``video_id`` — the same video with different
+        annotation suffixes — the first in manifest order wins, matching the behaviour of
+        the linear ``next(...)`` search this replaced.
+
+        Returns:
+            A mapping of video id to its first :class:`~annie.core.models.VideoEntry`.
+        """
+        if self._by_video_id is None:
+            index: dict[str, VideoEntry] = {}
+            for entry in self.entries:
+                index.setdefault(entry.video_id, entry)
+            self._by_video_id = index
+        return self._by_video_id
 
     @property
     def counts(self) -> dict[str, int | bool]:
