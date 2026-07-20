@@ -58,6 +58,11 @@ docs = [
   "sphinx-autoapi",
   "sphinx-autobuild",
   "myst-parser",
+  # Playbook screenshots (make screenshots): Playwright drives a real browser against a
+  # running Annie, Pillow downsizes the 2x captures. Needs a one-off browser download,
+  # `playwright install chromium`, which is why `make screenshots` does it for you.
+  "playwright",
+  "pillow",
 ]
 all = [
   "annie[media]",
