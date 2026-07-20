@@ -33,7 +33,11 @@ face tracks), but Annie is dataset-agnostic.
 
 <img src="https://raw.githubusercontent.com/fodorad/Annie/main/docs/ui/browse.png" alt="Annie – Browse tab" width="100%"/>
 
-*Browse tab — per-video rows with original clip, annotated frame strip, label tags, and review controls.*
+*Browse tab — per-video rows with original clip, annotated frame strip, and label tags, above collapsible Manipulate / Filter / View panels. Click a row's top-right corner to queue it for the Annotator.*
+
+<img src="https://raw.githubusercontent.com/fodorad/Annie/main/docs/ui/annotator.png" alt="Annie – Annotator tab" width="100%"/>
+
+*Annotator tab — where supervision is entered, one task at a time. The task switch offers only the tasks your sources support: Curation (shown), Protagonist review, and Segment review.*
 
 ## Features
 
@@ -189,6 +193,10 @@ make dev      # install in editable mode with all extras
 make check    # lint + type-check + test + docs (mirrors CI)
 make run      # start the app at http://127.0.0.1:8080
 ```
+
+Every screenshot in this README and in the docs is generated from the running UI, so it
+never drifts from what Annie actually looks like. After changing a screen, refresh them
+with `make screenshots` (needs `make install-docs` once) and commit the updated PNGs.
 
 **Tip — skip re-clicking paths on every restart:** set `ANNIE_*` environment
 variables and Annie will seed those sources automatically at launch. This is

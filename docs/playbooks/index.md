@@ -8,6 +8,21 @@ against the bundled `[Example] CMU-MOSEI Mini` config — so you can reproduce t
 picking that config on the Dataset tab. The Segment-review screens are still SVG mockups,
 because no bundled example carries a segmentation source yet.
 
+## Regenerating the screenshots
+
+The captures are scripted, so they can be refreshed whenever a screen changes instead of
+drifting out of date:
+
+```console
+$ make install-docs   # once — brings in Playwright and Pillow
+$ make screenshots
+```
+
+That boots Annie against the example config, drives it with Playwright, and rewrites the
+PNGs in place; commit whatever changes. The script serves the app from a copy of the repo
+at a neutral path and uses a throwaway `ANNIE_HOME`, so no personal directory layout or
+review state can end up in a published image. See `scripts/screenshot_docs.py`.
+
 ```{toctree}
 :maxdepth: 1
 

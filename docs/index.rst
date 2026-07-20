@@ -50,7 +50,17 @@ Screenshots
    :width: 100%
    :alt: Annie – Browse tab
 
-   Browse tab — per-video rows with original clip, annotated frame strip, label tags, and review controls.
+   Browse tab — per-video rows with original clip, annotated frame strip, and label tags,
+   above collapsible Manipulate / Filter / View panels. Click a row's top-right corner to
+   queue it for the Annotator.
+
+.. figure:: ui/annotator.png
+   :width: 100%
+   :alt: Annie – Annotator tab
+
+   Annotator tab — where supervision is entered, one task at a time. The task switch
+   offers only the tasks your sources support: Curation (shown), Protagonist review, and
+   Segment review.
 
 Architecture
 ------------
