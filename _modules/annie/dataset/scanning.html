@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,10 +298,10 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.dataset.scanning</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Dataset scanning: aggregate each video with its annotations into the manifest.</span>
+<span></span><span class="sd">"""Dataset scanning: aggregate each video with its annotations into the manifest.</span>
 
 <span class="sd">The scanner turns a :class:`~annie.sources.SourceRegistry` into **one row per</span>
-<span class="sd">video** (a :class:`~annie.models.VideoEntry`) carrying that video&#39;s raw detections,</span>
+<span class="sd">video** (a :class:`~annie.models.VideoEntry`) carrying that video's raw detections,</span>
 <span class="sd">all of its tracks, its resolved protagonist track, and any label values from</span>
 <span class="sd">CSV label sources. Browse consumes the sorted manifest; the Dataset tab shows the</span>
 <span class="sd">overview counts; the Browse filter bar is built from the discovered label columns.</span>
@@ -310,7 +314,7 @@
 <span class="sd">  before ``__track``. Both fall back to a longest-stem-first prefix scan only on</span>
 <span class="sd">  a miss.</span>
 <span class="sd">* A label/protagonist CSV row matches a video by exact key-column value.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -331,14 +335,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span> <span class="n">resolved_mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.track</span><span class="w"> </span><span class="kn">import</span> <span class="n">track_id_from_name</span>
 
-<span class="c1">#: A label source&#39;s value map: ``video_id -&gt; {column: value}``.</span>
+<span class="c1">#: A label source's value map: ``video_id -&gt; {column: value}``.</span>
 <span class="n">_LabelMap</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_iter_files</span><span class="p">(</span>
     <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">glob</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List non-junk files in ``directory`` matching suffixes or a glob.</span>
+<span class="w">    </span><span class="sd">"""List non-junk files in ``directory`` matching suffixes or a glob.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        directory: Folder to scan (non-recursive), or ``None``.</span>
@@ -347,7 +351,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Matching file paths, junk excluded. Empty if the folder is missing/None.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">directory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">glob</span><span class="p">)</span> <span class="k">if</span> <span class="n">glob</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">directory</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
@@ -365,7 +369,7 @@
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.ScanResult">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ScanResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The outcome of a dataset scan.</span>
+<span class="w">    </span><span class="sd">"""The outcome of a dataset scan.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        entries: The sorted, per-video manifest the Browse tab renders.</span>
@@ -373,7 +377,7 @@
 <span class="sd">        num_track_files: Total track files discovered.</span>
 <span class="sd">        protagonist_available: Whether protagonist assignments were found.</span>
 <span class="sd">        label_columns: The label-column names available for tags/filters.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">num_vdet_files</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -386,7 +390,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">by_video_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">VideoEntry</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The manifest indexed by ``video_id``, built once on first access.</span>
+<span class="w">        </span><span class="sd">"""The manifest indexed by ``video_id``, built once on first access.</span>
 
 <span class="sd">        Callers that resolve a video by id inside a re-rendered UI (the Segment-review</span>
 <span class="sd">        task does it on every keystroke) would otherwise walk the whole manifest per</span>
@@ -396,7 +400,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A mapping of video id to its first :class:`~annie.core.models.VideoEntry`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_video_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">VideoEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span><span class="p">:</span>
@@ -406,37 +410,37 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">counts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Overview metrics for the Dataset cards.</span>
+<span class="w">        </span><span class="sd">"""Overview metrics for the Dataset cards.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Counts keyed by ``num_videos``, ``num_vdet_files``, ``num_track_files``,</span>
 <span class="sd">            ``videos_vdet_and_track``, ``videos_with_vdet``, ``videos_with_track``,</span>
 <span class="sd">            and ``protagonist_available`` (bool).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">num_videos</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;num_videos&quot;</span><span class="p">:</span> <span class="n">num_videos</span><span class="p">,</span>
-            <span class="s2">&quot;num_vdet_files&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_vdet_files</span><span class="p">,</span>
-            <span class="s2">&quot;num_track_files&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_track_files</span><span class="p">,</span>
-            <span class="s2">&quot;videos_vdet_and_track&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="s2">"num_videos"</span><span class="p">:</span> <span class="n">num_videos</span><span class="p">,</span>
+            <span class="s2">"num_vdet_files"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_vdet_files</span><span class="p">,</span>
+            <span class="s2">"num_track_files"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_track_files</span><span class="p">,</span>
+            <span class="s2">"videos_vdet_and_track"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
                 <span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">has_vdet</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">has_track</span>
             <span class="p">),</span>
-            <span class="s2">&quot;videos_with_vdet&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">has_vdet</span><span class="p">),</span>
-            <span class="s2">&quot;videos_with_track&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">has_track</span><span class="p">),</span>
-            <span class="s2">&quot;protagonist_available&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protagonist_available</span><span class="p">,</span>
+            <span class="s2">"videos_with_vdet"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">has_vdet</span><span class="p">),</span>
+            <span class="s2">"videos_with_track"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">has_track</span><span class="p">),</span>
+            <span class="s2">"protagonist_available"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protagonist_available</span><span class="p">,</span>
         <span class="p">}</span>
 
 <div class="viewcode-block" id="ScanResult.label_values">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.ScanResult.label_values">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">label_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sorted distinct values a label column takes across entries.</span>
+<span class="w">        </span><span class="sd">"""Return the sorted distinct values a label column takes across entries.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            column: The label column name.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Sorted distinct non-empty values for that column.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">seen</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)}</span>
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span></div>
 </div>
@@ -446,7 +450,7 @@
 <div class="viewcode-block" id="resolve_video_stem">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.resolve_video_stem">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_video_stem</span><span class="p">(</span><span class="n">annotation_stem</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_stems_longest_first</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the video stem an annotation belongs to, longest-stem-first.</span>
+<span class="w">    </span><span class="sd">"""Find the video stem an annotation belongs to, longest-stem-first.</span>
 
 <span class="sd">    A video stem ``s`` matches when the annotation stem equals ``s`` exactly or</span>
 <span class="sd">    begins with ``s`` followed by an underscore separator. Checking longest-first</span>
@@ -458,9 +462,9 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The matching video stem, or ``None`` if no video matches.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">stem</span> <span class="ow">in</span> <span class="n">video_stems_longest_first</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">annotation_stem</span> <span class="o">==</span> <span class="n">stem</span> <span class="ow">or</span> <span class="n">annotation_stem</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">stem</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">annotation_stem</span> <span class="o">==</span> <span class="n">stem</span> <span class="ow">or</span> <span class="n">annotation_stem</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">stem</span> <span class="o">+</span> <span class="s2">"_"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">stem</span>
     <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -469,14 +473,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_fast</span><span class="p">(</span>
     <span class="n">candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stem</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_stems</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">video_stems_longest_first</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve to a video stem, exact-first (O(1)) then longest-prefix fallback.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolve to a video stem, exact-first (O(1)) then longest-prefix fallback."""</span>
     <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">video_stems</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">candidate</span>
     <span class="k">return</span> <span class="n">resolve_video_stem</span><span class="p">(</span><span class="n">stem</span><span class="p">,</span> <span class="n">video_stems_longest_first</span><span class="p">)</span> <span class="ow">or</span> <span class="n">candidate</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_primary_vdet</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the single ``.vdet`` for a video when several resolve to the same id.</span>
+<span class="w">    </span><span class="sd">"""Pick the single ``.vdet`` for a video when several resolve to the same id.</span>
 
 <span class="sd">    A video carries one raw-detection file, but distinct stems can resolve to the</span>
 <span class="sd">    same ``video_id`` (an exact match plus an underscore-prefix match, say). The</span>
@@ -489,38 +493,38 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The chosen ``.vdet`` path.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">exact</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">stem</span> <span class="o">==</span> <span class="n">video_id</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">exact</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">exact</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">paths</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_status_for</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">has_video</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_annotation</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RowStatus</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map presence flags to the tri-state row status (kept for internal grouping).</span>
+<span class="w">    </span><span class="sd">"""Map presence flags to the tri-state row status (kept for internal grouping).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        has_video: Whether the source video exists.</span>
 <span class="sd">        has_annotation: Whether any annotation (vdet or track) exists.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ``&quot;linked&quot;`` (video + annotation), ``&quot;video_only&quot;`` (video, no annotation),</span>
-<span class="sd">        or ``&quot;annotation_only&quot;`` (annotation, no video).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        ``"linked"`` (video + annotation), ``"video_only"`` (video, no annotation),</span>
+<span class="sd">        or ``"annotation_only"`` (annotation, no video).</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">has_video</span> <span class="ow">and</span> <span class="n">has_annotation</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;linked&quot;</span>
+        <span class="k">return</span> <span class="s2">"linked"</span>
     <span class="k">if</span> <span class="n">has_video</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;video_only&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;annotation_only&quot;</span>
+        <span class="k">return</span> <span class="s2">"video_only"</span>
+    <span class="k">return</span> <span class="s2">"annotation_only"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_active_mapping</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the protagonist ``video_id -&gt; track_id`` map from its source.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolve the protagonist ``video_id -&gt; track_id`` map from its source."""</span>
     <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="k">return</span> <span class="n">resolved_mapping</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_label_maps</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">_LabelMap</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load each label source&#39;s value map; return ``(maps, ordered_columns)``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Load each label source's value map; return ``(maps, ordered_columns)``."""</span>
     <span class="n">maps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_LabelMap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
@@ -537,7 +541,7 @@
 <div class="viewcode-block" id="build_manifest">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.build_manifest">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_manifest</span><span class="p">(</span><span class="n">registry</span><span class="p">:</span> <span class="n">SourceRegistry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScanResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan all sources in ``registry`` into a per-video manifest.</span>
+<span class="w">    </span><span class="sd">"""Scan all sources in ``registry`` into a per-video manifest.</span>
 
 <span class="sd">    The video source is the spine: with none configured the manifest is empty.</span>
 <span class="sd">    Every other source attaches to a video by stem (vdet/track) or key column</span>
@@ -550,7 +554,7 @@
 <span class="sd">        A :class:`ScanResult` with the per-video manifest, overview counts, and the</span>
 <span class="sd">        discovered label columns. Missing/unset sources contribute nothing rather</span>
 <span class="sd">        than raising.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">video_src</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">video</span>
     <span class="n">vdet_src</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">vdet</span>
     <span class="n">track_src</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">track</span>
@@ -574,7 +578,7 @@
     <span class="n">num_track_files</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">_iter_files</span><span class="p">(</span><span class="n">track_path</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">glob</span><span class="o">=</span><span class="n">TRACK_GLOB</span><span class="p">):</span>
         <span class="n">stem</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
-        <span class="n">base</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__track&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"__track"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">video_id</span> <span class="o">=</span> <span class="n">_resolve_fast</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">stem</span><span class="p">,</span> <span class="n">video_stems</span><span class="p">,</span> <span class="n">longest_first</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">track_id</span> <span class="o">=</span> <span class="n">track_id_from_name</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -588,10 +592,10 @@
     <span class="n">label_column_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">label_sources</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
-            <span class="n">label_column_types</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">column_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">&quot;str&quot;</span><span class="p">)</span>
+            <span class="n">label_column_types</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">column_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">"str"</span><span class="p">)</span>
 
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="c1"># Numbered over the full sorted manifest, before any filtering, so a row&#39;s id</span>
+    <span class="c1"># Numbered over the full sorted manifest, before any filtering, so a row's id</span>
     <span class="c1"># identifies the sample rather than its position in whatever list is on screen.</span>
     <span class="k">for</span> <span class="n">row_id</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">videos</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">vdets</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">tracks</span><span class="p">)),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="n">video_tracks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tracks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -639,7 +643,7 @@
     <span class="n">track_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">participants_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScanResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan the classic four MOSEI paths into a per-video manifest (convenience).</span>
+<span class="w">    </span><span class="sd">"""Scan the classic four MOSEI paths into a per-video manifest (convenience).</span>
 
 <span class="sd">    A thin wrapper that assembles a :class:`~annie.sources.SourceRegistry` from the</span>
 <span class="sd">    given folders and protagonist file (with the default ``uuid``/``track_id``</span>
@@ -653,7 +657,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A :class:`ScanResult` with the per-video manifest and overview counts.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">registry</span> <span class="o">=</span> <span class="n">SourceRegistry</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">videos_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">DataSource</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">videos_dir</span><span class="p">)))</span>

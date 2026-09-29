@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,12 +298,12 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.pages.fsbrowse</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Filesystem browsing helpers for the folder-picker dialog (service).</span>
+<span></span><span class="sd">"""Filesystem browsing helpers for the folder-picker dialog (service).</span>
 
-<span class="sd">Pure, side-effect-free directory navigation used by the Dataset tab&#39;s folder</span>
+<span class="sd">Pure, side-effect-free directory navigation used by the Dataset tab's folder</span>
 <span class="sd">picker. Kept out of the UI layer so it can be unit-tested without NiceGUI: the</span>
 <span class="sd">picker dialog (``annie/pages/folder_picker.py``) is a thin view over these.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -310,17 +314,17 @@
 <div class="viewcode-block" id="resolve_start_dir">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/fsbrowse/index.html#annie.pages.fsbrowse.resolve_start_dir">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_start_dir</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sensible existing directory to open the picker at.</span>
+<span class="w">    </span><span class="sd">"""Return a sensible existing directory to open the picker at.</span>
 
 <span class="sd">    Falls back gracefully: the given path if it is a directory, else its nearest</span>
-<span class="sd">    existing ancestor, else the user&#39;s home directory.</span>
+<span class="sd">    existing ancestor, else the user's home directory.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        start: A path hint (e.g. the current text-field value), or ``None``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An existing directory to start browsing from.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">start</span><span class="p">:</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
@@ -335,14 +339,14 @@
 <div class="viewcode-block" id="parent_of">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/fsbrowse/index.html#annie.pages.fsbrowse.parent_of">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parent_of</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the parent directory, or ``None`` if already at the filesystem root.</span>
+<span class="w">    </span><span class="sd">"""Return the parent directory, or ``None`` if already at the filesystem root.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: The current directory.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The parent :class:`~pathlib.Path`, or ``None`` at the root.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">parent</span> <span class="o">=</span> <span class="n">resolved</span><span class="o">.</span><span class="n">parent</span>
     <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">parent</span> <span class="o">==</span> <span class="n">resolved</span> <span class="k">else</span> <span class="n">parent</span></div>
@@ -358,7 +362,7 @@
     <span class="n">suffixes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">show_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List a directory&#39;s subfolders (and optionally files) in a single pass.</span>
+<span class="w">    </span><span class="sd">"""List a directory's subfolders (and optionally files) in a single pass.</span>
 
 <span class="sd">    Uses :func:`os.scandir`, whose entries carry the file type read straight from the</span>
 <span class="sd">    directory itself, so classifying each child as a folder or file costs no extra</span>
@@ -376,13 +380,13 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A ``(subdirs, files)`` pair, each sorted by lower-cased name; ``files`` is</span>
 <span class="sd">        empty when ``want_files`` is ``False``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">subdirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">scandir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">it</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">show_hidden</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">show_hidden</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">):</span>
                     <span class="k">continue</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
@@ -404,7 +408,7 @@
 <div class="viewcode-block" id="list_subdirectories">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/fsbrowse/index.html#annie.pages.fsbrowse.list_subdirectories">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_subdirectories</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">show_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List immediate subdirectories of ``path``, sorted case-insensitively.</span>
+<span class="w">    </span><span class="sd">"""List immediate subdirectories of ``path``, sorted case-insensitively.</span>
 
 <span class="sd">    Hidden entries (dotfiles, including macOS AppleDouble ``._*``) are excluded by</span>
 <span class="sd">    default. Unreadable directories yield an empty list rather than raising, so a</span>
@@ -416,7 +420,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The child directories, sorted by lower-cased name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">scan_entries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">want_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_hidden</span><span class="o">=</span><span class="n">show_hidden</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
@@ -426,10 +430,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">list_files</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">show_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List immediate files of ``path``, sorted case-insensitively.</span>
+<span class="w">    </span><span class="sd">"""List immediate files of ``path``, sorted case-insensitively.</span>
 
 <span class="sd">    Hidden entries are excluded by default; an optional suffix filter restricts the</span>
-<span class="sd">    result (e.g. ``(&quot;.csv&quot;,)``). Unreadable directories yield an empty list.</span>
+<span class="sd">    result (e.g. ``(".csv",)``). Unreadable directories yield an empty list.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: The directory to list.</span>
@@ -438,7 +442,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The child files, sorted by lower-cased name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">scan_entries</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">want_files</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="n">suffixes</span><span class="p">,</span> <span class="n">show_hidden</span><span class="o">=</span><span class="n">show_hidden</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span></div>
 
 </pre></div>

@@ -89,7 +89,7 @@ Module Contents
       ``1.83`` on the row. Purely a display flag — filtering never consults it.
 
 
-.. py:function:: transforms_for(col_type: ColumnType) -> tuple[TransformKind, Ellipsis]
+.. py:function:: transforms_for(col_type: ColumnType) -> tuple[TransformKind, ...]
 
    Return the transforms valid for a column type.
 

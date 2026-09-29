@@ -1,0 +1,127 @@
+annie.dataset.events
+====================
+
+.. py:module:: annie.dataset.events
+
+.. autoapi-nested-parse::
+
+   Event-annotation domain: interval events on tracks, and their export.
+
+   The Event-annotation task lets a reviewer mark **events** — labelled ``[start, end]`` frame
+   intervals — on named **tracks** (a track *is* its category) while watching one video. Unlike
+   the CSV-driven tasks, nothing is loaded from a source file: events are authored from scratch
+   and persisted to the review database (see :class:`annie.dataset.storage.EventRecord`). This
+   module holds the pure pieces around that store:
+
+   * frame ↔ second conversion, since the database is the source of truth in **frames**
+     (fps-independent) while humans and exports think in seconds;
+   * interval clamping, so a typed or dragged boundary can never leave the video;
+   * the two export shapes. **JSON** is nested — one object per video, tracks holding their
+     events with attributes inline — for downstream code. **CSV** is flat — one row per event,
+     attributes flattened into ``attr_<key>`` columns — for opening in a spreadsheet. That
+     split is deliberate: nested attributes do not live cleanly in a CSV cell.
+
+   Pure domain: no NiceGUI, no torch. The task UI and the store consume it.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.events.frames_to_seconds
+   annie.dataset.events.seconds_to_frame
+   annie.dataset.events.clamp_event
+   annie.dataset.events.build_export_tree
+   annie.dataset.events.export_events_json
+   annie.dataset.events.export_events_csv
+
+
+Module Contents
+---------------
+
+.. py:function:: frames_to_seconds(frame: int, fps: float) -> float
+
+   Convert a frame index to seconds at ``fps``.
+
+   :param frame: The frame index.
+   :param fps: Frames per second (``<= 0`` is treated as ``0`` seconds, since no timebase
+               is known — the caller falls back to frame numbers).
+
+   :returns: The time in seconds, or ``0.0`` when ``fps`` is non-positive.
+
+
+.. py:function:: seconds_to_frame(sec: float, fps: float) -> int
+
+   Convert seconds to the nearest frame index at ``fps``.
+
+   Rounds to the nearest frame; on constant-fps media this is exact, and on a variable-fps
+   file it may be off by one frame (the documented playback limitation).
+
+   :param sec: The time in seconds.
+   :param fps: Frames per second (``<= 0`` yields frame ``0``).
+
+   :returns: The nearest non-negative frame index.
+
+
+.. py:function:: clamp_event(start: int, end: int, num_frames: int) -> tuple[int, int]
+
+   Order and bound an event's frames to a valid interval within the video.
+
+   Swaps a reversed pair so ``start <= end``, then clamps both to ``[0, last]`` where
+   ``last = num_frames - 1``. A video with no known frame count (``num_frames <= 0``) is
+   clamped only at the lower bound, so an event can still be authored before metadata loads.
+
+   :param start: The proposed start frame.
+   :param end: The proposed end frame.
+   :param num_frames: The video's total frame count (``<= 0`` if unknown).
+
+   :returns: The ordered, bounded ``(start, end)`` pair.
+
+
+.. py:function:: build_export_tree(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float]) -> dict[str, dict[str, object]]
+
+   Group events into the nested ``video_id -> {fps, tracks}`` export structure.
+
+   Shared by the JSON export and, indirectly, the CSV export's row order. Videos and their
+   tracks appear in first-seen order; events keep the order they arrive in (the store hands
+   them back sorted by track then start frame).
+
+   :param events: The events to export.
+   :param fps_by_video: Frames per second per ``video_id``, for the derived seconds. A video
+                        missing here is exported with ``fps = 0`` and zero seconds (frames still stand).
+
+   :returns: A mapping of ``video_id`` to ``{"fps": float, "tracks": {track: [event dict, ...]}}``.
+
+
+.. py:function:: export_events_json(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+
+   Write events to a nested JSON file (one object per video).
+
+   Suits downstream code: attributes stay nested, seconds are derived per video's fps. A
+   per-video export is this same shape with a single top-level key; a session export has
+   many.
+
+   :param events: The events to write.
+   :param fps_by_video: Frames per second per ``video_id``.
+   :param path: Destination ``.json`` path (parent directories are created).
+
+   :returns: The path written.
+
+
+.. py:function:: export_events_csv(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+
+   Write events to a flat CSV (one row per event) for a spreadsheet.
+
+   Fixed columns come first, then one ``attr_<key>`` column per attribute key seen across
+   *all* events (empty where an event lacks that key), so colleagues can open and sort the
+   file in Excel. Attribute keys are sorted for a stable header.
+
+   :param events: The events to write.
+   :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+   :param path: Destination ``.csv`` path (parent directories are created).
+
+   :returns: The path written.
+
+

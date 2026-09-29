@@ -12,6 +12,7 @@ Submodules
 
    /autoapi/annie/dataset/corrections/index
    /autoapi/annie/dataset/datasets/index
+   /autoapi/annie/dataset/events/index
    /autoapi/annie/dataset/filtering/index
    /autoapi/annie/dataset/manipulate/index
    /autoapi/annie/dataset/scanning/index

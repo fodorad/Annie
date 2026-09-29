@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.pages.paging</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Incremental row paging shared by the Browse and Annotator tabs (UI helper).</span>
+<span></span><span class="sd">"""Incremental row paging shared by the Browse and Annotator tabs (UI helper).</span>
 
 <span class="sd">Both tabs render long lists of expensive rows — every row schedules a lazy frame</span>
 <span class="sd">decode — so they reveal only :attr:`annie.core.state.UiSettings.page_size` rows at a</span>
@@ -317,12 +321,12 @@
 <span class="sd">event, so toggling the setting takes effect without rebuilding the list.</span>
 
 <span class="sd">**A row number identifies the sample, not its slot on screen.** It is</span>
-<span class="sd">:attr:`annie.core.models.VideoEntry.row_id` — the video&#39;s 1-based position in the</span>
+<span class="sd">:attr:`annie.core.models.VideoEntry.row_id` — the video's 1-based position in the</span>
 <span class="sd">whole scanned dataset, assigned once at scan time over the sorted manifest. So a</span>
 <span class="sd">filtered Browse tab shows a sparse ``#3, #17, #204`` rather than renumbering from 1,</span>
-<span class="sd">the Annotator&#39;s queued subset keeps each video&#39;s dataset number, and &quot;I stopped at</span>
-<span class="sd">3400&quot; survives a restart, a filter change, and a re-queue.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">the Annotator's queued subset keeps each video's dataset number, and "I stopped at</span>
+<span class="sd">3400" survives a restart, a filter change, and a re-queue.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -339,21 +343,21 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="c1">#: How far ahead of the viewport the sentinel triggers the next page.</span>
-<span class="n">_SENTINEL_MARGIN</span> <span class="o">=</span> <span class="s2">&quot;600px&quot;</span>
+<span class="n">_SENTINEL_MARGIN</span> <span class="o">=</span> <span class="s2">"600px"</span>
 
 
 <div class="viewcode-block" id="Pager">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Pager</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A cursor over ``total`` rows, revealed one page at a time.</span>
+<span class="w">    </span><span class="sd">"""A cursor over ``total`` rows, revealed one page at a time.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        total: The number of rows in the backing list.</span>
 <span class="sd">        start: Index of the first row actually rendered (non-zero after a seek).</span>
 <span class="sd">        shown: Index one past the last rendered row; also the count of rendered</span>
 <span class="sd">            rows when ``start`` is 0.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">total</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -362,15 +366,15 @@
 <div class="viewcode-block" id="Pager.advance">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager.advance">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">slice</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reserve the next page and return the slice of rows to render.</span>
+<span class="w">        </span><span class="sd">"""Reserve the next page and return the slice of rows to render.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            page_size: Rows to reveal. Values below 1 are clamped to 1, so a bad</span>
-<span class="sd">                setting can never yield an empty page and stall the caller&#39;s loop.</span>
+<span class="sd">                setting can never yield an empty page and stall the caller's loop.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The slice of the backing list covering the newly revealed rows.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">begin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shown</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">shown</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">page_size</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shown</span><span class="p">)</span></div>
@@ -379,14 +383,14 @@
 <div class="viewcode-block" id="Pager.seek">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager.seek">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">seek</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Restart paging at ``index``, clamped into range.</span>
+<span class="w">        </span><span class="sd">"""Restart paging at ``index``, clamped into range.</span>
 
 <span class="sd">        The next :meth:`advance` renders the page beginning at ``index``; rows before</span>
 <span class="sd">        it are skipped entirely rather than rendered and scrolled past.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            index: Zero-based row index to resume from.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">target</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">target</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">shown</span> <span class="o">=</span> <span class="n">target</span></div>
@@ -394,12 +398,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">remaining</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;How many rows are still unrendered.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""How many rows are still unrendered."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">shown</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">exhausted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether every row from :attr:`start` onward has been rendered.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether every row from :attr:`start` onward has been rendered."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remaining</span> <span class="o">&lt;=</span> <span class="mi">0</span></div>
 
 
@@ -407,12 +411,12 @@
 <div class="viewcode-block" id="index_of_row_id">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/paging/index.html#annie.pages.paging.index_of_row_id">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">index_of_row_id</span><span class="p">(</span><span class="n">row_ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return where ``target`` sits among the shown rows&#39; ``row_ids``.</span>
+<span class="w">    </span><span class="sd">"""Return where ``target`` sits among the shown rows' ``row_ids``.</span>
 
 <span class="sd">    Row ids increase along the list (they are positions in the same sorted manifest),</span>
 <span class="sd">    so a filtered list is still ordered and can be searched. A row id that was</span>
 <span class="sd">    filtered out resolves to the next one still on screen, which is what a reviewer</span>
-<span class="sd">    typing &quot;3400&quot; into a filtered Browse tab means: *take me to where 3400 would be*.</span>
+<span class="sd">    typing "3400" into a filtered Browse tab means: *take me to where 3400 would be*.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        row_ids: The dataset row ids of the shown rows, ascending.</span>
@@ -420,7 +424,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A 0-based index into ``row_ids``, clamped to the last row.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">row_ids</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">0</span>
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">bisect_left</span><span class="p">(</span><span class="n">row_ids</span><span class="p">,</span> <span class="n">target</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">row_ids</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
@@ -440,33 +444,33 @@
     <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">jump_slot</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``entries`` one page at a time, with jump, auto-scroll, and a button.</span>
+<span class="w">    </span><span class="sd">"""Render ``entries`` one page at a time, with jump, auto-scroll, and a button.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        entries: The rows to page through — already filtered, still ordered.</span>
 <span class="sd">        render_row: Builds one row. Called inside the rows container.</span>
 <span class="sd">        row_id: The dataset row id of an entry, used to drive the jump box. This is</span>
-<span class="sd">            the sample&#39;s number in the whole dataset, not its index in ``entries``.</span>
+<span class="sd">            the sample's number in the whole dataset, not its index in ``entries``.</span>
 <span class="sd">        total_rows: How many rows the *unfiltered* dataset has, so the jump box</span>
 <span class="sd">            accepts any dataset row id even when the view is filtered.</span>
 <span class="sd">        actions: Builds extra controls at the end of the jump row, for list-wide</span>
-<span class="sd">            operations that belong next to it (the Annotator&#39;s &quot;Clear all&quot;).</span>
+<span class="sd">            operations that belong next to it (the Annotator's "Clear all").</span>
 <span class="sd">        container: Factory for the element newly revealed rows are built into.</span>
 <span class="sd">            Defaults to a vertical column; the Browse grid view passes a wrapping</span>
 <span class="sd">            row so its boxes flow into a grid.</span>
 <span class="sd">        page_size: Rows revealed per page. Defaults to</span>
 <span class="sd">            :attr:`annie.core.state.UiSettings.page_size`; the grid view reveals more.</span>
-<span class="sd">        jump_slot: Where to build the &quot;Jump to row&quot; card. When given, it is rendered</span>
+<span class="sd">        jump_slot: Where to build the "Jump to row" card. When given, it is rendered</span>
 <span class="sd">            into that (pre-existing, persistent) element — e.g. the Browse View</span>
 <span class="sd">            panel — instead of inline above the rows. The slot is cleared first, so a</span>
 <span class="sd">            re-paged list never stacks duplicate jump cards.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">pager</span> <span class="o">=</span> <span class="n">Pager</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">))</span>
     <span class="n">row_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">row_id</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">]</span>
     <span class="n">reveal</span> <span class="o">=</span> <span class="n">page_size</span> <span class="k">if</span> <span class="n">page_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">page_size</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">restart</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Re-page from dataset row id ``target``, discarding the rendered rows.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Re-page from dataset row id ``target``, discarding the rendered rows."""</span>
         <span class="n">body</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">pager</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">index_of_row_id</span><span class="p">(</span><span class="n">row_ids</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
         <span class="n">show_more</span><span class="p">()</span>
@@ -474,10 +478,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">caption</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">total_rows</span><span class="p">:</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">total_rows</span><span class="si">}</span><span class="s2"> samples match the filters.&quot;</span><span class="p">)</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">total_rows</span><span class="si">}</span><span class="s2"> samples match the filters."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pager</span><span class="o">.</span><span class="n">start</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Showing from row #</span><span class="si">{</span><span class="n">row_ids</span><span class="p">[</span><span class="n">pager</span><span class="o">.</span><span class="n">start</span><span class="p">]</span><span class="si">}</span><span class="s2"> — earlier rows hidden.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Showing from row #</span><span class="si">{</span><span class="n">row_ids</span><span class="p">[</span><span class="n">pager</span><span class="o">.</span><span class="n">start</span><span class="p">]</span><span class="si">}</span><span class="s2"> — earlier rows hidden."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">jump_slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">jump_slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -486,26 +490,26 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_jump_section</span><span class="p">(</span><span class="n">total_rows</span><span class="p">,</span> <span class="n">restart</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">actions</span><span class="p">)</span>
 
-    <span class="n">body</span> <span class="o">=</span> <span class="p">(</span><span class="n">container</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-2&quot;</span><span class="p">)))()</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="p">(</span><span class="n">container</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">)))()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">show_more</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">body</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">[</span><span class="n">pager</span><span class="o">.</span><span class="n">advance</span><span class="p">(</span><span class="n">reveal</span><span class="p">)]:</span>
                 <span class="n">render_row</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
-        <span class="n">more</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Show more (</span><span class="si">{</span><span class="n">pager</span><span class="o">.</span><span class="n">remaining</span><span class="si">}</span><span class="s2"> left)&quot;</span><span class="p">)</span>
+        <span class="n">more</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Show more (</span><span class="si">{</span><span class="n">pager</span><span class="o">.</span><span class="n">remaining</span><span class="si">}</span><span class="s2"> left)"</span><span class="p">)</span>
         <span class="n">more</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="ow">not</span> <span class="n">pager</span><span class="o">.</span><span class="n">exhausted</span><span class="p">)</span>
-        <span class="n">sentinel</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="ow">not</span> <span class="n">pager</span><span class="o">.</span><span class="n">exhausted</span><span class="p">)</span>
+        <span class="nb">sentinel</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="ow">not</span> <span class="n">pager</span><span class="o">.</span><span class="n">exhausted</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_sentinel</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ANN001 - NiceGUI event args</span>
         <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">args</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">auto_scroll</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">pager</span><span class="o">.</span><span class="n">exhausted</span><span class="p">:</span>
             <span class="n">show_more</span><span class="p">()</span>
 
-    <span class="n">more</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Show more&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">show_more</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+    <span class="n">more</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Show more"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">show_more</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
     <span class="c1"># A 1px-tall element: an empty one has a zero-area rect, which browsers do not</span>
     <span class="c1"># reliably report as intersecting.</span>
-    <span class="n">sentinel</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;q-intersection&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;margin=</span><span class="si">{</span><span class="n">_SENTINEL_MARGIN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">sentinel</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;height:1px&quot;</span><span class="p">)</span>
-    <span class="n">sentinel</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;visibility&quot;</span><span class="p">,</span> <span class="n">on_sentinel</span><span class="p">)</span>
+    <span class="nb">sentinel</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"q-intersection"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"margin=</span><span class="si">{</span><span class="n">_SENTINEL_MARGIN</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">sentinel</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">"height:1px"</span><span class="p">)</span>
+    <span class="nb">sentinel</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"visibility"</span><span class="p">,</span> <span class="n">on_sentinel</span><span class="p">)</span>
 
     <span class="n">show_more</span><span class="p">()</span></div>
 
@@ -517,18 +521,18 @@
     <span class="n">caption</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">],</span>
     <span class="n">actions</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the &quot;Jump to row&quot; card that re-pages the list from a dataset row id.&quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full&quot;</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-1&quot;</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2 flex-wrap&quot;</span><span class="p">):</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">&quot;my_location&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Jump to row&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;font-medium&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Build the "Jump to row" card that re-pages the list from a dataset row id."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 flex-wrap"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"my_location"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Jump to row"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"font-medium"</span><span class="p">)</span>
             <span class="n">target</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">total_rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;dense outlined&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-28&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">&quot;A row&#39;s #number, counted over the whole dataset&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense outlined"</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"A row's #number, counted over the whole dataset"</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;of </span><span class="si">{</span><span class="n">total_rows</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-sm&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"of </span><span class="si">{</span><span class="n">total_rows</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">go</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">jump</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">))</span>
@@ -538,14 +542,14 @@
                 <span class="n">target</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">go</span><span class="p">()</span>
 
-            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Jump&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">go</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;unelevated dense&quot;</span><span class="p">)</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">&quot;restart_alt&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">reset</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat dense round&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
-                <span class="s2">&quot;Back to the first row&quot;</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Jump"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">go</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated dense"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"restart_alt"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">reset</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                <span class="s2">"Back to the first row"</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">actions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">actions</span><span class="p">()</span>
 
-        <span class="n">label</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">caption</span><span class="p">())</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">caption</span><span class="p">())</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>

@@ -82,42 +82,42 @@ Module Contents
 ---------------
 
 .. py:data:: AUDIO_INPUT_SUFFIXES
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('.wav', '.mp3', '.flac', '.m4a', '.aac', '.ogg', '.opus')
 
 
    Accepted source-audio suffixes (lower-case, dotted).
 
 .. py:data:: VIDEO_INPUT_SUFFIXES
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('.mp4', '.avi', '.mov', '.mkv', '.webm', '.m4v')
 
 
    Accepted source-video suffixes (lower-case, dotted).
 
 .. py:data:: AUDIO_OUTPUT_FORMATS
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('wav', 'flac', 'mp3')
 
 
    Offered audio output containers/codecs.
 
 .. py:data:: VIDEO_OUTPUT_FORMATS
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('mp4',)
 
 
    Offered video containers/codecs.
 
 .. py:data:: COMMON_SAMPLE_RATES
-   :type:  tuple[int, Ellipsis]
+   :type:  tuple[int, ...]
    :value: (8000, 16000, 22050, 44100, 48000)
 
 
    Sample rates the UI offers as quick picks.
 
 .. py:data:: COMMON_FPS
-   :type:  tuple[float, Ellipsis]
+   :type:  tuple[float, ...]
    :value: (10, 24, 25, 30)
 
 

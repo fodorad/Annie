@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.media.rendering</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Render pipeline: burn annotations into a browser-playable preview clip.</span>
+<span></span><span class="sd">"""Render pipeline: burn annotations into a browser-playable preview clip.</span>
 
 <span class="sd">A render is submitted as a **job** and runs on a background thread, so the</span>
 <span class="sd">unpredictable, CPU-bound work of decoding and re-encoding never stalls the UI.</span>
@@ -308,7 +312,7 @@
 <span class="sd">(:func:`annie.color.draw_overlay`), pipes raw RGB into an ``ffmpeg`` subprocess</span>
 <span class="sd">(libx264), and muxes the source audio back. Outputs land in a temp dir that a TTL</span>
 <span class="sd">sweeper purges, so rendered clips never accumulate on disk.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -327,41 +331,41 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
 
 <span class="n">RenderFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">VideoEntry</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;Signature of a render function.</span>
+<span class="sd">"""Signature of a render function.</span>
 
 <span class="sd">Given a video entry and an output path, produce a browser-playable annotated clip.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="n">CRF</span> <span class="o">=</span> <span class="mi">26</span>
-<span class="sd">&quot;&quot;&quot;x264 quality for rendered previews (lower is better; ffmpeg&#39;s default is 23).</span>
+<span class="sd">"""x264 quality for rendered previews (lower is better; ffmpeg's default is 23).</span>
 
 <span class="sd">These clips are throwaway review aids swept within minutes, watched in a box a few</span>
 <span class="sd">hundred pixels wide, so preview-grade quality buys a materially smaller file and a</span>
 <span class="sd">faster render without affecting frame count or timing.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
-<span class="n">PRESET</span> <span class="o">=</span> <span class="s2">&quot;veryfast&quot;</span>
-<span class="sd">&quot;&quot;&quot;x264 speed/compression trade-off. The reviewer is waiting on this render, so</span>
+<span class="n">PRESET</span> <span class="o">=</span> <span class="s2">"veryfast"</span>
+<span class="sd">"""x264 speed/compression trade-off. The reviewer is waiting on this render, so</span>
 <span class="sd">spend the time budget on latency rather than on the last few percent of bitrate.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
-<span class="n">FASTSTART</span> <span class="o">=</span> <span class="s2">&quot;+faststart&quot;</span>
-<span class="sd">&quot;&quot;&quot;``-movflags`` value that relocates the MP4 ``moov`` atom ahead of the media data.</span>
+<span class="n">FASTSTART</span> <span class="o">=</span> <span class="s2">"+faststart"</span>
+<span class="sd">"""``-movflags`` value that relocates the MP4 ``moov`` atom ahead of the media data.</span>
 
 <span class="sd">Without it the atom lands at the end of the file and a browser must fetch the whole</span>
 <span class="sd">clip before the first frame can play.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 
 <div class="viewcode-block" id="JobStatus">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.JobStatus">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobStatus</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lifecycle states of a render job.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Lifecycle states of a render job."""</span>
 
-    <span class="n">PENDING</span> <span class="o">=</span> <span class="s2">&quot;pending&quot;</span>
-    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
-    <span class="n">DONE</span> <span class="o">=</span> <span class="s2">&quot;done&quot;</span>
-    <span class="n">FAILED</span> <span class="o">=</span> <span class="s2">&quot;failed&quot;</span></div>
+    <span class="n">PENDING</span> <span class="o">=</span> <span class="s2">"pending"</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">"running"</span>
+    <span class="n">DONE</span> <span class="o">=</span> <span class="s2">"done"</span>
+    <span class="n">FAILED</span> <span class="o">=</span> <span class="s2">"failed"</span></div>
 
 
 
@@ -369,7 +373,7 @@
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderJob">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RenderJob</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single render job and its current state.</span>
+<span class="w">    </span><span class="sd">"""A single render job and its current state.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        job_id: Unique opaque id used to poll for status.</span>
@@ -378,7 +382,7 @@
 <span class="sd">        output_path: Path to the finished clip once ``status`` is ``DONE``.</span>
 <span class="sd">        error: Error message when ``status`` is ``FAILED``.</span>
 <span class="sd">        created_at: Monotonic-ish wall-clock submit time (epoch seconds).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span>
@@ -392,7 +396,7 @@
 <div class="viewcode-block" id="RenderService">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RenderService</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Thread-pool-backed render-job tracker with a TTL temp sweeper.</span>
+<span class="w">    </span><span class="sd">"""Thread-pool-backed render-job tracker with a TTL temp sweeper.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        render_fn: The function that actually produces a clip. Defaults to</span>
@@ -402,7 +406,7 @@
 <span class="sd">            dir.</span>
 <span class="sd">        max_workers: Maximum concurrent renders. Defaults to the configured value.</span>
 <span class="sd">        ttl_seconds: Age after which a finished clip is eligible for sweeping.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -427,7 +431,7 @@
 <div class="viewcode-block" id="RenderService.submit">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.submit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enqueue a render for ``entry`` and return its job id immediately.</span>
+<span class="w">        </span><span class="sd">"""Enqueue a render for ``entry`` and return its job id immediately.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            entry: The video to render. Must have a video file to decode.</span>
@@ -437,9 +441,9 @@
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the entry has no video path to render.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot render a video-less entry&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cannot render a video-less entry"</span><span class="p">)</span>
         <span class="n">job_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
         <span class="n">job</span> <span class="o">=</span> <span class="n">RenderJob</span><span class="p">(</span><span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span> <span class="n">row_key</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
@@ -449,9 +453,9 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">RenderJob</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute one job on a worker thread, recording its outcome.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Execute one job on a worker thread, recording its outcome."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_status</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2">.mp4&quot;</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2">.mp4"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_render_fn</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - jobs must never crash the pool</span>
@@ -464,21 +468,21 @@
             <span class="n">job</span><span class="o">.</span><span class="n">output_path</span> <span class="o">=</span> <span class="n">output</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n">JobStatus</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Atomically update a job&#39;s status.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Atomically update a job's status."""</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
 
 <div class="viewcode-block" id="RenderService.get">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.get">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RenderJob</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the job for ``job_id``, or ``None`` if unknown.</span>
+<span class="w">        </span><span class="sd">"""Return the job for ``job_id``, or ``None`` if unknown.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            job_id: The id returned by :meth:`submit`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The :class:`RenderJob`, or ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span></div>
 
@@ -486,11 +490,11 @@
 <div class="viewcode-block" id="RenderService.jobs">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.jobs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RenderJob</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a snapshot of all tracked jobs.</span>
+<span class="w">        </span><span class="sd">"""Return a snapshot of all tracked jobs.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A list copy of the current jobs.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
 
@@ -498,30 +502,30 @@
 <div class="viewcode-block" id="RenderService.sweep">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.sweep">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete rendered clips whose file is older than the TTL; forget their jobs.</span>
+<span class="w">        </span><span class="sd">"""Delete rendered clips whose file is older than the TTL; forget their jobs.</span>
 
 <span class="sd">        File-based (by modification time) rather than job-based, so it also reclaims</span>
 <span class="sd">        clips orphaned by a page refresh or disconnect — where the job is still</span>
 <span class="sd">        tracked but the UI element that showed it is gone — and any ``.mp4`` left by a</span>
-<span class="sd">        previous process. A running job&#39;s output is never touched.</span>
+<span class="sd">        previous process. A running job's output is never touched.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            now: Override for the current epoch time (for testing).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The number of clip files deleted.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">ttl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ttl_seconds</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ttl_seconds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_ttl_seconds</span>
         <span class="n">cutoff</span> <span class="o">=</span> <span class="p">(</span><span class="n">now</span> <span class="k">if</span> <span class="n">now</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">-</span> <span class="n">ttl</span>
         <span class="n">deleted</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">running</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">.mp4&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">.mp4"</span>
                 <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temp_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()):</span>
-                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;.mp4&quot;</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">running</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">".mp4"</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">running</span><span class="p">:</span>
                     <span class="k">continue</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">expired</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span> <span class="o">&lt;</span> <span class="n">cutoff</span>
@@ -537,7 +541,7 @@
 <div class="viewcode-block" id="RenderService.clear_all">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.clear_all">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete every finished clip and forget all non-running jobs.</span>
+<span class="w">        </span><span class="sd">"""Delete every finished clip and forget all non-running jobs.</span>
 
 <span class="sd">        Unlike :meth:`sweep`, this ignores the TTL and also removes any orphaned</span>
 <span class="sd">        ``.mp4`` files in :attr:`temp_dir` that are not tracked by a job (e.g.</span>
@@ -547,7 +551,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A ``(jobs_cleared, files_deleted)`` pair — the number of jobs removed</span>
 <span class="sd">            from the tracker and the number of files actually unlinked from disk.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">jobs_cleared</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">files_deleted</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
@@ -563,7 +567,7 @@
         <span class="c1"># Remove any orphaned mp4s not tracked by a current job.</span>
         <span class="n">tracked</span> <span class="o">=</span> <span class="p">{</span><span class="n">job</span><span class="o">.</span><span class="n">output_path</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.mp4&quot;</span> <span class="ow">and</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tracked</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".mp4"</span> <span class="ow">and</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tracked</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">files_deleted</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">jobs_cleared</span><span class="p">,</span> <span class="n">files_deleted</span></div>
@@ -572,7 +576,7 @@
 <div class="viewcode-block" id="RenderService.shutdown">
 <a class="viewcode-back" href="../../../autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.shutdown">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shut the worker pool down, waiting for in-flight jobs to finish.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Shut the worker pool down, waiting for in-flight jobs to finish."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 
@@ -583,7 +587,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">burn_clip</span><span class="p">(</span>
     <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - needs media + ffmpeg</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a video&#39;s combined annotations into a browser-playable clip.</span>
+<span class="w">    </span><span class="sd">"""Render a video's combined annotations into a browser-playable clip.</span>
 
 <span class="sd">    Decodes **every** frame of the source (a frame with no detections is written</span>
 <span class="sd">    through unchanged, so the render always has the same frame count as the</span>
@@ -610,39 +614,39 @@
 <span class="sd">        annie.decode.MediaUnavailableError: If the ``media`` extra is absent.</span>
 <span class="sd">        ValueError: If the entry has no video path.</span>
 <span class="sd">        RuntimeError: If the ffmpeg subprocess fails.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>  <span class="c1"># local import: optional media dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.color</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_overlay</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_entry_annotations</span><span class="p">,</span> <span class="n">merge_frame</span>
 
     <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;burn_clip requires a video path&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"burn_clip requires a video path"</span><span class="p">)</span>
 
     <span class="n">vdet_by_frame</span><span class="p">,</span> <span class="n">tracks_by_id</span> <span class="o">=</span> <span class="n">load_entry_annotations</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
     <span class="n">include</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tracks_by_id</span><span class="p">)</span>  <span class="c1"># draw every track on the full render</span>
 
     <span class="n">meta</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">video_metadata</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">)</span>  <span class="c1"># width / height / fps</span>
-    <span class="n">decoder</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span>  <span class="c1"># noqa: SLF001 - service owns decode</span>
-    <span class="c1"># The exact decoder&#39;s count is authoritative; approximate metadata can over-report</span>
-    <span class="c1"># num_frames and walk the loop past the real end (&quot;no more frames to decode&quot;).</span>
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="s2">"exact"</span><span class="p">)</span>  <span class="c1"># noqa: SLF001 - service owns decode</span>
+    <span class="c1"># The exact decoder's count is authoritative; approximate metadata can over-report</span>
+    <span class="c1"># num_frames and walk the loop past the real end ("no more frames to decode").</span>
     <span class="n">num_frames</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">decoder</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
 
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;rawvideo&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;rgb24&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;-r&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">),</span>
-        <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;0:v:0&quot;</span><span class="p">,</span> <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;1:a:0?&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;libx264&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-preset&quot;</span><span class="p">,</span> <span class="n">PRESET</span><span class="p">,</span> <span class="s2">&quot;-crf&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">CRF</span><span class="p">),</span>
+        <span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span>
+        <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"rawvideo"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"rgb24"</span><span class="p">,</span>
+        <span class="s2">"-s"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-r"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"-i"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">,</span>
+        <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">),</span>
+        <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v:0"</span><span class="p">,</span> <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a:0?"</span><span class="p">,</span>
+        <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span>
+        <span class="s2">"-preset"</span><span class="p">,</span> <span class="n">PRESET</span><span class="p">,</span> <span class="s2">"-crf"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">CRF</span><span class="p">),</span>
         <span class="c1"># Put the moov atom first so the browser can start playing before the whole</span>
         <span class="c1"># clip has downloaded, instead of buffering it end-to-end.</span>
-        <span class="s2">&quot;-movflags&quot;</span><span class="p">,</span> <span class="n">FASTSTART</span><span class="p">,</span>
-        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
+        <span class="s2">"-movflags"</span><span class="p">,</span> <span class="n">FASTSTART</span><span class="p">,</span>
+        <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span>
     <span class="p">]</span>  <span class="c1"># fmt: skip</span>
-    <span class="c1"># Drain ffmpeg&#39;s progress/error output to a temp file so a full stderr pipe</span>
+    <span class="c1"># Drain ffmpeg's progress/error output to a temp file so a full stderr pipe</span>
     <span class="c1"># can never deadlock the frame-writing loop on a long clip.</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryFile</span><span class="p">()</span> <span class="k">as</span> <span class="n">errlog</span><span class="p">:</span>
         <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">errlog</span><span class="p">)</span>
@@ -662,7 +666,7 @@
         <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">errlog</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ffmpeg failed: </span><span class="si">{</span><span class="n">errlog</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;replace&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ffmpeg failed: </span><span class="si">{</span><span class="n">errlog</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">,</span><span class="w"> </span><span class="s1">'replace'</span><span class="p">)[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

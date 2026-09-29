@@ -34,6 +34,7 @@ Classes
 .. autoapisummary::
 
    annie.dataset.storage.ReviewRecord
+   annie.dataset.storage.EventRecord
    annie.dataset.storage.ReviewStore
 
 
@@ -85,6 +86,57 @@ Module Contents
 
       The Segment-review accept/drop for a clip row, or ``None`` if the
       clip is not (or not a) Segment-review sample.
+
+   .. attribute:: updated_at
+
+      ISO-8601 UTC timestamp of the last change.
+
+
+.. py:class:: EventRecord
+
+   One persisted Event-annotation event: a labelled interval on a track.
+
+   .. attribute:: event_id
+
+      Stable UUID identity, so an event survives edits to its own fields.
+
+   .. attribute:: video_id
+
+      The video this event belongs to.
+
+   .. attribute:: row_key
+
+      The :attr:`annie.core.models.VideoEntry.key` of the queue row, tying the
+      event to the same identity curation uses.
+
+   .. attribute:: track
+
+      The track (category) name the event sits on.
+
+   .. attribute:: start_frame
+
+      Inclusive start frame of the interval.
+
+   .. attribute:: end_frame
+
+      Inclusive end frame of the interval (``>= start_frame``).
+
+   .. attribute:: label
+
+      Free-text label shown on the event box (empty when unnamed).
+
+   .. attribute:: note
+
+      Free-text note (empty when none).
+
+   .. attribute:: attributes
+
+      Arbitrary string key/value pairs; stored as a JSON object.
+
+   .. attribute:: color
+
+      Per-event colour override (hex string), or ``None`` to inherit the track's
+      colour on the timeline.
 
    .. attribute:: updated_at
 
@@ -277,6 +329,136 @@ Module Contents
       :param decision: ``"accept"`` or ``"drop"``.
 
       :returns: Matching review records ordered by row key (the accepted or dropped set).
+
+
+
+   .. py:method:: add_event(video_id: str, row_key: str, track: str, start_frame: int, end_frame: int, *, label: str = '', note: str = '', attributes: dict[str, str] | None = None, color: str | None = None) -> EventRecord
+
+      Insert a new event on a track and return it (with its fresh id).
+
+      The event's track is also registered in ``event_track`` if absent, so a lane
+      created implicitly by dropping an event onto it persists like an explicit one.
+
+      :param video_id: The video the event belongs to.
+      :param row_key: The queue row identity the event ties to.
+      :param track: The track (category) name.
+      :param start_frame: Inclusive start frame.
+      :param end_frame: Inclusive end frame (``>= start_frame``).
+      :param label: Optional event label.
+      :param note: Optional event note.
+      :param attributes: Optional arbitrary string key/value pairs.
+      :param color: Optional per-event colour override (hex), or ``None`` to inherit the track.
+
+      :returns: The stored :class:`EventRecord`.
+
+
+
+   .. py:method:: update_event(event_id: str, **fields: object) -> EventRecord | None
+
+      Update named columns of an event, returning the updated record.
+
+      Only the columns named in ``fields`` are written (plus ``updated_at``); any
+      others keep their stored value. ``attributes`` is accepted as a dict and stored
+      as JSON. Passing an unknown column raises, so a typo fails loudly rather than
+      silently doing nothing.
+
+      :param event_id: The event to update.
+      :param \*\*fields: Column/value pairs among ``track``, ``start_frame``, ``end_frame``,
+                         ``label``, ``note``, ``attributes``, ``color``.
+
+      :returns: The updated :class:`EventRecord`, or ``None`` if no such event exists.
+
+
+
+   .. py:method:: delete_event(event_id: str) -> None
+
+      Delete one event by id (a no-op if it does not exist).
+
+      :param event_id: The event to delete.
+
+
+
+   .. py:method:: get_event(event_id: str) -> EventRecord | None
+
+      Return one event by id, or ``None`` if it does not exist.
+
+      :param event_id: The event to fetch.
+
+      :returns: The stored :class:`EventRecord`, or ``None``.
+
+
+
+   .. py:method:: events_for(row_key: str) -> list[EventRecord]
+
+      Return a video's events, ordered by track then start frame.
+
+      :param row_key: The queue row identity to fetch events for.
+
+      :returns: The events on that video, grouped by track and sorted within each track.
+
+
+
+   .. py:method:: all_events() -> list[EventRecord]
+
+      Return every stored event, ordered by video then track then start frame.
+
+      Backs the session-wide export (every annotated video in one file).
+
+      :returns: All events in the store.
+
+
+
+   .. py:method:: add_track(row_key: str, track: str) -> None
+
+      Create an empty track (lane) for a video, appended after existing ones.
+
+      Idempotent: re-adding an existing track leaves its ordinal untouched.
+
+      :param row_key: The queue row identity.
+      :param track: The track (category) name.
+
+
+
+   .. py:method:: rename_track(row_key: str, old: str, new: str) -> None
+
+      Rename a track and move its events onto the new name, keeping the ordinal.
+
+      A no-op when ``old`` and ``new`` are equal. If ``new`` already exists, the two
+      lanes merge: ``old``'s events move onto ``new`` and the now-empty ``old`` lane
+      is removed.
+
+      :param row_key: The queue row identity.
+      :param old: The current track name.
+      :param new: The new track name.
+
+
+
+   .. py:method:: delete_track(row_key: str, track: str) -> None
+
+      Delete a track and all of its events for a video.
+
+      :param row_key: The queue row identity.
+      :param track: The track (category) name to remove.
+
+
+
+   .. py:method:: tracks_for(row_key: str) -> list[str]
+
+      Return a video's track names in their vertical order.
+
+      :param row_key: The queue row identity.
+
+      :returns: The track names ordered by ``ordinal`` (their top-to-bottom lane order).
+
+
+
+   .. py:method:: event_row_keys() -> set[str]
+
+      Return the row keys that have at least one event or track.
+
+      Lets the tab know which queued videos already carry annotation work.
+
+      :returns: The set of row keys present in either event table.
 
 
 

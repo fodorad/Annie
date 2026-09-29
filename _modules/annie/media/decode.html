@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.media.decode</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Frame-reading wrapper over torchcodec (infrastructure).</span>
+<span></span><span class="sd">"""Frame-reading wrapper over torchcodec (infrastructure).</span>
 
 <span class="sd">torchcodec and the rest of the PyTorch ecosystem are an **optional** dependency</span>
 <span class="sd">(the ``media`` extra). Everything here imports them lazily, so importing</span>
@@ -310,7 +314,7 @@
 
 <span class="sd">Frames are returned as ``numpy`` ``uint8`` arrays in HWC/RGB order, which is what</span>
 <span class="sd">the Pillow-based overlay renderer in :mod:`annie.color` consumes.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -322,40 +326,40 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="n">SeekMode</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;Frame-seek strategy: ``&quot;exact&quot;`` for frame accuracy, ``&quot;approximate&quot;`` for speed.&quot;&quot;&quot;</span>
+<span class="n">SeekMode</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"exact"</span><span class="p">,</span> <span class="s2">"approximate"</span><span class="p">]</span>
+<span class="sd">"""Frame-seek strategy: ``"exact"`` for frame accuracy, ``"approximate"`` for speed."""</span>
 
 
 <div class="viewcode-block" id="MediaUnavailableError">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.MediaUnavailableError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MediaUnavailableError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a frame-decode operation needs torchcodec but it is absent.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Raised when a frame-decode operation needs torchcodec but it is absent."""</span></div>
 
 
 
 <div class="viewcode-block" id="media_available">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.media_available">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">media_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether the optional torchcodec backend can be imported.</span>
+<span class="w">    </span><span class="sd">"""Return whether the optional torchcodec backend can be imported.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ``True`` if ``torchcodec`` is importable, ``False`` otherwise.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="s2">&quot;torchcodec&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="s2">"torchcodec"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_require_media</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise :class:`MediaUnavailableError` if torchcodec is not installed.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raise :class:`MediaUnavailableError` if torchcodec is not installed."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">MediaUnavailableError</span><span class="p">(</span>
-            <span class="s2">&quot;Frame decoding requires the &#39;media&#39; extra. Install it with &quot;</span>
-            <span class="s1">&#39;`uv pip install -e &quot;.[media]&quot;` and a system FFmpeg (4-8).&#39;</span>
+            <span class="s2">"Frame decoding requires the 'media' extra. Install it with "</span>
+            <span class="s1">'`uv pip install -e ".[media]"` and a system FFmpeg (4-8).'</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span><span class="p">):</span>  <span class="c1"># noqa: ANN202 - external type</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""</span>
     <span class="n">_require_media</span><span class="p">()</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcodec.decoders</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoDecoder</span>  <span class="c1"># local import: optional dependency</span>
 
@@ -363,26 +367,26 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_to_hwc_uint8</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: ANN001 - external tensor type</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a torchcodec CHW uint8 tensor to an HWC uint8 numpy array.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert a torchcodec CHW uint8 tensor to an HWC uint8 numpy array."""</span>
     <span class="k">return</span> <span class="n">frame</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="read_frame">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.read_frame">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_frame</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frame_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a single frame by index.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_frame</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frame_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span> <span class="o">=</span> <span class="s2">"exact"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read a single frame by index.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Path to the video file.</span>
 <span class="sd">        frame_idx: Zero-based frame index to read.</span>
-<span class="sd">        seek_mode: ``&quot;exact&quot;`` (frame-accurate) or ``&quot;approximate&quot;`` (fast).</span>
+<span class="sd">        seek_mode: ``"exact"`` (frame-accurate) or ``"approximate"`` (fast).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The frame as an HWC ``uint8`` RGB numpy array.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        MediaUnavailableError: If torchcodec is not installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">decoder</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_to_hwc_uint8</span><span class="p">(</span><span class="n">decoder</span><span class="p">[</span><span class="n">frame_idx</span><span class="p">])</span></div>
 
@@ -391,21 +395,21 @@
 <div class="viewcode-block" id="read_frames">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.read_frames">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_frames</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span> <span class="o">=</span> <span class="s2">&quot;approximate&quot;</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span> <span class="o">=</span> <span class="s2">"approximate"</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read several frames by index.</span>
+<span class="w">    </span><span class="sd">"""Read several frames by index.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Path to the video file.</span>
 <span class="sd">        indices: Zero-based frame indices to read.</span>
-<span class="sd">        seek_mode: Seek mode; defaults to ``&quot;approximate&quot;`` for fast previews.</span>
+<span class="sd">        seek_mode: Seek mode; defaults to ``"approximate"`` for fast previews.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        One HWC ``uint8`` RGB numpy array per requested index, in order.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        MediaUnavailableError: If torchcodec is not installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">decoder</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">_to_hwc_uint8</span><span class="p">(</span><span class="n">decoder</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span></div>
 
@@ -414,7 +418,7 @@
 <div class="viewcode-block" id="frame_count">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.frame_count">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">frame_count</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of frames in a video.</span>
+<span class="w">    </span><span class="sd">"""Return the number of frames in a video.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Path to the video file.</span>
@@ -424,8 +428,8 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        MediaUnavailableError: If torchcodec is not installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">decoder</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"approximate"</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">decoder</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span></div>
 
 
@@ -434,14 +438,14 @@
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.VideoMetadata">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">VideoMetadata</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Basic video metadata needed by the render/preview pipeline.</span>
+<span class="w">    </span><span class="sd">"""Basic video metadata needed by the render/preview pipeline.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        num_frames: Total decoded frame count.</span>
 <span class="sd">        width: Frame width in pixels.</span>
 <span class="sd">        height: Frame height in pixels.</span>
 <span class="sd">        fps: Average frames per second.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">width</span><span class="p">:</span> <span class="nb">int</span>
@@ -453,7 +457,7 @@
 <div class="viewcode-block" id="video_metadata">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.video_metadata">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">video_metadata</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VideoMetadata</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read frame count, dimensions, and fps for a video.</span>
+<span class="w">    </span><span class="sd">"""Read frame count, dimensions, and fps for a video.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Path to the video file.</span>
@@ -463,8 +467,8 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        MediaUnavailableError: If torchcodec is not installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">metadata</span>
+<span class="sd">    """</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"approximate"</span><span class="p">)</span><span class="o">.</span><span class="n">metadata</span>
     <span class="k">return</span> <span class="n">VideoMetadata</span><span class="p">(</span>
         <span class="n">num_frames</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span><span class="p">),</span>
         <span class="n">width</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">width</span><span class="p">),</span>
@@ -477,20 +481,20 @@
 <div class="viewcode-block" id="read_strip">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.read_strip">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_strip</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span> <span class="o">=</span> <span class="s2">"exact"</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read evenly spaced sample frames for the Browse strip in one pass.</span>
+<span class="w">    </span><span class="sd">"""Read evenly spaced sample frames for the Browse strip in one pass.</span>
 
-<span class="sd">    Defaults to ``&quot;exact&quot;`` seek mode: in ``&quot;approximate&quot;`` mode torchcodec derives</span>
+<span class="sd">    Defaults to ``"exact"`` seek mode: in ``"approximate"`` mode torchcodec derives</span>
 <span class="sd">    ``num_frames`` from duration × fps, which can over-report the true count for</span>
 <span class="sd">    some clips and make the last sample index point past the real end (raising</span>
-<span class="sd">    &quot;no more frames left to decode&quot;). Exact mode scans the file so the count and</span>
+<span class="sd">    "no more frames left to decode"). Exact mode scans the file so the count and</span>
 <span class="sd">    every sampled index are valid; decoding is still guarded per frame.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Path to the video file.</span>
 <span class="sd">        count: Number of evenly spaced frames (first / ¼ / ½ / ¾ / last by default).</span>
-<span class="sd">        seek_mode: Seek mode; ``&quot;exact&quot;`` for an accurate frame count.</span>
+<span class="sd">        seek_mode: Seek mode; ``"exact"`` for an accurate frame count.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An ``(indices, frames, num_frames)`` triple: the sampled frame indices that</span>
@@ -498,7 +502,7 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        MediaUnavailableError: If torchcodec is not installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">decoder</span> <span class="o">=</span> <span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">)</span>
     <span class="n">total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">decoder</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
     <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -517,7 +521,7 @@
 <div class="viewcode-block" id="strip_indices">
 <a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.strip_indices">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">strip_indices</span><span class="p">(</span><span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute evenly spaced sample indices for the Browse 5-frame strip.</span>
+<span class="w">    </span><span class="sd">"""Compute evenly spaced sample indices for the Browse 5-frame strip.</span>
 
 <span class="sd">    Returns indices at first / ¼ / ½ / ¾ / last by default. Pure arithmetic, so</span>
 <span class="sd">    it needs no media backend and is unit-tested directly.</span>
@@ -531,11 +535,11 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If ``total &lt; 1`` or ``count &lt; 1``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;total must be &gt;= 1&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"total must be &gt;= 1"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;count must be &gt;= 1&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"count must be &gt;= 1"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">last</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="mi">1</span>

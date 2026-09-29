@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,13 +298,13 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.media.preview</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Build Browse preview images for a video (service; needs the ``media`` extra).</span>
+<span></span><span class="sd">"""Build Browse preview images for a video (service; needs the ``media`` extra).</span>
 
 <span class="sd">Produces the static thumbnail (clean first frame) and the annotated five-frame</span>
 <span class="sd">strip (vdet boxes in blue, the protagonist track in green) shown on each Browse</span>
 <span class="sd">row. Decoding is lazy via :mod:`annie.decode`, so importing this module never</span>
 <span class="sd">requires torch; call :func:`annie.decode.media_available` before using it.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -318,7 +322,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
 
 
-<span class="c1">#: Oversampling factor applied to a box&#39;s CSS size, so previews stay crisp on</span>
+<span class="c1">#: Oversampling factor applied to a box's CSS size, so previews stay crisp on</span>
 <span class="c1">#: HiDPI/Retina displays without paying for the full decoded frame.</span>
 <span class="n">HIDPI_SCALE</span> <span class="o">=</span> <span class="mi">2</span>
 
@@ -330,16 +334,16 @@
 <div class="viewcode-block" id="to_data_uri">
 <a class="viewcode-back" href="../../../autoapi/annie/media/preview/index.html#annie.media.preview.to_data_uri">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_data_uri</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="n">box</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode a PIL image as a self-contained ``data:`` WebP URI.</span>
+<span class="w">    </span><span class="sd">"""Encode a PIL image as a self-contained ``data:`` WebP URI.</span>
 
 <span class="sd">    Embedding the pixels in the element (rather than serving a per-client temp</span>
 <span class="sd">    file) means a thumbnail/strip frame never produces an orphaned static route</span>
 <span class="sd">    that 404s after a reconnect. The flip side is that every embedded frame is</span>
-<span class="sd">    held in memory twice — server-side in the element&#39;s props, and again in the</span>
+<span class="sd">    held in memory twice — server-side in the element's props, and again in the</span>
 <span class="sd">    browser tab — for as long as its row is on the page. So the image is first</span>
 <span class="sd">    downscaled to the box it will actually be displayed in (times</span>
 <span class="sd">    :data:`HIDPI_SCALE`) and encoded as lossy WebP rather than lossless PNG,</span>
-<span class="sd">    which cuts a Browse row&#39;s payload by roughly 15x.</span>
+<span class="sd">    which cuts a Browse row's payload by roughly 15x.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        image: The image to encode.</span>
@@ -349,15 +353,15 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A ``data:image/webp;base64,…`` string usable as a ``ui.image`` source.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">box</span>
         <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">image</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">((</span><span class="n">width</span> <span class="o">*</span> <span class="n">HIDPI_SCALE</span><span class="p">,</span> <span class="n">height</span> <span class="o">*</span> <span class="n">HIDPI_SCALE</span><span class="p">),</span> <span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">LANCZOS</span><span class="p">)</span>
     <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-    <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;WEBP&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">_WEBP_QUALITY</span><span class="p">)</span>
-    <span class="n">encoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;data:image/webp;base64,</span><span class="si">{</span><span class="n">encoded</span><span class="si">}</span><span class="s2">&quot;</span></div>
+    <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"WEBP"</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">_WEBP_QUALITY</span><span class="p">)</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"data:image/webp;base64,</span><span class="si">{</span><span class="n">encoded</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
@@ -366,11 +370,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">band_frame_indices</span><span class="p">(</span>
     <span class="n">start_sec</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_sec</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evenly sample ``count`` frame indices across the span ``[start_sec, end_sec)``.</span>
+<span class="w">    </span><span class="sd">"""Evenly sample ``count`` frame indices across the span ``[start_sec, end_sec)``.</span>
 
-<span class="sd">    Converts the band&#39;s seconds to frame indices via ``fps`` and picks ``count``</span>
+<span class="sd">    Converts the band's seconds to frame indices via ``fps`` and picks ``count``</span>
 <span class="sd">    positions spread across the span (inclusive of both ends when ``count &gt; 1``), so a</span>
-<span class="sd">    clip&#39;s preview strip shows that span rather than the whole video. Indices are</span>
+<span class="sd">    clip's preview strip shows that span rather than the whole video. Indices are</span>
 <span class="sd">    clamped into ``[0, num_frames - 1]`` and a degenerate or reversed span collapses to</span>
 <span class="sd">    the single start frame.</span>
 
@@ -383,7 +387,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ``count`` (or fewer, when the span is a single frame) frame indices, ascending.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">num_frames</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">fps</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">last</span> <span class="o">=</span> <span class="n">num_frames</span> <span class="o">-</span> <span class="mi">1</span>
@@ -399,7 +403,7 @@
 <div class="viewcode-block" id="build_preview">
 <a class="viewcode-back" href="../../../autoapi/annie/media/preview/index.html#annie.media.preview.build_preview">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_preview</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode a video&#39;s strip and draw its annotations.</span>
+<span class="w">    </span><span class="sd">"""Decode a video's strip and draw its annotations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        entry: The video to preview; ``entry.video_path`` must be set.</span>
@@ -408,14 +412,14 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A ``(thumbnail, strip, num_frames)`` triple: the clean first frame as a</span>
 <span class="sd">        thumbnail, a list of annotated strip frames (vdet blue, active track green),</span>
-<span class="sd">        and the video&#39;s total frame count.</span>
+<span class="sd">        and the video's total frame count.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If the entry has no video to decode.</span>
 <span class="sd">        annie.decode.MediaUnavailableError: If the ``media`` extra is absent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot build a preview for a video-less entry&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cannot build a preview for a video-less entry"</span><span class="p">)</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>  <span class="c1"># local import: optional media dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.color</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_overlay</span>
@@ -424,7 +428,7 @@
     <span class="n">vdet_by_frame</span><span class="p">,</span> <span class="n">tracks_by_id</span> <span class="o">=</span> <span class="n">load_entry_annotations</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
     <span class="n">include</span> <span class="o">=</span> <span class="n">strip_track_ids</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 
-    <span class="n">thumbnail</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
+    <span class="n">thumbnail</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGB"</span><span class="p">)</span>
     <span class="n">strip</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">draw_overlay</span><span class="p">(</span>
             <span class="n">frame</span><span class="p">,</span>
@@ -441,34 +445,34 @@
 <div class="viewcode-block" id="build_grid_preview">
 <a class="viewcode-back" href="../../../autoapi/annie/media/preview/index.html#annie.media.preview.build_grid_preview">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_grid_preview</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode a video&#39;s middle (½) frame with its annotations drawn on it.</span>
+<span class="w">    </span><span class="sd">"""Decode a video's middle (½) frame with its annotations drawn on it.</span>
 
 <span class="sd">    The Browse grid view shows a single static frame per video, so this is the fast</span>
 <span class="sd">    counterpart to :func:`build_preview`: it decodes only three sample frames in one</span>
-<span class="sd">    pass and keeps the middle one. ``&quot;approximate&quot;`` seek is safe here because the</span>
-<span class="sd">    middle index — unlike the strip&#39;s last frame — never risks the tail overshoot</span>
-<span class="sd">    that :func:`annie.media.decode.read_strip` guards against with ``&quot;exact&quot;`` mode.</span>
+<span class="sd">    pass and keeps the middle one. ``"approximate"`` seek is safe here because the</span>
+<span class="sd">    middle index — unlike the strip's last frame — never risks the tail overshoot</span>
+<span class="sd">    that :func:`annie.media.decode.read_strip` guards against with ``"exact"`` mode.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        entry: The video to preview; ``entry.video_path`` must be set.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An ``(image, num_frames)`` pair: the annotated middle frame (vdet blue,</span>
-<span class="sd">        active track green) and the video&#39;s total frame count.</span>
+<span class="sd">        active track green) and the video's total frame count.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If the entry has no video to decode.</span>
 <span class="sd">        annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot build a preview for a video-less entry&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cannot build a preview for a video-less entry"</span><span class="p">)</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>  <span class="c1"># local import: optional media dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.color</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_overlay</span>
 
-    <span class="n">indices</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">num_frames</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">read_strip</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seek_mode</span><span class="o">=</span><span class="s2">&quot;approximate&quot;</span><span class="p">)</span>
+    <span class="n">indices</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">num_frames</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">read_strip</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seek_mode</span><span class="o">=</span><span class="s2">"approximate"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">frames</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no frames decoded for </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no frames decoded for </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">vdet_by_frame</span><span class="p">,</span> <span class="n">tracks_by_id</span> <span class="o">=</span> <span class="n">load_entry_annotations</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
     <span class="n">include</span> <span class="o">=</span> <span class="n">strip_track_ids</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 
@@ -488,9 +492,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">build_band_strip</span><span class="p">(</span>
     <span class="n">video_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">start_sec</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_sec</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode a plain strip spanning one band&#39;s ``[start_sec, end_sec)`` window.</span>
+<span class="w">    </span><span class="sd">"""Decode a plain strip spanning one band's ``[start_sec, end_sec)`` window.</span>
 
-<span class="sd">    Used by the Segment-review task to preview a clip&#39;s span. Unlike</span>
+<span class="sd">    Used by the Segment-review task to preview a clip's span. Unlike</span>
 <span class="sd">    :func:`build_preview` this draws no track/vdet overlay — the reviewer is judging the</span>
 <span class="sd">    temporal cut, so the raw frames of the span are what matters — and it decodes only</span>
 <span class="sd">    the sampled frames of that span rather than the whole video.</span>
@@ -506,15 +510,15 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>  <span class="c1"># local import: optional media dependency</span>
 
     <span class="n">meta</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">video_metadata</span><span class="p">(</span><span class="n">video_path</span><span class="p">)</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="n">band_frame_indices</span><span class="p">(</span><span class="n">start_sec</span><span class="p">,</span> <span class="n">end_sec</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">indices</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
-    <span class="n">frames</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">read_frames</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">seek_mode</span><span class="o">=</span><span class="s2">&quot;approximate&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">]</span></div>
+    <span class="n">frames</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">read_frames</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">seek_mode</span><span class="o">=</span><span class="s2">"approximate"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGB"</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">]</span></div>
 
 </pre></div>
         </article>

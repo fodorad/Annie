@@ -1,0 +1,185 @@
+annie.pages.timeline
+====================
+
+.. py:module:: annie.pages.timeline
+
+.. autoapi-nested-parse::
+
+   The Event-annotation timeline — an inline-SVG track/event surface (UI).
+
+   A video-editor-style timeline: a time ruler, a vertical playhead across every lane, and one
+   lane per track holding its event boxes. The surface is always the **full width of its
+   container**; zooming does not widen it — it narrows the *time window* shown, so the ruler
+   grows denser and boundaries are easier to place. The visible window is
+   ``[view_start_frame, view_end_frame]`` (the task keeps it centred on the playhead); frames
+   map to x within that window, and the gesture x-fraction maps back through the same window.
+
+   Within one track, events that overlap in time are **stacked into sub-rows** rather than drawn
+   on top of each other, so every event stays clickable; a lane's height grows with how many
+   events are concurrent at once (see :func:`pack_lanes`).
+
+   **Where the logic lives.** Python owns the model and renders the SVG *markup* — this keeps
+   the geometry testable (:func:`build_svg`, :func:`pack_lanes`, both pure) and mirrors how the
+   segment-review layout keeps its logic server-side. JavaScript does two things only: it reports
+   pointer gestures back (carrying the track and an x fraction of the *window*) so Python can
+   convert them to frames, and it moves the single playhead line during playback without a full
+   re-render (see :func:`annie.pages.videoclock.set_playhead_x`).
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.pages.timeline.ROW_HEIGHT
+   annie.pages.timeline.LANE_PAD
+   annie.pages.timeline.RULER_HEIGHT
+   annie.pages.timeline.LANE_GAP
+   annie.pages.timeline.BASE_WIDTH
+   annie.pages.timeline.EVENT_RADIUS
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.timeline.TimelineEvent
+   annie.pages.timeline.TimelineTrack
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.timeline.pack_lanes
+   annie.pages.timeline.build_svg
+   annie.pages.timeline.gesture_script
+
+
+Module Contents
+---------------
+
+.. py:data:: ROW_HEIGHT
+   :value: 22
+
+
+.. py:data:: LANE_PAD
+   :value: 6
+
+
+.. py:data:: RULER_HEIGHT
+   :value: 22
+
+
+.. py:data:: LANE_GAP
+   :value: 4
+
+
+.. py:data:: BASE_WIDTH
+   :value: 1000
+
+
+.. py:data:: EVENT_RADIUS
+   :value: 4
+
+
+.. py:class:: TimelineEvent
+
+   One event to draw on a lane.
+
+   .. attribute:: event_id
+
+      The event's stable id (echoed back on click, to select it).
+
+   .. attribute:: start_frame
+
+      Inclusive start frame.
+
+   .. attribute:: end_frame
+
+      Inclusive end frame.
+
+   .. attribute:: label
+
+      Text drawn inside the box (may be empty).
+
+   .. attribute:: selected
+
+      Whether to draw this box in the selected style.
+
+   .. attribute:: color
+
+      Per-event fill colour override (hex), or ``None`` to use the lane's colour.
+
+
+.. py:class:: TimelineTrack
+
+   One lane: a track name and the events on it.
+
+   .. attribute:: name
+
+      The track (category) name, shown as the lane label.
+
+   .. attribute:: events
+
+      The events to draw, in any order.
+
+
+.. py:function:: pack_lanes(events: collections.abc.Sequence[TimelineEvent]) -> list[int]
+
+   Assign each event a sub-row so overlapping events never share one.
+
+   A greedy interval-partitioning pass: events are considered in start-frame order and each
+   is placed on the lowest sub-row whose last event has already ended. Two events overlap
+   when one starts at or before the other ends (inclusive frames), so touching intervals are
+   treated as overlapping and separated — clearer for the reviewer than a 1px seam.
+
+   :param events: The events on one track, in any order.
+
+   :returns: A list of sub-row indices, parallel to ``events`` in their *original* order.
+
+
+.. py:function:: build_svg(tracks: collections.abc.Sequence[TimelineTrack], *, view_start: int, view_end: int, fps: float, svg_id: str, pending_start: int | None = None, pending_end: int | None = None) -> str
+
+   Render the timeline as an inline-SVG string for the visible frame window.
+
+   Pure and deterministic — no NiceGUI, no DOM — so the geometry (tick placement, event box
+   extents, lane stacking) is unit-testable.
+
+   :param tracks: The lanes to draw, top to bottom.
+   :param view_start: First frame shown at the left edge.
+   :param view_end: Last frame shown at the right edge (``> view_start``).
+   :param fps: Frames per second, for converting the window to ruler seconds.
+   :param svg_id: DOM id for the ``<svg>`` (the playhead updater and gesture bridge use it).
+   :param pending_start: While the reviewer is mid-capture (start marked, end not yet), the
+                         start frame of the growing amber band; ``None`` when not capturing.
+   :param pending_end: The band's right edge — the live playhead frame; defaults to
+                       ``pending_start`` (a minimal band) when omitted. Ignored if ``pending_start`` is
+                       ``None``.
+
+   :returns: A complete ``<svg>…</svg>`` markup string that scales to its container's width.
+
+
+.. py:function:: gesture_script(svg_id: str, event_name: str) -> str
+
+   Return JS that reports a timeline click to the server via ``emitEvent``.
+
+   Attached once after the SVG is embedded. It listens for pointer down/up on the SVG and
+   emits ``event_name`` with a ``detail`` of ``{kind, x, ...}`` where ``x`` is a ``[0, 1]``
+   fraction of the *visible window*:
+
+   * ``kind = "select"`` when an existing event box is clicked (carries ``event_id``);
+   * ``kind = "seek"`` for a click anywhere else, or any drag.
+
+   The timeline is navigation-only — it never creates events — so there is no click/drag
+   authoring gesture; boundaries come from the START/END EVENT buttons and the i/o keys.
+
+   :param svg_id: DOM id of the timeline ``<svg>``.
+   :param event_name: The custom event name the NiceGUI handler listens for.
+
+   :returns: The JavaScript to run once via ``ui.run_javascript``.
+
+

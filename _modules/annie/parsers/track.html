@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,13 +298,13 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.parsers.track</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Parser for ``.track`` / ``__track{N}.csv`` files (one tracked face per file).</span>
+<span></span><span class="sd">"""Parser for ``.track`` / ``__track{N}.csv`` files (one tracked face per file).</span>
 
 <span class="sd">A track file is derived from a ``.vdet`` by a tracking heuristic and follows a</span>
 <span class="sd">single face across frames — exactly one row per frame it appears in. The track</span>
 <span class="sd">index is encoded in the filename after a **double** underscore, e.g.</span>
 <span class="sd">``{video_id}__track0.csv``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -314,13 +318,13 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrameAnnotation</span>
 
 <span class="c1">#: Captures the integer ``N`` from a ``...__track{N}`` filename stem.</span>
-<span class="n">_TRACK_ID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;__track(\d+)$&quot;</span><span class="p">)</span>
+<span class="n">_TRACK_ID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"__track(\d+)$"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="track_id_from_name">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/track/index.html#annie.parsers.track.track_id_from_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">track_id_from_name</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the track index ``N`` from a ``...__track{N}`` filename.</span>
+<span class="w">    </span><span class="sd">"""Extract the track index ``N`` from a ``...__track{N}`` filename.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: The track file path or name.</span>
@@ -330,11 +334,11 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If the name does not contain a ``__track{N}`` segment.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">stem</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
     <span class="n">match</span> <span class="o">=</span> <span class="n">_TRACK_ID_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">stem</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;not a &#39;__track</span><span class="se">{{</span><span class="s2">N</span><span class="se">}}</span><span class="s2">&#39; filename: </span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"not a '__track</span><span class="se">{{</span><span class="s2">N</span><span class="se">}}</span><span class="s2">' filename: </span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></div>
 
 
@@ -342,7 +346,7 @@
 <div class="viewcode-block" id="load_track">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/track/index.html#annie.parsers.track.load_track">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_track</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">FrameAnnotation</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a track file into its track id and per-frame annotations.</span>
+<span class="w">    </span><span class="sd">"""Load a track file into its track id and per-frame annotations.</span>
 
 <span class="sd">    Every box is stamped with the track id parsed from the filename. A</span>
 <span class="sd">    well-formed track has exactly one box per frame, but the loader does not</span>
@@ -354,7 +358,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A ``(track_id, frames)`` tuple where ``frames`` is ordered by ascending</span>
 <span class="sd">        frame index.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">track_id</span> <span class="o">=</span> <span class="n">track_id_from_name</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">read_csv_rows</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">track_id</span><span class="p">,</span> <span class="n">group_rows_by_frame</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">track_id</span><span class="o">=</span><span class="n">track_id</span><span class="p">)</span></div>

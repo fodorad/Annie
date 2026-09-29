@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,22 +298,22 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.core.logbook</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Central event log — a dated file plus an in-memory store for the Log tab (infra).</span>
+<span></span><span class="sd">"""Central event log — a dated file plus an in-memory store for the Log tab (infra).</span>
 
 <span class="sd">Errors that happen in the background (lazy decode, render workers, the conversion</span>
-<span class="sd">batch, NiceGUI&#39;s own callbacks) used to escape to the terminal and were easy to</span>
+<span class="sd">batch, NiceGUI's own callbacks) used to escape to the terminal and were easy to</span>
 <span class="sd">miss. The log book gives them one home:</span>
 
 <span class="sd">* every event is appended to an in-memory ring buffer the **Log tab** reads, and</span>
 <span class="sd">* mirrored to a per-session file **named after the session database** (e.g.</span>
-<span class="sd">  ``annie_2026-01-02_09-00-00.log`` beside ``…/sessions/annie_…​.db``) so a session&#39;s</span>
+<span class="sd">  ``annie_2026-01-02_09-00-00.log`` beside ``…/sessions/annie_…​.db``) so a session's</span>
 <span class="sd">  log and its review DB are paired; renaming the DB renames the log (see</span>
 <span class="sd">  :meth:`LogBook.retarget`), keeping their names in lockstep.</span>
 
 <span class="sd">The store is event-sourced: each event has a monotonic ``seq`` so a per-client</span>
 <span class="sd">poller can fetch only what is new (for toasts) without re-rendering everything. It</span>
 <span class="sd">is pure stdlib and thread-safe, so render/convert worker threads can report too.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -322,18 +326,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="n">LEVELS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;The levels an event can carry, most severe first.&quot;&quot;&quot;</span>
+<span class="n">LEVELS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"error"</span><span class="p">,</span> <span class="s2">"warning"</span><span class="p">,</span> <span class="s2">"info"</span><span class="p">)</span>
+<span class="sd">"""The levels an event can carry, most severe first."""</span>
 
 <span class="c1">#: Annie level name → stdlib :mod:`logging` level, for mirroring to a log file.</span>
-<span class="n">_PY_LEVEL</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="s2">&quot;warning&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">}</span>
+<span class="n">_PY_LEVEL</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"error"</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="s2">"warning"</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="s2">"info"</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">}</span>
 
 
 <div class="viewcode-block" id="LogEvent">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogEvent</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One recorded event.</span>
+<span class="w">    </span><span class="sd">"""One recorded event.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        seq: Monotonic sequence number (for incremental polling).</span>
@@ -341,25 +345,25 @@
 <span class="sd">        level: One of :data:`LEVELS`.</span>
 <span class="sd">        message: Short, one-line summary.</span>
 <span class="sd">        details: Optional long text (e.g. a traceback) for the expandable view.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">seq</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
     <span class="n">level</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">time_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The timestamp formatted as ``YYYY-MM-DD HH:MM:SS``.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""The timestamp formatted as ``YYYY-MM-DD HH:MM:SS``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LogEvent.as_clipboard">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent.as_clipboard">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">as_clipboard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The event rendered as plain text for the Copy button.&quot;&quot;&quot;</span>
-        <span class="n">head</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">time_text</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">details</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">details</span> <span class="k">else</span> <span class="n">head</span></div>
+<span class="w">        </span><span class="sd">"""The event rendered as plain text for the Copy button."""</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">time_text</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">head</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">details</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">details</span> <span class="k">else</span> <span class="n">head</span></div>
 </div>
 
 
@@ -367,14 +371,14 @@
 <div class="viewcode-block" id="LogBook">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogBook</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A thread-safe, bounded event store mirrored to a dated log file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A thread-safe, bounded event store mirrored to a dated log file."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">capacity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an empty store.</span>
+<span class="w">        </span><span class="sd">"""Create an empty store.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            capacity: Maximum number of events kept in memory (oldest dropped).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="n">LogEvent</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">capacity</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
@@ -384,25 +388,25 @@
 <div class="viewcode-block" id="LogBook.attach_file">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.attach_file">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">attach_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mirror events to ``&lt;log_dir&gt;/&lt;name&gt;.log`` and return the file path.</span>
+<span class="w">        </span><span class="sd">"""Mirror events to ``&lt;log_dir&gt;/&lt;name&gt;.log`` and return the file path.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            log_dir: Directory to write the log file into (created if needed).</span>
-<span class="sd">            name: Base filename (no suffix) — the session database&#39;s stem, so the log</span>
+<span class="sd">            name: Base filename (no suffix) — the session database's stem, so the log</span>
 <span class="sd">                and its review DB share a name and can be found together.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The log file path.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">log_dir</span><span class="p">)</span>
         <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.log&quot;</span>
-        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;annie.events&quot;</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.log"</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"annie.events"</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># keep it out of the root/console handlers</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">):</span>
-            <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-            <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">"</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">))</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="o">=</span> <span class="n">path</span>
@@ -412,10 +416,10 @@
 <div class="viewcode-block" id="LogBook.retarget">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.retarget">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">retarget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rename the active log file to match a (renamed) session database.</span>
+<span class="w">        </span><span class="sd">"""Rename the active log file to match a (renamed) session database.</span>
 
 <span class="sd">        The log and its review DB are paired session data, so when the DB is renamed</span>
-<span class="sd">        the log follows: the current log file&#39;s **content moves** to</span>
+<span class="sd">        the log follows: the current log file's **content moves** to</span>
 <span class="sd">        ``&lt;logs_dir&gt;/&lt;db_stem&gt;.log`` and the file handler re-points there. If a log by</span>
 <span class="sd">        that name already exists (e.g. switching to a previously used DB), events are</span>
 <span class="sd">        appended to it rather than clobbering it.</span>
@@ -425,10 +429,10 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The new log path, or ``None`` if no log file is attached yet.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">new_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.log&quot;</span>
+        <span class="n">new_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.log"</span>
         <span class="k">if</span> <span class="n">new_path</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span>
         <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">):</span>
@@ -438,8 +442,8 @@
         <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">OSError</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">new_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span>  <span class="c1"># carry the existing content across</span>
-        <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">new_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>  <span class="c1"># append mode</span>
-        <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">new_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>  <span class="c1"># append mode</span>
+        <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">"</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="o">=</span> <span class="n">new_path</span>
         <span class="k">return</span> <span class="n">new_path</span></div>
@@ -447,8 +451,8 @@
 
 <div class="viewcode-block" id="LogBook.add">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.add">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogEvent</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record an event (and mirror it to the file, if attached).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogEvent</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Record an event (and mirror it to the file, if attached).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            level: One of :data:`LEVELS`.</span>
@@ -457,7 +461,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The stored :class:`LogEvent`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">event</span> <span class="o">=</span> <span class="n">LogEvent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seq</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
@@ -465,7 +469,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
                 <span class="n">_PY_LEVEL</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">),</span>
-                <span class="n">message</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">details</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">details</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">message</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">details</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">details</span> <span class="k">else</span> <span class="s2">""</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">event</span></div>
 
@@ -473,7 +477,7 @@
 <div class="viewcode-block" id="LogBook.events">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.events">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LogEvent</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a snapshot of all stored events, oldest first.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return a snapshot of all stored events, oldest first."""</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">)</span></div>
 
@@ -481,14 +485,14 @@
 <div class="viewcode-block" id="LogBook.since">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.since">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">since</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">LogEvent</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return events newer than ``seq`` and the latest sequence number.</span>
+<span class="w">        </span><span class="sd">"""Return events newer than ``seq`` and the latest sequence number.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            seq: The last sequence number the caller has already seen.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A ``(new_events, latest_seq)`` pair.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">new</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">seq</span> <span class="o">&gt;</span> <span class="n">seq</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">new</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span></div>
@@ -497,7 +501,7 @@
 <div class="viewcode-block" id="LogBook.latest_seq">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.latest_seq">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">latest_seq</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the most recent sequence number (``0`` when empty).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the most recent sequence number (``0`` when empty)."""</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span></div>
 
@@ -505,7 +509,7 @@
 <div class="viewcode-block" id="LogBook.clear">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.clear">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop all in-memory events (the file is untouched).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Drop all in-memory events (the file is untouched)."""</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 </div>
@@ -513,13 +517,13 @@
 
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">LogBook</span><span class="p">()</span>
-<span class="sd">&quot;&quot;&quot;The process-wide event log.&quot;&quot;&quot;</span>
+<span class="sd">"""The process-wide event log."""</span>
 
 
 <div class="viewcode-block" id="report">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.report">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogEvent</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Record an event on the global :data:`LOG`.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"error"</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogEvent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Record an event on the global :data:`LOG`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        message: One-line summary.</span>
@@ -528,7 +532,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The stored :class:`LogEvent`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">LOG</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span></div>
 
 
@@ -536,7 +540,7 @@
 <div class="viewcode-block" id="report_exception">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.report_exception">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">report_exception</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogEvent</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Record an error event whose details are ``exc``&#39;s formatted traceback.</span>
+<span class="w">    </span><span class="sd">"""Record an error event whose details are ``exc``'s formatted traceback.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        message: One-line summary.</span>
@@ -544,11 +548,11 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The stored :class:`LogEvent`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">details</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">details</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">details</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">LOG</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span></div>
+        <span class="n">details</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">LOG</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"error"</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

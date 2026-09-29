@@ -107,19 +107,19 @@ Module Contents
 
 
 .. py:data:: FOLDER_KINDS
-   :type:  tuple[SourceKind, Ellipsis]
+   :type:  tuple[SourceKind, ...]
 
    Folder-backed kinds. Each is a **singleton** in a registry.
 
 .. py:data:: VIDEO_SUFFIXES
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('.mp4',)
 
 
    Accepted source-video suffixes (lower-case, dotted).
 
 .. py:data:: VDET_SUFFIXES
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('.vdet',)
 
 

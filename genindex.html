@@ -211,6 +211,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -236,6 +237,7 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -244,7 +246,9 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -331,9 +335,15 @@
         </ul></li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.VideoOptions.add_audio">add_audio (annie.media.convert.VideoOptions attribute)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.add_event">add_event() (annie.dataset.storage.ReviewStore method)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.add_track">add_track() (annie.dataset.storage.ReviewStore method)</a>
+</li>
         <li><a href="autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager.advance">advance() (annie.pages.paging.Pager method)</a>
 </li>
         <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.all">all() (annie.dataset.storage.ReviewStore method)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.all_events">all_events() (annie.dataset.storage.ReviewStore method)</a>
 </li>
         <li>
     annie
@@ -410,6 +420,13 @@
 
         <ul>
           <li><a href="autoapi/annie/dataset/datasets/index.html#module-annie.dataset.datasets">module</a>
+</li>
+        </ul></li>
+        <li>
+    annie.dataset.events
+
+        <ul>
+          <li><a href="autoapi/annie/dataset/events/index.html#module-annie.dataset.events">module</a>
 </li>
         </ul></li>
         <li>
@@ -562,6 +579,13 @@
 </li>
         </ul></li>
         <li>
+    annie.pages.event_task
+
+        <ul>
+          <li><a href="autoapi/annie/pages/event_task/index.html#module-annie.pages.event_task">module</a>
+</li>
+        </ul></li>
+        <li>
     annie.pages.folder_picker
 
         <ul>
@@ -618,10 +642,24 @@
 </li>
         </ul></li>
         <li>
+    annie.pages.timeline
+
+        <ul>
+          <li><a href="autoapi/annie/pages/timeline/index.html#module-annie.pages.timeline">module</a>
+</li>
+        </ul></li>
+        <li>
     annie.pages.utils
 
         <ul>
           <li><a href="autoapi/annie/pages/utils/index.html#module-annie.pages.utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    annie.pages.videoclock
+
+        <ul>
+          <li><a href="autoapi/annie/pages/videoclock/index.html#module-annie.pages.videoclock">module</a>
 </li>
         </ul></li>
         <li>
@@ -699,6 +737,8 @@
 </li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.attach_file">attach_file() (annie.core.logbook.LogBook method)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.attributes">attributes (annie.dataset.storage.EventRecord attribute)</a>
+</li>
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.FilterSpec.audio">audio (annie.dataset.filtering.FilterSpec attribute)</a>
 </li>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.AppState.audio_cache">audio_cache (annie.core.state.AppState attribute)</a>
@@ -743,6 +783,8 @@
           <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.DataSource.bands">(annie.dataset.sources.DataSource attribute)</a>
 </li>
         </ul></li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.BASE_WIDTH">BASE_WIDTH (in module annie.pages.timeline)</a>
+</li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.BBox">BBox (class in annie.core.models)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.BLACK_DEFAULT_FPS">BLACK_DEFAULT_FPS (in module annie.media.convert)</a>
@@ -755,21 +797,25 @@
 </li>
         <li><a href="autoapi/annie/media/color/index.html#annie.media.color.box_color">box_color() (in module annie.media.color)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.FrameAnnotation.boxes">boxes (annie.core.models.FrameAnnotation attribute)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.UiSettings.browse_row_height">browse_row_height (annie.core.state.UiSettings attribute)</a>
 </li>
         <li><a href="autoapi/annie/app/index.html#annie.app.build">build() (in module annie.app)</a>
 </li>
         <li><a href="autoapi/annie/media/preview/index.html#annie.media.preview.build_band_strip">build_band_strip() (in module annie.media.preview)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/events/index.html#annie.dataset.events.build_export_tree">build_export_tree() (in module annie.dataset.events)</a>
+</li>
         <li><a href="autoapi/annie/media/preview/index.html#annie.media.preview.build_grid_preview">build_grid_preview() (in module annie.media.preview)</a>
 </li>
         <li><a href="autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.build_manifest">build_manifest() (in module annie.dataset.scanning)</a>
 </li>
         <li><a href="autoapi/annie/media/preview/index.html#annie.media.preview.build_preview">build_preview() (in module annie.media.preview)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.build_svg">build_svg() (in module annie.pages.timeline)</a>
 </li>
         <li><a href="autoapi/annie/dataset/datasets/index.html#annie.dataset.datasets.bundled_config_dir">bundled_config_dir() (in module annie.dataset.datasets)</a>
 </li>
@@ -789,6 +835,10 @@
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.AudioOptions.channels">channels (annie.media.convert.AudioOptions attribute)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/events/index.html#annie.dataset.events.clamp_event">clamp_event() (in module annie.dataset.events)</a>
+</li>
+        <li><a href="autoapi/annie/pages/event_task/index.html#annie.pages.event_task.cleanup">cleanup() (in module annie.pages.event_task)</a>
+</li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.clear">clear() (annie.core.logbook.LogBook method)</a>
 </li>
         <li><a href="autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.clear_all">clear_all() (annie.media.rendering.RenderService method)</a>
@@ -801,6 +851,12 @@
 </li>
         <li><a href="autoapi/annie/media/clipping/index.html#annie.media.clipping.clips_dir">clips_dir() (in module annie.media.clipping)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.color">color (annie.dataset.storage.EventRecord attribute)</a>
+
+        <ul>
+          <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent.color">(annie.pages.timeline.TimelineEvent attribute)</a>
+</li>
+        </ul></li>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.color">color() (in module annie.core.theme)</a>
 </li>
         <li><a href="autoapi/annie/media/color/index.html#annie.media.color.color_for_track">color_for_track() (in module annie.media.color)</a>
@@ -815,12 +871,12 @@
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.COMMON_SAMPLE_RATES">COMMON_SAMPLE_RATES (in module annie.media.convert)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/config/index.html#annie.core.config.Settings.config_dir">config_dir (annie.core.config.Settings attribute)</a>
 </li>
         <li><a href="autoapi/annie/dataset/datasets/index.html#annie.dataset.datasets.config_name">config_name() (in module annie.dataset.datasets)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.configure_csv">configure_csv() (in module annie.pages.csv_dialog)</a>
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.BBox.contains">contains() (annie.core.models.BBox method)</a>
@@ -852,6 +908,8 @@
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.CsvRole">CsvRole (class in annie.dataset.sources)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress.current">current (annie.media.convert.ConvertProgress attribute)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.current_time">current_time() (in module annie.pages.videoclock)</a>
 </li>
         <li><a href="autoapi/annie/media/clipping/index.html#annie.media.clipping.cut_clip">cut_clip() (in module annie.media.clipping)</a>
 </li>
@@ -885,13 +943,17 @@
 </li>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.DECISION_DROP_TINT">DECISION_DROP_TINT (in module annie.core.theme)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.DECISION_UNDECIDED">DECISION_UNDECIDED (in module annie.core.theme)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.decisions">decisions() (annie.dataset.storage.ReviewStore method)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.decodable_frames">decodable_frames() (in module annie.media.convert)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.delete_event">delete_event() (annie.dataset.storage.ReviewStore method)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.delete_track">delete_track() (annie.dataset.storage.ReviewStore method)</a>
 </li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent.details">details (annie.core.logbook.LogEvent attribute)</a>
 </li>
@@ -919,6 +981,8 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress.elapsed">elapsed (annie.media.convert.ConvertProgress property)</a>
 </li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.element_id">element_id() (in module annie.pages.videoclock)</a>
+</li>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.UiSettings.embed_ttl_seconds">embed_ttl_seconds (annie.core.state.UiSettings attribute)</a>
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.Event.end">end (annie.core.models.Event attribute)</a>
@@ -929,6 +993,12 @@
         </ul></li>
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SegmentationBand.end_column">end_column (annie.dataset.sources.SegmentationBand attribute)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.end_frame">end_frame (annie.dataset.storage.EventRecord attribute)</a>
+
+        <ul>
+          <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent.end_frame">(annie.pages.timeline.TimelineEvent attribute)</a>
+</li>
+        </ul></li>
         <li><a href="autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.ScanResult.entries">entries (annie.dataset.scanning.ScanResult attribute)</a>
 </li>
         <li><a href="autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderJob.error">error (annie.media.rendering.RenderJob attribute)</a>
@@ -937,12 +1007,40 @@
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.Event">Event (class in annie.core.models)</a>
 </li>
-        <li><a href="autoapi/annie/core/models/index.html#annie.core.models.Event.event_id">event_id (annie.core.models.Event attribute)</a>
+        <li><a href="autoapi/annie/pages/event_task/index.html#annie.pages.event_task.event_annotation_task">event_annotation_task() (in module annie.pages.event_task)</a>
 </li>
-        <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.events">events() (annie.core.logbook.LogBook method)</a>
+        <li><a href="autoapi/annie/core/models/index.html#annie.core.models.Event.event_id">event_id (annie.core.models.Event attribute)</a>
+
+        <ul>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.event_id">(annie.dataset.storage.EventRecord attribute)</a>
+</li>
+          <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent.event_id">(annie.pages.timeline.TimelineEvent attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.EVENT_PENDING">EVENT_PENDING (in module annie.core.theme)</a>
+</li>
+        <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.EVENT_PLAYHEAD">EVENT_PLAYHEAD (in module annie.core.theme)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.EVENT_RADIUS">EVENT_RADIUS (in module annie.pages.timeline)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.event_row_keys">event_row_keys() (annie.dataset.storage.ReviewStore method)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.EVENT_SELECTED">EVENT_SELECTED (in module annie.core.theme)</a>
+</li>
+        <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.event_track_color">event_track_color() (in module annie.core.theme)</a>
+</li>
+        <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.EVENT_TRACK_PALETTE">EVENT_TRACK_PALETTE (in module annie.core.theme)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord">EventRecord (class in annie.dataset.storage)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineTrack.events">events (annie.pages.timeline.TimelineTrack attribute)</a>
+</li>
+        <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.events">events() (annie.core.logbook.LogBook method)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.events_for">events_for() (annie.dataset.storage.ReviewStore method)</a>
+</li>
         <li><a href="autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager.exhausted">exhausted (annie.pages.paging.Pager property)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.expected_frame_count">expected_frame_count() (in module annie.media.convert)</a>
@@ -958,6 +1056,10 @@
         <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.export_csv">export_csv() (annie.dataset.storage.ReviewStore method)</a>
 </li>
         <li><a href="autoapi/annie/dataset/segments/index.html#annie.dataset.segments.export_decision_sets">export_decision_sets() (in module annie.dataset.segments)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/events/index.html#annie.dataset.events.export_events_csv">export_events_csv() (in module annie.dataset.events)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/events/index.html#annie.dataset.events.export_events_json">export_events_json() (in module annie.dataset.events)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.export_failures">export_failures() (in module annie.media.convert)</a>
 </li>
@@ -991,10 +1093,10 @@
           <li><a href="autoapi/annie/media/decode/index.html#annie.media.decode.VideoMetadata.fps">(annie.media.decode.VideoMetadata attribute)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress.fraction">fraction (annie.media.convert.ConvertProgress property)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/media/decode/index.html#annie.media.decode.frame_count">frame_count() (in module annie.media.decode)</a>
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.FrameAnnotation.frame_idx">frame_idx (annie.core.models.FrameAnnotation attribute)</a>
@@ -1007,6 +1109,8 @@
 </li>
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.FilterSpec.frames_threshold">frames_threshold (annie.dataset.filtering.FilterSpec attribute)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/events/index.html#annie.dataset.events.frames_to_seconds">frames_to_seconds() (in module annie.dataset.events)</a>
+</li>
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.FramesFilter">FramesFilter (in module annie.dataset.filtering)</a>
 </li>
     </ul></td>
@@ -1017,6 +1121,8 @@
   <h2>G</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.gesture_script">gesture_script() (in module annie.pages.timeline)</a>
+</li>
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.get">get() (annie.dataset.sources.SourceRegistry method)</a>
 
         <ul>
@@ -1025,10 +1131,12 @@
           <li><a href="autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService.get">(annie.media.rendering.RenderService method)</a>
 </li>
         </ul></li>
-        <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.VideoOptions.grayscale">grayscale (annie.media.convert.VideoOptions attribute)</a>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.get_event">get_event() (annie.dataset.storage.ReviewStore method)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.VideoOptions.grayscale">grayscale (annie.media.convert.VideoOptions attribute)</a>
+</li>
         <li><a href="autoapi/annie/media/color/index.html#annie.media.color.GREEN">GREEN (in module annie.media.color)</a>
 </li>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.UiSettings.grid_page_size">grid_page_size (annie.core.state.UiSettings attribute)</a>
@@ -1188,9 +1296,13 @@
 </li>
           <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.TaskRequirement.label">(annie.dataset.sources.TaskRequirement attribute)</a>
 </li>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.label">(annie.dataset.storage.EventRecord attribute)</a>
+</li>
           <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.AudioItem.label">(annie.media.convert.AudioItem property)</a>
 </li>
           <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.VideoItem.label">(annie.media.convert.VideoItem property)</a>
+</li>
+          <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent.label">(annie.pages.timeline.TimelineEvent attribute)</a>
 </li>
         </ul></li>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.LABEL_COLOR">LABEL_COLOR (in module annie.core.theme)</a>
@@ -1217,12 +1329,16 @@
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.BBox.landmarks">landmarks (annie.core.models.BBox attribute)</a>
 </li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.LANE_GAP">LANE_GAP (in module annie.pages.timeline)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.LANE_PAD">LANE_PAD (in module annie.pages.timeline)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook.latest_seq">latest_seq() (annie.core.logbook.LogBook method)</a>
 </li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent.level">level (annie.core.logbook.LogEvent attribute)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LEVELS">LEVELS (in module annie.core.logbook)</a>
 </li>
         <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.list_by_decision">list_by_decision() (annie.dataset.storage.ReviewStore method)</a>
@@ -1313,6 +1429,8 @@
 </li>
           <li><a href="autoapi/annie/dataset/datasets/index.html#module-annie.dataset.datasets">annie.dataset.datasets</a>
 </li>
+          <li><a href="autoapi/annie/dataset/events/index.html#module-annie.dataset.events">annie.dataset.events</a>
+</li>
           <li><a href="autoapi/annie/dataset/filtering/index.html#module-annie.dataset.filtering">annie.dataset.filtering</a>
 </li>
           <li><a href="autoapi/annie/dataset/manipulate/index.html#module-annie.dataset.manipulate">annie.dataset.manipulate</a>
@@ -1355,6 +1473,8 @@
 </li>
           <li><a href="autoapi/annie/pages/dataset/index.html#module-annie.pages.dataset">annie.pages.dataset</a>
 </li>
+          <li><a href="autoapi/annie/pages/event_task/index.html#module-annie.pages.event_task">annie.pages.event_task</a>
+</li>
           <li><a href="autoapi/annie/pages/folder_picker/index.html#module-annie.pages.folder_picker">annie.pages.folder_picker</a>
 </li>
           <li><a href="autoapi/annie/pages/fsbrowse/index.html#module-annie.pages.fsbrowse">annie.pages.fsbrowse</a>
@@ -1371,7 +1491,11 @@
 </li>
           <li><a href="autoapi/annie/pages/settings/index.html#module-annie.pages.settings">annie.pages.settings</a>
 </li>
+          <li><a href="autoapi/annie/pages/timeline/index.html#module-annie.pages.timeline">annie.pages.timeline</a>
+</li>
           <li><a href="autoapi/annie/pages/utils/index.html#module-annie.pages.utils">annie.pages.utils</a>
+</li>
+          <li><a href="autoapi/annie/pages/videoclock/index.html#module-annie.pages.videoclock">annie.pages.videoclock</a>
 </li>
           <li><a href="autoapi/annie/pages/viewport/index.html#module-annie.pages.viewport">annie.pages.viewport</a>
 </li>
@@ -1403,6 +1527,8 @@
 </li>
           <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SegmentationBand.name">(annie.dataset.sources.SegmentationBand attribute)</a>
 </li>
+          <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineTrack.name">(annie.pages.timeline.TimelineTrack attribute)</a>
+</li>
         </ul></li>
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.FilterSpec.name_prefix">name_prefix (annie.dataset.filtering.FilterSpec attribute)</a>
 </li>
@@ -1410,17 +1536,21 @@
 </li>
         <li><a href="autoapi/annie/dataset/segments/index.html#annie.dataset.segments.next_undecided_index">next_undecided_index() (in module annie.dataset.segments)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.NO_ACTIVE_TRACK">NO_ACTIVE_TRACK (in module annie.core.models)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.ReviewState.note">note (annie.dataset.filtering.ReviewState attribute)</a>
 
         <ul>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.note">(annie.dataset.storage.EventRecord attribute)</a>
+</li>
           <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord.note">(annie.dataset.storage.ReviewRecord attribute)</a>
 </li>
         </ul></li>
         <li><a href="autoapi/annie/pages/utils/index.html#annie.pages.utils.notify_detached">notify_detached() (in module annie.pages.utils)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.nudge_seconds">nudge_seconds() (in module annie.pages.videoclock)</a>
 </li>
         <li><a href="autoapi/annie/media/decode/index.html#annie.media.decode.VideoMetadata.num_frames">num_frames (annie.media.decode.VideoMetadata attribute)</a>
 </li>
@@ -1458,6 +1588,8 @@
   <h2>P</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.pack_lanes">pack_lanes() (in module annie.pages.timeline)</a>
+</li>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.UiSettings.page_size">page_size (annie.core.state.UiSettings attribute)</a>
 </li>
         <li><a href="autoapi/annie/pages/paging/index.html#annie.pages.paging.paged">paged() (in module annie.pages.paging)</a>
@@ -1472,17 +1604,21 @@
 </li>
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.DataSource.path">path (annie.dataset.sources.DataSource attribute)</a>
 </li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.pause">pause() (in module annie.pages.videoclock)</a>
+</li>
         <li><a href="autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate.pending">pending (annie.pages.viewport.OffscreenGate attribute)</a>
 </li>
         <li><a href="autoapi/annie/pages/folder_picker/index.html#annie.pages.folder_picker.pick_directory">pick_directory() (in module annie.pages.folder_picker)</a>
 </li>
-        <li><a href="autoapi/annie/pages/folder_picker/index.html#annie.pages.folder_picker.pick_file">pick_file() (in module annie.pages.folder_picker)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/annie/pages/folder_picker/index.html#annie.pages.folder_picker.pick_file">pick_file() (in module annie.pages.folder_picker)</a>
+</li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.plan_audio">plan_audio() (in module annie.media.convert)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.plan_video">plan_video() (in module annie.media.convert)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.play">play() (in module annie.pages.videoclock)</a>
 </li>
         <li><a href="autoapi/annie/core/config/index.html#annie.core.config.Settings.port">port (annie.core.config.Settings attribute)</a>
 </li>
@@ -1536,6 +1672,8 @@
 </li>
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.remove">remove() (annie.dataset.sources.SourceRegistry method)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.rename_track">rename_track() (annie.dataset.storage.ReviewStore method)</a>
+</li>
         <li><a href="autoapi/annie/pages/annotator/index.html#annie.pages.annotator.render">render() (in module annie.pages.annotator)</a>
 
         <ul>
@@ -1564,10 +1702,10 @@
 </li>
         <li><a href="autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderService">RenderService (class in annie.media.rendering)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/dataset/datasets/index.html#annie.dataset.datasets.repo_data_dir">repo_data_dir() (in module annie.dataset.datasets)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.report">report() (in module annie.core.logbook)</a>
 </li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.report_exception">report_exception() (in module annie.core.logbook)</a>
@@ -1610,15 +1748,21 @@
 </li>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.ROW_BORDER">ROW_BORDER (in module annie.core.theme)</a>
 </li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.ROW_HEIGHT">ROW_HEIGHT (in module annie.pages.timeline)</a>
+</li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.VideoEntry.row_id">row_id (annie.core.models.VideoEntry attribute)</a>
 </li>
-        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord.row_key">row_key (annie.dataset.storage.ReviewRecord attribute)</a>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.row_key">row_key (annie.dataset.storage.EventRecord attribute)</a>
 
         <ul>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord.row_key">(annie.dataset.storage.ReviewRecord attribute)</a>
+</li>
           <li><a href="autoapi/annie/media/rendering/index.html#annie.media.rendering.RenderJob.row_key">(annie.media.rendering.RenderJob attribute)</a>
 </li>
         </ul></li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.RowStatus">RowStatus (in module annie.core.models)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.RULER_HEIGHT">RULER_HEIGHT (in module annie.pages.timeline)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.run_ffmpeg">run_ffmpeg() (in module annie.media.convert)</a>
 </li>
@@ -1648,7 +1792,13 @@
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.BBox.score">score (annie.core.models.BBox attribute)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/events/index.html#annie.dataset.events.seconds_to_frame">seconds_to_frame() (in module annie.dataset.events)</a>
+</li>
         <li><a href="autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager.seek">seek() (annie.pages.paging.Pager method)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.seek_frame">seek_frame() (in module annie.pages.videoclock)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.seek_seconds">seek_seconds() (in module annie.pages.videoclock)</a>
 </li>
         <li><a href="autoapi/annie/media/decode/index.html#annie.media.decode.SeekMode">SeekMode (in module annie.media.decode)</a>
 </li>
@@ -1663,6 +1813,8 @@
         <li><a href="autoapi/annie/dataset/segments/index.html#annie.dataset.segments.SegmentClip">SegmentClip (class in annie.dataset.segments)</a>
 </li>
         <li><a href="autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.select_id_column">select_id_column() (in module annie.pages.csv_dialog)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent.selected">selected (annie.pages.timeline.TimelineEvent attribute)</a>
 </li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent.seq">seq (annie.core.logbook.LogEvent attribute)</a>
 </li>
@@ -1684,6 +1836,10 @@
 </li>
         <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_note">set_note() (annie.dataset.storage.ReviewStore method)</a>
 </li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.set_pending_band">set_pending_band() (in module annie.pages.videoclock)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.set_playhead_x">set_playhead_x() (in module annie.pages.videoclock)</a>
+</li>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.AppState.set_store">set_store() (annie.core.state.AppState method)</a>
 </li>
         <li><a href="autoapi/annie/pages/annotator/index.html#annie.pages.annotator.set_tab">set_tab() (in module annie.pages.annotator)</a>
@@ -1694,10 +1850,12 @@
 </li>
         <li><a href="autoapi/annie/core/config/index.html#annie.core.config.settings">settings (in module annie.core.config)</a>
 </li>
-        <li><a href="autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate.show">show() (annie.pages.viewport.OffscreenGate method)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/annie/pages/event_task/index.html#annie.pages.event_task.settings_temp_dir">settings_temp_dir() (in module annie.pages.event_task)</a>
+</li>
+        <li><a href="autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate.show">show() (annie.pages.viewport.OffscreenGate method)</a>
+</li>
         <li><a href="autoapi/annie/dataset/manipulate/index.html#annie.dataset.manipulate.Transform.show_original">show_original (annie.dataset.manipulate.Transform attribute)</a>
 </li>
         <li><a href="autoapi/annie/pages/paging/index.html#annie.pages.paging.Pager.shown">shown (annie.pages.paging.Pager attribute)</a>
@@ -1726,6 +1884,12 @@
 </li>
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SegmentationBand.start_column">start_column (annie.dataset.sources.SegmentationBand attribute)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.start_frame">start_frame (annie.dataset.storage.EventRecord attribute)</a>
+
+        <ul>
+          <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent.start_frame">(annie.pages.timeline.TimelineEvent attribute)</a>
+</li>
+        </ul></li>
         <li><a href="autoapi/annie/pages/logs/index.html#annie.pages.logs.start_toasts">start_toasts() (in module annie.pages.logs)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress.started_at">started_at (annie.media.convert.ConvertProgress attribute)</a>
@@ -1747,6 +1911,8 @@
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.STATUS_ICONS">STATUS_ICONS (in module annie.core.theme)</a>
 </li>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.STATUS_LABELS">STATUS_LABELS (in module annie.core.theme)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.step_frames">step_frames() (in module annie.pages.videoclock)</a>
 </li>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.AppState.store">store (annie.core.state.AppState attribute)</a>
 </li>
@@ -1798,6 +1964,10 @@
 </li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent.time_text">time_text (annie.core.logbook.LogEvent property)</a>
 </li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent">TimelineEvent (class in annie.pages.timeline)</a>
+</li>
+        <li><a href="autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineTrack">TimelineTrack (class in annie.pages.timeline)</a>
+</li>
         <li><a href="autoapi/annie/core/logbook/index.html#annie.core.logbook.LogEvent.timestamp">timestamp (annie.core.logbook.LogEvent attribute)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress.title">title (annie.media.convert.ConvertProgress attribute)</a>
@@ -1805,6 +1975,8 @@
         <li><a href="autoapi/annie/dataset/datasets/index.html#annie.dataset.datasets.to_config_dict">to_config_dict() (in module annie.dataset.datasets)</a>
 </li>
         <li><a href="autoapi/annie/media/preview/index.html#annie.media.preview.to_data_uri">to_data_uri() (in module annie.media.preview)</a>
+</li>
+        <li><a href="autoapi/annie/pages/videoclock/index.html#annie.pages.videoclock.toggle">toggle() (in module annie.pages.videoclock)</a>
 </li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress.total">total (annie.media.convert.ConvertProgress attribute)</a>
 
@@ -1815,7 +1987,11 @@
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.track">track (annie.dataset.sources.SourceRegistry property)</a>
+
+        <ul>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.track">(annie.dataset.storage.EventRecord attribute)</a>
 </li>
+        </ul></li>
         <li><a href="autoapi/annie/core/theme/index.html#annie.core.theme.TRACK_COLOR">TRACK_COLOR (in module annie.core.theme)</a>
 </li>
         <li><a href="autoapi/annie/core/config/index.html#annie.core.config.Settings.track_dir">track_dir (annie.core.config.Settings attribute)</a>
@@ -1837,6 +2013,8 @@
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.TrackFilter">TrackFilter (in module annie.dataset.filtering)</a>
 </li>
         <li><a href="autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.FilterSpec.tracks">tracks (annie.dataset.filtering.FilterSpec attribute)</a>
+</li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.tracks_for">tracks_for() (annie.dataset.storage.ReviewStore method)</a>
 </li>
         <li><a href="autoapi/annie/dataset/manipulate/index.html#annie.dataset.manipulate.Transform">Transform (class in annie.dataset.manipulate)</a>
 </li>
@@ -1862,14 +2040,20 @@
 </li>
         <li><a href="autoapi/annie/pages/utils/index.html#annie.pages.utils.unembed_after_idle">unembed_after_idle() (in module annie.pages.utils)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/state/index.html#annie.core.state.UiSettings.unload_after_seconds">unload_after_seconds (annie.core.state.UiSettings attribute)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/pages/annotator/index.html#annie.pages.annotator.update_availability">update_availability() (in module annie.pages.annotator)</a>
 </li>
-        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord.updated_at">updated_at (annie.dataset.storage.ReviewRecord attribute)</a>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.update_event">update_event() (annie.dataset.storage.ReviewStore method)</a>
 </li>
+        <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.updated_at">updated_at (annie.dataset.storage.EventRecord attribute)</a>
+
+        <ul>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord.updated_at">(annie.dataset.storage.ReviewRecord attribute)</a>
+</li>
+        </ul></li>
         <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.upsert">upsert() (annie.dataset.storage.ReviewStore method)</a>
 </li>
     </ul></td>
@@ -1918,16 +2102,18 @@
         </ul></li>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.video_command">video_command() (in module annie.media.convert)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/core/config/index.html#annie.core.config.Settings.video_extensions">video_extensions (annie.core.config.Settings attribute)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="autoapi/annie/media/convert/index.html#annie.media.convert.video_filters">video_filters() (in module annie.media.convert)</a>
 </li>
         <li><a href="autoapi/annie/core/models/index.html#annie.core.models.VideoEntry.video_id">video_id (annie.core.models.VideoEntry attribute)</a>
 
         <ul>
           <li><a href="autoapi/annie/dataset/segments/index.html#annie.dataset.segments.SegmentClip.video_id">(annie.dataset.segments.SegmentClip attribute)</a>
+</li>
+          <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord.video_id">(annie.dataset.storage.EventRecord attribute)</a>
 </li>
           <li><a href="autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord.video_id">(annie.dataset.storage.ReviewRecord attribute)</a>
 </li>

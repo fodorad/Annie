@@ -42,7 +42,7 @@ Module Contents
 ---------------
 
 .. py:data:: LANDMARK_NAMES
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('left_eye', 'right_eye', 'nose', 'left_mouth', 'right_mouth')
 
 

@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.dataset.sources</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Generic, extensible data-source registry (domain).</span>
+<span></span><span class="sd">"""Generic, extensible data-source registry (domain).</span>
 
 <span class="sd">Annie is dataset-agnostic: a dataset is described as an ordered list of</span>
 <span class="sd">**data sources** the user adds on the Dataset tab, rather than four fixed</span>
@@ -311,7 +315,7 @@
 
 <span class="sd">This module is pure domain — no NiceGUI, no config, no torch. The registry is the</span>
 <span class="sd">single source of truth the scanner (:mod:`annie.scanning`) consumes.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -328,32 +332,32 @@
 <div class="viewcode-block" id="SourceKind">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceKind">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SourceKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The kind of a data source.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The kind of a data source."""</span>
 
-    <span class="n">VIDEO</span> <span class="o">=</span> <span class="s2">&quot;video&quot;</span>
-    <span class="n">VDET</span> <span class="o">=</span> <span class="s2">&quot;vdet&quot;</span>
-    <span class="n">TRACK</span> <span class="o">=</span> <span class="s2">&quot;track&quot;</span>
-    <span class="n">CSV</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span></div>
+    <span class="n">VIDEO</span> <span class="o">=</span> <span class="s2">"video"</span>
+    <span class="n">VDET</span> <span class="o">=</span> <span class="s2">"vdet"</span>
+    <span class="n">TRACK</span> <span class="o">=</span> <span class="s2">"track"</span>
+    <span class="n">CSV</span> <span class="o">=</span> <span class="s2">"csv"</span></div>
 
 
 
 <div class="viewcode-block" id="CsvRole">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.CsvRole">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CsvRole</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a CSV source is interpreted.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""How a CSV source is interpreted."""</span>
 
     <span class="c1">#: Value columns become Browse tags and filter facets.</span>
-    <span class="n">LABELS</span> <span class="o">=</span> <span class="s2">&quot;labels&quot;</span>
-    <span class="c1">#: One value column holds each video&#39;s active protagonist track id.</span>
-    <span class="n">PROTAGONIST</span> <span class="o">=</span> <span class="s2">&quot;protagonist&quot;</span>
+    <span class="n">LABELS</span> <span class="o">=</span> <span class="s2">"labels"</span>
+    <span class="c1">#: One value column holds each video's active protagonist track id.</span>
+    <span class="n">PROTAGONIST</span> <span class="o">=</span> <span class="s2">"protagonist"</span>
     <span class="c1">#: Rows are per-clip segments of a long video, reviewed (accept/drop) in the</span>
-    <span class="c1">#: Annotator&#39;s Segment-review task. See :class:`SegmentationBand`.</span>
-    <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;segmentation&quot;</span>
+    <span class="c1">#: Annotator's Segment-review task. See :class:`SegmentationBand`.</span>
+    <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">"segmentation"</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_missing_</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CsvRole</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the pre-rename ``&quot;main_character&quot;`` role stored in older configs.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">PROTAGONIST</span> <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;main_character&quot;</span> <span class="k">else</span> <span class="kc">None</span></div>
+<span class="w">        </span><span class="sd">"""Resolve the pre-rename ``"main_character"`` role stored in older configs."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">PROTAGONIST</span> <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">"main_character"</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
 
@@ -361,17 +365,17 @@
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SegmentationBand">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SegmentationBand</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A named start/end column pair defining one segmentation of a clip.</span>
+<span class="w">    </span><span class="sd">"""A named start/end column pair defining one segmentation of a clip.</span>
 
 <span class="sd">    A segmentation CSV may carry several competing segmentations of the same clip</span>
 <span class="sd">    (e.g. a ground-truth span and a WhisperX forced-alignment span); each is one</span>
 <span class="sd">    band, rendered side by side in the Segment-review task for comparison.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        name: Human label shown beside the band&#39;s preview (e.g. ``&quot;GT&quot;``, ``&quot;cut&quot;``).</span>
-<span class="sd">        start_column: CSV column holding the band&#39;s start time, in seconds.</span>
-<span class="sd">        end_column: CSV column holding the band&#39;s end time, in seconds.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        name: Human label shown beside the band's preview (e.g. ``"GT"``, ``"cut"``).</span>
+<span class="sd">        start_column: CSV column holding the band's start time, in seconds.</span>
+<span class="sd">        end_column: CSV column holding the band's end time, in seconds.</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">start_column</span><span class="p">:</span> <span class="nb">str</span>
@@ -380,42 +384,42 @@
 
 
 <span class="n">FOLDER_KINDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SourceKind</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">,</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">,</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Folder-backed kinds. Each is a **singleton** in a registry.&quot;&quot;&quot;</span>
+<span class="sd">"""Folder-backed kinds. Each is a **singleton** in a registry."""</span>
 
-<span class="n">VIDEO_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.mp4&quot;</span><span class="p">,)</span>
-<span class="sd">&quot;&quot;&quot;Accepted source-video suffixes (lower-case, dotted).&quot;&quot;&quot;</span>
-<span class="n">VDET_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.vdet&quot;</span><span class="p">,)</span>
-<span class="sd">&quot;&quot;&quot;Suffix identifying a raw-detection file.&quot;&quot;&quot;</span>
-<span class="n">TRACK_GLOB</span> <span class="o">=</span> <span class="s2">&quot;*__track*.csv&quot;</span>
-<span class="sd">&quot;&quot;&quot;Glob identifying derived single-track files.&quot;&quot;&quot;</span>
+<span class="n">VIDEO_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".mp4"</span><span class="p">,)</span>
+<span class="sd">"""Accepted source-video suffixes (lower-case, dotted)."""</span>
+<span class="n">VDET_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".vdet"</span><span class="p">,)</span>
+<span class="sd">"""Suffix identifying a raw-detection file."""</span>
+<span class="n">TRACK_GLOB</span> <span class="o">=</span> <span class="s2">"*__track*.csv"</span>
+<span class="sd">"""Glob identifying derived single-track files."""</span>
 
 <span class="n">KIND_LABELS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SourceKind</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">&quot;Videos folder&quot;</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="s2">&quot;Vdet folder&quot;</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="s2">&quot;Track folder&quot;</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span> <span class="s2">&quot;CSV file&quot;</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">"Videos folder"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="s2">"Vdet folder"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="s2">"Track folder"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span> <span class="s2">"CSV file"</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="sd">&quot;&quot;&quot;Short human label per kind, for the Dataset source list and the add menu.&quot;&quot;&quot;</span>
+<span class="sd">"""Short human label per kind, for the Dataset source list and the add menu."""</span>
 
 <span class="n">KIND_ICONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SourceKind</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">&quot;movie&quot;</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="s2">&quot;center_focus_strong&quot;</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="s2">&quot;timeline&quot;</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span> <span class="s2">&quot;table_chart&quot;</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">"movie"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="s2">"center_focus_strong"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="s2">"timeline"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span> <span class="s2">"table_chart"</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="sd">&quot;&quot;&quot;Tabler icon per kind for the Dataset cards.&quot;&quot;&quot;</span>
+<span class="sd">"""Tabler icon per kind for the Dataset cards."""</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_junk</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether a filename is OS junk (any dotfile: ``._*``, ``.DS_Store``).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Return whether a filename is OS junk (any dotfile: ``._*``, ``.DS_Store``)."""</span>
+    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="DataSource">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.DataSource">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataSource</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One configured data source.</span>
+<span class="w">    </span><span class="sd">"""One configured data source.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        kind: The :class:`SourceKind`.</span>
@@ -425,7 +429,7 @@
 <span class="sd">        value_columns: For a CSV source, the selected value columns (label tags,</span>
 <span class="sd">            or a single protagonist track-id column).</span>
 <span class="sd">        column_types: For a CSV source, the chosen data type per value column</span>
-<span class="sd">            (``&quot;str&quot;`` / ``&quot;int&quot;`` / ``&quot;float&quot;``); columns absent here default to str.</span>
+<span class="sd">            (``"str"`` / ``"int"`` / ``"float"``); columns absent here default to str.</span>
 <span class="sd">        segment_column: For a :attr:`CsvRole.SEGMENTATION` CSV, the column that tells</span>
 <span class="sd">            apart the several rows sharing one ``key_column`` value: the two combine</span>
 <span class="sd">            into the clip identity ``{video_id}_{segment_id}`` that each accept/drop is</span>
@@ -433,7 +437,7 @@
 <span class="sd">        bands: For a :attr:`CsvRole.SEGMENTATION` CSV, the ordered start/end column</span>
 <span class="sd">            pairs to render and compare (see :class:`SegmentationBand`). Empty</span>
 <span class="sd">            otherwise.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">kind</span><span class="p">:</span> <span class="n">SourceKind</span>
     <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
@@ -446,44 +450,44 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this source points at a folder (vs a single CSV file).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether this source points at a folder (vs a single CSV file)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">FOLDER_KINDS</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_protagonist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this is the CSV that assigns each video&#39;s protagonist track.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether this is the CSV that assigns each video's protagonist track."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_segmentation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this CSV holds per-clip segments for the Segment-review task.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether this CSV holds per-clip segments for the Segment-review task."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the source path currently exists (folder for folders, file for CSV).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether the source path currently exists (folder for folders, file for CSV)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_folder</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A short label for the Dataset source list.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""A short label for the Dataset source list."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_protagonist</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Protagonist file&quot;</span>
+                <span class="k">return</span> <span class="s2">"Protagonist file"</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_segmentation</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Segmentation file&quot;</span>
-            <span class="k">return</span> <span class="s2">&quot;Label file&quot;</span>
+                <span class="k">return</span> <span class="s2">"Segmentation file"</span>
+            <span class="k">return</span> <span class="s2">"Label file"</span>
         <span class="k">return</span> <span class="n">KIND_LABELS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
 
 <div class="viewcode-block" id="DataSource.count">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.DataSource.count">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count the items the source contributes (cheap; no matching).</span>
+<span class="w">        </span><span class="sd">"""Count the items the source contributes (cheap; no matching).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The number of videos / vdet / track files, or CSV data rows. ``0`` if</span>
 <span class="sd">            the path is missing.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span>
@@ -499,7 +503,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_count_suffixes</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count non-junk files in ``directory`` whose suffix is in ``suffixes``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Count non-junk files in ``directory`` whose suffix is in ``suffixes``."""</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
         <span class="mi">1</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">directory</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
@@ -511,23 +515,23 @@
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SourceRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An ordered set of data sources with singleton rules.</span>
+<span class="w">    </span><span class="sd">"""An ordered set of data sources with singleton rules.</span>
 
 <span class="sd">    Folder kinds (video/vdet/track) and the protagonist CSV are singletons:</span>
 <span class="sd">    adding one replaces any existing source of that role. Label CSVs are</span>
 <span class="sd">    unlimited, keyed by path (re-adding the same file replaces it).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SourceRegistry.add">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.add">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add ``source``, enforcing the singleton rules in place of duplicates.</span>
+<span class="w">        </span><span class="sd">"""Add ``source``, enforcing the singleton rules in place of duplicates.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            source: The source to add.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">FOLDER_KINDS</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">source</span><span class="o">.</span><span class="n">is_protagonist</span><span class="p">:</span>
@@ -540,7 +544,7 @@
 <div class="viewcode-block" id="SourceRegistry.remove">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.remove">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove ``source`` if present (identity by path + kind).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Remove ``source`` if present (identity by path + kind)."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
         <span class="p">]</span></div>
@@ -549,50 +553,50 @@
 <div class="viewcode-block" id="SourceRegistry.get">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.get">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">SourceKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first source of ``kind``, or ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the first source of ``kind``, or ``None``."""</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">kind</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">video</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The video-folder source, or ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The video-folder source, or ``None``."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">vdet</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The vdet-folder source, or ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The vdet-folder source, or ``None``."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">track</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The track-folder source, or ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The track-folder source, or ``None``."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">protagonist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The protagonist CSV source, or ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The protagonist CSV source, or ``None``."""</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_protagonist</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">label_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;All label CSV sources (excludes the protagonist and segmentation CSVs).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""All label CSV sources (excludes the protagonist and segmentation CSVs)."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">role</span> <span class="ow">is</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">segmentation_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;All segmentation CSV sources (drive the Segment-review task).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""All segmentation CSV sources (drive the Segment-review task)."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_segmentation</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_video</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether a usable (existing) video folder is configured.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether a usable (existing) video folder is configured."""</span>
         <span class="n">video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">video</span>
         <span class="k">return</span> <span class="n">video</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">video</span><span class="o">.</span><span class="n">available</span>
 
 <div class="viewcode-block" id="SourceRegistry.available_kinds_to_add">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceRegistry.available_kinds_to_add">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">available_kinds_to_add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourceKind</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Kinds offered by the ``+`` menu (singletons drop out once present).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Kinds offered by the ``+`` menu (singletons drop out once present)."""</span>
         <span class="n">present</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">}</span>
         <span class="n">offered</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">FOLDER_KINDS</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">present</span><span class="p">]</span>
         <span class="n">offered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">)</span>  <span class="c1"># CSVs are always addable</span>
@@ -604,35 +608,38 @@
 <div class="viewcode-block" id="TaskKind">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.TaskKind">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TaskKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A supervision task the Annotator can offer, driven by the sources present.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A supervision task the Annotator can offer, driven by the sources present."""</span>
 
     <span class="c1">#: Keep/drop plus notes on whole videos (needs only videos).</span>
-    <span class="n">CURATION</span> <span class="o">=</span> <span class="s2">&quot;curation&quot;</span>
-    <span class="c1">#: Correct each video&#39;s protagonist track (needs a protagonist CSV).</span>
-    <span class="n">PROTAGONIST</span> <span class="o">=</span> <span class="s2">&quot;protagonist&quot;</span>
+    <span class="n">CURATION</span> <span class="o">=</span> <span class="s2">"curation"</span>
+    <span class="c1">#: Correct each video's protagonist track (needs a protagonist CSV).</span>
+    <span class="n">PROTAGONIST</span> <span class="o">=</span> <span class="s2">"protagonist"</span>
     <span class="c1">#: Accept/drop per-clip segments of long videos (needs a segmentation CSV).</span>
-    <span class="n">SEGMENT_REVIEW</span> <span class="o">=</span> <span class="s2">&quot;segment_review&quot;</span></div>
+    <span class="n">SEGMENT_REVIEW</span> <span class="o">=</span> <span class="s2">"segment_review"</span>
+    <span class="c1">#: Mark labelled time-interval events on a timeline (needs only videos).</span>
+    <span class="n">EVENT</span> <span class="o">=</span> <span class="s2">"event"</span></div>
 
 
 
 <span class="n">TASK_LABELS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TaskKind</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">TaskKind</span><span class="o">.</span><span class="n">CURATION</span><span class="p">:</span> <span class="s2">&quot;Curation&quot;</span><span class="p">,</span>
-    <span class="n">TaskKind</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">:</span> <span class="s2">&quot;Protagonist review&quot;</span><span class="p">,</span>
-    <span class="n">TaskKind</span><span class="o">.</span><span class="n">SEGMENT_REVIEW</span><span class="p">:</span> <span class="s2">&quot;Segment review&quot;</span><span class="p">,</span>
+    <span class="n">TaskKind</span><span class="o">.</span><span class="n">CURATION</span><span class="p">:</span> <span class="s2">"Curation"</span><span class="p">,</span>
+    <span class="n">TaskKind</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">:</span> <span class="s2">"Protagonist review"</span><span class="p">,</span>
+    <span class="n">TaskKind</span><span class="o">.</span><span class="n">SEGMENT_REVIEW</span><span class="p">:</span> <span class="s2">"Segment review"</span><span class="p">,</span>
+    <span class="n">TaskKind</span><span class="o">.</span><span class="n">EVENT</span><span class="p">:</span> <span class="s2">"Event annotation"</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="sd">&quot;&quot;&quot;Human label per task, for the Dataset task-wise sections and the Annotator switch.&quot;&quot;&quot;</span>
+<span class="sd">"""Human label per task, for the Dataset task-wise sections and the Annotator switch."""</span>
 
 
 <div class="viewcode-block" id="TaskRequirement">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.TaskRequirement">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TaskRequirement</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One prerequisite for a task, and whether the registry satisfies it.</span>
+<span class="w">    </span><span class="sd">"""One prerequisite for a task, and whether the registry satisfies it.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        label: Human name of the required source (e.g. ``&quot;videos&quot;``).</span>
+<span class="sd">        label: Human name of the required source (e.g. ``"videos"``).</span>
 <span class="sd">        present: Whether an available source satisfying it is configured.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">present</span><span class="p">:</span> <span class="nb">bool</span></div>
@@ -643,19 +650,19 @@
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.TaskReadiness">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TaskReadiness</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether a task&#39;s sources are all present, with the per-requirement detail.</span>
+<span class="w">    </span><span class="sd">"""Whether a task's sources are all present, with the per-requirement detail.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        task: The :class:`TaskKind`.</span>
 <span class="sd">        requirements: Each prerequisite and its present/absent state, in order.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">task</span><span class="p">:</span> <span class="n">TaskKind</span>
     <span class="n">requirements</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TaskRequirement</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">ready</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether every requirement is satisfied (the Annotator may offer the task).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether every requirement is satisfied (the Annotator may offer the task)."""</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">present</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requirements</span><span class="p">)</span></div>
 
 
@@ -663,32 +670,33 @@
 <div class="viewcode-block" id="task_readiness">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.task_readiness">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">task_readiness</span><span class="p">(</span><span class="n">registry</span><span class="p">:</span> <span class="n">SourceRegistry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TaskReadiness</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Report, per task, which required sources are present in ``registry``.</span>
+<span class="w">    </span><span class="sd">"""Report, per task, which required sources are present in ``registry``.</span>
 
-<span class="sd">    This is the single source of truth behind both the Dataset tab&#39;s task-wise</span>
-<span class="sd">    readiness sections and the Annotator&#39;s decision of which tasks to offer.</span>
+<span class="sd">    This is the single source of truth behind both the Dataset tab's task-wise</span>
+<span class="sd">    readiness sections and the Annotator's decision of which tasks to offer.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        registry: The configured sources.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        One :class:`TaskReadiness` per :class:`TaskKind`, requirements in order.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">has_video</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">has_video</span>
     <span class="n">protagonist</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">protagonist</span>
     <span class="n">has_protagonist</span> <span class="o">=</span> <span class="n">protagonist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">protagonist</span><span class="o">.</span><span class="n">available</span>
     <span class="n">has_segmentation</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">available</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">segmentation_sources</span><span class="p">)</span>
-    <span class="n">video_req</span> <span class="o">=</span> <span class="n">TaskRequirement</span><span class="p">(</span><span class="s2">&quot;videos&quot;</span><span class="p">,</span> <span class="n">has_video</span><span class="p">)</span>
+    <span class="n">video_req</span> <span class="o">=</span> <span class="n">TaskRequirement</span><span class="p">(</span><span class="s2">"videos"</span><span class="p">,</span> <span class="n">has_video</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">TaskReadiness</span><span class="p">(</span><span class="n">TaskKind</span><span class="o">.</span><span class="n">CURATION</span><span class="p">,</span> <span class="p">(</span><span class="n">video_req</span><span class="p">,)),</span>
         <span class="n">TaskReadiness</span><span class="p">(</span>
             <span class="n">TaskKind</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">video_req</span><span class="p">,</span> <span class="n">TaskRequirement</span><span class="p">(</span><span class="s2">&quot;protagonist CSV&quot;</span><span class="p">,</span> <span class="n">has_protagonist</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">video_req</span><span class="p">,</span> <span class="n">TaskRequirement</span><span class="p">(</span><span class="s2">"protagonist CSV"</span><span class="p">,</span> <span class="n">has_protagonist</span><span class="p">)),</span>
         <span class="p">),</span>
         <span class="n">TaskReadiness</span><span class="p">(</span>
             <span class="n">TaskKind</span><span class="o">.</span><span class="n">SEGMENT_REVIEW</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">video_req</span><span class="p">,</span> <span class="n">TaskRequirement</span><span class="p">(</span><span class="s2">&quot;segmentation CSV&quot;</span><span class="p">,</span> <span class="n">has_segmentation</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">video_req</span><span class="p">,</span> <span class="n">TaskRequirement</span><span class="p">(</span><span class="s2">"segmentation CSV"</span><span class="p">,</span> <span class="n">has_segmentation</span><span class="p">)),</span>
         <span class="p">),</span>
+        <span class="n">TaskReadiness</span><span class="p">(</span><span class="n">TaskKind</span><span class="o">.</span><span class="n">EVENT</span><span class="p">,</span> <span class="p">(</span><span class="n">video_req</span><span class="p">,)),</span>
     <span class="p">]</span></div>
 
 </pre></div>

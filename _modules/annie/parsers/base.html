@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.parsers.base</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Shared CSV schema and the parser protocol.</span>
+<span></span><span class="sd">"""Shared CSV schema and the parser protocol.</span>
 
 <span class="sd">Both ``.vdet`` and ``.track`` files use one identical 17-column schema with a</span>
 <span class="sd">header row and CRLF line endings:</span>
@@ -305,7 +309,7 @@
 
 <span class="sd">The ``source`` column is informational only — matching is done by file stem, not</span>
 <span class="sd">by this path (it points at the original capture location, which need not exist).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -316,48 +320,48 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">LANDMARK_NAMES</span><span class="p">,</span> <span class="n">BBox</span><span class="p">,</span> <span class="n">FrameAnnotation</span>
 
 <span class="n">CSV_COLUMNS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;frame_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;source&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;score&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;x&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;y&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;w&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;h&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;left_eye_x&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;left_eye_y&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;right_eye_x&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;right_eye_y&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;nose_x&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;nose_y&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;left_mouth_x&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;left_mouth_y&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;right_mouth_x&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;right_mouth_y&quot;</span><span class="p">,</span>
+    <span class="s2">"frame_id"</span><span class="p">,</span>
+    <span class="s2">"source"</span><span class="p">,</span>
+    <span class="s2">"score"</span><span class="p">,</span>
+    <span class="s2">"x"</span><span class="p">,</span>
+    <span class="s2">"y"</span><span class="p">,</span>
+    <span class="s2">"w"</span><span class="p">,</span>
+    <span class="s2">"h"</span><span class="p">,</span>
+    <span class="s2">"left_eye_x"</span><span class="p">,</span>
+    <span class="s2">"left_eye_y"</span><span class="p">,</span>
+    <span class="s2">"right_eye_x"</span><span class="p">,</span>
+    <span class="s2">"right_eye_y"</span><span class="p">,</span>
+    <span class="s2">"nose_x"</span><span class="p">,</span>
+    <span class="s2">"nose_y"</span><span class="p">,</span>
+    <span class="s2">"left_mouth_x"</span><span class="p">,</span>
+    <span class="s2">"left_mouth_y"</span><span class="p">,</span>
+    <span class="s2">"right_mouth_x"</span><span class="p">,</span>
+    <span class="s2">"right_mouth_y"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;The 17 columns of the shared detection/track CSV schema, in order.&quot;&quot;&quot;</span>
+<span class="sd">"""The 17 columns of the shared detection/track CSV schema, in order."""</span>
 
 
 <div class="viewcode-block" id="AnnotationParser">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/base/index.html#annie.parsers.base.AnnotationParser">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AnnotationParser</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol implemented by every annotation loader.</span>
+<span class="w">    </span><span class="sd">"""Protocol implemented by every annotation loader.</span>
 
 <span class="sd">    A parser turns a path into a list of :class:`~annie.models.FrameAnnotation`,</span>
 <span class="sd">    one entry per distinct ``frame_id`` it contains.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="AnnotationParser.__call__">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/base/index.html#annie.parsers.base.AnnotationParser.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FrameAnnotation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse ``path`` into per-frame annotations.</span>
+<span class="w">        </span><span class="sd">"""Parse ``path`` into per-frame annotations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path: Path to the annotation file.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            One :class:`~annie.models.FrameAnnotation` per distinct frame index.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="o">...</span></div>
 </div>
 
@@ -366,9 +370,9 @@
 <div class="viewcode-block" id="read_csv_rows">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/base/index.html#annie.parsers.base.read_csv_rows">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_csv_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a shared-schema CSV into a list of column-keyed dict rows.</span>
+<span class="w">    </span><span class="sd">"""Read a shared-schema CSV into a list of column-keyed dict rows.</span>
 
-<span class="sd">    Tolerant of both CRLF and LF line endings (``newline=&quot;&quot;`` lets :mod:`csv`</span>
+<span class="sd">    Tolerant of both CRLF and LF line endings (``newline=""`` lets :mod:`csv`</span>
 <span class="sd">    handle either) and of a UTF-8 BOM. The header row is required and is used as</span>
 <span class="sd">    the dict keys.</span>
 
@@ -380,8 +384,8 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        FileNotFoundError: If ``path`` does not exist.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8-sig&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8-sig"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">handle</span><span class="p">))</span></div>
 
 
@@ -389,7 +393,7 @@
 <div class="viewcode-block" id="parse_bbox_row">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/base/index.html#annie.parsers.base.parse_bbox_row">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_bbox_row</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">track_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BBox</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`~annie.models.BBox` from one CSV row.</span>
+<span class="w">    </span><span class="sd">"""Build a :class:`~annie.models.BBox` from one CSV row.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        row: A column-keyed dict as produced by :func:`read_csv_rows`.</span>
@@ -398,17 +402,17 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The parsed bounding box, with its five named landmarks populated.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">landmarks</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">name</span><span class="p">:</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_x&quot;</span><span class="p">]))),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_y&quot;</span><span class="p">]))))</span>
+        <span class="n">name</span><span class="p">:</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_x"</span><span class="p">]))),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_y"</span><span class="p">]))))</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LANDMARK_NAMES</span>
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">BBox</span><span class="p">(</span>
-        <span class="n">x</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]))),</span>
-        <span class="n">y</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]))),</span>
-        <span class="n">w</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;w&quot;</span><span class="p">]))),</span>
-        <span class="n">h</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;h&quot;</span><span class="p">]))),</span>
-        <span class="n">score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]),</span>
+        <span class="n">x</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"x"</span><span class="p">]))),</span>
+        <span class="n">y</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]))),</span>
+        <span class="n">w</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"w"</span><span class="p">]))),</span>
+        <span class="n">h</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"h"</span><span class="p">]))),</span>
+        <span class="n">score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"score"</span><span class="p">]),</span>
         <span class="n">landmarks</span><span class="o">=</span><span class="n">landmarks</span><span class="p">,</span>
         <span class="n">track_id</span><span class="o">=</span><span class="n">track_id</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -420,7 +424,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">group_rows_by_frame</span><span class="p">(</span>
     <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">track_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FrameAnnotation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Group flat CSV rows into per-frame annotations, sorted by frame index.</span>
+<span class="w">    </span><span class="sd">"""Group flat CSV rows into per-frame annotations, sorted by frame index.</span>
 
 <span class="sd">    Multiple rows sharing a ``frame_id`` (possible in a ``.vdet``) collapse into a</span>
 <span class="sd">    single :class:`~annie.models.FrameAnnotation` carrying all their boxes.</span>
@@ -431,10 +435,10 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Per-frame annotations ordered by ascending ``frame_idx``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">by_frame</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">FrameAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-        <span class="n">frame_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;frame_id&quot;</span><span class="p">])</span>
+        <span class="n">frame_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"frame_id"</span><span class="p">])</span>
         <span class="n">annotation</span> <span class="o">=</span> <span class="n">by_frame</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">frame_idx</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">annotation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">annotation</span> <span class="o">=</span> <span class="n">FrameAnnotation</span><span class="p">(</span><span class="n">frame_idx</span><span class="o">=</span><span class="n">frame_idx</span><span class="p">)</span>

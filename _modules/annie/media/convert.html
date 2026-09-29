@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,10 +298,10 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.media.convert</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Re-encode an audio/video dataset to a consistent, validated form (service).</span>
+<span></span><span class="sd">"""Re-encode an audio/video dataset to a consistent, validated form (service).</span>
 
 <span class="sd">Some source clips are subtly broken: their container metadata disagrees with the</span>
-<span class="sd">real frame count (torchcodec&#39;s ``approximate`` mode derives ``num_frames`` from</span>
+<span class="sd">real frame count (torchcodec's ``approximate`` mode derives ``num_frames`` from</span>
 <span class="sd">duration × fps, so a clip can report more frames than it has and blow up decoding</span>
 <span class="sd">near the end). Re-encoding every file to constant-frame-rate H.264 — and</span>
 <span class="sd">**validating** the result with torchcodec — makes the dataset consistent for Annie</span>
@@ -310,9 +314,9 @@
 
 <span class="sd">Audio/video length contract when muxing: the audio filter ``apad`` pads the audio</span>
 <span class="sd">with silence and ``-shortest`` trims the output to the (finite) video stream, so the</span>
-<span class="sd">muxed audio is exactly the video&#39;s duration — short audio is padded, long audio is</span>
+<span class="sd">muxed audio is exactly the video's duration — short audio is padded, long audio is</span>
 <span class="sd">cut — which is what :func:`audio_video_consistent` checks.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -328,35 +332,35 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="n">AUDIO_INPUT_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.wav&quot;</span><span class="p">,</span> <span class="s2">&quot;.mp3&quot;</span><span class="p">,</span> <span class="s2">&quot;.flac&quot;</span><span class="p">,</span> <span class="s2">&quot;.m4a&quot;</span><span class="p">,</span> <span class="s2">&quot;.aac&quot;</span><span class="p">,</span> <span class="s2">&quot;.ogg&quot;</span><span class="p">,</span> <span class="s2">&quot;.opus&quot;</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Accepted source-audio suffixes (lower-case, dotted).&quot;&quot;&quot;</span>
-<span class="n">VIDEO_INPUT_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.mp4&quot;</span><span class="p">,</span> <span class="s2">&quot;.avi&quot;</span><span class="p">,</span> <span class="s2">&quot;.mov&quot;</span><span class="p">,</span> <span class="s2">&quot;.mkv&quot;</span><span class="p">,</span> <span class="s2">&quot;.webm&quot;</span><span class="p">,</span> <span class="s2">&quot;.m4v&quot;</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Accepted source-video suffixes (lower-case, dotted).&quot;&quot;&quot;</span>
+<span class="n">AUDIO_INPUT_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".wav"</span><span class="p">,</span> <span class="s2">".mp3"</span><span class="p">,</span> <span class="s2">".flac"</span><span class="p">,</span> <span class="s2">".m4a"</span><span class="p">,</span> <span class="s2">".aac"</span><span class="p">,</span> <span class="s2">".ogg"</span><span class="p">,</span> <span class="s2">".opus"</span><span class="p">)</span>
+<span class="sd">"""Accepted source-audio suffixes (lower-case, dotted)."""</span>
+<span class="n">VIDEO_INPUT_SUFFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".mp4"</span><span class="p">,</span> <span class="s2">".avi"</span><span class="p">,</span> <span class="s2">".mov"</span><span class="p">,</span> <span class="s2">".mkv"</span><span class="p">,</span> <span class="s2">".webm"</span><span class="p">,</span> <span class="s2">".m4v"</span><span class="p">)</span>
+<span class="sd">"""Accepted source-video suffixes (lower-case, dotted)."""</span>
 
-<span class="n">AUDIO_OUTPUT_FORMATS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;wav&quot;</span><span class="p">,</span> <span class="s2">&quot;flac&quot;</span><span class="p">,</span> <span class="s2">&quot;mp3&quot;</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Offered audio output containers/codecs.&quot;&quot;&quot;</span>
-<span class="n">VIDEO_OUTPUT_FORMATS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mp4&quot;</span><span class="p">,)</span>
-<span class="sd">&quot;&quot;&quot;Offered video containers/codecs.&quot;&quot;&quot;</span>
+<span class="n">AUDIO_OUTPUT_FORMATS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"wav"</span><span class="p">,</span> <span class="s2">"flac"</span><span class="p">,</span> <span class="s2">"mp3"</span><span class="p">)</span>
+<span class="sd">"""Offered audio output containers/codecs."""</span>
+<span class="n">VIDEO_OUTPUT_FORMATS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"mp4"</span><span class="p">,)</span>
+<span class="sd">"""Offered video containers/codecs."""</span>
 
 <span class="n">COMMON_SAMPLE_RATES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8000</span><span class="p">,</span> <span class="mi">16000</span><span class="p">,</span> <span class="mi">22050</span><span class="p">,</span> <span class="mi">44100</span><span class="p">,</span> <span class="mi">48000</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Sample rates the UI offers as quick picks.&quot;&quot;&quot;</span>
+<span class="sd">"""Sample rates the UI offers as quick picks."""</span>
 <span class="n">COMMON_FPS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Quick-pick constant frame rates.&quot;&quot;&quot;</span>
+<span class="sd">"""Quick-pick constant frame rates."""</span>
 
 
 <div class="viewcode-block" id="AudioOptions">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.AudioOptions">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AudioOptions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Audio re-encode settings.</span>
+<span class="w">    </span><span class="sd">"""Audio re-encode settings.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        out_format: Output container/codec (``&quot;wav&quot;`` default, PCM 16-bit).</span>
+<span class="sd">        out_format: Output container/codec (``"wav"`` default, PCM 16-bit).</span>
 <span class="sd">        sample_rate: Target sample rate in Hz.</span>
 <span class="sd">        channels: Channel count (``1`` = mono, the default).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">out_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;wav&quot;</span>
+    <span class="n">out_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"wav"</span>
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span>
     <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span></div>
 
@@ -366,7 +370,7 @@
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.VideoOptions">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">VideoOptions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Video re-encode settings.</span>
+<span class="w">    </span><span class="sd">"""Video re-encode settings.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        width: Target width in px, or ``None`` to keep the source width.</span>
@@ -376,10 +380,10 @@
 <span class="sd">        add_audio: Mux the matching-stem audio into the output when ``True``.</span>
 <span class="sd">        min_frames: Reject (skip) any source whose output would have fewer than this</span>
 <span class="sd">            many decodable frames. ``2`` (default) drops degenerate single-frame</span>
-<span class="sd">            &quot;videos&quot; (audio-only files that carry one thumbnail-like frame); ``1``</span>
+<span class="sd">            "videos" (audio-only files that carry one thumbnail-like frame); ``1``</span>
 <span class="sd">            only requires that at least one frame decodes.</span>
-<span class="sd">        out_format: Output container (``&quot;mp4&quot;``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        out_format: Output container (``"mp4"``).</span>
+<span class="sd">    """</span>
 
     <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -388,22 +392,22 @@
     <span class="n">add_audio</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">audio_only_black</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">min_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">out_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mp4&quot;</span>
+    <span class="n">out_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mp4"</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">keep_resolution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the source resolution is kept (no scaling).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether the source resolution is kept (no scaling)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">grayscale</span></div>
 
 
 
 <span class="n">BLACK_DEFAULT_SIZE</span> <span class="o">=</span> <span class="mi">256</span>
-<span class="sd">&quot;&quot;&quot;Black-frame fallback size for a synthesised audio-only video.</span>
+<span class="sd">"""Black-frame fallback size for a synthesised audio-only video.</span>
 
 <span class="sd">Used when the options keep the original size/fps (of which there is none).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="n">BLACK_DEFAULT_FPS</span> <span class="o">=</span> <span class="mf">25.0</span>
-<span class="sd">&quot;&quot;&quot;Fps of the synthesised black video when the source has none.&quot;&quot;&quot;</span>
+<span class="sd">"""Fps of the synthesised black video when the source has none."""</span>
 
 
 <span class="c1"># ── ffmpeg command builders (pure) ───────────────────────────────────────────</span>
@@ -412,7 +416,7 @@
 <div class="viewcode-block" id="audio_command">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.audio_command">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">audio_command</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">AudioOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ffmpeg argv to re-encode one audio file.</span>
+<span class="w">    </span><span class="sd">"""Build the ffmpeg argv to re-encode one audio file.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        src: Source audio (or a media file with an audio stream).</span>
@@ -421,12 +425,12 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The ffmpeg argv list (no shell).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
-        <span class="s2">&quot;-vn&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-ar&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">),</span>
-        <span class="s2">&quot;-ac&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span>
+        <span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
+        <span class="s2">"-vn"</span><span class="p">,</span>
+        <span class="s2">"-ar"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">),</span>
+        <span class="s2">"-ac"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">),</span>
     <span class="p">]</span>  <span class="c1"># fmt: skip</span></div>
 
@@ -435,27 +439,27 @@
 <div class="viewcode-block" id="video_filters">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.video_filters">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">video_filters</span><span class="p">(</span><span class="n">opts</span><span class="p">:</span> <span class="n">VideoOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ``-vf`` filter chain string for the given video options.</span>
+<span class="w">    </span><span class="sd">"""Build the ``-vf`` filter chain string for the given video options.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        opts: Video settings.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A comma-joined filter chain, or ``&quot;&quot;`` when no spatial filter is needed.</span>
+<span class="sd">        A comma-joined filter chain, or ``""`` when no spatial filter is needed.</span>
 <span class="sd">        A single given dimension scales the other by ``-2`` (keeps aspect, even).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">opts</span><span class="o">.</span><span class="n">height</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale=</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale=</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">:-2&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">:-2"</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">height</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale=-2:</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scale=-2:</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">grayscale</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hue=s=0&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"hue=s=0"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">fps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fps=</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">fps</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fps=</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">fps</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
 
 
 
@@ -464,7 +468,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">video_command</span><span class="p">(</span>
     <span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">VideoOptions</span><span class="p">,</span> <span class="n">audio_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ffmpeg argv to re-encode one video (constant frame rate H.264).</span>
+<span class="w">    </span><span class="sd">"""Build the ffmpeg argv to re-encode one video (constant frame rate H.264).</span>
 
 <span class="sd">    Audio handling: when ``opts.add_audio`` and ``audio_path`` is given, the audio</span>
 <span class="sd">    is muxed and matched to the video length via ``apad`` + ``-shortest``; otherwise</span>
@@ -478,19 +482,19 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The ffmpeg argv list (no shell).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">use_audio</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">add_audio</span> <span class="ow">and</span> <span class="n">audio_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)]</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)]</span>
     <span class="k">if</span> <span class="n">use_audio</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio_path</span><span class="p">)]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio_path</span><span class="p">)]</span>
     <span class="n">vf</span> <span class="o">=</span> <span class="n">video_filters</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">vf</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-vf&quot;</span><span class="p">,</span> <span class="n">vf</span><span class="p">]</span>
-    <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;libx264&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span> <span class="s2">&quot;-vsync&quot;</span><span class="p">,</span> <span class="s2">&quot;cfr&quot;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"-vf"</span><span class="p">,</span> <span class="n">vf</span><span class="p">]</span>
+    <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span> <span class="s2">"-vsync"</span><span class="p">,</span> <span class="s2">"cfr"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">use_audio</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;0:v:0&quot;</span><span class="p">,</span> <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;1:a:0&quot;</span><span class="p">,</span> <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span> <span class="s2">&quot;-af&quot;</span><span class="p">,</span> <span class="s2">&quot;apad&quot;</span><span class="p">,</span> <span class="s2">&quot;-shortest&quot;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v:0"</span><span class="p">,</span> <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a:0"</span><span class="p">,</span> <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span> <span class="s2">"-af"</span><span class="p">,</span> <span class="s2">"apad"</span><span class="p">,</span> <span class="s2">"-shortest"</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-an&quot;</span><span class="p">]</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"-an"</span><span class="p">]</span>
     <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">)]</span>
     <span class="k">return</span> <span class="n">cmd</span></div>
 
@@ -499,10 +503,10 @@
 <div class="viewcode-block" id="black_video_command">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.black_video_command">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">black_video_command</span><span class="p">(</span><span class="n">dst</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">VideoOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ffmpeg argv for an audio-only item: a black-frame video + audio.</span>
+<span class="w">    </span><span class="sd">"""Build the ffmpeg argv for an audio-only item: a black-frame video + audio.</span>
 
 <span class="sd">    The black ``lavfi`` source is infinite and ``-shortest`` trims the output to the</span>
-<span class="sd">    (finite) audio, so the synthesised video has exactly the audio&#39;s duration. The</span>
+<span class="sd">    (finite) audio, so the synthesised video has exactly the audio's duration. The</span>
 <span class="sd">    frame size / fps come from ``opts`` or fall back to :data:`BLACK_DEFAULT_SIZE` /</span>
 <span class="sd">    :data:`BLACK_DEFAULT_FPS` when the options keep the (non-existent) original.</span>
 
@@ -513,16 +517,16 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The ffmpeg argv list (no shell).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">width</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">width</span> <span class="ow">or</span> <span class="n">BLACK_DEFAULT_SIZE</span>
     <span class="n">height</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">height</span> <span class="ow">or</span> <span class="n">BLACK_DEFAULT_SIZE</span>
     <span class="n">fps</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">fps</span> <span class="ow">or</span> <span class="n">BLACK_DEFAULT_FPS</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;lavfi&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;color=c=black:s=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:r=</span><span class="si">{</span><span class="n">fps</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
-        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;libx264&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span> <span class="s2">&quot;-shortest&quot;</span><span class="p">,</span>
+        <span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span>
+        <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"lavfi"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"color=c=black:s=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:r=</span><span class="si">{</span><span class="n">fps</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+        <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span>
+        <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span> <span class="s2">"-shortest"</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">),</span>
     <span class="p">]</span>  <span class="c1"># fmt: skip</span></div>
 
@@ -532,12 +536,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_junk</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether a filename is OS junk (any dotfile).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Return whether a filename is OS junk (any dotfile)."""</span>
+    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_list_inputs</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List non-junk files in ``directory`` whose suffix is in ``suffixes``, sorted.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""List non-junk files in ``directory`` whose suffix is in ``suffixes``, sorted."""</span>
     <span class="k">if</span> <span class="n">directory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">[</span>
@@ -552,14 +556,14 @@
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.AudioItem">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AudioItem</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One planned audio conversion (source → destination).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One planned audio conversion (source → destination)."""</span>
 
     <span class="n">src</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">dst</span><span class="p">:</span> <span class="n">Path</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Display name for progress (the source filename).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Display name for progress (the source filename)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="o">.</span><span class="n">name</span></div>
 
 
@@ -568,11 +572,11 @@
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.VideoItem">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">VideoItem</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One planned video conversion.</span>
+<span class="w">    </span><span class="sd">"""One planned video conversion.</span>
 
 <span class="sd">    ``src`` is the source video, or ``None`` for an **audio-only** item that should</span>
 <span class="sd">    be synthesised as a black-frame video carrying ``audio``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">src</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">dst</span><span class="p">:</span> <span class="n">Path</span>
@@ -580,12 +584,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Display name for progress (the source filename, or the output name).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Display name for progress (the source filename, or the output name)."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dst</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_black</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this item synthesises a black-frame video (no source video).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether this item synthesises a black-frame video (no source video)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="ow">is</span> <span class="kc">None</span></div>
 
 
@@ -595,7 +599,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">plan_audio</span><span class="p">(</span>
     <span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">AudioOptions</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AudioItem</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plan the audio batch: one :class:`AudioItem` per input file.</span>
+<span class="w">    </span><span class="sd">"""Plan the audio batch: one :class:`AudioItem` per input file.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        in_dir: Folder of source audio files.</span>
@@ -604,10 +608,10 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The planned items (empty if the input folder is missing).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">AudioItem</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">out</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">src</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">out_format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">AudioItem</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">out</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">out_format</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">_list_inputs</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">in_dir</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">AUDIO_INPUT_SUFFIXES</span><span class="p">)</span>
     <span class="p">]</span></div>
 
@@ -621,7 +625,7 @@
     <span class="n">opts</span><span class="p">:</span> <span class="n">VideoOptions</span><span class="p">,</span>
     <span class="n">audio_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoItem</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plan the video batch: one :class:`VideoItem` per input file.</span>
+<span class="w">    </span><span class="sd">"""Plan the video batch: one :class:`VideoItem` per input file.</span>
 
 <span class="sd">    When ``opts.add_audio`` and ``audio_dir`` is given, each video is paired by stem</span>
 <span class="sd">    with an audio file of any supported format in ``audio_dir``. When</span>
@@ -637,7 +641,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The planned items (empty if the input folder is missing).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">audio_by_stem</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">add_audio</span> <span class="ow">or</span> <span class="n">opts</span><span class="o">.</span><span class="n">audio_only_black</span><span class="p">)</span> <span class="ow">and</span> <span class="n">audio_dir</span><span class="p">:</span>
@@ -649,12 +653,12 @@
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoItem</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">videos</span><span class="p">:</span>
         <span class="n">audio_match</span> <span class="o">=</span> <span class="n">audio_by_stem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">stem</span><span class="p">)</span> <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">add_audio</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">VideoItem</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">out</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">src</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">out_format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">audio_match</span><span class="p">))</span>
+        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">VideoItem</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">out</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">out_format</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">audio_match</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">add_audio</span> <span class="ow">and</span> <span class="n">opts</span><span class="o">.</span><span class="n">audio_only_black</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">stem</span><span class="p">,</span> <span class="n">audio</span> <span class="ow">in</span> <span class="n">audio_by_stem</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">stem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">video_stems</span><span class="p">:</span>
-                <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">VideoItem</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">out</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">out_format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">audio</span><span class="p">))</span>
+                <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">VideoItem</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">out</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">out_format</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">audio</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">items</span></div>
 
 
@@ -665,7 +669,7 @@
 <div class="viewcode-block" id="expected_frame_count">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.expected_frame_count">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">expected_frame_count</span><span class="p">(</span><span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of frames a ``duration_s`` clip at ``fps`` should have.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the number of frames a ``duration_s`` clip at ``fps`` should have."""</span>
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">duration_s</span> <span class="o">*</span> <span class="n">fps</span><span class="p">)</span></div>
 
 
@@ -673,7 +677,7 @@
 <div class="viewcode-block" id="expected_sample_count">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.expected_sample_count">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">expected_sample_count</span><span class="p">(</span><span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of audio samples a ``duration_s`` clip at ``sample_rate`` has.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the number of audio samples a ``duration_s`` clip at ``sample_rate`` has."""</span>
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">duration_s</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span></div>
 
 
@@ -683,7 +687,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">audio_video_consistent</span><span class="p">(</span>
     <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tolerance_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.04</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether an audio track and a video stream have matching durations.</span>
+<span class="w">    </span><span class="sd">"""Whether an audio track and a video stream have matching durations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        num_frames: Decoded video frame count.</span>
@@ -694,7 +698,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ``True`` if the two durations agree within ``tolerance_s``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">fps</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">sample_rate</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="n">video_s</span> <span class="o">=</span> <span class="n">num_frames</span> <span class="o">/</span> <span class="n">fps</span>
@@ -709,17 +713,17 @@
 <div class="viewcode-block" id="run_ffmpeg">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.run_ffmpeg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_ffmpeg</span><span class="p">(</span><span class="n">cmd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - needs system ffmpeg</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an ffmpeg command, raising :class:`RuntimeError` with its tail on failure.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run an ffmpeg command, raising :class:`RuntimeError` with its tail on failure."""</span>
     <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># noqa: S603</span>
     <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ffmpeg failed: </span><span class="si">{</span><span class="n">proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ffmpeg failed: </span><span class="si">{</span><span class="n">proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="decodable_frames">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.decodable_frames">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">decodable_frames</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># pragma: no cover - needs media</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the torchcodec frame count, verified by actually decoding, or ``0``.</span>
+<span class="w">    </span><span class="sd">"""Return the torchcodec frame count, verified by actually decoding, or ``0``.</span>
 
 <span class="sd">    A file with a declared video stream but **no real frames** (an audio-only</span>
 <span class="sd">    ``.mp4`` that VLC plays as audio) can still report ``num_frames &gt;= 1`` in its</span>
@@ -731,17 +735,17 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The number of decodable frames (``0`` if the frames cannot be decoded).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span>  <span class="c1"># noqa: SLF001 - service owns decode</span>
+        <span class="n">decoder</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"exact"</span><span class="p">)</span>  <span class="c1"># noqa: SLF001 - service owns decode</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">decoder</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># raises if the declared frame is not actually decodable</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - any decode failure means &quot;no usable frames&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - any decode failure means "no usable frames"</span>
         <span class="k">return</span> <span class="mi">0</span>
     <span class="k">return</span> <span class="n">n</span></div>
 
@@ -752,7 +756,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_video</span><span class="p">(</span>  <span class="c1"># pragma: no cover - needs media</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">min_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a re-encoded video with torchcodec.</span>
+<span class="w">    </span><span class="sd">"""Validate a re-encoded video with torchcodec.</span>
 
 <span class="sd">    Requires at least ``min_frames`` frames (so a degenerate single-frame, audio-only</span>
 <span class="sd">    result is rejected), decodes **every** frame in ``exact`` mode (so an unreadable</span>
@@ -765,24 +769,24 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An ``(ok, message)`` pair.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>
 
-    <span class="n">exact</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span>  <span class="c1"># noqa: SLF001 - service owns decode</span>
+    <span class="n">exact</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"exact"</span><span class="p">)</span>  <span class="c1"># noqa: SLF001 - service owns decode</span>
     <span class="n">n_exact</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">exact</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">n_exact</span> <span class="o">&lt;</span> <span class="n">min_frames</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;only </span><span class="si">{</span><span class="n">n_exact</span><span class="si">}</span><span class="s2"> decodable frame(s) (need &gt;= </span><span class="si">{</span><span class="n">min_frames</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"only </span><span class="si">{</span><span class="n">n_exact</span><span class="si">}</span><span class="s2"> decodable frame(s) (need &gt;= </span><span class="si">{</span><span class="n">min_frames</span><span class="si">}</span><span class="s2">)"</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_exact</span><span class="p">):</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">exact</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># raises if a frame is unreadable</span>
-    <span class="n">n_approx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
+    <span class="n">n_approx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">decode</span><span class="o">.</span><span class="n">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"approximate"</span><span class="p">)</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
     <span class="k">if</span> <span class="n">n_exact</span> <span class="o">!=</span> <span class="n">n_approx</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;frame-count mismatch (exact=</span><span class="si">{</span><span class="n">n_exact</span><span class="si">}</span><span class="s2">, approx=</span><span class="si">{</span><span class="n">n_approx</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_exact</span><span class="si">}</span><span class="s2"> frames OK&quot;</span></div>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"frame-count mismatch (exact=</span><span class="si">{</span><span class="n">n_exact</span><span class="si">}</span><span class="s2">, approx=</span><span class="si">{</span><span class="n">n_approx</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_exact</span><span class="si">}</span><span class="s2"> frames OK"</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_remove</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - filesystem cleanup</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete ``path`` if it exists, ignoring errors (so failures leave no output).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Delete ``path`` if it exists, ignoring errors (so failures leave no output)."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
@@ -794,18 +798,18 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_audio_file</span><span class="p">(</span>  <span class="c1"># pragma: no cover - needs system ffmpeg</span>
     <span class="n">item</span><span class="p">:</span> <span class="n">AudioItem</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">AudioOptions</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-encode one audio file, skipping it if a non-empty output already exists.</span>
+<span class="w">    </span><span class="sd">"""Re-encode one audio file, skipping it if a non-empty output already exists.</span>
 
 <span class="sd">    On any failure the (possibly partial) output is removed, so the output folder</span>
 <span class="sd">    only ever contains good files.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span>  <span class="c1"># resume: already converted</span>
     <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">run_ffmpeg</span><span class="p">(</span><span class="n">audio_command</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;output missing or empty&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"output missing or empty"</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">_remove</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">)</span>
         <span class="k">raise</span></div>
@@ -817,28 +821,28 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_video_file</span><span class="p">(</span>  <span class="c1"># pragma: no cover - needs media + ffmpeg</span>
     <span class="n">item</span><span class="p">:</span> <span class="n">VideoItem</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">VideoOptions</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-encode one video (or synthesise a black-frame one), then validate it.</span>
+<span class="w">    </span><span class="sd">"""Re-encode one video (or synthesise a black-frame one), then validate it.</span>
 
 <span class="sd">    Grace handling: a source ``.mp4`` is skipped with an error (and never lands in</span>
 <span class="sd">    the output folder) when it has **no video stream** or yields fewer than</span>
 <span class="sd">    ``opts.min_frames`` decodable frames — which drops degenerate single-frame</span>
-<span class="sd">    &quot;videos&quot; (audio-only files carrying one thumbnail-like frame, which VLC plays as</span>
+<span class="sd">    "videos" (audio-only files carrying one thumbnail-like frame, which VLC plays as</span>
 <span class="sd">    audio-only). A stale bad output from a previous run is removed in those cases too.</span>
 <span class="sd">    If a torchcodec-valid output already exists it is skipped (resume); any failure</span>
 <span class="sd">    removes a partial output.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
 
     <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">src</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">probe</span><span class="o">.</span><span class="n">has_video</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">src</span><span class="p">):</span>
             <span class="n">_remove</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;no video stream — skipped (audio-only file)&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"no video stream — skipped (audio-only file)"</span><span class="p">)</span>
         <span class="n">frames</span> <span class="o">=</span> <span class="n">decodable_frames</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">src</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">frames</span> <span class="o">&lt;</span> <span class="n">opts</span><span class="o">.</span><span class="n">min_frames</span><span class="p">:</span>
             <span class="n">_remove</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;only </span><span class="si">{</span><span class="n">frames</span><span class="si">}</span><span class="s2"> decodable frame(s) (need &gt;= </span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">min_frames</span><span class="si">}</span><span class="s2">) — &quot;</span>
-                <span class="s2">&quot;skipped (audio-only / degenerate video)&quot;</span>
+                <span class="sa">f</span><span class="s2">"only </span><span class="si">{</span><span class="n">frames</span><span class="si">}</span><span class="s2"> decodable frame(s) (need &gt;= </span><span class="si">{</span><span class="n">opts</span><span class="o">.</span><span class="n">min_frames</span><span class="si">}</span><span class="s2">) — "</span>
+                <span class="s2">"skipped (audio-only / degenerate video)"</span>
             <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -854,13 +858,13 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">src</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">audio</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;audio-only item has no audio to carry&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"audio-only item has no audio to carry"</span><span class="p">)</span>
             <span class="n">run_ffmpeg</span><span class="p">(</span><span class="n">black_video_command</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">audio</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">run_ffmpeg</span><span class="p">(</span><span class="n">video_command</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">,</span> <span class="n">opts</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">audio</span><span class="p">))</span>
         <span class="n">ok</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">validate_video</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">,</span> <span class="n">opts</span><span class="o">.</span><span class="n">min_frames</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;validation failed: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"validation failed: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">_remove</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">dst</span><span class="p">)</span>
         <span class="k">raise</span></div>
@@ -870,7 +874,7 @@
 <div class="viewcode-block" id="export_ids">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.export_ids">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">export_ids</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a one-column CSV (``id``) of the given filenames&#39; stems, sorted.</span>
+<span class="w">    </span><span class="sd">"""Write a one-column CSV (``id``) of the given filenames' stems, sorted.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Destination CSV path.</span>
@@ -878,13 +882,13 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The path written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">stems</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">Path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">})</span>
-    <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
-        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">((</span><span class="s2">&quot;id&quot;</span><span class="p">,))</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">((</span><span class="s2">"id"</span><span class="p">,))</span>
         <span class="n">writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">((</span><span class="n">stem</span><span class="p">,)</span> <span class="k">for</span> <span class="n">stem</span> <span class="ow">in</span> <span class="n">stems</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
@@ -893,7 +897,7 @@
 <div class="viewcode-block" id="export_failures">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.export_failures">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">export_failures</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">failures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a two-column CSV (``id,error``) for the failed files, sorted by id.</span>
+<span class="w">    </span><span class="sd">"""Write a two-column CSV (``id,error``) for the failed files, sorted by id.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Destination CSV path.</span>
@@ -901,13 +905,13 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The path written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">Path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">failures</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
-        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">((</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">))</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">((</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">))</span>
         <span class="n">writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
@@ -915,18 +919,18 @@
 
 <span class="c1"># ── batch runner with progress ───────────────────────────────────────────────</span>
 
-<span class="n">ConvertStatus</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;idle&quot;</span><span class="p">,</span> <span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;Lifecycle state of a batch conversion run.&quot;&quot;&quot;</span>
+<span class="n">ConvertStatus</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"idle"</span><span class="p">,</span> <span class="s2">"running"</span><span class="p">,</span> <span class="s2">"done"</span><span class="p">,</span> <span class="s2">"cancelled"</span><span class="p">]</span>
+<span class="sd">"""Lifecycle state of a batch conversion run."""</span>
 
 
 <div class="viewcode-block" id="ConvertProgress">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.ConvertProgress">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConvertProgress</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A snapshot of a running (or finished) conversion batch.</span>
+<span class="w">    </span><span class="sd">"""A snapshot of a running (or finished) conversion batch.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        title: Human label of the batch (e.g. ``&quot;Audio&quot;`` / ``&quot;Video&quot;``).</span>
+<span class="sd">        title: Human label of the batch (e.g. ``"Audio"`` / ``"Video"``).</span>
 <span class="sd">        total: Number of files in the batch.</span>
 <span class="sd">        done: Number processed so far (succeeded or failed).</span>
 <span class="sd">        current: The file currently being processed.</span>
@@ -935,21 +939,21 @@
 <span class="sd">        started_at: Epoch seconds when the batch started, or ``None``.</span>
 <span class="sd">        finished_at: Epoch seconds when it finished, or ``None`` while running.</span>
 <span class="sd">        status: One of :data:`ConvertStatus`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">done</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">current</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">current</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">succeeded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">failed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">started_at</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">finished_at</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">status</span><span class="p">:</span> <span class="n">ConvertStatus</span> <span class="o">=</span> <span class="s2">&quot;idle&quot;</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">ConvertStatus</span> <span class="o">=</span> <span class="s2">"idle"</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">elapsed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Seconds elapsed since the batch started (frozen once finished).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Seconds elapsed since the batch started (frozen once finished)."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
         <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished_at</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished_at</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -957,19 +961,19 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Progress as a fraction in ``[0, 1]``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Progress as a fraction in ``[0, 1]``."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="k">else</span> <span class="mf">0.0</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">eta_seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimated seconds remaining, or ``None`` if not yet estimable.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">&quot;running&quot;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Estimated seconds remaining, or ``None`` if not yet estimable."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"running"</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elapsed</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">succeeded_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of files processed without error.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Number of files processed without error."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">failed</span><span class="p">)</span></div>
 
 
@@ -977,12 +981,12 @@
 <div class="viewcode-block" id="ConversionRunner">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.ConversionRunner">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConversionRunner</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Runs one conversion batch at a time on a background thread, with progress.</span>
+<span class="w">    </span><span class="sd">"""Runs one conversion batch at a time on a background thread, with progress.</span>
 
 <span class="sd">    The batch loop is generic: it is given a list of items, a ``work`` callable that</span>
 <span class="sd">    converts one item (raising on failure), and a ``label`` callable for display.</span>
 <span class="sd">    Failures are recorded per item and never stop the batch.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span> <span class="o">=</span> <span class="n">ConvertProgress</span><span class="p">()</span>
@@ -993,15 +997,15 @@
 <div class="viewcode-block" id="ConversionRunner.running">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.ConversionRunner.running">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">running</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether a batch is currently in progress.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Whether a batch is currently in progress."""</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;running&quot;</span></div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"running"</span></div>
 
 
 <div class="viewcode-block" id="ConversionRunner.progress">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.ConversionRunner.progress">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">progress</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConvertProgress</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a consistent snapshot of the current progress.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return a consistent snapshot of the current progress."""</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span>
             <span class="k">return</span> <span class="n">ConvertProgress</span><span class="p">(</span>
@@ -1020,7 +1024,7 @@
 <div class="viewcode-block" id="ConversionRunner.cancel">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.ConversionRunner.cancel">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request cancellation; the batch stops after the current file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Request cancellation; the batch stops after the current file."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
@@ -1032,9 +1036,9 @@
         <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>  <span class="c1"># list[AudioItem | VideoItem]</span>
         <span class="n">work</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">object</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">label</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">object</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">it</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">it</span><span class="p">)),</span>
+        <span class="n">label</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">object</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">it</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">it</span><span class="p">)),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Future</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Begin a batch on the worker thread.</span>
+<span class="w">        </span><span class="sd">"""Begin a batch on the worker thread.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            title: Human label for the batch.</span>
@@ -1047,13 +1051,13 @@
 
 <span class="sd">        Raises:</span>
 <span class="sd">            RuntimeError: If a batch is already running.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;a conversion is already running&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"a conversion is already running"</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span> <span class="o">=</span> <span class="n">ConvertProgress</span><span class="p">(</span>
-                <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="n">started_at</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="s2">"running"</span><span class="p">,</span> <span class="n">started_at</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">work</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span></div>
 
@@ -1061,7 +1065,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">work</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">object</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">object</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the batch sequentially, updating progress under the lock.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Execute the batch sequentially, updating progress under the lock."""</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span><span class="p">:</span>
                 <span class="k">break</span>
@@ -1080,13 +1084,13 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">done</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">finished_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;cancelled&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span> <span class="k">else</span> <span class="s2">&quot;done&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="s2">""</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s2">"cancelled"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span> <span class="k">else</span> <span class="s2">"done"</span>
 
 <div class="viewcode-block" id="ConversionRunner.shutdown">
 <a class="viewcode-back" href="../../../autoapi/annie/media/convert/index.html#annie.media.convert.ConversionRunner.shutdown">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shut the worker pool down, waiting for an in-flight batch to finish.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Shut the worker pool down, waiting for an in-flight batch to finish."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 

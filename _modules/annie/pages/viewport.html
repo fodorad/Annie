@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,11 +298,11 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.pages.viewport</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Drop a row&#39;s preview images while it is far off screen (UI helper).</span>
+<span></span><span class="sd">"""Drop a row's preview images while it is far off screen (UI helper).</span>
 
 <span class="sd">Paging bounds how fast rows appear, not how many end up on the page: a reviewer who</span>
 <span class="sd">scrolls through 2800 samples has 2800 rows mounted, each pinning ~60 KB of base64</span>
-<span class="sd">WebP in the server&#39;s element tree *and* in the browser tab, plus its decoded bitmaps.</span>
+<span class="sd">WebP in the server's element tree *and* in the browser tab, plus its decoded bitmaps.</span>
 <span class="sd">That adds up to hundreds of megabytes long after the row has left the screen.</span>
 
 <span class="sd">So each row carries a **viewport observer** — a Quasar ``q-intersection`` stretched</span>
@@ -316,7 +320,7 @@
 <span class="sd">What this does *not* reclaim is the row skeleton itself (~43 elements: the card, its</span>
 <span class="sd">badges, buttons and selects). Those are far cheaper per row than the images, but they</span>
 <span class="sd">still accumulate; capping the number of mounted rows is a separate change.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -334,16 +338,16 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="c1">#: How far outside the viewport a row still counts as &quot;on screen&quot;. Generous, so</span>
+<span class="c1">#: How far outside the viewport a row still counts as "on screen". Generous, so</span>
 <span class="c1">#: rows just past the edge are never dropped and re-decoded during normal scrolling.</span>
-<span class="n">_MARGIN</span> <span class="o">=</span> <span class="s2">&quot;1200px&quot;</span>
+<span class="n">_MARGIN</span> <span class="o">=</span> <span class="s2">"1200px"</span>
 
 
 <div class="viewcode-block" id="OffscreenGate">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OffscreenGate</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decides when an off-screen row&#39;s images may be dropped, and when to restore them.</span>
+<span class="w">    </span><span class="sd">"""Decides when an off-screen row's images may be dropped, and when to restore them.</span>
 
 <span class="sd">    A row can leave and re-enter the viewport many times while an unload is waiting</span>
 <span class="sd">    out its delay. Rather than trying to cancel the pending task, each scroll event</span>
@@ -351,9 +355,9 @@
 <span class="sd">    the newest, so a row that came back is left alone.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        loaded: Whether the row&#39;s images are currently mounted.</span>
+<span class="sd">        loaded: Whether the row's images are currently mounted.</span>
 <span class="sd">        pending: Generation of the most recent visibility change.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">loaded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">pending</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -361,12 +365,12 @@
 <div class="viewcode-block" id="OffscreenGate.hide">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate.hide">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record that the row left the viewport.</span>
+<span class="w">        </span><span class="sd">"""Record that the row left the viewport.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The generation to arm an unload with, or ``None`` if the row&#39;s images are</span>
+<span class="sd">            The generation to arm an unload with, or ``None`` if the row's images are</span>
 <span class="sd">            already gone and there is nothing to drop.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded</span> <span class="k">else</span> <span class="kc">None</span></div>
 
@@ -374,11 +378,11 @@
 <div class="viewcode-block" id="OffscreenGate.show">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate.show">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record that the row entered the viewport.</span>
+<span class="w">        </span><span class="sd">"""Record that the row entered the viewport.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            ``True`` if the caller must rebuild the images (they had been dropped).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># invalidates any unload still waiting out its delay</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -389,14 +393,14 @@
 <div class="viewcode-block" id="OffscreenGate.expire">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/viewport/index.html#annie.pages.viewport.OffscreenGate.expire">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">expire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">generation</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve an armed unload whose delay has elapsed.</span>
+<span class="w">        </span><span class="sd">"""Resolve an armed unload whose delay has elapsed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            generation: The generation the unload was armed with.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            ``True`` if the row is still off screen and its images should be dropped.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">generation</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">loaded</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># the row came back, or a later event superseded this one</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loaded</span> <span class="o">=</span> <span class="kc">False</span>
@@ -410,20 +414,20 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">observe_row</span><span class="p">(</span>
     <span class="n">load</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">unload</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Watch the enclosing row and drop its images once it sits off screen.</span>
+<span class="w">    </span><span class="sd">"""Watch the enclosing row and drop its images once it sits off screen.</span>
 
 <span class="sd">    Must be called inside a **relatively positioned** container (the row card); the</span>
-<span class="sd">    observer stretches over it, so its visibility is the row&#39;s visibility.</span>
+<span class="sd">    observer stretches over it, so its visibility is the row's visibility.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        load: Rebuilds the row&#39;s images. Called when a dropped row scrolls back in.</span>
-<span class="sd">        unload: Clears the row&#39;s images back to their placeholders.</span>
+<span class="sd">        load: Rebuilds the row's images. Called when a dropped row scrolls back in.</span>
+<span class="sd">        unload: Clears the row's images back to their placeholders.</span>
 <span class="sd">        delay: How long the row may sit off screen before its images are dropped.</span>
 <span class="sd">            Defaults to :attr:`annie.core.state.UiSettings.unload_after_seconds`; the</span>
 <span class="sd">            Browse grid view passes a shorter value.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">observer</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">&quot;q-intersection&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;margin=</span><span class="si">{</span><span class="n">_MARGIN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">observer</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">&quot;position:absolute;inset:0;pointer-events:none;z-index:-1&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">observer</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"q-intersection"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"margin=</span><span class="si">{</span><span class="n">_MARGIN</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">observer</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">"position:absolute;inset:0;pointer-events:none;z-index:-1"</span><span class="p">)</span>
     <span class="n">gate</span> <span class="o">=</span> <span class="n">OffscreenGate</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_expire</span><span class="p">(</span><span class="n">generation</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -443,7 +447,7 @@
         <span class="k">if</span> <span class="n">generation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">schedule</span><span class="p">(</span><span class="n">observer</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">g</span><span class="o">=</span><span class="n">generation</span><span class="p">:</span> <span class="n">_expire</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
 
-    <span class="n">observer</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;visibility&quot;</span><span class="p">,</span> <span class="n">on_visibility</span><span class="p">)</span></div>
+    <span class="n">observer</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"visibility"</span><span class="p">,</span> <span class="n">on_visibility</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

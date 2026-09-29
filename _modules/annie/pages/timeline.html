@@ -1,0 +1,769 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/_modules/annie/pages/timeline.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>annie.pages.timeline - Annie latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">Annie latest documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">Annie latest documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/segments/index.html">annie.dataset.segments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/sources/index.html">annie.dataset.sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/storage/index.html">annie.dataset.storage</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/clipping/index.html">annie.media.clipping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/color/index.html">annie.media.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/compose/index.html">annie.media.compose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/convert/index.html">annie.media.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/decode/index.html">annie.media.decode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/probe/index.html">annie.media.probe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/rendering/index.html">annie.media.rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/pages/index.html">annie.pages</a><input aria-label="Toggle navigation of annie.pages" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/annotator/index.html">annie.pages.annotator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/browse/index.html">annie.pages.browse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/base/index.html">annie.parsers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/csvmeta/index.html">annie.parsers.csvmeta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for annie.pages.timeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The Event-annotation timeline — an inline-SVG track/event surface (UI).</span>
+
+<span class="sd">A video-editor-style timeline: a time ruler, a vertical playhead across every lane, and one</span>
+<span class="sd">lane per track holding its event boxes. The surface is always the **full width of its</span>
+<span class="sd">container**; zooming does not widen it — it narrows the *time window* shown, so the ruler</span>
+<span class="sd">grows denser and boundaries are easier to place. The visible window is</span>
+<span class="sd">``[view_start_frame, view_end_frame]`` (the task keeps it centred on the playhead); frames</span>
+<span class="sd">map to x within that window, and the gesture x-fraction maps back through the same window.</span>
+
+<span class="sd">Within one track, events that overlap in time are **stacked into sub-rows** rather than drawn</span>
+<span class="sd">on top of each other, so every event stays clickable; a lane's height grows with how many</span>
+<span class="sd">events are concurrent at once (see :func:`pack_lanes`).</span>
+
+<span class="sd">**Where the logic lives.** Python owns the model and renders the SVG *markup* — this keeps</span>
+<span class="sd">the geometry testable (:func:`build_svg`, :func:`pack_lanes`, both pure) and mirrors how the</span>
+<span class="sd">segment-review layout keeps its logic server-side. JavaScript does two things only: it reports</span>
+<span class="sd">pointer gestures back (carrying the track and an x fraction of the *window*) so Python can</span>
+<span class="sd">convert them to frames, and it moves the single playhead line during playback without a full</span>
+<span class="sd">re-render (see :func:`annie.pages.videoclock.set_playhead_x`).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">html</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+
+<span class="c1">#: Height of one packed sub-row within a lane, in SVG user units.</span>
+<span class="n">ROW_HEIGHT</span> <span class="o">=</span> <span class="mi">22</span>
+<span class="c1">#: Vertical padding inside a lane, above the first sub-row and below the last.</span>
+<span class="n">LANE_PAD</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="c1">#: Height of the ruler strip above the lanes.</span>
+<span class="n">RULER_HEIGHT</span> <span class="o">=</span> <span class="mi">22</span>
+<span class="c1">#: Vertical gap between lanes.</span>
+<span class="n">LANE_GAP</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="c1">#: Fixed drawing width in SVG user units; the element still scales to 100% of its container,</span>
+<span class="c1">#: so this is the internal coordinate space, not a pixel size on screen.</span>
+<span class="n">BASE_WIDTH</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="c1">#: Rounded-corner radius of an event box.</span>
+<span class="n">EVENT_RADIUS</span> <span class="o">=</span> <span class="mi">4</span>
+
+
+<div class="viewcode-block" id="TimelineEvent">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineEvent">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimelineEvent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One event to draw on a lane.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        event_id: The event's stable id (echoed back on click, to select it).</span>
+<span class="sd">        start_frame: Inclusive start frame.</span>
+<span class="sd">        end_frame: Inclusive end frame.</span>
+<span class="sd">        label: Text drawn inside the box (may be empty).</span>
+<span class="sd">        selected: Whether to draw this box in the selected style.</span>
+<span class="sd">        color: Per-event fill colour override (hex), or ``None`` to use the lane's colour.</span>
+<span class="sd">    """</span>
+
+    <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">start_frame</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">end_frame</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="TimelineTrack">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/timeline/index.html#annie.pages.timeline.TimelineTrack">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimelineTrack</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One lane: a track name and the events on it.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name: The track (category) name, shown as the lane label.</span>
+<span class="sd">        events: The events to draw, in any order.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TimelineEvent</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="pack_lanes">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/timeline/index.html#annie.pages.timeline.pack_lanes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pack_lanes</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TimelineEvent</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Assign each event a sub-row so overlapping events never share one.</span>
+
+<span class="sd">    A greedy interval-partitioning pass: events are considered in start-frame order and each</span>
+<span class="sd">    is placed on the lowest sub-row whose last event has already ended. Two events overlap</span>
+<span class="sd">    when one starts at or before the other ends (inclusive frames), so touching intervals are</span>
+<span class="sd">    treated as overlapping and separated — clearer for the reviewer than a 1px seam.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        events: The events on one track, in any order.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of sub-row indices, parallel to ``events`` in their *original* order.</span>
+<span class="sd">    """</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">end_frame</span><span class="p">))</span>
+    <span class="n">row_last_end</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># last end frame occupying each sub-row</span>
+    <span class="n">assigned</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">placed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">last_end</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row_last_end</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">start_frame</span> <span class="o">&gt;</span> <span class="n">last_end</span><span class="p">:</span>  <span class="c1"># this row is free from here on</span>
+                <span class="n">row_last_end</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">end_frame</span>
+                <span class="n">assigned</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span>
+                <span class="n">placed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
+            <span class="n">assigned</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">row_last_end</span><span class="p">)</span>
+            <span class="n">row_last_end</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">assigned</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_rows</span><span class="p">(</span><span class="n">track</span><span class="p">:</span> <span class="n">TimelineTrack</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return ``(sub-row per event, sub-row count)`` for a track (min one row)."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">track</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[],</span> <span class="mi">1</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">pack_lanes</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">events</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rows</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lane_height</span><span class="p">(</span><span class="n">row_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Pixel height of a lane holding ``row_count`` stacked sub-rows."""</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">LANE_PAD</span> <span class="o">+</span> <span class="n">row_count</span> <span class="o">*</span> <span class="n">ROW_HEIGHT</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tick_step_seconds</span><span class="p">(</span><span class="n">span_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Choose a ruler tick spacing (seconds) giving ~one tick per 90 px of the window.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        span_seconds: Seconds visible in the current window.</span>
+<span class="sd">        width: Rendered timeline width in user units.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A "nice" tick step in seconds (1, 2, 5, 10, … scaled by powers of ten). Never zero.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">span_seconds</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">width</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+    <span class="n">target_ticks</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">width</span> <span class="o">/</span> <span class="mf">90.0</span><span class="p">)</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">span_seconds</span> <span class="o">/</span> <span class="n">target_ticks</span>
+    <span class="n">magnitude</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span> <span class="k">if</span> <span class="n">raw</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="k">for</span> <span class="n">nice</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="o">&lt;=</span> <span class="n">nice</span> <span class="o">*</span> <span class="n">magnitude</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nice</span> <span class="o">*</span> <span class="n">magnitude</span>
+    <span class="k">return</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">magnitude</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_x_of_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">view_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">view_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Map a frame to an x position within the visible window ``[view_start, view_end]``."""</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">view_end</span> <span class="o">-</span> <span class="n">view_start</span>
+    <span class="k">if</span> <span class="n">span</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">frame</span> <span class="o">-</span> <span class="n">view_start</span><span class="p">)</span> <span class="o">/</span> <span class="n">span</span> <span class="o">*</span> <span class="n">width</span>
+
+
+<div class="viewcode-block" id="build_svg">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/timeline/index.html#annie.pages.timeline.build_svg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_svg</span><span class="p">(</span>
+    <span class="n">tracks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TimelineTrack</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">view_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">view_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">svg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pending_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pending_end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render the timeline as an inline-SVG string for the visible frame window.</span>
+
+<span class="sd">    Pure and deterministic — no NiceGUI, no DOM — so the geometry (tick placement, event box</span>
+<span class="sd">    extents, lane stacking) is unit-testable.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tracks: The lanes to draw, top to bottom.</span>
+<span class="sd">        view_start: First frame shown at the left edge.</span>
+<span class="sd">        view_end: Last frame shown at the right edge (``&gt; view_start``).</span>
+<span class="sd">        fps: Frames per second, for converting the window to ruler seconds.</span>
+<span class="sd">        svg_id: DOM id for the ``&lt;svg&gt;`` (the playhead updater and gesture bridge use it).</span>
+<span class="sd">        pending_start: While the reviewer is mid-capture (start marked, end not yet), the</span>
+<span class="sd">            start frame of the growing amber band; ``None`` when not capturing.</span>
+<span class="sd">        pending_end: The band's right edge — the live playhead frame; defaults to</span>
+<span class="sd">            ``pending_start`` (a minimal band) when omitted. Ignored if ``pending_start`` is</span>
+<span class="sd">            ``None``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A complete ``&lt;svg&gt;…&lt;/svg&gt;`` markup string that scales to its container's width.</span>
+<span class="sd">    """</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">BASE_WIDTH</span><span class="p">)</span>
+    <span class="n">view_end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">view_end</span><span class="p">,</span> <span class="n">view_start</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">lanes_top</span> <span class="o">=</span> <span class="n">RULER_HEIGHT</span> <span class="o">+</span> <span class="n">LANE_GAP</span>
+
+    <span class="c1"># Pre-compute each lane's packing and height so the total height is known up front.</span>
+    <span class="n">packed</span> <span class="o">=</span> <span class="p">[</span><span class="n">_lane_rows</span><span class="p">(</span><span class="n">track</span><span class="p">)</span> <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">tracks</span><span class="p">]</span>
+    <span class="n">lane_heights</span> <span class="o">=</span> <span class="p">[</span><span class="n">_lane_height</span><span class="p">(</span><span class="n">row_count</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row_count</span> <span class="ow">in</span> <span class="n">packed</span><span class="p">]</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">lanes_top</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">LANE_GAP</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">lane_heights</span><span class="p">)</span> <span class="o">+</span> <span class="n">LANE_GAP</span>
+
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s1">'&lt;svg id="</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">svg_id</span><span class="p">)</span><span class="si">}</span><span class="s1">" xmlns="http://www.w3.org/2000/svg" '</span>
+        <span class="sa">f</span><span class="s1">'viewBox="0 0 </span><span class="si">{</span><span class="n">width</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">height</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" preserveAspectRatio="none" '</span>
+        <span class="sa">f</span><span class="s1">'width="100%" height="</span><span class="si">{</span><span class="n">height</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'style="font-family:inherit;font-size:11px;display:block"&gt;'</span><span class="p">,</span>
+        <span class="c1"># Hover highlight for event boxes; the selected box is styled inline (below).</span>
+        <span class="s2">"&lt;style&gt;.annie-event{transition:fill-opacity .1s}"</span>
+        <span class="s2">".annie-event:hover{fill-opacity:0.8}&lt;/style&gt;"</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">_append_ruler</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+
+    <span class="c1"># The pending band is drawn before the lanes/events so it sits *behind* them. It always</span>
+    <span class="c1"># carries the annie-pending class so the poll can resize it live without a re-render; when</span>
+    <span class="c1"># not capturing it is emitted zero-width and invisible so the JS hook still exists.</span>
+    <span class="n">_append_pending_band</span><span class="p">(</span>
+        <span class="n">parts</span><span class="p">,</span> <span class="n">pending_start</span><span class="p">,</span> <span class="n">pending_end</span><span class="p">,</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">lanes_top</span><span class="p">,</span> <span class="n">height</span>
+    <span class="p">)</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">lanes_top</span>
+    <span class="k">for</span> <span class="n">ordinal</span><span class="p">,</span> <span class="n">track</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tracks</span><span class="p">):</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">row_count</span> <span class="o">=</span> <span class="n">packed</span><span class="p">[</span><span class="n">ordinal</span><span class="p">]</span>
+        <span class="n">lane_h</span> <span class="o">=</span> <span class="n">lane_heights</span><span class="p">[</span><span class="n">ordinal</span><span class="p">]</span>
+        <span class="n">colour</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">event_track_color</span><span class="p">(</span><span class="n">ordinal</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;rect class="annie-lane" data-track="</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'x="0" y="</span><span class="si">{</span><span class="n">y</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">width</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">lane_h</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'fill="#fafafa" stroke="#e9ecef" stroke-width="1"/&gt;'</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">events</span><span class="p">):</span>
+            <span class="n">_append_event</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="n">lane_h</span> <span class="o">+</span> <span class="n">LANE_GAP</span>
+
+    <span class="c1"># Playhead — one line the poll moves via set_playhead_x (class is the hook). Its x is set</span>
+    <span class="c1"># by the caller after render for the current time; it starts at the window's left edge.</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;line class="annie-playhead" x1="0" y1="0" x2="0" y2="</span><span class="si">{</span><span class="n">height</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PLAYHEAD</span><span class="si">}</span><span class="s1">" stroke-width="2" pointer-events="none"/&gt;'</span>
+    <span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"&lt;/svg&gt;"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_append_pending_band</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913 - a drawing routine needs its geometry inputs</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">pending_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pending_end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">view_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">view_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">lanes_top</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw the amber capture band behind the lanes, from ``pending_start`` to the playhead.</span>
+
+<span class="sd">    Always emits a ``&lt;rect class="annie-pending"&gt;`` so the poll's cheap JS resize</span>
+<span class="sd">    (:func:`annie.pages.videoclock.set_pending_band`) has a stable hook; when there is no</span>
+<span class="sd">    capture in progress the rect is zero-width and invisible. The band spans the lane area</span>
+<span class="sd">    vertically (below the ruler) and is drawn before the events so it reads as a wash behind</span>
+<span class="sd">    them.</span>
+<span class="sd">    """</span>
+    <span class="n">band_h</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">height</span> <span class="o">-</span> <span class="n">lanes_top</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pending_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;rect class="annie-pending" x="0" y="</span><span class="si">{</span><span class="n">lanes_top</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="0" '</span>
+            <span class="sa">f</span><span class="s1">'height="</span><span class="si">{</span><span class="n">band_h</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" fill="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PENDING</span><span class="si">}</span><span class="s1">" fill-opacity="0.25" '</span>
+            <span class="sa">f</span><span class="s1">'pointer-events="none"/&gt;'</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">pending_start</span> <span class="k">if</span> <span class="n">pending_end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pending_end</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="p">(</span><span class="n">pending_start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span> <span class="k">if</span> <span class="n">pending_start</span> <span class="o">&lt;=</span> <span class="n">end</span> <span class="k">else</span> <span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">pending_start</span><span class="p">)</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">_x_of_frame</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">_x_of_frame</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;rect class="annie-pending" x="</span><span class="si">{</span><span class="n">x0</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">lanes_top</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">x1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">x0</span><span class="p">)</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">band_h</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'fill="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PENDING</span><span class="si">}</span><span class="s1">" fill-opacity="0.25" pointer-events="none"/&gt;'</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_append_ruler</span><span class="p">(</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">view_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">view_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw the ruler strip: ticks and second labels across the visible window."""</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'&lt;rect x="0" y="0" width="</span><span class="si">{</span><span class="n">width</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">RULER_HEIGHT</span><span class="si">}</span><span class="s1">" fill="#f1f3f5"/&gt;'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">start_sec</span> <span class="o">=</span> <span class="n">view_start</span> <span class="o">/</span> <span class="n">fps</span>
+    <span class="n">end_sec</span> <span class="o">=</span> <span class="n">view_end</span> <span class="o">/</span> <span class="n">fps</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">end_sec</span> <span class="o">-</span> <span class="n">start_sec</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">_tick_step_seconds</span><span class="p">(</span><span class="n">span</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="c1"># First tick at or after the window start, on a step boundary.</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">start_sec</span> <span class="o">/</span> <span class="n">step</span><span class="p">)</span> <span class="o">*</span> <span class="n">step</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">first</span>
+    <span class="k">while</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="n">end_sec</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">start_sec</span><span class="p">)</span> <span class="o">/</span> <span class="n">span</span> <span class="o">*</span> <span class="n">width</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;line x1="</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y1="0" x2="</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y2="</span><span class="si">{</span><span class="n">RULER_HEIGHT</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'stroke="#adb5bd" stroke-width="1"/&gt;'</span>
+        <span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="14" fill="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s1">"&gt;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s1">g</span><span class="si">}</span><span class="s1">s&lt;/text&gt;'</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">step</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_append_event</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913 - a drawing routine needs its geometry inputs</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">event</span><span class="p">:</span> <span class="n">TimelineEvent</span><span class="p">,</span>
+    <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">lane_y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">sub_row</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">view_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">view_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw one event box (and its label) on its packed sub-row within a lane.</span>
+
+<span class="sd">    Events fully outside the visible window are skipped; one that straddles an edge is</span>
+<span class="sd">    clamped to the window so its visible part still shows and stays clickable.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">end_frame</span> <span class="o">&lt;</span> <span class="n">view_start</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">start_frame</span> <span class="o">&gt;</span> <span class="n">view_end</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">_x_of_frame</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="n">view_start</span><span class="p">),</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">_x_of_frame</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span> <span class="n">view_end</span><span class="p">),</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">box_w</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span>
+    <span class="n">box_y</span> <span class="o">=</span> <span class="n">lane_y</span> <span class="o">+</span> <span class="n">LANE_PAD</span> <span class="o">+</span> <span class="n">sub_row</span> <span class="o">*</span> <span class="n">ROW_HEIGHT</span>
+    <span class="n">fill</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="n">colour</span>  <span class="c1"># per-event colour overrides the lane's default</span>
+    <span class="c1"># Every box carries a black outline so a pale pastel fill still reads against the lane;</span>
+    <span class="c1"># selection just thickens it rather than changing the colour.</span>
+    <span class="n">stroke</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">EVENT_SELECTED</span>
+    <span class="n">stroke_w</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">selected</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">opacity</span> <span class="o">=</span> <span class="s2">"0.9"</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">selected</span> <span class="k">else</span> <span class="s2">"0.7"</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">escape</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;rect class="annie-event" data-event="</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_id</span><span class="p">)</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'x="</span><span class="si">{</span><span class="n">x0</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">box_y</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">box_w</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">ROW_HEIGHT</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">4</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'rx="</span><span class="si">{</span><span class="n">EVENT_RADIUS</span><span class="si">}</span><span class="s1">" fill="</span><span class="si">{</span><span class="n">fill</span><span class="si">}</span><span class="s1">" fill-opacity="</span><span class="si">{</span><span class="n">opacity</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">stroke</span><span class="si">}</span><span class="s1">" stroke-width="</span><span class="si">{</span><span class="n">stroke_w</span><span class="si">}</span><span class="s1">" style="cursor:pointer"&gt;'</span>
+        <span class="sa">f</span><span class="s2">"&lt;title&gt;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&lt;/title&gt;&lt;/rect&gt;"</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">label</span> <span class="ow">and</span> <span class="n">_label_fits</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">box_w</span><span class="p">):</span>
+        <span class="c1"># Centred in the box; only drawn when it plausibly fits, so a short box is not</span>
+        <span class="c1"># overrun by text spilling past its edges (an estimate — see _label_fits).</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'&lt;text x="</span><span class="si">{</span><span class="n">x0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">box_w</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">" y="</span><span class="si">{</span><span class="n">box_y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ROW_HEIGHT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'text-anchor="middle" fill="#1a1a1a" style="pointer-events:none"&gt;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+        <span class="p">)</span>
+
+
+<span class="c1">#: Rough width, in user units, of one label character at the 11px timeline font. Used only</span>
+<span class="c1">#: to decide whether a label fits its box — an over-estimate is safe (it just hides a label</span>
+<span class="c1">#: that might have squeezed in), which is why it errs generous.</span>
+<span class="n">_CHAR_WIDTH</span> <span class="o">=</span> <span class="mf">6.5</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_label_fits</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">box_width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether ``label`` plausibly fits inside a box ``box_width`` user units wide.</span>
+
+<span class="sd">    A cheap character-count estimate (the server cannot measure real text metrics), with a</span>
+<span class="sd">    small padding margin. When it does not fit, the caller draws no label and the full text</span>
+<span class="sd">    is still available via the box's ``&lt;title&gt;`` tooltip.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="o">*</span> <span class="n">_CHAR_WIDTH</span> <span class="o">+</span> <span class="mi">6</span> <span class="o">&lt;=</span> <span class="n">box_width</span>
+
+
+<div class="viewcode-block" id="gesture_script">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/timeline/index.html#annie.pages.timeline.gesture_script">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gesture_script</span><span class="p">(</span><span class="n">svg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">event_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return JS that reports a timeline click to the server via ``emitEvent``.</span>
+
+<span class="sd">    Attached once after the SVG is embedded. It listens for pointer down/up on the SVG and</span>
+<span class="sd">    emits ``event_name`` with a ``detail`` of ``{kind, x, ...}`` where ``x`` is a ``[0, 1]``</span>
+<span class="sd">    fraction of the *visible window*:</span>
+
+<span class="sd">    * ``kind = "select"`` when an existing event box is clicked (carries ``event_id``);</span>
+<span class="sd">    * ``kind = "seek"`` for a click anywhere else, or any drag.</span>
+
+<span class="sd">    The timeline is navigation-only — it never creates events — so there is no click/drag</span>
+<span class="sd">    authoring gesture; boundaries come from the START/END EVENT buttons and the i/o keys.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        svg_id: DOM id of the timeline ``&lt;svg&gt;``.</span>
+<span class="sd">        event_name: The custom event name the NiceGUI handler listens for.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The JavaScript to run once via ``ui.run_javascript``.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Gestures are reported to the server via NiceGUI's emitEvent (a Python ``ui.on`` handler</span>
+    <span class="c1"># receives them), not a DOM CustomEvent — the latter needed a brittle forward hop through</span>
+    <span class="c1"># the wrapper element. ``eventBox`` walks up from the pointer target with ``closest`` so a</span>
+    <span class="c1"># click landing on a box's ``&lt;title&gt;`` child still resolves to the box; capturing the</span>
+    <span class="c1"># event id at pointerdown makes a click select it even if the pointer twitches a pixel.</span>
+    <span class="c1">#</span>
+    <span class="c1"># The timeline is navigation-only: a click on a box selects it, anywhere else is a seek.</span>
+    <span class="c1"># New events are created solely by the START/END EVENT buttons (and the i/o keys), so</span>
+    <span class="c1"># their boundaries are exact rather than wherever a click happened to land.</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">    (() =&gt; </span><span class="se">{{</span>
+<span class="s2">      const svg = document.getElementById('</span><span class="si">{</span><span class="n">svg_id</span><span class="si">}</span><span class="s2">');</span>
+<span class="s2">      if (!svg || svg.dataset.annieBound) return;</span>
+<span class="s2">      svg.dataset.annieBound = '1';</span>
+<span class="s2">      let downX = null, downEvent = null;</span>
+<span class="s2">      const frac = (clientX) =&gt; </span><span class="se">{{</span>
+<span class="s2">        const r = svg.getBoundingClientRect();</span>
+<span class="s2">        return Math.min(1, Math.max(0, (clientX - r.left) / r.width));</span>
+<span class="s2">      </span><span class="se">}}</span><span class="s2">;</span>
+<span class="s2">      const eventBox = (t) =&gt; (t &amp;&amp; t.closest) ? t.closest('.annie-event') : null;</span>
+<span class="s2">      svg.addEventListener('pointerdown', (e) =&gt; </span><span class="se">{{</span>
+<span class="s2">        downX = frac(e.clientX);</span>
+<span class="s2">        const box = eventBox(e.target);</span>
+<span class="s2">        downEvent = box ? box.getAttribute('data-event') : null;</span>
+<span class="s2">      </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">      svg.addEventListener('pointerup', (e) =&gt; </span><span class="se">{{</span>
+<span class="s2">        if (downX === null) return;</span>
+<span class="s2">        const upX = frac(e.clientX);</span>
+<span class="s2">        const moved = Math.abs(upX - downX) &gt; 0.006;</span>
+<span class="s2">        const detail = (downEvent &amp;&amp; !moved)</span>
+<span class="s2">          ? </span><span class="se">{{</span><span class="s2">kind: 'select', event_id: downEvent, x: upX</span><span class="se">}}</span>
+<span class="s2">          : </span><span class="se">{{</span><span class="s2">kind: 'seek', track: null, x: upX</span><span class="se">}}</span><span class="s2">;</span>
+<span class="s2">        emitEvent('</span><span class="si">{</span><span class="n">event_name</span><span class="si">}</span><span class="s2">', detail);</span>
+<span class="s2">        downX = null; downEvent = null;</span>
+<span class="s2">      </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">    </span><span class="se">}}</span><span class="s2">)();</span>
+<span class="s2">    """</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Ádám Fodor
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=c6e86fd7"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

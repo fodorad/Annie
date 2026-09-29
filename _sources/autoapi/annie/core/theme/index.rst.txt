@@ -38,6 +38,10 @@ Attributes
    annie.core.theme.DECISION_ACCEPT_TINT
    annie.core.theme.DECISION_DROP_TINT
    annie.core.theme.ROW_BORDER
+   annie.core.theme.EVENT_TRACK_PALETTE
+   annie.core.theme.EVENT_PLAYHEAD
+   annie.core.theme.EVENT_SELECTED
+   annie.core.theme.EVENT_PENDING
    annie.core.theme.VDET_COLOR
    annie.core.theme.TRACK_COLOR
    annie.core.theme.AVAILABLE
@@ -57,6 +61,7 @@ Functions
 
 .. autoapisummary::
 
+   annie.core.theme.event_track_color
    annie.core.theme.status_color
    annie.core.theme.color
 
@@ -144,6 +149,41 @@ Module Contents
 
 
    The light border every Browse/Annotator row card carries, so its extent is visible.
+
+.. py:data:: EVENT_TRACK_PALETTE
+   :type:  tuple[str, ...]
+   :value: ('#3a86ff', '#8338ec', '#fb5607', '#2a9d8f', '#e63946', '#606c38')
+
+
+   Per-lane fill colours for timeline event boxes, cycled by the lane's order.
+
+.. py:data:: EVENT_PLAYHEAD
+   :value: '#d90429'
+
+
+   Coral — the vertical playhead line marking the current time across all lanes.
+
+.. py:data:: EVENT_SELECTED
+   :value: '#111827'
+
+
+   Near-black — the outline of the currently selected event box.
+
+.. py:data:: EVENT_PENDING
+   :value: '#f59e0b'
+
+
+   Amber — the translucent band drawn from an event's start to the live playhead while the
+   reviewer is mid-capture (start set, end not yet), and the armed "Set end" button.
+
+.. py:function:: event_track_color(ordinal: int) -> str
+
+   Return the timeline fill colour for a track at vertical position ``ordinal``.
+
+   :param ordinal: The lane's zero-based position from the top.
+
+   :returns: A hex colour from :data:`EVENT_TRACK_PALETTE`, cycled by ``ordinal``.
+
 
 .. py:data:: VDET_COLOR
    :value: '#1d3557'

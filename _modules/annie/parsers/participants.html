@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,20 +298,20 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.parsers.participants</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Parser and resolver for the protagonist participant file.</span>
+<span></span><span class="sd">"""Parser and resolver for the protagonist participant file.</span>
 
 <span class="sd">A protagonist file maps each video to the track index that is its active /</span>
 <span class="sd">monitored protagonist. Classically this is a two-column CSV — ``uuid,track_id``</span>
 <span class="sd">— but Annie is dataset-agnostic: the **key column** (the video id) and the</span>
 <span class="sd">**value column** (the track id) are chosen when the source is added, defaulting to</span>
-<span class="sd">``uuid`` / ``track_id``. A ``track_id`` of ``-1`` means &quot;no active track&quot;.</span>
+<span class="sd">``uuid`` / ``track_id``. A ``track_id`` of ``-1`` means "no active track".</span>
 
 <span class="sd">Annie keeps human judgement separate from heuristic output. The user selects the</span>
 <span class="sd">source file; Annie never writes to it. Manual corrections go to its ``_manual``</span>
 <span class="sd">sibling (``..._heuristic.csv`` → ``..._heuristic_manual.csv``), an upsert keyed by</span>
 <span class="sd">the video id, written with the same two columns. Resolution order is</span>
 <span class="sd">**manual ▸ source ▸ -1**.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -317,25 +321,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">NO_ACTIVE_TRACK</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;NO_ACTIVE_TRACK&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;export_resolved&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;load_participants&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;manual_path_for&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;resolved_mapping&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;resolve_active_track&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;set_active_track&quot;</span><span class="p">,</span>
+    <span class="s2">"NO_ACTIVE_TRACK"</span><span class="p">,</span>
+    <span class="s2">"export_resolved"</span><span class="p">,</span>
+    <span class="s2">"load_participants"</span><span class="p">,</span>
+    <span class="s2">"manual_path_for"</span><span class="p">,</span>
+    <span class="s2">"resolved_mapping"</span><span class="p">,</span>
+    <span class="s2">"resolve_active_track"</span><span class="p">,</span>
+    <span class="s2">"set_active_track"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">DEFAULT_KEY_COLUMN</span> <span class="o">=</span> <span class="s2">&quot;uuid&quot;</span>
-<span class="sd">&quot;&quot;&quot;Default key/value columns when a source does not specify them.&quot;&quot;&quot;</span>
-<span class="n">DEFAULT_VALUE_COLUMN</span> <span class="o">=</span> <span class="s2">&quot;track_id&quot;</span>
-<span class="sd">&quot;&quot;&quot;Default protagonist track-id column.&quot;&quot;&quot;</span>
+<span class="n">DEFAULT_KEY_COLUMN</span> <span class="o">=</span> <span class="s2">"uuid"</span>
+<span class="sd">"""Default key/value columns when a source does not specify them."""</span>
+<span class="n">DEFAULT_VALUE_COLUMN</span> <span class="o">=</span> <span class="s2">"track_id"</span>
+<span class="sd">"""Default protagonist track-id column."""</span>
 
 
 <div class="viewcode-block" id="manual_path_for">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/participants/index.html#annie.parsers.participants.manual_path_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">manual_path_for</span><span class="p">(</span><span class="n">source_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the manual-correction sibling path for a source file.</span>
+<span class="w">    </span><span class="sd">"""Return the manual-correction sibling path for a source file.</span>
 
 <span class="sd">    ``/x/participant_face_track_heuristic.csv`` →</span>
 <span class="sd">    ``/x/participant_face_track_heuristic_manual.csv``.</span>
@@ -345,9 +349,9 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The path where manual corrections are written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_file</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_manual</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_manual</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
@@ -358,10 +362,10 @@
     <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
     <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a protagonist CSV into a ``video_id -&gt; track_id`` mapping.</span>
+<span class="w">    </span><span class="sd">"""Load a protagonist CSV into a ``video_id -&gt; track_id`` mapping.</span>
 
-<span class="sd">    A missing file resolves to an empty mapping (treated as &quot;no corrections /</span>
-<span class="sd">    no source yet&quot;) rather than raising, so resolution degrades cleanly. Rows</span>
+<span class="sd">    A missing file resolves to an empty mapping (treated as "no corrections /</span>
+<span class="sd">    no source yet") rather than raising, so resolution degrades cleanly. Rows</span>
 <span class="sd">    whose track-id value is blank or non-integer are skipped.</span>
 
 <span class="sd">    Args:</span>
@@ -372,15 +376,15 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Mapping from video id to its active track index (may be ``-1``). Empty if</span>
 <span class="sd">        the file does not exist.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8-sig&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8-sig"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">handle</span><span class="p">):</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">try</span><span class="p">:</span>
@@ -398,7 +402,7 @@
     <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
     <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the merged ``video_id -&gt; track_id`` mapping (manual overrides source).</span>
+<span class="w">    </span><span class="sd">"""Return the merged ``video_id -&gt; track_id`` mapping (manual overrides source).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        source_file: Path to the protagonist source CSV.</span>
@@ -407,7 +411,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The source mapping with manual corrections layered on top.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">merged</span> <span class="o">=</span> <span class="n">load_participants</span><span class="p">(</span><span class="n">source_file</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
     <span class="n">merged</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">load_participants</span><span class="p">(</span><span class="n">manual_path_for</span><span class="p">(</span><span class="n">source_file</span><span class="p">),</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">merged</span></div>
@@ -422,7 +426,7 @@
     <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
     <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the active track id for a video using manual ▸ source ▸ -1.</span>
+<span class="w">    </span><span class="sd">"""Resolve the active track id for a video using manual ▸ source ▸ -1.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        uuid: The video id to look up.</span>
@@ -432,7 +436,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The resolved active track index, or ``-1`` when none applies.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">manual</span> <span class="o">=</span> <span class="n">load_participants</span><span class="p">(</span><span class="n">manual_path_for</span><span class="p">(</span><span class="n">source_file</span><span class="p">),</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">uuid</span> <span class="ow">in</span> <span class="n">manual</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">manual</span><span class="p">[</span><span class="n">uuid</span><span class="p">]</span>
@@ -441,9 +445,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_mapping</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a ``video_id -&gt; track_id`` mapping as a two-column CSV, sorted by key.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Write a ``video_id -&gt; track_id`` mapping as a two-column CSV, sorted by key."""</span>
     <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
         <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">((</span><span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mapping</span><span class="p">):</span>
@@ -460,7 +464,7 @@
     <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
     <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Upsert a manual protagonist correction for ``uuid``.</span>
+<span class="w">    </span><span class="sd">"""Upsert a manual protagonist correction for ``uuid``.</span>
 
 <span class="sd">    Writes to the ``_manual`` sibling of the source file only (the source file is</span>
 <span class="sd">    never touched). The write is an upsert keyed by the video id — re-correcting a</span>
@@ -476,7 +480,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The path to the manual-correction file that was written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">manual_path</span> <span class="o">=</span> <span class="n">manual_path_for</span><span class="p">(</span><span class="n">source_file</span><span class="p">)</span>
     <span class="n">mapping</span> <span class="o">=</span> <span class="n">load_participants</span><span class="p">(</span><span class="n">manual_path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
     <span class="n">mapping</span><span class="p">[</span><span class="n">uuid</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">track_id</span><span class="p">)</span>
@@ -492,7 +496,7 @@
     <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
     <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the resolved (manual ▸ source) mapping to a standalone CSV.</span>
+<span class="w">    </span><span class="sd">"""Write the resolved (manual ▸ source) mapping to a standalone CSV.</span>
 
 <span class="sd">    This is the export of the corrected protagonist datasource: the heuristic</span>
 <span class="sd">    rows with every manual correction applied, in one self-contained file.</span>
@@ -505,7 +509,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The path written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">mapping</span> <span class="o">=</span> <span class="n">resolved_mapping</span><span class="p">(</span><span class="n">source_file</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_write_mapping</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">out_path</span><span class="p">),</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span></div>
 

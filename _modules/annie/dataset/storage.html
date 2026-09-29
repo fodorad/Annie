@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,26 +298,27 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.dataset.storage</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;SQLite-backed review-status store (Browse tab curation state).</span>
+<span></span><span class="sd">"""SQLite-backed review-status store (Browse tab curation state).</span>
 
 <span class="sd">This holds *curation* state per video — a good/bad verdict, an optional note, an</span>
-<span class="sd">&quot;add to annotator&quot; flag, and the protagonist-track correction — plus, on export,</span>
+<span class="sd">"add to annotator" flag, and the protagonist-track correction — plus, on export,</span>
 <span class="sd">the protagonist ``_manual`` CSV. The store is a real file (by default a per-session</span>
 <span class="sd">``~/.annie/sessions/annie_&lt;timestamp&gt;.db``; pin one with ``ANNIE_DB_PATH``) so it</span>
 <span class="sd">survives restarts, and is keyed by :attr:`annie.models.VideoEntry.key`.</span>
 
 <span class="sd">Every video is **liked (good) by default**: a row only exists once the user</span>
-<span class="sd">interacts, and the UI treats &quot;no row&quot; as good. The store is exportable to CSV/JSON</span>
-<span class="sd">in one call and importable via upsert, so a reviewer&#39;s curation travels with them.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">interacts, and the UI treats "no row" as good. The store is exportable to CSV/JSON</span>
+<span class="sd">in one call and importable via upsert, so a reviewer's curation travels with them.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span>
@@ -321,49 +326,84 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
 
-<span class="n">Verdict</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;good&quot;</span><span class="p">,</span> <span class="s2">&quot;bad&quot;</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;A review verdict. ``None`` (no row) is treated as ``&quot;good&quot;`` by the UI.&quot;&quot;&quot;</span>
+<span class="n">Verdict</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"good"</span><span class="p">,</span> <span class="s2">"bad"</span><span class="p">]</span>
+<span class="sd">"""A review verdict. ``None`` (no row) is treated as ``"good"`` by the UI."""</span>
 
-<span class="n">Decision</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;accept&quot;</span><span class="p">,</span> <span class="s2">&quot;drop&quot;</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;A Segment-review decision on a clip. ``None`` means the clip is not yet reviewed.&quot;&quot;&quot;</span>
+<span class="n">Decision</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"accept"</span><span class="p">,</span> <span class="s2">"drop"</span><span class="p">]</span>
+<span class="sd">"""A Segment-review decision on a clip. ``None`` means the clip is not yet reviewed."""</span>
 
-<span class="c1">#: DDL for the single ``review`` table, created on first connection (idempotent).</span>
-<span class="c1">#: ``row_key`` is free-form text, so segment rows key on ``{video_id}_{segment_id}``</span>
-<span class="c1">#: without a schema change; ``decision`` carries the Segment-review accept/drop.</span>
-<span class="n">_SCHEMA</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="c1">#: DDL for the persisted tables, created on first connection (all idempotent).</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``review`` is one row per video (curation, protagonist, segment decision); ``row_key``</span>
+<span class="c1">#: is free-form text, so segment rows key on ``{video_id}_{segment_id}`` without a schema</span>
+<span class="c1">#: change, and ``decision`` carries the Segment-review accept/drop.</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``event`` and ``event_track`` back the Event-annotation task, which is a different shape:</span>
+<span class="c1">#: one video carries **many** interval events across **many** tracks. An event is a</span>
+<span class="c1">#: ``[start_frame, end_frame]`` span on a named track (the track *is* the category), with a</span>
+<span class="c1">#: free-text label/note and a JSON ``attributes`` object for arbitrary key/values — hence a</span>
+<span class="c1">#: dedicated table rather than more columns on ``review``. ``event_track`` records a track's</span>
+<span class="c1">#: existence and vertical order even before it holds any event, so an added-but-empty lane</span>
+<span class="c1">#: survives a reload. Both are keyed by :attr:`annie.core.models.VideoEntry.key` (``row_key``)</span>
+<span class="c1">#: so events tie to the same queue row curation does. Opening a pre-events database simply</span>
+<span class="c1">#: creates these tables empty — no column migration is needed for whole new tables.</span>
+<span class="n">_SCHEMA</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">CREATE TABLE IF NOT EXISTS review (</span>
 <span class="s2">    row_key            TEXT PRIMARY KEY,</span>
 <span class="s2">    video_id           TEXT NOT NULL,</span>
 <span class="s2">    annotation_suffix  TEXT,</span>
 <span class="s2">    verdict            TEXT,</span>
-<span class="s2">    note               TEXT NOT NULL DEFAULT &#39;&#39;,</span>
+<span class="s2">    note               TEXT NOT NULL DEFAULT '',</span>
 <span class="s2">    annotate           INTEGER NOT NULL DEFAULT 0,</span>
 <span class="s2">    active_track       INTEGER,</span>
 <span class="s2">    decision           TEXT,</span>
 <span class="s2">    updated_at         TEXT NOT NULL</span>
 <span class="s2">);</span>
-<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s2">CREATE TABLE IF NOT EXISTS event (</span>
+<span class="s2">    event_id     TEXT PRIMARY KEY,</span>
+<span class="s2">    video_id     TEXT NOT NULL,</span>
+<span class="s2">    row_key      TEXT NOT NULL,</span>
+<span class="s2">    track        TEXT NOT NULL,</span>
+<span class="s2">    start_frame  INTEGER NOT NULL,</span>
+<span class="s2">    end_frame    INTEGER NOT NULL,</span>
+<span class="s2">    label        TEXT NOT NULL DEFAULT '',</span>
+<span class="s2">    note         TEXT NOT NULL DEFAULT '',</span>
+<span class="s2">    attributes   TEXT NOT NULL DEFAULT '</span><span class="si">{}</span><span class="s2">',</span>
+<span class="s2">    color        TEXT,</span>
+<span class="s2">    updated_at   TEXT NOT NULL</span>
+<span class="s2">);</span>
+<span class="s2">CREATE INDEX IF NOT EXISTS event_by_video ON event(row_key);</span>
+
+<span class="s2">CREATE TABLE IF NOT EXISTS event_track (</span>
+<span class="s2">    row_key     TEXT NOT NULL,</span>
+<span class="s2">    track       TEXT NOT NULL,</span>
+<span class="s2">    ordinal     INTEGER NOT NULL,</span>
+<span class="s2">    updated_at  TEXT NOT NULL,</span>
+<span class="s2">    PRIMARY KEY (row_key, track)</span>
+<span class="s2">);</span>
+<span class="s2">"""</span>
 
 
 <div class="viewcode-block" id="ReviewRecord">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewRecord">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReviewRecord</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One persisted review row.</span>
+<span class="w">    </span><span class="sd">"""One persisted review row.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        row_key: Stable per-row identity (:attr:`annie.models.VideoEntry.key`).</span>
 <span class="sd">        video_id: The video this review belongs to.</span>
 <span class="sd">        annotation_suffix: The annotation suffix, or ``None`` for an exact match.</span>
-<span class="sd">        verdict: ``&quot;good&quot;``, ``&quot;bad&quot;``, or ``None`` if untouched (treated as good).</span>
+<span class="sd">        verdict: ``"good"``, ``"bad"``, or ``None`` if untouched (treated as good).</span>
 <span class="sd">        note: Free-text reviewer note (empty string when none).</span>
 <span class="sd">        annotate: Whether the video is queued for the Annotator tab.</span>
-<span class="sd">        active_track: The session&#39;s protagonist-track override, or ``None`` if the</span>
+<span class="sd">        active_track: The session's protagonist-track override, or ``None`` if the</span>
 <span class="sd">            reviewer has not corrected this video (the heuristic value then stands).</span>
 <span class="sd">        decision: The Segment-review accept/drop for a clip row, or ``None`` if the</span>
 <span class="sd">            clip is not (or not a) Segment-review sample.</span>
 <span class="sd">        updated_at: ISO-8601 UTC timestamp of the last change.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -377,28 +417,69 @@
 
 
 
+<div class="viewcode-block" id="EventRecord">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventRecord">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventRecord</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One persisted Event-annotation event: a labelled interval on a track.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        event_id: Stable UUID identity, so an event survives edits to its own fields.</span>
+<span class="sd">        video_id: The video this event belongs to.</span>
+<span class="sd">        row_key: The :attr:`annie.core.models.VideoEntry.key` of the queue row, tying the</span>
+<span class="sd">            event to the same identity curation uses.</span>
+<span class="sd">        track: The track (category) name the event sits on.</span>
+<span class="sd">        start_frame: Inclusive start frame of the interval.</span>
+<span class="sd">        end_frame: Inclusive end frame of the interval (``&gt;= start_frame``).</span>
+<span class="sd">        label: Free-text label shown on the event box (empty when unnamed).</span>
+<span class="sd">        note: Free-text note (empty when none).</span>
+<span class="sd">        attributes: Arbitrary string key/value pairs; stored as a JSON object.</span>
+<span class="sd">        color: Per-event colour override (hex string), or ``None`` to inherit the track's</span>
+<span class="sd">            colour on the timeline.</span>
+<span class="sd">        updated_at: ISO-8601 UTC timestamp of the last change.</span>
+<span class="sd">    """</span>
+
+    <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">track</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">start_frame</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">end_frame</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_new_event_id</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a fresh UUID4 hex string for a new event."""</span>
+    <span class="k">return</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_now</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the current time as an ISO-8601 UTC string (seconds precision).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">timespec</span><span class="o">=</span><span class="s2">&quot;seconds&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Return the current time as an ISO-8601 UTC string (seconds precision)."""</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">timespec</span><span class="o">=</span><span class="s2">"seconds"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ReviewStore">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReviewStore</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A thin, connection-per-call wrapper over the ``review`` table.</span>
+<span class="w">    </span><span class="sd">"""A thin, connection-per-call wrapper over the ``review`` table.</span>
 
 <span class="sd">    The store opens a fresh connection for each operation, which keeps it safe to</span>
 <span class="sd">    call from the render worker threads and the UI thread alike without sharing a</span>
 <span class="sd">    connection across threads.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open (creating if needed) the review database at ``db_path``.</span>
+<span class="w">        </span><span class="sd">"""Open (creating if needed) the review database at ``db_path``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            db_path: Filesystem path to the SQLite file. Parent directories are</span>
 <span class="sd">                created as needed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
@@ -407,18 +488,23 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_migrate</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add columns missing from a database created by an older Annie.&quot;&quot;&quot;</span>
-        <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA table_info(review)&quot;</span><span class="p">)}</span>
-        <span class="k">if</span> <span class="s2">&quot;annotate&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ALTER TABLE review ADD COLUMN annotate INTEGER NOT NULL DEFAULT 0&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;active_track&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ALTER TABLE review ADD COLUMN active_track INTEGER&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;decision&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;ALTER TABLE review ADD COLUMN decision TEXT&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Add columns missing from a database created by an older Annie."""</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA table_info(review)"</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="s2">"annotate"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"ALTER TABLE review ADD COLUMN annotate INTEGER NOT NULL DEFAULT 0"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"active_track"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"ALTER TABLE review ADD COLUMN active_track INTEGER"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"decision"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"ALTER TABLE review ADD COLUMN decision TEXT"</span><span class="p">)</span>
+        <span class="c1"># The event table already exists (CREATE IF NOT EXISTS ran); a database from the first</span>
+        <span class="c1"># cut of the feature lacks the later per-event colour column.</span>
+        <span class="n">event_columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA table_info(event)"</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="s2">"color"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event_columns</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"ALTER TABLE event ADD COLUMN color TEXT"</span><span class="p">)</span>
 
     <span class="nd">@contextmanager</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield a row-factory connection inside a transaction, closing it after.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Yield a row-factory connection inside a transaction, closing it after."""</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
         <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
         <span class="k">try</span><span class="p">:</span>
@@ -432,53 +518,53 @@
 <div class="viewcode-block" id="ReviewStore.get">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.get">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the review record for ``row_key``, or ``None`` if unreviewed.</span>
+<span class="w">        </span><span class="sd">"""Return the review record for ``row_key``, or ``None`` if unreviewed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: The row identity to look up.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The stored :class:`ReviewRecord`, or ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM review WHERE row_key = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM review WHERE row_key = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.all">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.all">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReviewRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every review record, ordered by row key.</span>
+<span class="w">        </span><span class="sd">"""Return every review record, ordered by row key.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            All stored review records.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM review ORDER BY row_key&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM review ORDER BY row_key"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.list_by_verdict">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.list_by_verdict">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_by_verdict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verdict</span><span class="p">:</span> <span class="n">Verdict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReviewRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all records with the given verdict (the good or bad list).</span>
+<span class="w">        </span><span class="sd">"""Return all records with the given verdict (the good or bad list).</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            verdict: ``&quot;good&quot;`` or ``&quot;bad&quot;``.</span>
+<span class="sd">            verdict: ``"good"`` or ``"bad"``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Matching review records ordered by row key.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">&quot;good&quot;</span><span class="p">:</span>
-                <span class="c1"># NULL verdict means &quot;never explicitly set&quot; → treated as good by convention.</span>
+            <span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">"good"</span><span class="p">:</span>
+                <span class="c1"># NULL verdict means "never explicitly set" → treated as good by convention.</span>
                 <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                    <span class="s2">&quot;SELECT * FROM review WHERE verdict = ? OR verdict IS NULL ORDER BY row_key&quot;</span><span class="p">,</span>
+                    <span class="s2">"SELECT * FROM review WHERE verdict = ? OR verdict IS NULL ORDER BY row_key"</span><span class="p">,</span>
                     <span class="p">(</span><span class="n">verdict</span><span class="p">,),</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                    <span class="s2">&quot;SELECT * FROM review WHERE verdict = ? ORDER BY row_key&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">verdict</span><span class="p">,)</span>
+                    <span class="s2">"SELECT * FROM review WHERE verdict = ? ORDER BY row_key"</span><span class="p">,</span> <span class="p">(</span><span class="n">verdict</span><span class="p">,)</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
 
@@ -499,7 +585,7 @@
         <span class="n">active_track</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">decision</span><span class="p">:</span> <span class="n">Decision</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert or update a review row, preserving fields left as ``None``.</span>
+<span class="w">        </span><span class="sd">"""Insert or update a review row, preserving fields left as ``None``.</span>
 
 <span class="sd">        Passing ``verdict=None`` / ``note=None`` / ``annotate=None`` /</span>
 <span class="sd">        ``active_track=None`` / ``decision=None`` keeps any existing value, so the</span>
@@ -519,10 +605,10 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The resulting :class:`ReviewRecord`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">row_key</span><span class="p">)</span>
-        <span class="n">new_verdict</span> <span class="o">=</span> <span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">verdict</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="s2">&quot;good&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">verdict</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">verdict</span>
-        <span class="n">new_note</span> <span class="o">=</span> <span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">note</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">note</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">note</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">new_verdict</span> <span class="o">=</span> <span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">verdict</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="s2">"good"</span><span class="p">)</span> <span class="k">if</span> <span class="n">verdict</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">verdict</span>
+        <span class="n">new_note</span> <span class="o">=</span> <span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">note</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span> <span class="k">if</span> <span class="n">note</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">note</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
         <span class="n">new_annotate</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">annotate</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">annotate</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">bool</span><span class="p">(</span><span class="n">annotate</span><span class="p">)</span>
         <span class="p">)</span>
@@ -543,7 +629,7 @@
         <span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">                </span><span class="sd">"""</span>
 <span class="sd">                INSERT INTO review</span>
 <span class="sd">                    (row_key, video_id, annotation_suffix, verdict, note, annotate,</span>
 <span class="sd">                     active_track, decision, updated_at)</span>
@@ -558,7 +644,7 @@
 <span class="sd">                    active_track      = excluded.active_track,</span>
 <span class="sd">                    decision          = excluded.decision,</span>
 <span class="sd">                    updated_at        = excluded.updated_at</span>
-<span class="sd">                &quot;&quot;&quot;</span><span class="p">,</span>
+<span class="sd">                """</span><span class="p">,</span>
                 <span class="n">asdict</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">record</span></div>
@@ -569,20 +655,20 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">set_verdict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verdict</span><span class="p">:</span> <span class="n">Verdict</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set (or clear) the good/bad verdict for a row.</span>
+<span class="w">        </span><span class="sd">"""Set (or clear) the good/bad verdict for a row.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: Stable row identity.</span>
 <span class="sd">            video_id: The video id.</span>
 <span class="sd">            annotation_suffix: The annotation suffix, or ``None``.</span>
-<span class="sd">            verdict: ``&quot;good&quot;``, ``&quot;bad&quot;``, or ``None`` to clear.</span>
+<span class="sd">            verdict: ``"good"``, ``"bad"``, or ``None`` to clear.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The updated :class:`ReviewRecord`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Clearing requires a direct write because upsert treats None as &quot;keep&quot;.</span>
+<span class="sd">        """</span>
+        <span class="c1"># Clearing requires a direct write because upsert treats None as "keep".</span>
         <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">row_key</span><span class="p">)</span>
-        <span class="n">note</span> <span class="o">=</span> <span class="n">existing</span><span class="o">.</span><span class="n">note</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">existing</span><span class="o">.</span><span class="n">note</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="s2">""</span>
         <span class="n">annotate</span> <span class="o">=</span> <span class="n">existing</span><span class="o">.</span><span class="n">annotate</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="kc">False</span>
         <span class="n">active</span> <span class="o">=</span> <span class="n">existing</span><span class="o">.</span><span class="n">active_track</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">decision</span> <span class="o">=</span> <span class="n">existing</span><span class="o">.</span><span class="n">decision</span> <span class="k">if</span> <span class="n">existing</span> <span class="k">else</span> <span class="kc">None</span>
@@ -591,7 +677,7 @@
         <span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">                </span><span class="sd">"""</span>
 <span class="sd">                INSERT INTO review</span>
 <span class="sd">                    (row_key, video_id, annotation_suffix, verdict, note, annotate,</span>
 <span class="sd">                     active_track, decision, updated_at)</span>
@@ -600,7 +686,7 @@
 <span class="sd">                ON CONFLICT(row_key) DO UPDATE SET</span>
 <span class="sd">                    verdict    = excluded.verdict,</span>
 <span class="sd">                    updated_at = excluded.updated_at</span>
-<span class="sd">                &quot;&quot;&quot;</span><span class="p">,</span>
+<span class="sd">                """</span><span class="p">,</span>
                 <span class="n">asdict</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">record</span></div>
@@ -611,7 +697,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">set_annotate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the &quot;add to annotator&quot; flag for a video.</span>
+<span class="w">        </span><span class="sd">"""Set the "add to annotator" flag for a video.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: Stable row identity.</span>
@@ -621,16 +707,16 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The updated :class:`ReviewRecord`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">video_id</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="n">value</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.set_annotate_many">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_annotate_many">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_annotate_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">videos</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the &quot;add to annotator&quot; flag for many videos in one transaction.</span>
+<span class="w">        </span><span class="sd">"""Set the "add to annotator" flag for many videos in one transaction.</span>
 
-<span class="sd">        Backs Browse&#39;s &quot;Add all to Annotator&quot; action: calling :meth:`set_annotate`</span>
+<span class="sd">        Backs Browse's "Add all to Annotator" action: calling :meth:`set_annotate`</span>
 <span class="sd">        per video would open a connection and commit for each one, which is slow on</span>
 <span class="sd">        a large filtered selection. Only the ``annotate`` column is written, so any</span>
 <span class="sd">        stored verdict, note, or protagonist correction survives; videos with no row</span>
@@ -642,25 +728,25 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The number of videos written.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">now</span> <span class="o">=</span> <span class="n">_now</span><span class="p">()</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;row_key&quot;</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot;video_id&quot;</span><span class="p">:</span> <span class="n">video_id</span><span class="p">,</span> <span class="s2">&quot;annotate&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">&quot;updated_at&quot;</span><span class="p">:</span> <span class="n">now</span><span class="p">}</span>
+            <span class="p">{</span><span class="s2">"row_key"</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s2">"video_id"</span><span class="p">:</span> <span class="n">video_id</span><span class="p">,</span> <span class="s2">"annotate"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">"updated_at"</span><span class="p">:</span> <span class="n">now</span><span class="p">}</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">videos</span>
         <span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span>
-<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">                </span><span class="sd">"""</span>
 <span class="sd">                INSERT INTO review</span>
 <span class="sd">                    (row_key, video_id, annotation_suffix, verdict, note, annotate,</span>
 <span class="sd">                     active_track, updated_at)</span>
-<span class="sd">                VALUES (:row_key, :video_id, NULL, &#39;good&#39;, &#39;&#39;, :annotate, NULL, :updated_at)</span>
+<span class="sd">                VALUES (:row_key, :video_id, NULL, 'good', '', :annotate, NULL, :updated_at)</span>
 <span class="sd">                ON CONFLICT(row_key) DO UPDATE SET</span>
 <span class="sd">                    annotate   = excluded.annotate,</span>
 <span class="sd">                    updated_at = excluded.updated_at</span>
-<span class="sd">                &quot;&quot;&quot;</span><span class="p">,</span>
+<span class="sd">                """</span><span class="p">,</span>
                 <span class="n">rows</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
@@ -671,10 +757,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">set_active_track</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">track_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist the reviewer&#39;s protagonist-track correction for a video.</span>
+<span class="w">        </span><span class="sd">"""Persist the reviewer's protagonist-track correction for a video.</span>
 
-<span class="sd">        The choice lives only in this session&#39;s database; the ``_manual`` CSV is</span>
-<span class="sd">        written separately by the Annotator&#39;s &quot;Export corrected CSV&quot; action.</span>
+<span class="sd">        The choice lives only in this session's database; the ``_manual`` CSV is</span>
+<span class="sd">        written separately by the Annotator's "Export corrected CSV" action.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: Stable row identity.</span>
@@ -684,43 +770,43 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The updated :class:`ReviewRecord`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">video_id</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">,</span> <span class="n">active_track</span><span class="o">=</span><span class="n">track_id</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.active_tracks">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.active_tracks">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">active_tracks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every stored protagonist override as ``row_key -&gt; track_id``.</span>
+<span class="w">        </span><span class="sd">"""Return every stored protagonist override as ``row_key -&gt; track_id``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A mapping of row key to corrected track index for the rows a reviewer</span>
 <span class="sd">            has changed this session (rows without an override are omitted).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                <span class="s2">&quot;SELECT row_key, active_track FROM review WHERE active_track IS NOT NULL&quot;</span>
+                <span class="s2">"SELECT row_key, active_track FROM review WHERE active_track IS NOT NULL"</span>
             <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;row_key&quot;</span><span class="p">]:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;active_track&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
+        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"active_track"</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.annotator_keys">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.annotator_keys">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">annotator_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the row keys flagged for the Annotator tab.</span>
+<span class="w">        </span><span class="sd">"""Return the row keys flagged for the Annotator tab.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The set of ``row_key`` values whose ``annotate`` flag is set.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT row_key FROM review WHERE annotate = 1&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;row_key&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT row_key FROM review WHERE annotate = 1"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.set_decision">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_decision">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_decision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">decision</span><span class="p">:</span> <span class="n">Decision</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist a Segment-review accept/drop decision for a clip.</span>
+<span class="w">        </span><span class="sd">"""Persist a Segment-review accept/drop decision for a clip.</span>
 
 <span class="sd">        The clip is keyed by its composite ``{video_id}_{segment_id}`` ``row_key``,</span>
 <span class="sd">        so re-opening the source resumes a half-finished pass from the database.</span>
@@ -728,31 +814,31 @@
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: The clip identity (``{video_id}_{segment_id}``).</span>
 <span class="sd">            video_id: The parent video id, stored for export/grouping.</span>
-<span class="sd">            decision: ``&quot;accept&quot;`` or ``&quot;drop&quot;``.</span>
+<span class="sd">            decision: ``"accept"`` or ``"drop"``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The updated :class:`ReviewRecord`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">decision</span><span class="o">=</span><span class="n">decision</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.clear_decision">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.clear_decision">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear_decision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a clip to the *undecided* state, dropping any accept/drop.</span>
+<span class="w">        </span><span class="sd">"""Return a clip to the *undecided* state, dropping any accept/drop.</span>
 
-<span class="sd">        This is the &quot;Undecided&quot; escape hatch in Segment review: a misclick or a changed</span>
+<span class="sd">        This is the "Undecided" escape hatch in Segment review: a misclick or a changed</span>
 <span class="sd">        mind must be able to put a clip back into the undecided pool that the progress</span>
-<span class="sd">        bar counts and &quot;jump to next undecided&quot; walks. It cannot go through</span>
-<span class="sd">        :meth:`upsert`, where ``decision=None`` means &quot;leave unchanged&quot; — this writes the</span>
+<span class="sd">        bar counts and "jump to next undecided" walks. It cannot go through</span>
+<span class="sd">        :meth:`upsert`, where ``decision=None`` means "leave unchanged" — this writes the</span>
 <span class="sd">        ``NULL`` explicitly. A clip that was never decided is left untouched.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: The clip identity (``{video_id}_{segment_id}``).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                <span class="s2">&quot;UPDATE review SET decision = NULL, updated_at = ? WHERE row_key = ?&quot;</span><span class="p">,</span>
+                <span class="s2">"UPDATE review SET decision = NULL, updated_at = ? WHERE row_key = ?"</span><span class="p">,</span>
                 <span class="p">(</span><span class="n">_now</span><span class="p">(),</span> <span class="n">row_key</span><span class="p">),</span>
             <span class="p">)</span></div>
 
@@ -760,35 +846,319 @@
 <div class="viewcode-block" id="ReviewStore.decisions">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.decisions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">decisions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Decision</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every stored Segment-review decision as ``row_key -&gt; decision``.</span>
+<span class="w">        </span><span class="sd">"""Return every stored Segment-review decision as ``row_key -&gt; decision``.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A mapping of clip key to ``&quot;accept&quot;``/``&quot;drop&quot;`` for the clips a</span>
+<span class="sd">            A mapping of clip key to ``"accept"``/``"drop"`` for the clips a</span>
 <span class="sd">            reviewer has decided (undecided clips are omitted).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                <span class="s2">&quot;SELECT row_key, decision FROM review WHERE decision IS NOT NULL&quot;</span>
+                <span class="s2">"SELECT row_key, decision FROM review WHERE decision IS NOT NULL"</span>
             <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;row_key&quot;</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;decision&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
+        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"decision"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.list_by_decision">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.list_by_decision">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_by_decision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decision</span><span class="p">:</span> <span class="n">Decision</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReviewRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all records with the given Segment-review decision.</span>
+<span class="w">        </span><span class="sd">"""Return all records with the given Segment-review decision.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            decision: ``&quot;accept&quot;`` or ``&quot;drop&quot;``.</span>
+<span class="sd">            decision: ``"accept"`` or ``"drop"``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Matching review records ordered by row key (the accepted or dropped set).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                <span class="s2">&quot;SELECT * FROM review WHERE decision = ? ORDER BY row_key&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">decision</span><span class="p">,)</span>
+                <span class="s2">"SELECT * FROM review WHERE decision = ? ORDER BY row_key"</span><span class="p">,</span> <span class="p">(</span><span class="n">decision</span><span class="p">,)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+    <span class="c1"># ── event annotation ─────────────────────────────────────────────────────────</span>
+
+<div class="viewcode-block" id="ReviewStore.add_event">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.add_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">track</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">start_frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">end_frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventRecord</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Insert a new event on a track and return it (with its fresh id).</span>
+
+<span class="sd">        The event's track is also registered in ``event_track`` if absent, so a lane</span>
+<span class="sd">        created implicitly by dropping an event onto it persists like an explicit one.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_id: The video the event belongs to.</span>
+<span class="sd">            row_key: The queue row identity the event ties to.</span>
+<span class="sd">            track: The track (category) name.</span>
+<span class="sd">            start_frame: Inclusive start frame.</span>
+<span class="sd">            end_frame: Inclusive end frame (``&gt;= start_frame``).</span>
+<span class="sd">            label: Optional event label.</span>
+<span class="sd">            note: Optional event note.</span>
+<span class="sd">            attributes: Optional arbitrary string key/value pairs.</span>
+<span class="sd">            color: Optional per-event colour override (hex), or ``None`` to inherit the track.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The stored :class:`EventRecord`.</span>
+<span class="sd">        """</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">EventRecord</span><span class="p">(</span>
+            <span class="n">event_id</span><span class="o">=</span><span class="n">_new_event_id</span><span class="p">(),</span>
+            <span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">,</span>
+            <span class="n">row_key</span><span class="o">=</span><span class="n">row_key</span><span class="p">,</span>
+            <span class="n">track</span><span class="o">=</span><span class="n">track</span><span class="p">,</span>
+            <span class="n">start_frame</span><span class="o">=</span><span class="n">start_frame</span><span class="p">,</span>
+            <span class="n">end_frame</span><span class="o">=</span><span class="n">end_frame</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+            <span class="n">attributes</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">attributes</span> <span class="ow">or</span> <span class="p">{}),</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">updated_at</span><span class="o">=</span><span class="n">_now</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_track</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">row_key</span><span class="p">,</span> <span class="n">track</span><span class="p">)</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="w">                </span><span class="sd">"""</span>
+<span class="sd">                INSERT INTO event</span>
+<span class="sd">                    (event_id, video_id, row_key, track, start_frame, end_frame,</span>
+<span class="sd">                     label, note, attributes, color, updated_at)</span>
+<span class="sd">                VALUES (:event_id, :video_id, :row_key, :track, :start_frame, :end_frame,</span>
+<span class="sd">                        :label, :note, :attributes, :color, :updated_at)</span>
+<span class="sd">                """</span><span class="p">,</span>
+                <span class="n">_event_params</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">record</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.update_event">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.update_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update named columns of an event, returning the updated record.</span>
+
+<span class="sd">        Only the columns named in ``fields`` are written (plus ``updated_at``); any</span>
+<span class="sd">        others keep their stored value. ``attributes`` is accepted as a dict and stored</span>
+<span class="sd">        as JSON. Passing an unknown column raises, so a typo fails loudly rather than</span>
+<span class="sd">        silently doing nothing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_id: The event to update.</span>
+<span class="sd">            **fields: Column/value pairs among ``track``, ``start_frame``, ``end_frame``,</span>
+<span class="sd">                ``label``, ``note``, ``attributes``, ``color``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The updated :class:`EventRecord`, or ``None`` if no such event exists.</span>
+<span class="sd">        """</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"track"</span><span class="p">,</span> <span class="s2">"start_frame"</span><span class="p">,</span> <span class="s2">"end_frame"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">,</span> <span class="s2">"note"</span><span class="p">,</span> <span class="s2">"attributes"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">}</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">-</span> <span class="n">allowed</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown event field(s): </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_id</span><span class="p">)</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">fields</span><span class="p">}</span>
+        <span class="k">if</span> <span class="s2">"attributes"</span> <span class="ow">in</span> <span class="n">assignments</span><span class="p">:</span>
+            <span class="n">assignments</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">assignments</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">])</span>
+        <span class="n">assignments</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_now</span><span class="p">()</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = :</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">assignments</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"UPDATE event SET </span><span class="si">{</span><span class="n">columns</span><span class="si">}</span><span class="s2"> WHERE event_id = :event_id"</span><span class="p">,</span>  <span class="c1"># noqa: S608 - keys are whitelisted</span>
+                <span class="p">{</span><span class="o">**</span><span class="n">assignments</span><span class="p">,</span> <span class="s2">"event_id"</span><span class="p">:</span> <span class="n">event_id</span><span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">event_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.delete_event">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.delete_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete one event by id (a no-op if it does not exist).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_id: The event to delete.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event WHERE event_id = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">event_id</span><span class="p">,))</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.get_event">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.get_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return one event by id, or ``None`` if it does not exist.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_id: The event to fetch.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The stored :class:`EventRecord`, or ``None``.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM event WHERE event_id = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">event_id</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">_event_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.events_for">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.events_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">events_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return a video's events, ordered by track then start frame.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            row_key: The queue row identity to fetch events for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The events on that video, grouped by track and sorted within each track.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT * FROM event WHERE row_key = ? ORDER BY track, start_frame, event_id"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">row_key</span><span class="p">,),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_event_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.all_events">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.all_events">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">all_events</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return every stored event, ordered by video then track then start frame.</span>
+
+<span class="sd">        Backs the session-wide export (every annotated video in one file).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            All events in the store.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT * FROM event ORDER BY row_key, track, start_frame, event_id"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_event_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_track</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">track</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Register a track for a video if it is not already present (append at the end)."""</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT 1 FROM event_track WHERE row_key = ? AND track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">track</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="p">(</span><span class="n">count</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT COUNT(*) FROM event_track WHERE row_key = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"INSERT INTO event_track (row_key, track, ordinal, updated_at) VALUES (?, ?, ?, ?)"</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">track</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">_now</span><span class="p">()),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ReviewStore.add_track">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.add_track">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">track</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create an empty track (lane) for a video, appended after existing ones.</span>
+
+<span class="sd">        Idempotent: re-adding an existing track leaves its ordinal untouched.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            row_key: The queue row identity.</span>
+<span class="sd">            track: The track (category) name.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_track</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">row_key</span><span class="p">,</span> <span class="n">track</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.rename_track">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.rename_track">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rename_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Rename a track and move its events onto the new name, keeping the ordinal.</span>
+
+<span class="sd">        A no-op when ``old`` and ``new`` are equal. If ``new`` already exists, the two</span>
+<span class="sd">        lanes merge: ``old``'s events move onto ``new`` and the now-empty ``old`` lane</span>
+<span class="sd">        is removed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            row_key: The queue row identity.</span>
+<span class="sd">            old: The current track name.</span>
+<span class="sd">            new: The new track name.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">old</span> <span class="o">==</span> <span class="n">new</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">merging</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT 1 FROM event_track WHERE row_key = ? AND track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event SET track = ?, updated_at = ? WHERE row_key = ? AND track = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">row_key</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">merging</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"DELETE FROM event_track WHERE row_key = ? AND track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">old</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event_track SET track = ?, updated_at = ? "</span>
+                    <span class="s2">"WHERE row_key = ? AND track = ?"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">row_key</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.delete_track">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.delete_track">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">track</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete a track and all of its events for a video.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            row_key: The queue row identity.</span>
+<span class="sd">            track: The track (category) name to remove.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event WHERE row_key = ? AND track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">track</span><span class="p">))</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"DELETE FROM event_track WHERE row_key = ? AND track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">track</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.tracks_for">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.tracks_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tracks_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return a video's track names in their vertical order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            row_key: The queue row identity.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The track names ordered by ``ordinal`` (their top-to-bottom lane order).</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT track FROM event_track WHERE row_key = ? ORDER BY ordinal, track"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">row_key</span><span class="p">,),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">"track"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.event_row_keys">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.event_row_keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">event_row_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the row keys that have at least one event or track.</span>
+
+<span class="sd">        Lets the tab know which queued videos already carry annotation work.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The set of row keys present in either event table.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT row_key FROM event UNION SELECT row_key FROM event_track"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.set_note">
@@ -796,7 +1166,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">set_note</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the free-text note for a row.</span>
+<span class="w">        </span><span class="sd">"""Set the free-text note for a row.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            row_key: Stable row identity.</span>
@@ -806,7 +1176,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The updated :class:`ReviewRecord`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span><span class="n">row_key</span><span class="p">,</span> <span class="n">video_id</span><span class="p">,</span> <span class="n">annotation_suffix</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span></div>
 
 
@@ -815,45 +1185,45 @@
 <div class="viewcode-block" id="ReviewStore.export_json">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.export_json">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write all review records to a JSON array file.</span>
+<span class="w">        </span><span class="sd">"""Write all review records to a JSON array file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path: Destination JSON path.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The path written.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">asdict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">()],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">asdict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">()],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
 
 <div class="viewcode-block" id="ReviewStore.export_csv">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.export_csv">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write all review records to a CSV file.</span>
+<span class="w">        </span><span class="sd">"""Write all review records to a CSV file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path: Destination CSV path.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The path written.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s2">&quot;row_key&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;video_id&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;annotation_suffix&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;verdict&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;note&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;annotate&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;active_track&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;decision&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;updated_at&quot;</span><span class="p">,</span>
+            <span class="s2">"row_key"</span><span class="p">,</span>
+            <span class="s2">"video_id"</span><span class="p">,</span>
+            <span class="s2">"annotation_suffix"</span><span class="p">,</span>
+            <span class="s2">"verdict"</span><span class="p">,</span>
+            <span class="s2">"note"</span><span class="p">,</span>
+            <span class="s2">"annotate"</span><span class="p">,</span>
+            <span class="s2">"active_track"</span><span class="p">,</span>
+            <span class="s2">"decision"</span><span class="p">,</span>
+            <span class="s2">"updated_at"</span><span class="p">,</span>
         <span class="p">]</span>
-        <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
             <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
@@ -864,38 +1234,38 @@
 <div class="viewcode-block" id="ReviewStore.import_records">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.import_records">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">import_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Upsert review records from dicts (e.g. a re-imported export).</span>
+<span class="w">        </span><span class="sd">"""Upsert review records from dicts (e.g. a re-imported export).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            records: Iterable of dicts with at least ``row_key`` and ``video_id``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The number of records imported.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
-            <span class="n">raw_verdict</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verdict&quot;</span><span class="p">)</span>
+            <span class="n">raw_verdict</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"verdict"</span><span class="p">)</span>
             <span class="n">verdict</span><span class="p">:</span> <span class="n">Verdict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">raw_verdict</span> <span class="o">==</span> <span class="s2">&quot;good&quot;</span><span class="p">:</span>
-                <span class="n">verdict</span> <span class="o">=</span> <span class="s2">&quot;good&quot;</span>
-            <span class="k">elif</span> <span class="n">raw_verdict</span> <span class="o">==</span> <span class="s2">&quot;bad&quot;</span><span class="p">:</span>
-                <span class="n">verdict</span> <span class="o">=</span> <span class="s2">&quot;bad&quot;</span>
-            <span class="n">raw_active</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;active_track&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raw_verdict</span> <span class="o">==</span> <span class="s2">"good"</span><span class="p">:</span>
+                <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"good"</span>
+            <span class="k">elif</span> <span class="n">raw_verdict</span> <span class="o">==</span> <span class="s2">"bad"</span><span class="p">:</span>
+                <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"bad"</span>
+            <span class="n">raw_active</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"active_track"</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">active_track</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw_active</span><span class="p">))</span> <span class="k">if</span> <span class="n">raw_active</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">active_track</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw_active</span><span class="p">))</span> <span class="k">if</span> <span class="n">raw_active</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">active_track</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">raw_decision</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;decision&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">raw_decision</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"decision"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
             <span class="n">decision</span><span class="p">:</span> <span class="n">Decision</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="s2">&quot;accept&quot;</span> <span class="k">if</span> <span class="n">raw_decision</span> <span class="o">==</span> <span class="s2">&quot;accept&quot;</span> <span class="k">else</span> <span class="s2">&quot;drop&quot;</span> <span class="k">if</span> <span class="n">raw_decision</span> <span class="o">==</span> <span class="s2">&quot;drop&quot;</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="s2">"accept"</span> <span class="k">if</span> <span class="n">raw_decision</span> <span class="o">==</span> <span class="s2">"accept"</span> <span class="k">else</span> <span class="s2">"drop"</span> <span class="k">if</span> <span class="n">raw_decision</span> <span class="o">==</span> <span class="s2">"drop"</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">&quot;row_key&quot;</span><span class="p">]),</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">&quot;video_id&quot;</span><span class="p">]),</span>
-                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">&quot;annotation_suffix&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;annotation_suffix&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]),</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"video_id"</span><span class="p">]),</span>
+                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"annotation_suffix"</span><span class="p">])</span> <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"annotation_suffix"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
                 <span class="n">verdict</span><span class="o">=</span><span class="n">verdict</span><span class="p">,</span>
-                <span class="n">note</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;note&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                <span class="n">annotate</span><span class="o">=</span><span class="n">_truthy</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;annotate&quot;</span><span class="p">)),</span>
+                <span class="n">note</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"note"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="n">annotate</span><span class="o">=</span><span class="n">_truthy</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"annotate"</span><span class="p">)),</span>
                 <span class="n">active_track</span><span class="o">=</span><span class="n">active_track</span><span class="p">,</span>
                 <span class="n">decision</span><span class="o">=</span><span class="n">decision</span><span class="p">,</span>
             <span class="p">)</span>
@@ -906,24 +1276,58 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_truthy</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce a CSV/JSON cell (``&quot;1&quot;``, ``1``, ``True``, ``&quot;true&quot;``) to ``bool``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Coerce a CSV/JSON cell (``"1"``, ``1``, ``True``, ``"true"``) to ``bool``."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReviewRecord</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`ReviewRecord` from a SQLite row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a :class:`ReviewRecord` from a SQLite row."""</span>
     <span class="k">return</span> <span class="n">ReviewRecord</span><span class="p">(</span>
-        <span class="n">row_key</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;row_key&quot;</span><span class="p">],</span>
-        <span class="n">video_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;video_id&quot;</span><span class="p">],</span>
-        <span class="n">annotation_suffix</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;annotation_suffix&quot;</span><span class="p">],</span>
-        <span class="n">verdict</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;verdict&quot;</span><span class="p">],</span>
-        <span class="n">note</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;note&quot;</span><span class="p">],</span>
-        <span class="n">annotate</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;annotate&quot;</span><span class="p">]),</span>
-        <span class="n">active_track</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;active_track&quot;</span><span class="p">],</span>
-        <span class="n">decision</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;decision&quot;</span><span class="p">],</span>
-        <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;updated_at&quot;</span><span class="p">],</span>
+        <span class="n">row_key</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">],</span>
+        <span class="n">video_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"video_id"</span><span class="p">],</span>
+        <span class="n">annotation_suffix</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"annotation_suffix"</span><span class="p">],</span>
+        <span class="n">verdict</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"verdict"</span><span class="p">],</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"note"</span><span class="p">],</span>
+        <span class="n">annotate</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"annotate"</span><span class="p">]),</span>
+        <span class="n">active_track</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"active_track"</span><span class="p">],</span>
+        <span class="n">decision</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"decision"</span><span class="p">],</span>
+        <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_params</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Flatten an :class:`EventRecord` to SQL bind parameters (attributes → JSON)."""</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+    <span class="n">params</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">params</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventRecord</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build an :class:`EventRecord` from a SQLite row (attributes ← JSON).</span>
+
+<span class="sd">    A malformed ``attributes`` cell degrades to an empty dict rather than raising, so a</span>
+<span class="sd">    hand-edited database can still be opened.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">])</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">]</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attributes</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">EventRecord</span><span class="p">(</span>
+        <span class="n">event_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"event_id"</span><span class="p">],</span>
+        <span class="n">video_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"video_id"</span><span class="p">],</span>
+        <span class="n">row_key</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">],</span>
+        <span class="n">track</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"track"</span><span class="p">],</span>
+        <span class="n">start_frame</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"start_frame"</span><span class="p">]),</span>
+        <span class="n">end_frame</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"end_frame"</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"label"</span><span class="p">],</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"note"</span><span class="p">],</span>
+        <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"color"</span><span class="p">],</span>
+        <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">],</span>
     <span class="p">)</span>
 </pre></div>
         </article>

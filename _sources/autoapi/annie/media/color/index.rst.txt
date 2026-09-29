@@ -64,7 +64,7 @@ Module Contents
    The active / protagonist track.
 
 .. py:data:: TRACK_PALETTE
-   :type:  tuple[tuple[int, int, int], Ellipsis]
+   :type:  tuple[tuple[int, int, int], ...]
    :value: ((239, 68, 68), (249, 115, 22), (234, 179, 8), (168, 85, 247), (236, 72, 153), (20, 184, 166),...
 
 

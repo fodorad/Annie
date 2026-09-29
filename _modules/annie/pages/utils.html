@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.pages.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Shared UI helpers used by multiple page modules (UI).&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Shared UI helpers used by multiple page modules (UI)."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -317,12 +321,12 @@
 <div class="viewcode-block" id="render_embed_ttl">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.render_embed_ttl">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">render_embed_ttl</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Idle-revert delay for an embedded *rendered* clip.</span>
+<span class="w">    </span><span class="sd">"""Idle-revert delay for an embedded *rendered* clip.</span>
 
-<span class="sd">    Capped at the temp-dir sweep TTL so a rendered clip&#39;s ``ui.video`` always reverts</span>
+<span class="sd">    Capped at the temp-dir sweep TTL so a rendered clip's ``ui.video`` always reverts</span>
 <span class="sd">    to its placeholder no later than the periodic sweep deletes the underlying file —</span>
 <span class="sd">    the element never points at a clip that has been reclaimed from disk.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_ttl_seconds</span><span class="p">)</span></div>
 
 
@@ -330,13 +334,13 @@
 <div class="viewcode-block" id="notify_detached">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.notify_detached">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">notify_detached</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Client</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Toast from a handler that tore down the slot it was invoked in.</span>
+<span class="w">    </span><span class="sd">"""Toast from a handler that tore down the slot it was invoked in.</span>
 
 <span class="sd">    ``ui.notify`` resolves its client through the slot the handler runs in, which</span>
-<span class="sd">    NiceGUI takes from the sender&#39;s **parent** element. A handler that deletes its</span>
+<span class="sd">    NiceGUI takes from the sender's **parent** element. A handler that deletes its</span>
 <span class="sd">    own row — or refreshes the container holding its button — drops the last</span>
-<span class="sd">    reference to that parent, so a later ``ui.notify`` dies with &quot;the parent element</span>
-<span class="sd">    this slot belongs to has been deleted&quot;.</span>
+<span class="sd">    reference to that parent, so a later ``ui.notify`` dies with "the parent element</span>
+<span class="sd">    this slot belongs to has been deleted".</span>
 
 <span class="sd">    Re-entering ``client`` lands in :attr:`nicegui.Client.content`, which outlives</span>
 <span class="sd">    any refresh, so the toast survives the teardown that caused it.</span>
@@ -345,7 +349,7 @@
 <span class="sd">        client: The client captured *before* the teardown (``context.client``).</span>
 <span class="sd">        message: The toast text.</span>
 <span class="sd">        color: The toast colour.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">with</span> <span class="n">client</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span></div>
 
@@ -356,7 +360,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">unembed_after_idle</span><span class="p">(</span>
     <span class="n">box</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">restore</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">ttl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Swap an embedded clip back to its placeholder once it has sat idle.</span>
+<span class="w">    </span><span class="sd">"""Swap an embedded clip back to its placeholder once it has sat idle.</span>
 
 <span class="sd">    An embedded ``ui.video`` keeps its clip buffered in the browser tab (and its</span>
 <span class="sd">    element alive server-side) for as long as the row is on the page. A reviewer</span>
@@ -374,7 +378,7 @@
 <span class="sd">        ttl: Idle seconds before reverting. Defaults to</span>
 <span class="sd">            :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass</span>
 <span class="sd">            :func:`render_embed_ttl` so they never outlive the temp-dir sweep.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">delay</span> <span class="o">=</span> <span class="n">ttl</span> <span class="k">if</span> <span class="n">ttl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_revert</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -389,7 +393,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_alive</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether it is safe to mutate ``element`` (its client and element both exist).</span>
+<span class="w">    </span><span class="sd">"""Whether it is safe to mutate ``element`` (its client and element both exist).</span>
 
 <span class="sd">    Accessing ``element.client`` *raises* once the client is deleted, and mutating a</span>
 <span class="sd">    deleted element *warns*, so any lazy task that resumes after a reload or refresh</span>
@@ -399,8 +403,8 @@
 <span class="sd">        element: The NiceGUI element to check.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ``True`` if the element&#39;s client is alive and the element has not been deleted.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        ``True`` if the element's client is alive and the element has not been deleted.</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">element</span><span class="o">.</span><span class="n">_client</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">element</span><span class="o">.</span><span class="n">is_deleted</span>  <span class="c1"># noqa: SLF001</span>
 </pre></div>
         </article>

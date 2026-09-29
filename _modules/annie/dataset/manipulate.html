@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,7 +298,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.dataset.manipulate</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Browse &#39;Manipulate&#39; transforms — derive a display/filter value per label column.</span>
+<span></span><span class="sd">"""Browse 'Manipulate' transforms — derive a display/filter value per label column.</span>
 
 <span class="sd">A label column carries raw CSV text plus a **data type** (``str`` / ``int`` /</span>
 <span class="sd">``float``, chosen when the CSV is added). The Browse *Manipulate* block then applies</span>
@@ -306,7 +310,7 @@
 <span class="sd">  ``positive``).</span>
 
 <span class="sd">The functions are pure and unit-tested; the UI only wires them up.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -316,31 +320,31 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 
-<span class="n">ColumnType</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;A column&#39;s data type.&quot;&quot;&quot;</span>
-<span class="n">TransformKind</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;trim&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="s2">&quot;sign&quot;</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;A transform a column can carry.&quot;&quot;&quot;</span>
+<span class="n">ColumnType</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"str"</span><span class="p">,</span> <span class="s2">"int"</span><span class="p">,</span> <span class="s2">"float"</span><span class="p">]</span>
+<span class="sd">"""A column's data type."""</span>
+<span class="n">TransformKind</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">"trim"</span><span class="p">,</span> <span class="s2">"round"</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">,</span> <span class="s2">"sign"</span><span class="p">]</span>
+<span class="sd">"""A transform a column can carry."""</span>
 
 <span class="c1">#: Transforms offered for text columns (no numeric operations apply).</span>
-<span class="n">_TEXT_TRANSFORMS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TransformKind</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;trim&quot;</span><span class="p">)</span>
+<span class="n">_TEXT_TRANSFORMS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TransformKind</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">"trim"</span><span class="p">)</span>
 <span class="c1">#: Transforms offered for numeric columns.</span>
-<span class="n">_NUMERIC_TRANSFORMS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TransformKind</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="s2">&quot;sign&quot;</span><span class="p">)</span>
+<span class="n">_NUMERIC_TRANSFORMS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TransformKind</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">"round"</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">,</span> <span class="s2">"sign"</span><span class="p">)</span>
 
 <span class="n">TRANSFORM_LABELS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TransformKind</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;none&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;trim&quot;</span><span class="p">:</span> <span class="s2">&quot;trim spaces&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;round&quot;</span><span class="p">:</span> <span class="s2">&quot;round to X digits&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="s2">&quot;threshold ≥ X&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;sign&quot;</span><span class="p">:</span> <span class="s2">&quot;sign (−/0/+)&quot;</span><span class="p">,</span>
+    <span class="s2">"none"</span><span class="p">:</span> <span class="s2">"none"</span><span class="p">,</span>
+    <span class="s2">"trim"</span><span class="p">:</span> <span class="s2">"trim spaces"</span><span class="p">,</span>
+    <span class="s2">"round"</span><span class="p">:</span> <span class="s2">"round to X digits"</span><span class="p">,</span>
+    <span class="s2">"threshold"</span><span class="p">:</span> <span class="s2">"threshold ≥ X"</span><span class="p">,</span>
+    <span class="s2">"sign"</span><span class="p">:</span> <span class="s2">"sign (−/0/+)"</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="sd">&quot;&quot;&quot;Short human labels for the transform dropdown.&quot;&quot;&quot;</span>
+<span class="sd">"""Short human labels for the transform dropdown."""</span>
 
 
 <div class="viewcode-block" id="Transform">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/manipulate/index.html#annie.dataset.manipulate.Transform">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Transform</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One column&#39;s transform.</span>
+<span class="w">    </span><span class="sd">"""One column's transform.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        kind: The transform to apply.</span>
@@ -351,9 +355,9 @@
 <span class="sd">            transform does: ``threshold ≥ 0`` on a ``[-3, 3]`` sentiment makes a clean</span>
 <span class="sd">            two-way filter facet, but the reviewer usually still wants to read the real</span>
 <span class="sd">            ``1.83`` on the row. Purely a display flag — filtering never consults it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">kind</span><span class="p">:</span> <span class="n">TransformKind</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">TransformKind</span> <span class="o">=</span> <span class="s2">"none"</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">show_original</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
@@ -363,8 +367,8 @@
 <div class="viewcode-block" id="transforms_for">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/manipulate/index.html#annie.dataset.manipulate.transforms_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">transforms_for</span><span class="p">(</span><span class="n">col_type</span><span class="p">:</span> <span class="n">ColumnType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TransformKind</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the transforms valid for a column type.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_TEXT_TRANSFORMS</span> <span class="k">if</span> <span class="n">col_type</span> <span class="o">==</span> <span class="s2">&quot;str&quot;</span> <span class="k">else</span> <span class="n">_NUMERIC_TRANSFORMS</span></div>
+<span class="w">    </span><span class="sd">"""Return the transforms valid for a column type."""</span>
+    <span class="k">return</span> <span class="n">_TEXT_TRANSFORMS</span> <span class="k">if</span> <span class="n">col_type</span> <span class="o">==</span> <span class="s2">"str"</span> <span class="k">else</span> <span class="n">_NUMERIC_TRANSFORMS</span></div>
 
 
 
@@ -387,68 +391,68 @@
 <div class="viewcode-block" id="detect_type">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/manipulate/index.html#annie.dataset.manipulate.detect_type">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">detect_type</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ColumnType</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Guess a column&#39;s type from a sample of its (string) values.</span>
+<span class="w">    </span><span class="sd">"""Guess a column's type from a sample of its (string) values.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        values: Sample cell values.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ``&quot;int&quot;`` if every non-empty value is an integer, ``&quot;float&quot;`` if every value</span>
-<span class="sd">        is numeric, else ``&quot;str&quot;``. An all-empty/absent column defaults to ``&quot;str&quot;``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        ``"int"`` if every non-empty value is an integer, ``"float"`` if every value</span>
+<span class="sd">        is numeric, else ``"str"``. An all-empty/absent column defaults to ``"str"``.</span>
+<span class="sd">    """</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">seen</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;str&quot;</span>
+        <span class="k">return</span> <span class="s2">"str"</span>
     <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;int&quot;</span>
+        <span class="k">return</span> <span class="s2">"int"</span>
     <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;float&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;str&quot;</span></div>
+        <span class="k">return</span> <span class="s2">"float"</span>
+    <span class="k">return</span> <span class="s2">"str"</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_threshold</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a threshold without trailing zeros (``1.0`` → ``1``).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="sd">"""Format a threshold without trailing zeros (``1.0`` → ``1``)."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span>
 
 
 <div class="viewcode-block" id="apply_transform">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/manipulate/index.html#annie.dataset.manipulate.apply_transform">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_transform</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">col_type</span><span class="p">:</span> <span class="n">ColumnType</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">Transform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a column&#39;s transform to one raw value, returning its display value.</span>
+<span class="w">    </span><span class="sd">"""Apply a column's transform to one raw value, returning its display value.</span>
 
 <span class="sd">    A value that cannot be parsed as a number (in a numeric column) is returned</span>
 <span class="sd">    unchanged, so a stray non-numeric cell never breaks the row.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        value: The raw cell text.</span>
-<span class="sd">        col_type: The column&#39;s data type.</span>
+<span class="sd">        col_type: The column's data type.</span>
 <span class="sd">        transform: The transform to apply.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The transformed string.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">col_type</span> <span class="o">==</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;trim&quot;</span> <span class="k">else</span> <span class="n">value</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">col_type</span> <span class="o">==</span> <span class="s2">"str"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"trim"</span> <span class="k">else</span> <span class="n">value</span>
 
-    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"none"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
-    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;round&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"round"</span><span class="p">:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">digits</span><span class="p">))</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">number</span><span class="p">)))</span>
-    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;threshold&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"threshold"</span><span class="p">:</span>
         <span class="n">cut</span> <span class="o">=</span> <span class="n">_fmt_threshold</span><span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;≥</span><span class="si">{</span><span class="n">cut</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">number</span> <span class="o">&gt;=</span> <span class="n">transform</span><span class="o">.</span><span class="n">threshold</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="n">cut</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;sign&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"≥</span><span class="si">{</span><span class="n">cut</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">number</span> <span class="o">&gt;=</span> <span class="n">transform</span><span class="o">.</span><span class="n">threshold</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"&lt;</span><span class="si">{</span><span class="n">cut</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"sign"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;positive&quot;</span>
+            <span class="k">return</span> <span class="s2">"positive"</span>
         <span class="k">if</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;negative&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;zero&quot;</span>
+            <span class="k">return</span> <span class="s2">"negative"</span>
+        <span class="k">return</span> <span class="s2">"zero"</span>
     <span class="k">return</span> <span class="n">value</span></div>
 
 </pre></div>

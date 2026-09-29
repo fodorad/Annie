@@ -1,0 +1,1320 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/_modules/annie/pages/event_task.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>annie.pages.event_task - Annie latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">Annie latest documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">Annie latest documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/segments/index.html">annie.dataset.segments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/sources/index.html">annie.dataset.sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/storage/index.html">annie.dataset.storage</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/clipping/index.html">annie.media.clipping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/color/index.html">annie.media.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/compose/index.html">annie.media.compose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/convert/index.html">annie.media.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/decode/index.html">annie.media.decode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/probe/index.html">annie.media.probe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/rendering/index.html">annie.media.rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/pages/index.html">annie.pages</a><input aria-label="Toggle navigation of annie.pages" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/annotator/index.html">annie.pages.annotator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/browse/index.html">annie.pages.browse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/base/index.html">annie.parsers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/csvmeta/index.html">annie.parsers.csvmeta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for annie.pages.event_task</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Event-annotation task UI — the video-editor timeline surface (UI).</span>
+
+<span class="sd">One queued video at a time: a large HTML5 player centred at the top, a transport bar</span>
+<span class="sd">(play/pause, ±5 s, frame-step, "Start/End here"), linked frame/second/timecode jump fields,</span>
+<span class="sd">then the SVG timeline (one lane per track) and an event editor. Events are authored from</span>
+<span class="sd">scratch and saved to the review DB **immediately** on every change — there is no Save button;</span>
+<span class="sd">export (JSON for code, CSV for a spreadsheet) is a separate step.</span>
+
+<span class="sd">Which video is shown comes from the Browse annotator queue, like Curation. Frame accuracy is</span>
+<span class="sd">provided by :mod:`annie.pages.videoclock` (HTML5 ``currentTime`` stepping); the timeline is</span>
+<span class="sd">drawn by :mod:`annie.pages.timeline` (Python owns the model, JS reports gestures). The layout</span>
+<span class="sd">is fixed: the video and the editor sit side by side on top, with the full-width timeline in</span>
+<span class="sd">its own row beneath both.</span>
+
+<span class="sd">This module is heavy on browser interaction (video, JS bridge, SVG gestures) so its wiring is</span>
+<span class="sd">verified in the browser; the pure geometry/export/store pieces it calls are unit-tested in</span>
+<span class="sd">their own modules.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">context</span><span class="p">,</span> <span class="n">ui</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.events</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">clamp_event</span><span class="p">,</span>
+    <span class="n">export_events_csv</span><span class="p">,</span>
+    <span class="n">export_events_json</span><span class="p">,</span>
+    <span class="n">frames_to_seconds</span><span class="p">,</span>
+    <span class="n">seconds_to_frame</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span><span class="p">,</span> <span class="n">video_metadata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericEventArguments</span><span class="p">,</span> <span class="n">KeyEventArguments</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventRecord</span>
+
+<span class="c1">#: Base name for the per-client timeline gesture event (the client id is appended, so one</span>
+<span class="c1">#: client's ``ui.on`` handler never fires on another's gestures).</span>
+<span class="n">_GESTURE_EVENT</span> <span class="o">=</span> <span class="s2">"annie-timeline-gesture"</span>
+
+<span class="c1">#: Client ids whose gesture ``ui.on`` handler is already registered (it is process-global,</span>
+<span class="c1">#: so it must be attached exactly once per client, not once per refreshable rebuild).</span>
+<span class="n">_gesture_bound</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+<span class="c1">#: Fixed video-height steps (px) the −/+ buttons cycle through; aspect ratio stays locked.</span>
+<span class="c1">#: Extends down to 180 so the video can be halved twice from the default for a timeline-heavy</span>
+<span class="c1">#: layout, and up to 840 for close frame work.</span>
+<span class="n">_VIDEO_HEIGHTS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">360</span><span class="p">,</span> <span class="mi">480</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">720</span><span class="p">,</span> <span class="mi">840</span><span class="p">)</span>
+
+<span class="c1">#: Name a freshly-created event carries until the reviewer renames it, so a new box is never</span>
+<span class="c1">#: blank on the timeline; the editor pre-selects it so typing replaces it in one go.</span>
+<span class="n">_DEFAULT_EVENT_LABEL</span> <span class="o">=</span> <span class="s2">"event_name"</span>
+
+<span class="c1">#: The single track every video starts with. A track is just the timeline lane events live</span>
+<span class="c1">#: on — not a category — so one is enough; it is created on load and never shown to the user</span>
+<span class="c1">#: as a name (the multi-track UI is intentionally hidden for now).</span>
+<span class="n">_DEFAULT_TRACK</span> <span class="o">=</span> <span class="s2">"events"</span>
+
+<span class="c1">#: Eight pastel, mutually-distinct colours the editor offers for per-event colour-coding. The</span>
+<span class="c1">#: first (``None`` sentinel handled in the UI) means "use the track's colour"; these override</span>
+<span class="c1">#: it. Pastel so a filled timeline stays easy on the eye while still separable.</span>
+<span class="n">_EVENT_COLORS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"#a8dadc"</span><span class="p">,</span>  <span class="c1"># pale cyan</span>
+    <span class="s2">"#ffb4a2"</span><span class="p">,</span>  <span class="c1"># salmon</span>
+    <span class="s2">"#b5e48c"</span><span class="p">,</span>  <span class="c1"># light green</span>
+    <span class="s2">"#ffd6a5"</span><span class="p">,</span>  <span class="c1"># peach</span>
+    <span class="s2">"#cdb4db"</span><span class="p">,</span>  <span class="c1"># lilac</span>
+    <span class="s2">"#fdffb6"</span><span class="p">,</span>  <span class="c1"># pale yellow</span>
+    <span class="s2">"#a2d2ff"</span><span class="p">,</span>  <span class="c1"># sky blue</span>
+    <span class="s2">"#ffc8dd"</span><span class="p">,</span>  <span class="c1"># pink</span>
+<span class="p">)</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_EventState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Per-client Event-annotation position and view settings.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        row_key: The queued video currently open, or ``None`` before the first loads.</span>
+<span class="sd">        video_id: Its video id.</span>
+<span class="sd">        index: Position in the queue (for the n / m readout and prev/next).</span>
+<span class="sd">        fps: The open video's frames per second (0 until metadata loads).</span>
+<span class="sd">        num_frames: Its total frame count (0 until metadata loads).</span>
+<span class="sd">        duration: Its duration in seconds.</span>
+<span class="sd">        zoom: Timeline zoom — how many times *less* than the whole video is visible; 1.0</span>
+<span class="sd">            shows the whole clip, higher shows a proportionally narrower window.</span>
+<span class="sd">        playhead_frame: The last known playhead frame, tracked so the timeline window can</span>
+<span class="sd">            centre on it and the red line can be redrawn after any seek without a poll.</span>
+<span class="sd">        video_height: Current video box height in px.</span>
+<span class="sd">        selected_event: The id of the event open in the editor, or ``None``.</span>
+<span class="sd">        pending_start: A frame set by ``I`` awaiting an ``O`` to close the event.</span>
+<span class="sd">        focus_name: Transient flag: the next rebuild should focus the editor's name input</span>
+<span class="sd">            (set right after finalising a new event, cleared once the focus is issued).</span>
+<span class="sd">        restore_frame: Transient frame the video should be re-seeked to after a full rebuild</span>
+<span class="sd">            recreates the ``&lt;video&gt;`` (which the browser resets to 0); ``None`` when no</span>
+<span class="sd">            restore is pending. Cleared once issued.</span>
+<span class="sd">    """</span>
+
+    <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">zoom</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">playhead_frame</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">video_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">480</span>
+    <span class="n">selected_event</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pending_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">focus_name</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">restore_frame</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">view_window</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The visible ``[start, end]`` frame window at the current zoom, centred on the head.</span>
+
+<span class="sd">        At zoom 1.0 the whole clip is shown; higher zoom shows ``num_frames / zoom`` frames</span>
+<span class="sd">        centred on :attr:`playhead_frame`, clamped so the window never runs off either end.</span>
+<span class="sd">        """</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span> <span class="o">&lt;=</span> <span class="mf">1.0</span> <span class="ow">or</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="n">total</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">((</span><span class="n">total</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span><span class="p">))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">-</span> <span class="n">span</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">total</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">span</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">span</span>
+
+
+<span class="c1">#: Per-client Event-annotation state, keyed by client id; cleaned up on disconnect.</span>
+<span class="n">_event_states</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_EventState</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="cleanup">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.cleanup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cleanup</span><span class="p">(</span><span class="n">client_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drop a disconnected client's Event-annotation state and gesture handler flag."""</span>
+    <span class="n">_event_states</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">_gesture_bound</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">client_id</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_state</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">_EventState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The current client's Event-annotation state, created on first use."""</span>
+    <span class="k">return</span> <span class="n">_event_states</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">_EventState</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_queued_entries</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The manifest entries queued for annotation (shared with the other tasks)."""</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">annotator_keys</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_video_if_needed</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">VideoEntry</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Ensure ``state_`` points at a valid queued video and its metadata is loaded.</span>
+
+<span class="sd">    Returns the current entry, or ``None`` when the queue is empty.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">entries</span><span class="p">[</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">==</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span> <span class="ow">and</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">entry</span>  <span class="c1"># already loaded</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">fps</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">media_available</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">video_metadata</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">)</span>
+            <span class="n">state_</span><span class="o">.</span><span class="n">fps</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span>
+            <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span>
+            <span class="n">state_</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad file must not break the tab</span>
+            <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not read metadata for </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="c1"># Every video has exactly one track for now; create it so a fresh video already has a lane</span>
+    <span class="c1"># to draw events on (the multi-track UI is hidden).</span>
+    <span class="k">if</span> <span class="n">_DEFAULT_TRACK</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">tracks_for</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">):</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_track</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">_DEFAULT_TRACK</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">entry</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_events_by_track</span><span class="p">(</span><span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Group a video's stored events by track name (order preserved by the store)."""</span>
+    <span class="n">grouped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">events_for</span><span class="p">(</span><span class="n">row_key</span><span class="p">):</span>
+        <span class="n">grouped</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">grouped</span>
+
+
+<span class="c1"># ── build ────────────────────────────────────────────────────────────────────</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">event_annotation_task</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the Event-annotation work area for the current queued video."""</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="n">_queued_entries</span><span class="p">()</span>
+    <span class="n">state_</span> <span class="o">=</span> <span class="n">_event_state</span><span class="p">()</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">_load_video_if_needed</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"No videos queued. Select rows on the Browse tab to annotate events here."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"This queue item has no video file to annotate."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Install the 'media' extra to read frame counts and annotate events."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">_toolbar</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>
+    <span class="n">_keyboard</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+
+    <span class="c1"># A single layout: the top row splits into the video (with its transport) and the editor</span>
+    <span class="c1"># side by side; the timeline sits in its own row beneath, spanning the full width under</span>
+    <span class="c1"># both — so it is always 100% wide, never cramped into the video column.</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-start gap-3 no-wrap"</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow min-w-0 gap-2"</span><span class="p">):</span>
+                <span class="n">_video_and_transport</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"gap-2"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">"width:340px;flex:0 0 340px"</span><span class="p">):</span>
+                <span class="n">_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+        <span class="n">_timeline_block</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_toolbar</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Queue position, prev/next video, and the export menu."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-3 wrap"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"chevron_left"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_step_video</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Previous video"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"video </span><span class="si">{</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+            <span class="s2">"text-sm font-medium"</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"chevron_right"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_step_video</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Next video"</span><span class="p">)</span>
+
+        <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Export"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu</span><span class="p">():</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span>
+                    <span class="s2">"This video — JSON"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"video"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span><span class="s2">"This video — CSV"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"video"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"csv"</span><span class="p">))</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span>
+                    <span class="s2">"All session — JSON"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span>
+                    <span class="s2">"All session — CSV"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"csv"</span><span class="p">)</span>
+                <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_video_and_transport</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The centred HTML5 player, the video-size buttons, transport bar, and jump fields."""</span>
+    <span class="n">vid_id</span> <span class="o">=</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">element_id</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"video size"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs self-center"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"remove"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_resize_video</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat dense round"</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_resize_video</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+    <span class="n">video_path</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span>
+    <span class="k">assert</span> <span class="n">video_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># noqa: S101 - the caller returns early for no-video items</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-center"</span><span class="p">):</span>
+        <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">controls</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"id=</span><span class="si">{</span><span class="n">vid_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"height:</span><span class="si">{</span><span class="n">state_</span><span class="o">.</span><span class="n">video_height</span><span class="si">}</span><span class="s2">px;max-width:100%;aspect-ratio:16/9"</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># A full rebuild recreated the &lt;video&gt; (which resets to frame 0); put it back where the</span>
+        <span class="c1"># reviewer was. Deferred so the new element exists before the seek runs.</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">seek_frame</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-center gap-2 wrap"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"replay_5"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">nudge_seconds</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Back 5 s [Shift+←]"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+            <span class="n">icon</span><span class="o">=</span><span class="s2">"skip_previous"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">step_frames</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat round"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Previous frame [←]"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"play_arrow"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">vid_id</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Play / pause [space]"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+            <span class="n">icon</span><span class="o">=</span><span class="s2">"skip_next"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">step_frames</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat round"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Next frame [→]"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"forward_5"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">nudge_seconds</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Forward 5 s [Shift+→]"</span><span class="p">)</span>
+
+    <span class="n">_jump_fields</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">)</span>
+
+    <span class="n">_capture_controls</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="n">_start_playhead_poll</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">)</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_capture_controls</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The single dynamic capture button, plus Cancel while a start is armed.</span>
+
+<span class="sd">    Idle shows a neutral *Set start (I)*; once a start is marked the same slot becomes an</span>
+<span class="sd">    amber *Set end (O)* with a *Cancel (Esc)* beside it, so exactly one primary action is</span>
+<span class="sd">    offered at a time and the armed state is unmistakable.</span>
+
+<span class="sd">    This is its **own** refreshable so arming/cancelling swaps the button without rebuilding</span>
+<span class="sd">    the whole task — rebuilding would recreate the ``&lt;video&gt;`` element, which resets it to</span>
+<span class="sd">    frame 0. Arming must keep the video exactly where it is (a start marks *this* moment).</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-center gap-2"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Set start (I)"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"flag"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_arm_start</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                <span class="s2">"unelevated dense"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Mark the current frame as an event's start [i]"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Set end (O)"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"stop"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_finalise</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                <span class="s2">"unelevated dense"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PENDING</span><span class="si">}</span><span class="s2"> !important;color:#111 !important"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                <span class="s2">"Close the event at the current frame [o]"</span>
+            <span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel (Esc)"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"close"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_cancel_pending</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                <span class="s2">"flat dense"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Discard the started event [Esc]"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_start_playhead_poll</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Keep ``playhead_frame`` and the red line in step with the real video time.</span>
+
+<span class="sd">    The transport buttons and the ``&lt;video&gt;`` element's own controls change ``currentTime``</span>
+<span class="sd">    in the browser without telling Python, so a light poll reads it back a few times a second</span>
+<span class="sd">    and moves the line — the single source of truth for "where the video actually is". The</span>
+<span class="sd">    timer lives inside the refreshable, so each rebuild replaces the previous one rather than</span>
+<span class="sd">    stacking polls.</span>
+<span class="sd">    """</span>
+    <span class="n">svg_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"annie-timeline-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_tick</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">seconds</span> <span class="o">=</span> <span class="k">await</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">current_time</span><span class="p">(</span><span class="n">vid_id</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - the element may be gone between ticks</span>
+            <span class="k">return</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">seconds</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">frame</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">frame</span>
+        <span class="n">_sync_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">)</span>
+        <span class="c1"># While a start is armed, grow the amber band's right edge with the playhead — a cheap</span>
+        <span class="c1"># JS resize, no rebuild, so it tracks playback smoothly.</span>
+        <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_sync_pending_band</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">)</span>
+
+    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">_tick</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jump_fields</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The linked frame / seconds / timecode fields that seek the playhead when typed.</span>
+
+<span class="sd">    All three stay consistent: editing any one seeks the video, moves the red timeline line,</span>
+<span class="sd">    and rewrites the other two. They start at the current playhead, not zero, so returning to</span>
+<span class="sd">    a video shows where you were.</span>
+<span class="sd">    """</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span>
+    <span class="n">head_sec</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-center gap-3 wrap"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Jump to"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">frame_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"frame"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">head</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+        <span class="n">sec_in</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"seconds"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">head_sec</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">tc_in</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"mm:ss.ff"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">_format_timecode</span><span class="p">(</span><span class="n">head_sec</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">seek_to_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
+            <span class="n">_sync_jump_fields</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">frame_in</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">)</span>
+
+        <span class="n">frame_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">seek_to_frame</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">frame_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)))</span>
+        <span class="n">sec_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
+            <span class="s2">"blur"</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">seek_to_frame</span><span class="p">(</span><span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sec_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="n">tc_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
+            <span class="s2">"blur"</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">seek_to_frame</span><span class="p">(</span><span class="n">seconds_to_frame</span><span class="p">(</span><span class="n">_parse_timecode</span><span class="p">(</span><span class="n">tc_in</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_timeline_block</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The zoom controls and the SVG timeline itself."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Timeline"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"zoom_out"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_zoom</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">1.5</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat dense round"</span>
+        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"zoom_in"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_zoom</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+
+    <span class="n">grouped</span> <span class="o">=</span> <span class="n">_events_by_track</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">track_names</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">tracks_for</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">tracks</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">timeline</span><span class="o">.</span><span class="n">TimelineTrack</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="p">[</span>
+                <span class="n">timeline</span><span class="o">.</span><span class="n">TimelineEvent</span><span class="p">(</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                    <span class="n">selected</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">event_id</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">color</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">grouped</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">track_names</span>
+    <span class="p">]</span>
+    <span class="n">svg_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"annie-timeline-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">view_window</span><span class="p">()</span>
+    <span class="n">svg</span> <span class="o">=</span> <span class="n">timeline</span><span class="o">.</span><span class="n">build_svg</span><span class="p">(</span>
+        <span class="n">tracks</span><span class="p">,</span>
+        <span class="n">view_start</span><span class="o">=</span><span class="n">view_start</span><span class="p">,</span>
+        <span class="n">view_end</span><span class="o">=</span><span class="n">view_end</span><span class="p">,</span>
+        <span class="n">fps</span><span class="o">=</span><span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
+        <span class="n">svg_id</span><span class="o">=</span><span class="n">svg_id</span><span class="p">,</span>
+        <span class="n">pending_start</span><span class="o">=</span><span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span><span class="p">,</span>
+        <span class="n">pending_end</span><span class="o">=</span><span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># The surface is always full width; the wrapper and the ui.html element both stretch to</span>
+    <span class="c1"># 100% so the SVG's own width:100% actually fills the column (a bare ui.html shrinks to</span>
+    <span class="c1"># its content otherwise). Zoom narrows the time window instead of widening the element.</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">html</span><span class="p">(</span><span class="n">svg</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">"width:100%"</span><span class="p">)</span>
+    <span class="c1"># Gestures come back through NiceGUI's global event bus (emitEvent → ui.on), so there is</span>
+    <span class="c1"># no fragile DOM-event forwarding. Registered once per client (guarded), since ui.on is</span>
+    <span class="c1"># process-global and this refreshable rebuilds often.</span>
+    <span class="n">_ensure_gesture_handler</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">run_javascript</span><span class="p">(</span><span class="n">timeline</span><span class="o">.</span><span class="n">gesture_script</span><span class="p">(</span><span class="n">svg_id</span><span class="p">,</span> <span class="n">_gesture_event_name</span><span class="p">()))</span>
+    <span class="c1"># Put the red playhead line where the current frame sits within the visible window.</span>
+    <span class="n">_sync_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The selected event's editor: name, note, start/end, key-value attributes, delete."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Select or create an event to edit it."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Select or create an event to edit it."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Event"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium flex-grow"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"delete"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_delete_event</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                <span class="s2">"flat dense round"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this event [Del]"</span><span class="p">)</span>
+
+        <span class="c1"># The event's name is its timeline label — stored in the same `label` field.</span>
+        <span class="n">name_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"annie-event-name-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">name_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dense id=</span><span class="si">{</span><span class="n">name_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+        <span class="n">name_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name_in</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">focus_name</span><span class="p">:</span>
+            <span class="c1"># Just finalised a new event: focus the name and select its text so the reviewer</span>
+            <span class="c1"># types over the default in one go. One-shot — cleared so later rebuilds don't</span>
+            <span class="c1"># steal focus. The input the native id lands on is the inner &lt;input&gt; element.</span>
+            <span class="n">state_</span><span class="o">.</span><span class="n">focus_name</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span>
+                <span class="mf">0.05</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">run_javascript</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"const w=document.getElementById('</span><span class="si">{</span><span class="n">name_id</span><span class="si">}</span><span class="s2">');"</span>
+                    <span class="sa">f</span><span class="s2">" const el=w?w.querySelector('input'):null;"</span>
+                    <span class="sa">f</span><span class="s2">" if(el)</span><span class="se">{{</span><span class="s2">el.focus();el.select();</span><span class="se">}}</span><span class="s2">"</span>
+                <span class="p">),</span>
+                <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">_color_picker</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+        <span class="c1"># Start and end each get their own row: a frame field and a seconds field kept in</span>
+        <span class="c1"># two-way sync, so either can be typed. Both commit through clamp_event, which keeps</span>
+        <span class="c1"># start &lt;= end and both inside the video.</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"start"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">commit_bounds</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">clamp_event</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="s2">"start"</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="s2">"end"</span><span class="p">],</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
+            <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">start_frame</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end_frame</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
+
+        <span class="n">_bound_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="s2">"Start"</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">,</span> <span class="n">commit_bounds</span><span class="p">)</span>
+        <span class="n">_bound_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="s2">"End"</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">,</span> <span class="n">commit_bounds</span><span class="p">)</span>
+
+        <span class="n">note_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"note"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+        <span class="n">note_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note_in</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="n">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bound_row</span><span class="p">(</span>
+    <span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">commit</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One boundary row: ``&lt;title&gt;`` then a ``frame`` and a ``time (s)`` field, kept in sync.</span>
+
+<span class="sd">    Editing either field updates ``bounds[key]`` and the other field, then commits — so the</span>
+<span class="sd">    frame and seconds views of the same boundary never disagree. The seconds field rounds to</span>
+<span class="sd">    milliseconds; the frame field is the source of truth stored on the event.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state_: The client's event state (for the fps).</span>
+<span class="sd">        title: Row label, ``"Start"`` or ``"End"``.</span>
+<span class="sd">        bounds: The mutable ``{"start": frame, "end": frame}`` map the fields write into.</span>
+<span class="sd">        key: Which entry of ``bounds`` this row edits.</span>
+<span class="sd">        commit: Persists the (clamped) bounds and rebuilds.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 no-wrap"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs w-10"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">frame_in</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"frame"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">sec_in</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"time (s)"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">from_frame</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">frame_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">sec_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
+            <span class="n">commit</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">from_sec</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sec_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+            <span class="n">frame_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="n">commit</span><span class="p">()</span>
+
+        <span class="n">frame_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">from_frame</span><span class="p">)</span>
+        <span class="n">sec_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">from_sec</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_color_picker</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A row of eight pastel swatches (plus a reset) to colour-code the selected event.</span>
+
+<span class="sd">    Clicking a swatch sets the event's colour override; the reset returns it to the track's</span>
+<span class="sd">    colour. The current choice is ringed so it reads at a glance.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 wrap"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Colour"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">swatch</span> <span class="ow">in</span> <span class="n">_EVENT_COLORS</span><span class="p">:</span>
+            <span class="n">selected</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="o">==</span> <span class="n">swatch</span>
+            <span class="n">ring</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">EVENT_SELECTED</span> <span class="k">if</span> <span class="n">selected</span> <span class="k">else</span> <span class="s2">"#00000055"</span>
+            <span class="c1"># A plain div, not a q-btn: Quasar's button padding/min-width warps a tiny</span>
+            <span class="c1"># round button into an ellipse. A fixed-size div with border-radius:50% is a</span>
+            <span class="c1"># true circle. The click is wired with .on('click', ...).</span>
+            <span class="n">swatch_el</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">swatch</span><span class="si">}</span><span class="s2">;width:22px;height:22px;min-width:22px;min-height:22px;"</span>
+                <span class="sa">f</span><span class="s2">"border-radius:50%;border:2px solid </span><span class="si">{</span><span class="n">ring</span><span class="si">}</span><span class="s2">;cursor:pointer;box-sizing:border-box"</span>
+            <span class="p">)</span>
+            <span class="n">swatch_el</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"click"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">swatch</span><span class="p">:</span> <span class="n">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+            <span class="n">swatch_el</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">swatch</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"format_color_reset"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat dense round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Use the track's colour"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set (or clear) the selected event's colour override and rebuild."""</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The add/remove key-value attribute rows for one event."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Attributes"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">_attribute_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add attribute"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_add_attribute</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+        <span class="s2">"flat dense"</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_row</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One editable key/value attribute row; edits rewrite the event's whole attribute map.</span>
+
+<span class="sd">    ``key`` is captured per row (each row is its own function scope), so renaming or removing</span>
+<span class="sd">    a key acts on the right entry without the default-argument loop-capture trick.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 no-wrap"</span><span class="p">):</span>
+        <span class="n">key_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"key"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="n">val_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"value"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_save</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_current_attributes</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">new_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">new_key</span><span class="p">:</span>
+                <span class="n">attrs</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attrs</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_remove</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_current_attributes</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attrs</span><span class="p">)</span>
+
+        <span class="n">key_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">_save</span><span class="p">)</span>
+        <span class="n">val_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">_save</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"close"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_remove</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+
+
+<span class="c1"># ── actions ────────────────────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_current_attributes</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Read the selected event's current attributes fresh from the store."""</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span> <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_attribute</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add a blank attribute key so the reviewer can fill it in."""</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_current_attributes</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span>
+    <span class="n">base</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="s2">"key"</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">base</span>
+    <span class="k">while</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attrs</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Persist a change to the selected event and rebuild."""</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_delete_event</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Delete the selected event and clear the editor."""</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_step_video</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Move to the previous/next queued video."""</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="n">delta</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># force a reload of metadata + selection</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resize_video</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Step the video height through the fixed size list."""</span>
+    <span class="n">heights</span> <span class="o">=</span> <span class="n">_VIDEO_HEIGHTS</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">heights</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">video_height</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">video_height</span> <span class="o">=</span> <span class="n">heights</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">delta</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">heights</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))]</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_zoom</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Change the timeline zoom, then rebuild the (fixed-width) surface.</span>
+
+<span class="sd">    Zoom is "how many times less than the whole clip is visible", so it never drops below</span>
+<span class="sd">    1.0 (the whole clip) and the surface width is unaffected — only the visible window</span>
+<span class="sd">    narrows. The window re-centres on the playhead via :meth:`_EventState.view_window`.</span>
+<span class="sd">    """</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">zoom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">zoom</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">))</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_arm_start</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Mark the current frame as an event's start and enter the armed (capturing) state.</span>
+
+<span class="sd">    Reads the true browser time so the start matches exactly where the video is paused, stores</span>
+<span class="sd">    it as ``pending_start``, then refreshes **only** the button and shows the band via JS — the</span>
+<span class="sd">    video element is left untouched, so it stays on the current frame (it must not jump to 0).</span>
+<span class="sd">    """</span>
+    <span class="n">vid_id</span> <span class="o">=</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">element_id</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="k">await</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">current_time</span><span class="p">(</span><span class="n">vid_id</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">seconds</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span>
+    <span class="n">_capture_controls</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>  <span class="c1"># swap Set start → Set end, without rebuilding the video</span>
+    <span class="n">_sync_pending_band</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"annie-timeline-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_finalise</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Close the armed event at the current frame, select it, and focus its name field.</span>
+
+<span class="sd">    The span runs from ``pending_start`` (or the current frame, if end is pressed without a</span>
+<span class="sd">    prior start) to the current frame, clamped into the video. The new event is created on the</span>
+<span class="sd">    single default track with the default name and selected; ``focus_name`` asks the next</span>
+<span class="sd">    rebuild to focus the editor's name input so the reviewer can type over ``event_name``.</span>
+<span class="sd">    """</span>
+    <span class="n">vid_id</span> <span class="o">=</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">element_id</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="k">await</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">current_time</span><span class="p">(</span><span class="n">vid_id</span><span class="p">)</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">seconds</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">frame</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">frame</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">clamp_event</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">_DEFAULT_TRACK</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">_DEFAULT_EVENT_LABEL</span>
+    <span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">event_id</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">focus_name</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># A full rebuild is needed so the new event box appears on the timeline; that recreates the</span>
+    <span class="c1"># &lt;video&gt;, which the browser resets to frame 0, so restore it to where the reviewer was.</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="o">=</span> <span class="n">frame</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cancel_pending</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Discard an armed start without creating an event.</span>
+
+<span class="sd">    Like arming, this refreshes only the button and clears the band via JS, leaving the</span>
+<span class="sd">    ``&lt;video&gt;`` untouched so it stays on the current frame.</span>
+<span class="sd">    """</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_capture_controls</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_sync_pending_band</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"annie-timeline-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gesture_event_name</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The current client's timeline gesture event name (client-scoped)."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_GESTURE_EVENT</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_gesture_handler</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Register this client's ``ui.on`` gesture handler exactly once.</span>
+
+<span class="sd">    ``ui.on`` is process-global, so binding it inside the refreshable would stack a new</span>
+<span class="sd">    handler on every rebuild. The per-client guard set keeps it to one; the handler is</span>
+<span class="sd">    dropped in :func:`cleanup` when the client disconnects.</span>
+<span class="sd">    """</span>
+    <span class="n">cid</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">if</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">_gesture_bound</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">_gesture_event_name</span><span class="p">(),</span> <span class="k">lambda</span> <span class="n">event</span><span class="p">:</span> <span class="n">_on_gesture</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event</span><span class="p">))</span>
+    <span class="n">_gesture_bound</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_on_gesture</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">GenericEventArguments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Handle a timeline gesture: select an event box, or seek anywhere else.</span>
+
+<span class="sd">    The timeline never creates events (that is what START/END EVENT and the i/o keys are</span>
+<span class="sd">    for), so there are only two kinds. Selecting a box seeks the video and the red line to</span>
+<span class="sd">    that event's start frame, so the reviewer lands on the scene it marks.</span>
+<span class="sd">    """</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">detail</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">)</span>
+    <span class="n">vid_id</span> <span class="o">=</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">element_id</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"select"</span><span class="p">:</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="n">detail</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"event_id"</span><span class="p">)</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span> <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">start_frame</span><span class="p">)</span>
+        <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>  <span class="c1"># redraw so the new selection highlights</span>
+        <span class="k">return</span>
+    <span class="c1"># Any non-select gesture is a plain seek to the clicked position.</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">_fraction_to_frame</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">detail</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)))</span>
+    <span class="n">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the current video's or the whole session's events to JSON/CSV."""</span>
+    <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span><span class="p">:</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">events_for</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">stem</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="ow">or</span> <span class="s2">"video"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">all_events</span><span class="p">()</span>
+        <span class="n">stem</span> <span class="o">=</span> <span class="s2">"session"</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">events</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"No events to export yet."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">fps_by_video</span> <span class="o">=</span> <span class="n">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">settings_temp_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"annie_events_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
+        <span class="n">export_events_json</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">export_events_csv</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> event(s) → </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="c1"># ── helpers ────────────────────────────────────────────────────────────────────</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Best-effort fps per video id for the export, from the scan manifest.</span>
+
+<span class="sd">    The open video's fps is known on ``_EventState``; other videos in a session export are</span>
+<span class="sd">    looked up from the manifest and probed once. A video whose fps cannot be read exports</span>
+<span class="sd">    with frame numbers only (seconds ``0``), which the export handles.</span>
+<span class="sd">    """</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">state_</span> <span class="o">=</span> <span class="n">_event_state</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="ow">and</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">:</span>
+        <span class="n">fps</span><span class="p">[</span><span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span>
+    <span class="n">scan</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">video_id</span> <span class="ow">in</span> <span class="n">fps</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">scan</span><span class="o">.</span><span class="n">by_video_id</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fps</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">video_metadata</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">)</span><span class="o">.</span><span class="n">fps</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad file just exports with frames only</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">fps</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fraction_to_frame</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Map an ``[0, 1]`` x fraction of the *visible window* to an absolute frame index.</span>
+
+<span class="sd">    The fraction is relative to the timeline's current view (which zoom may have narrowed),</span>
+<span class="sd">    so it is mapped through ``view_window`` rather than the whole clip.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">view_window</span><span class="p">()</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">view_start</span> <span class="o">+</span> <span class="n">fraction</span> <span class="o">*</span> <span class="p">(</span><span class="n">view_end</span> <span class="o">-</span> <span class="n">view_start</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Seek the video to ``frame``, record it as the playhead, and move the timeline line.</span>
+
+<span class="sd">    Returns the clamped frame actually sought. When the timeline is zoomed and the new</span>
+<span class="sd">    playhead would fall outside the current window, the task is rebuilt so the window</span>
+<span class="sd">    re-centres; otherwise only the cheap red-line move runs (no full re-render).</span>
+<span class="sd">    """</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">view_window</span><span class="p">()</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">frame</span>
+    <span class="n">videoclock</span><span class="o">.</span><span class="n">seek_frame</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">view_window</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">after</span> <span class="o">!=</span> <span class="n">before</span><span class="p">:</span>
+        <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>  <span class="c1"># window shifted; redraw at the new offset</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_sync_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"annie-timeline-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">frame</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sync_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Move the red playhead line to the current frame's position within the window."""</span>
+    <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">view_window</span><span class="p">()</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">view_end</span> <span class="o">-</span> <span class="n">view_start</span>
+    <span class="k">if</span> <span class="n">span</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">fraction</span> <span class="o">=</span> <span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">-</span> <span class="n">view_start</span><span class="p">)</span> <span class="o">/</span> <span class="n">span</span>
+    <span class="n">videoclock</span><span class="o">.</span><span class="n">set_playhead_x</span><span class="p">(</span><span class="n">svg_id</span><span class="p">,</span> <span class="n">fraction</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sync_pending_band</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resize the amber capture band from the armed start to the live playhead (no rebuild).</span>
+
+<span class="sd">    When nothing is armed, collapse the band to zero width so cancelling hides it without a</span>
+<span class="sd">    rebuild.</span>
+<span class="sd">    """</span>
+    <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">view_window</span><span class="p">()</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">view_end</span> <span class="o">-</span> <span class="n">view_start</span>
+    <span class="k">if</span> <span class="n">span</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">videoclock</span><span class="o">.</span><span class="n">set_pending_band</span><span class="p">(</span><span class="n">svg_id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">start_frac</span> <span class="o">=</span> <span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">-</span> <span class="n">view_start</span><span class="p">)</span> <span class="o">/</span> <span class="n">span</span>
+    <span class="n">end_frac</span> <span class="o">=</span> <span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">-</span> <span class="n">view_start</span><span class="p">)</span> <span class="o">/</span> <span class="n">span</span>
+    <span class="n">videoclock</span><span class="o">.</span><span class="n">set_pending_band</span><span class="p">(</span><span class="n">svg_id</span><span class="p">,</span> <span class="n">start_frac</span><span class="p">,</span> <span class="n">end_frac</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sync_jump_fields</span><span class="p">(</span>
+    <span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">frame_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rewrite the three linked jump fields to a consistent frame/second/timecode."""</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">frame_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+    <span class="n">sec_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">tc_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">_format_timecode</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_timecode</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Format seconds as ``mm:ss.ff`` (hundredths)."""</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span> <span class="o">//</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="n">rest</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">-</span> <span class="n">minutes</span> <span class="o">*</span> <span class="mi">60</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">minutes</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">rest</span><span class="si">:</span><span class="s2">05.2f</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_timecode</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse ``mm:ss.ff`` (or a bare seconds string) to seconds; ``0`` on nonsense."""</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">":"</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">minutes</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">)</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+
+<div class="viewcode-block" id="settings_temp_dir">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.settings_temp_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">settings_temp_dir</span><span class="p">():</span>  <span class="c1"># noqa: ANN201 - thin indirection kept import-local</span>
+<span class="w">    </span><span class="sd">"""Return the export directory (``settings.temp_dir``), created if missing."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+
+    <span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_keyboard</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind transport + marking keys; a fresh handler each rebuild (like segment review)."""</span>
+    <span class="n">vid_id</span> <span class="o">=</span> <span class="n">videoclock</span><span class="o">.</span><span class="n">element_id</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_key</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">KeyEventArguments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">keydown</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">repeat</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">" "</span><span class="p">:</span>
+            <span class="n">videoclock</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">vid_id</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">arrow_left</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">modifiers</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
+            <span class="n">videoclock</span><span class="o">.</span><span class="n">nudge_seconds</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">arrow_right</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">modifiers</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
+            <span class="n">videoclock</span><span class="o">.</span><span class="n">nudge_seconds</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">arrow_left</span> <span class="ow">or</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">","</span><span class="p">:</span>
+            <span class="n">videoclock</span><span class="o">.</span><span class="n">step_frames</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">arrow_right</span> <span class="ow">or</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"."</span><span class="p">:</span>
+            <span class="n">videoclock</span><span class="o">.</span><span class="n">step_frames</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"i"</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_arm_start</span><span class="p">(</span><span class="n">state_</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"o"</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_finalise</span><span class="p">(</span><span class="n">state_</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"Escape"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_cancel_pending</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"Delete"</span> <span class="ow">or</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"Backspace"</span><span class="p">:</span>
+            <span class="n">_delete_event</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+
+    <span class="n">ui</span><span class="o">.</span><span class="n">keyboard</span><span class="p">(</span><span class="n">on_key</span><span class="o">=</span><span class="n">on_key</span><span class="p">)</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Ádám Fodor
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=c6e86fd7"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

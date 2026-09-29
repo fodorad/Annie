@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,13 +298,13 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.pages.folder_picker</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Server-side folder/file pickers for the Dataset tab.</span>
+<span></span><span class="sd">"""Server-side folder/file pickers for the Dataset tab.</span>
 
 <span class="sd">Annie runs locally, so the browser and the filesystem are the same machine: the</span>
 <span class="sd">user can navigate the real directory tree and pick a folder (or a file) instead</span>
 <span class="sd">of typing its path. Thin NiceGUI views over the pure helpers in</span>
 <span class="sd">:mod:`annie.fsbrowse`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -320,22 +324,22 @@
 <span class="c1">#: (or file) most recently *selected*, so the first pick lands at home and later ones</span>
 <span class="c1">#: land beside the siblings of what you chose before (video ▸ vdet ▸ track live</span>
 <span class="c1">#: together). Only a selection updates this — plain browsing does not.</span>
-<span class="n">_MEMORY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;default_dir&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<span class="n">_MEMORY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"default_dir"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_remember</span><span class="p">(</span><span class="n">selected</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Record the parent of a just-selected path as the next picker&#39;s default.&quot;&quot;&quot;</span>
-    <span class="n">_MEMORY</span><span class="p">[</span><span class="s2">&quot;default_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">parent</span>
+<span class="w">    </span><span class="sd">"""Record the parent of a just-selected path as the next picker's default."""</span>
+    <span class="n">_MEMORY</span><span class="p">[</span><span class="s2">"default_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">parent</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_initial_dir</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve where a picker opens: explicit hint ▸ last-selected parent ▸ home.</span>
+<span class="w">    </span><span class="sd">"""Resolve where a picker opens: explicit hint ▸ last-selected parent ▸ home.</span>
 
 <span class="sd">    Runs the ``stat``-ing off the event loop (see :func:`_pick`).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">start</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">resolve_start_dir</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-    <span class="n">remembered</span> <span class="o">=</span> <span class="n">_MEMORY</span><span class="p">[</span><span class="s2">&quot;default_dir&quot;</span><span class="p">]</span>
+    <span class="n">remembered</span> <span class="o">=</span> <span class="n">_MEMORY</span><span class="p">[</span><span class="s2">"default_dir"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">remembered</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">remembered</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">remembered</span>
     <span class="k">return</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span>
@@ -344,7 +348,7 @@
 <div class="viewcode-block" id="pick_directory">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/folder_picker/index.html#annie.pages.folder_picker.pick_directory">[docs]</a>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">pick_directory</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open a modal folder picker and return the chosen directory path.</span>
+<span class="w">    </span><span class="sd">"""Open a modal folder picker and return the chosen directory path.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        start: A path hint to open at. Falls back to the nearest existing ancestor</span>
@@ -352,7 +356,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The absolute path of the selected folder, or ``None`` if cancelled.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="k">await</span> <span class="n">_pick</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
@@ -360,7 +364,7 @@
 <div class="viewcode-block" id="pick_file">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/folder_picker/index.html#annie.pages.folder_picker.pick_file">[docs]</a>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">pick_file</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open a modal file picker and return the chosen file path.</span>
+<span class="w">    </span><span class="sd">"""Open a modal file picker and return the chosen file path.</span>
 
 <span class="sd">    Navigate folders as usual; clicking a file selects it and closes the dialog.</span>
 
@@ -369,27 +373,27 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The absolute path of the selected file, or ``None`` if cancelled.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="k">await</span> <span class="n">_pick</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_pick</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared picker dialog; lists files too when ``files`` is set.</span>
+<span class="w">    </span><span class="sd">"""Shared picker dialog; lists files too when ``files`` is set.</span>
 
 <span class="sd">    The dialog opens immediately with a spinner; the directory listing — and even</span>
 <span class="sd">    resolving the start directory — is read on a worker thread, so a slow or busy</span>
 <span class="sd">    drive never blocks the dialog from appearing (see</span>
 <span class="sd">    :func:`annie.pages.fsbrowse.scan_entries`).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<span class="sd">    """</span>
+    <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
 
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-[34rem] max-w-full&quot;</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Select a file&quot;</span> <span class="k">if</span> <span class="n">files</span> <span class="k">else</span> <span class="s2">&quot;Select a folder&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-lg font-medium&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[34rem] max-w-full"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Select a file"</span> <span class="k">if</span> <span class="n">files</span> <span class="k">else</span> <span class="s2">"Select a folder"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
         <span class="n">path_label</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;Loading…&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-xs break-all&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Loading…"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs break-all"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">listing</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full gap-0 max-h-72 overflow-auto&quot;</span><span class="p">)</span>
+        <span class="n">listing</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-0 max-h-72 overflow-auto"</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">navigate</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">background_tasks</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">load</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
@@ -398,10 +402,10 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">listing</span><span class="p">):</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="n">select</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">select</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>  <span class="c1"># can&#39;t submit a folder until this scan resolves a path</span>
+                <span class="n">select</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>  <span class="c1"># can't submit a folder until this scan resolves a path</span>
             <span class="n">listing</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">listing</span><span class="p">:</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">&quot;lg&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;self-center my-4&quot;</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"self-center my-4"</span><span class="p">)</span>
             <span class="c1"># Resolve the start dir off-thread too — it stats the hint and its ancestors.</span>
             <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="n">target</span>
@@ -412,25 +416,25 @@
             <span class="n">scanned</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">scan_entries</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">want_files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">scanned</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">listing</span><span class="p">):</span>
                 <span class="k">return</span>  <span class="c1"># app shutting down, or the dialog was closed mid-scan</span>
-            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
             <span class="n">subdirs</span><span class="p">,</span> <span class="n">file_children</span> <span class="o">=</span> <span class="n">scanned</span>
             <span class="n">path_label</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
             <span class="n">listing</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">listing</span><span class="p">:</span>
                 <span class="n">parent</span> <span class="o">=</span> <span class="n">parent_of</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">_entry_row</span><span class="p">(</span><span class="s2">&quot;arrow_upward&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span> <span class="n">muted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">_entry_row</span><span class="p">(</span><span class="s2">"arrow_upward"</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span> <span class="n">muted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">subdirs</span><span class="p">:</span>
                     <span class="n">_entry_row</span><span class="p">(</span>
-                        <span class="s2">&quot;folder&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">child</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span>
+                        <span class="s2">"folder"</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">child</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span>
                     <span class="p">)</span>
                 <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">file_children</span><span class="p">:</span>
-                    <span class="n">_entry_row</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">child</span><span class="p">:</span> <span class="n">choose_file</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+                    <span class="n">_entry_row</span><span class="p">(</span><span class="s2">"description"</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">child</span><span class="p">:</span> <span class="n">choose_file</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">select</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_alive</span><span class="p">(</span><span class="n">select</span><span class="p">):</span>
                 <span class="n">select</span><span class="o">.</span><span class="n">enable</span><span class="p">()</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">choose_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">chosen</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span>
+            <span class="n">chosen</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">chosen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">_remember</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
                 <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
@@ -440,11 +444,11 @@
             <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
 
         <span class="n">select</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full justify-end gap-2&quot;</span><span class="p">):</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Cancel&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">&quot;flat&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end gap-2"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
-                <span class="n">select</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Select this folder&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;check&quot;</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">choose_dir</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-                    <span class="s2">&quot;unelevated&quot;</span>
+                <span class="n">select</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Select this folder"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"check"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">choose_dir</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                    <span class="s2">"unelevated"</span>
                 <span class="p">)</span>
                 <span class="n">select</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>  <span class="c1"># enabled once the initial listing resolves</span>
 
@@ -460,14 +464,14 @@
     <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">muted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>  <span class="c1"># noqa: ANN202</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one clickable directory/file row inside the picker listing.&quot;&quot;&quot;</span>
-    <span class="n">row</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;w-full items-center gap-2 cursor-pointer p-1 rounded hover:bg-gray-200&quot;</span><span class="p">)</span>
-    <span class="n">row</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">on_click</span><span class="p">())</span>
+<span class="w">    </span><span class="sd">"""Render one clickable directory/file row inside the picker listing."""</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 cursor-pointer p-1 rounded hover:bg-gray-200"</span><span class="p">)</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"click"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">on_click</span><span class="p">())</span>
     <span class="k">with</span> <span class="n">row</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="n">icon</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span> <span class="ow">or</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">&quot;text-sm&quot;</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">muted</span><span class="p">:</span>
-            <span class="n">text</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">text</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">row</span>
 </pre></div>
         </article>

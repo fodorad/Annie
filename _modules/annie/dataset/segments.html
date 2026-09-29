@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,18 +298,18 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.dataset.segments</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Segment-review domain: clips of long videos and their accept/drop export.</span>
+<span></span><span class="sd">"""Segment-review domain: clips of long videos and their accept/drop export.</span>
 
 <span class="sd">A segmentation CSV (:attr:`annie.dataset.sources.CsvRole.SEGMENTATION`) has one row</span>
 <span class="sd">per **clip** — a span of a longer video identified by ``{video_id}_{segment_id}``.</span>
 <span class="sd">Each row may carry several competing start/end **bands** (e.g. a ground-truth span and</span>
 <span class="sd">a WhisperX forced-alignment span) that the Annotator renders side by side so the</span>
 <span class="sd">reviewer can accept or drop the clip. This module turns those rows into</span>
-<span class="sd">:class:`SegmentClip` records and writes the reviewer&#39;s decisions to two files — the</span>
+<span class="sd">:class:`SegmentClip` records and writes the reviewer's decisions to two files — the</span>
 <span class="sd">accepted set and the dropped set — keyed by clip.</span>
 
-<span class="sd">Pure domain: no NiceGUI, no torch. The Annotator&#39;s Segment-review task consumes it.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Pure domain: no NiceGUI, no torch. The Annotator's Segment-review task consumes it.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -326,20 +330,20 @@
 <div class="viewcode-block" id="clip_key">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/segments/index.html#annie.dataset.segments.clip_key">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clip_key</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">segment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the composite clip identity ``{video_id}_{segment_id}``.</span>
+<span class="w">    </span><span class="sd">"""Return the composite clip identity ``{video_id}_{segment_id}``.</span>
 
 <span class="sd">    ``segment_id`` may already carry a leading underscore (``review_band.csv`` stores</span>
-<span class="sd">    it as ``&quot;_15&quot;``); the separator is not doubled in that case.</span>
+<span class="sd">    it as ``"_15"``); the separator is not doubled in that case.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        video_id: The parent video id.</span>
 <span class="sd">        segment_id: The segment id, with or without a leading underscore.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The clip key, e.g. ``&quot;227426_15&quot;``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">suffix</span> <span class="o">=</span> <span class="n">segment_id</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">segment_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">segment_id</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span></div>
+<span class="sd">        The clip key, e.g. ``"227426_15"``.</span>
+<span class="sd">    """</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">segment_id</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">segment_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span> <span class="k">else</span> <span class="n">segment_id</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
@@ -348,10 +352,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">next_undecided_index</span><span class="p">(</span>
     <span class="n">clips</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SegmentClip</span><span class="p">],</span> <span class="n">decisions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Decision</span><span class="p">],</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the next clip after ``start`` with no accept/drop decision yet.</span>
+<span class="w">    </span><span class="sd">"""Find the next clip after ``start`` with no accept/drop decision yet.</span>
 
 <span class="sd">    The search wraps: it scans from ``start + 1`` to the end, then from the beginning up</span>
-<span class="sd">    to and including ``start``, so pressing &quot;jump to next undecided&quot; cycles through the</span>
+<span class="sd">    to and including ``start``, so pressing "jump to next undecided" cycles through the</span>
 <span class="sd">    whole backlog regardless of where the cursor sits. Returns ``None`` when every clip is</span>
 <span class="sd">    decided — the caller disables the jump control in that case.</span>
 
@@ -362,7 +366,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The index of the next undecided clip, or ``None`` if all are decided.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clips</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -378,13 +382,13 @@
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/segments/index.html#annie.dataset.segments.ClipBand">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClipBand</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One resolved start/end span of a clip, in seconds.</span>
+<span class="w">    </span><span class="sd">"""One resolved start/end span of a clip, in seconds.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        name: The band&#39;s label (e.g. ``&quot;GT&quot;``, ``&quot;cut&quot;``).</span>
+<span class="sd">        name: The band's label (e.g. ``"GT"``, ``"cut"``).</span>
 <span class="sd">        start: Start time in seconds.</span>
 <span class="sd">        end: End time in seconds.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">start</span><span class="p">:</span> <span class="nb">float</span>
@@ -396,7 +400,7 @@
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/segments/index.html#annie.dataset.segments.SegmentClip">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SegmentClip</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One reviewable clip of a long video.</span>
+<span class="w">    </span><span class="sd">"""One reviewable clip of a long video.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        key: The composite ``{video_id}_{segment_id}`` review key.</span>
@@ -404,7 +408,7 @@
 <span class="sd">        segment_id: The segment id as written in the CSV.</span>
 <span class="sd">        bands: The resolved start/end spans to compare, in file order.</span>
 <span class="sd">        tags: The remaining (non-span) value columns, shown read-only as tags.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -415,7 +419,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_span</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">start_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``(start, end)`` seconds for a band, or ``None`` if either is unparseable.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return ``(start, end)`` seconds for a band, or ``None`` if either is unparseable."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">start</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">start_col</span><span class="p">])</span>
         <span class="n">end</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">end_col</span><span class="p">])</span>
@@ -427,27 +431,27 @@
 <div class="viewcode-block" id="load_segment_clips">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/segments/index.html#annie.dataset.segments.load_segment_clips">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_segment_clips</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SegmentClip</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a segmentation CSV into clip records, one per usable row.</span>
+<span class="w">    </span><span class="sd">"""Load a segmentation CSV into clip records, one per usable row.</span>
 
 <span class="sd">    A row is kept when at least one band parses; bands whose start or end cannot be</span>
 <span class="sd">    read as a number are dropped, and a row with no valid band at all is skipped.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        source: A :attr:`~annie.dataset.sources.CsvRole.SEGMENTATION` data source with</span>
-<span class="sd">            its ``key_column``, ``segment_column``, and ``bands`` configured. The clip&#39;s</span>
+<span class="sd">            its ``key_column``, ``segment_column``, and ``bands`` configured. The clip's</span>
 <span class="sd">            video is resolved from the scanned videos folder by ``video_id``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The clips in file order.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">key_col</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span>
     <span class="n">seg_col</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">segment_column</span>
     <span class="k">if</span> <span class="n">key_col</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">seg_col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">clips</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SegmentClip</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
-        <span class="n">video_id</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="n">segment_id</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">seg_col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">video_id</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_col</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">segment_id</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">seg_col</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">video_id</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">segment_id</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ClipBand</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -457,7 +461,7 @@
                 <span class="n">bands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ClipBand</span><span class="p">(</span><span class="n">band</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">span</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">span</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">bands</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">}</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">}</span>
         <span class="n">clips</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">SegmentClip</span><span class="p">(</span>
                 <span class="n">key</span><span class="o">=</span><span class="n">clip_key</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="n">segment_id</span><span class="p">),</span>
@@ -472,23 +476,23 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_clip_rows</span><span class="p">(</span><span class="n">clips</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SegmentClip</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write ``clips`` to ``path`` as CSV: key, video/segment ids, then tag columns.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Write ``clips`` to ``path`` as CSV: key, video/segment ids, then tag columns."""</span>
     <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">tag_columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">clip</span> <span class="ow">in</span> <span class="n">clips</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">clip</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tag_columns</span><span class="p">:</span>
                 <span class="n">tag_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
-    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;clip_key&quot;</span><span class="p">,</span> <span class="s2">&quot;video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;segment_id&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">tag_columns</span><span class="p">]</span>
-    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"clip_key"</span><span class="p">,</span> <span class="s2">"video_id"</span><span class="p">,</span> <span class="s2">"segment_id"</span><span class="p">,</span> <span class="o">*</span><span class="n">tag_columns</span><span class="p">]</span>
+    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
         <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">clip</span> <span class="ow">in</span> <span class="n">clips</span><span class="p">:</span>
             <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;clip_key&quot;</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-                    <span class="s2">&quot;video_id&quot;</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
-                    <span class="s2">&quot;segment_id&quot;</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">segment_id</span><span class="p">,</span>
+                    <span class="s2">"clip_key"</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                    <span class="s2">"video_id"</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
+                    <span class="s2">"segment_id"</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">segment_id</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">clip</span><span class="o">.</span><span class="n">tags</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -503,22 +507,22 @@
     <span class="n">accepted_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">dropped_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the accepted clips and dropped clips to two separate CSV files.</span>
+<span class="w">    </span><span class="sd">"""Write the accepted clips and dropped clips to two separate CSV files.</span>
 
-<span class="sd">    Each file carries the clip key, the video/segment ids, and the clip&#39;s passthrough</span>
+<span class="sd">    Each file carries the clip key, the video/segment ids, and the clip's passthrough</span>
 <span class="sd">    tag columns. Undecided clips (no entry in ``decisions``) appear in neither file.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        clips: All clips loaded for the source (defines row order and tag columns).</span>
-<span class="sd">        decisions: The ``clip_key -&gt; &quot;accept&quot;/&quot;drop&quot;`` map from the review store.</span>
+<span class="sd">        decisions: The ``clip_key -&gt; "accept"/"drop"`` map from the review store.</span>
 <span class="sd">        accepted_path: Destination for the accepted set.</span>
 <span class="sd">        dropped_path: Destination for the dropped set.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The ``(accepted_path, dropped_path)`` written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">accepted</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;accept&quot;</span><span class="p">]</span>
-    <span class="n">dropped</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;drop&quot;</span><span class="p">]</span>
+<span class="sd">    """</span>
+    <span class="n">accepted</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"accept"</span><span class="p">]</span>
+    <span class="n">dropped</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"drop"</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">_write_clip_rows</span><span class="p">(</span><span class="n">accepted</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">accepted_path</span><span class="p">)),</span>
         <span class="n">_write_clip_rows</span><span class="p">(</span><span class="n">dropped</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">dropped_path</span><span class="p">)),</span>

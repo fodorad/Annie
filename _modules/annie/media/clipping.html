@@ -212,6 +212,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -237,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
@@ -245,7 +247,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -294,27 +298,27 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.media.clipping</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Cut a browser-playable sub-clip of a video for one segment band (service).</span>
+<span></span><span class="sd">"""Cut a browser-playable sub-clip of a video for one segment band (service).</span>
 
-<span class="sd">The Segment-review task lets a reviewer watch a band&#39;s exact ``[start, end)`` span</span>
+<span class="sd">The Segment-review task lets a reviewer watch a band's exact ``[start, end)`` span</span>
 <span class="sd">before accepting or dropping it. :func:`cut_clip` re-encodes that span to a small MP4</span>
 <span class="sd">the browser can play inline. The cut is **frame-accurate** — the input seek is placed</span>
 <span class="sd">*after* ``-i`` and the stream is re-encoded (libx264) rather than stream-copied — so the</span>
-<span class="sd">embedded clip lines up with the preview strip&#39;s boundaries instead of snapping to the</span>
+<span class="sd">embedded clip lines up with the preview strip's boundaries instead of snapping to the</span>
 <span class="sd">nearest keyframe.</span>
 
 <span class="sd">Cuts land in a ``clips/`` subdirectory of :attr:`~annie.core.config.Settings.temp_dir`</span>
 <span class="sd">and are cached by ``(video, start, end)`` so re-opening a band does not re-cut. The</span>
-<span class="sd">command mirrors :func:`annie.media.rendering.burn_clip`&#39;s web-friendly encode</span>
+<span class="sd">command mirrors :func:`annie.media.rendering.burn_clip`'s web-friendly encode</span>
 <span class="sd">(preview-grade CRF + faststart muxing).</span>
 
 <span class="sd">The subdirectory is what keeps a cut alive: the render sweeper deletes any ``.mp4``</span>
 <span class="sd">sitting *directly* in ``temp_dir`` once it is older than the TTL (three minutes by</span>
 <span class="sd">default), and it protects only in-flight render jobs — a band clip is neither a job nor</span>
 <span class="sd">refreshed while it plays, so a reviewer studying one card for a few minutes would have</span>
-<span class="sd">had the file unlinked out from under the embedded player. The sweeper&#39;s ``iterdir()``</span>
+<span class="sd">had the file unlinked out from under the embedded player. The sweeper's ``iterdir()``</span>
 <span class="sd">scan does not recurse, so clips in ``clips/`` are simply out of its reach.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -332,26 +336,26 @@
 
 <span class="c1">#: Name of the ``temp_dir`` subdirectory holding band cuts, kept out of the flat</span>
 <span class="c1">#: directory the render sweeper walks (see the module docstring).</span>
-<span class="n">_CLIPS_SUBDIR</span> <span class="o">=</span> <span class="s2">&quot;clips&quot;</span>
+<span class="n">_CLIPS_SUBDIR</span> <span class="o">=</span> <span class="s2">"clips"</span>
 
 
 <div class="viewcode-block" id="clips_dir">
 <a class="viewcode-back" href="../../../autoapi/annie/media/clipping/index.html#annie.media.clipping.clips_dir">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clips_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The directory band cuts are written to (``&lt;temp_dir&gt;/clips``).</span>
+<span class="w">    </span><span class="sd">"""The directory band cuts are written to (``&lt;temp_dir&gt;/clips``).</span>
 
 <span class="sd">    Resolved at call time rather than import time so a test or a runtime settings change</span>
 <span class="sd">    that repoints :attr:`~annie.core.config.Settings.temp_dir` is honoured.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The clips directory path (not created — :func:`cut_clip` makes it on demand).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span> <span class="o">/</span> <span class="n">_CLIPS_SUBDIR</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clip_name</span><span class="p">(</span><span class="n">video_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a stable, collision-resistant output filename for one span.</span>
+<span class="w">    </span><span class="sd">"""Build a stable, collision-resistant output filename for one span.</span>
 
 <span class="sd">    The span is hashed with the resolved source path so two different videos with the</span>
 <span class="sd">    same ``video_id`` stem never share a cache file, while the stem stays in the name</span>
@@ -364,15 +368,15 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A ``&lt;stem&gt;_&lt;hash&gt;.mp4`` filename.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">payload</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">video_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">video_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span><span class="si">}</span><span class="s2">.mp4&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">video_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">video_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span><span class="si">}</span><span class="s2">.mp4"</span>
 
 
 <div class="viewcode-block" id="cut_clip">
 <a class="viewcode-back" href="../../../autoapi/annie/media/clipping/index.html#annie.media.clipping.cut_clip">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cut_clip</span><span class="p">(</span><span class="n">video_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cut ``[start, end)`` of ``video_path`` to a browser-playable MP4 (frame-accurate).</span>
+<span class="w">    </span><span class="sd">"""Cut ``[start, end)`` of ``video_path`` to a browser-playable MP4 (frame-accurate).</span>
 
 <span class="sd">    The result is cached by ``(video, start, end)``: a cached file that still exists is</span>
 <span class="sd">    returned as-is, so re-opening the same band never re-encodes.</span>
@@ -388,10 +392,10 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If ``end`` is not strictly after ``start``.</span>
 <span class="sd">        RuntimeError: If the ffmpeg subprocess fails.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">video_path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">end</span> <span class="o">&lt;=</span> <span class="n">start</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;end (</span><span class="si">{</span><span class="n">end</span><span class="si">}</span><span class="s2">) must be after start (</span><span class="si">{</span><span class="n">start</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"end (</span><span class="si">{</span><span class="n">end</span><span class="si">}</span><span class="s2">) must be after start (</span><span class="si">{</span><span class="n">start</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 
     <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span> <span class="nb">round</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
     <span class="n">cached</span> <span class="o">=</span> <span class="n">_clip_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -403,22 +407,22 @@
     <span class="n">output</span> <span class="o">=</span> <span class="n">destination</span> <span class="o">/</span> <span class="n">_clip_name</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
 
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
+        <span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span>
         <span class="c1"># -ss/-to *after* -i is the accurate (decode-then-trim) form: the span lines up</span>
         <span class="c1"># with the preview strip rather than snapping to the nearest keyframe.</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
-        <span class="s2">&quot;-ss&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;-to&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;libx264&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-preset&quot;</span><span class="p">,</span> <span class="n">PRESET</span><span class="p">,</span> <span class="s2">&quot;-crf&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">CRF</span><span class="p">),</span>
-        <span class="s2">&quot;-movflags&quot;</span><span class="p">,</span> <span class="n">FASTSTART</span><span class="p">,</span>
-        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
+        <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
+        <span class="s2">"-ss"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-to"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span>
+        <span class="s2">"-preset"</span><span class="p">,</span> <span class="n">PRESET</span><span class="p">,</span> <span class="s2">"-crf"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">CRF</span><span class="p">),</span>
+        <span class="s2">"-movflags"</span><span class="p">,</span> <span class="n">FASTSTART</span><span class="p">,</span>
+        <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
     <span class="p">]</span>  <span class="c1"># fmt: skip</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryFile</span><span class="p">()</span> <span class="k">as</span> <span class="n">errlog</span><span class="p">:</span>
         <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">errlog</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">errlog</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ffmpeg failed: </span><span class="si">{</span><span class="n">errlog</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;replace&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ffmpeg failed: </span><span class="si">{</span><span class="n">errlog</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">,</span><span class="w"> </span><span class="s1">'replace'</span><span class="p">)[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">_clip_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span>
     <span class="k">return</span> <span class="n">output</span></div>

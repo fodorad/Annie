@@ -213,6 +213,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/scanning/index.html">annie.dataset.scanning</a></li>
@@ -238,6 +239,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
@@ -246,7 +248,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -375,7 +379,7 @@ colour.</p></li>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="annie.media.color.TRACK_PALETTE">
-<span class="sig-prename descclassname"><span class="pre">annie.media.color.</span></span><span class="sig-name descname"><span class="pre">TRACK_PALETTE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">((239,</span> <span class="pre">68,</span> <span class="pre">68),</span> <span class="pre">(249,</span> <span class="pre">115,</span> <span class="pre">22),</span> <span class="pre">(234,</span> <span class="pre">179,</span> <span class="pre">8),</span> <span class="pre">(168,</span> <span class="pre">85,</span> <span class="pre">247),</span> <span class="pre">(236,</span> <span class="pre">72,</span> <span class="pre">153),</span> <span class="pre">(20,</span> <span class="pre">184,</span> <span class="pre">166),...</span></span><a class="headerlink" href="#annie.media.color.TRACK_PALETTE" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.media.color.</span></span><span class="sig-name descname"><span class="pre">TRACK_PALETTE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">((239,</span> <span class="pre">68,</span> <span class="pre">68),</span> <span class="pre">(249,</span> <span class="pre">115,</span> <span class="pre">22),</span> <span class="pre">(234,</span> <span class="pre">179,</span> <span class="pre">8),</span> <span class="pre">(168,</span> <span class="pre">85,</span> <span class="pre">247),</span> <span class="pre">(236,</span> <span class="pre">72,</span> <span class="pre">153),</span> <span class="pre">(20,</span> <span class="pre">184,</span> <span class="pre">166),...</span></span><a class="headerlink" href="#annie.media.color.TRACK_PALETTE" title="Link to this definition">¶</a></dt>
 <dd><p>Stable palette for ordinary tracks.</p>
 <p>Deliberately excludes blue and green (and anything close to them) so reserved
 meanings stay unambiguous. Keyed by <code class="docutils literal notranslate"><span class="pre">track_id</span></code> modulo the palette length, so a

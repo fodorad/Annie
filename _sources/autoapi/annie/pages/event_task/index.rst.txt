@@ -1,0 +1,55 @@
+annie.pages.event_task
+======================
+
+.. py:module:: annie.pages.event_task
+
+.. autoapi-nested-parse::
+
+   Event-annotation task UI — the video-editor timeline surface (UI).
+
+   One queued video at a time: a large HTML5 player centred at the top, a transport bar
+   (play/pause, ±5 s, frame-step, "Start/End here"), linked frame/second/timecode jump fields,
+   then the SVG timeline (one lane per track) and an event editor. Events are authored from
+   scratch and saved to the review DB **immediately** on every change — there is no Save button;
+   export (JSON for code, CSV for a spreadsheet) is a separate step.
+
+   Which video is shown comes from the Browse annotator queue, like Curation. Frame accuracy is
+   provided by :mod:`annie.pages.videoclock` (HTML5 ``currentTime`` stepping); the timeline is
+   drawn by :mod:`annie.pages.timeline` (Python owns the model, JS reports gestures). The layout
+   is fixed: the video and the editor sit side by side on top, with the full-width timeline in
+   its own row beneath both.
+
+   This module is heavy on browser interaction (video, JS bridge, SVG gestures) so its wiring is
+   verified in the browser; the pure geometry/export/store pieces it calls are unit-tested in
+   their own modules.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.event_task.cleanup
+   annie.pages.event_task.event_annotation_task
+   annie.pages.event_task.settings_temp_dir
+
+
+Module Contents
+---------------
+
+.. py:function:: cleanup(client_id: str) -> None
+
+   Drop a disconnected client's Event-annotation state and gesture handler flag.
+
+
+.. py:function:: event_annotation_task() -> None
+
+   Build the Event-annotation work area for the current queued video.
+
+
+.. py:function:: settings_temp_dir()
+
+   Return the export directory (``settings.temp_dir``), created if missing.
+
+

@@ -54,7 +54,7 @@ Module Contents
 ---------------
 
 .. py:data:: LEVELS
-   :type:  tuple[str, Ellipsis]
+   :type:  tuple[str, ...]
    :value: ('error', 'warning', 'info')
 
 

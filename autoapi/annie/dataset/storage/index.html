@@ -213,6 +213,7 @@
 <li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="../corrections/index.html">annie.dataset.corrections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../filtering/index.html">annie.dataset.filtering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../scanning/index.html">annie.dataset.scanning</a></li>
@@ -238,6 +239,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
@@ -246,7 +248,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/viewport/index.html">annie.pages.viewport</a></li>
 </ul>
 </li>
@@ -334,7 +338,10 @@ in one call and importable via upsert, so a reviewer’s curation travels with t
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReviewRecord</span></code></a></p></td>
 <td><p>One persisted review row.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.storage.ReviewStore" title="annie.dataset.storage.ReviewStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReviewStore</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EventRecord</span></code></a></p></td>
+<td><p>One persisted Event-annotation event: a labelled interval on a track.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.storage.ReviewStore" title="annie.dataset.storage.ReviewStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReviewStore</span></code></a></p></td>
 <td><p>A thin, connection-per-call wrapper over the <code class="docutils literal notranslate"><span class="pre">review</span></code> table.</p></td>
 </tr>
 </tbody>
@@ -412,6 +419,80 @@ clip is not (or not a) Segment-review sample.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewRecord.updated_at">
 <span class="sig-name descname"><span class="pre">updated_at</span></span><a class="headerlink" href="#annie.dataset.storage.ReviewRecord.updated_at" title="Link to this definition">¶</a></dt>
+<dd><p>ISO-8601 UTC timestamp of the last change.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.storage.</span></span><span class="sig-name descname"><span class="pre">EventRecord</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#EventRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.EventRecord" title="Link to this definition">¶</a></dt>
+<dd><p>One persisted Event-annotation event: a labelled interval on a track.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.event_id">
+<span class="sig-name descname"><span class="pre">event_id</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.event_id" title="Link to this definition">¶</a></dt>
+<dd><p>Stable UUID identity, so an event survives edits to its own fields.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.video_id">
+<span class="sig-name descname"><span class="pre">video_id</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.video_id" title="Link to this definition">¶</a></dt>
+<dd><p>The video this event belongs to.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.row_key">
+<span class="sig-name descname"><span class="pre">row_key</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.row_key" title="Link to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../../core/models/index.html#annie.core.models.VideoEntry.key" title="annie.core.models.VideoEntry.key"><code class="xref py py-attr docutils literal notranslate"><span class="pre">annie.core.models.VideoEntry.key</span></code></a> of the queue row, tying the
+event to the same identity curation uses.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.track">
+<span class="sig-name descname"><span class="pre">track</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.track" title="Link to this definition">¶</a></dt>
+<dd><p>The track (category) name the event sits on.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.start_frame">
+<span class="sig-name descname"><span class="pre">start_frame</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.start_frame" title="Link to this definition">¶</a></dt>
+<dd><p>Inclusive start frame of the interval.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.end_frame">
+<span class="sig-name descname"><span class="pre">end_frame</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.end_frame" title="Link to this definition">¶</a></dt>
+<dd><p>Inclusive end frame of the interval (<code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">start_frame</span></code>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.label">
+<span class="sig-name descname"><span class="pre">label</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.label" title="Link to this definition">¶</a></dt>
+<dd><p>Free-text label shown on the event box (empty when unnamed).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.note">
+<span class="sig-name descname"><span class="pre">note</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.note" title="Link to this definition">¶</a></dt>
+<dd><p>Free-text note (empty when none).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.attributes">
+<span class="sig-name descname"><span class="pre">attributes</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.attributes" title="Link to this definition">¶</a></dt>
+<dd><p>Arbitrary string key/value pairs; stored as a JSON object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.color">
+<span class="sig-name descname"><span class="pre">color</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.color" title="Link to this definition">¶</a></dt>
+<dd><p>Per-event colour override (hex string), or <code class="docutils literal notranslate"><span class="pre">None</span></code> to inherit the track’s
+colour on the timeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.updated_at">
+<span class="sig-name descname"><span class="pre">updated_at</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.updated_at" title="Link to this definition">¶</a></dt>
 <dd><p>ISO-8601 UTC timestamp of the last change.</p>
 </dd></dl>
 
@@ -665,6 +746,178 @@ reviewer has decided (undecided clips are omitted).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.add_event">
+<span class="sig-name descname"><span class="pre">add_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attributes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">EventRecord</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.add_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.add_event" title="Link to this definition">¶</a></dt>
+<dd><p>Insert a new event on a track and return it (with its fresh id).</p>
+<p>The event’s track is also registered in <code class="docutils literal notranslate"><span class="pre">event_track</span></code> if absent, so a lane
+created implicitly by dropping an event onto it persists like an explicit one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video_id</strong> – The video the event belongs to.</p></li>
+<li><p><strong>row_key</strong> – The queue row identity the event ties to.</p></li>
+<li><p><strong>track</strong> – The track (category) name.</p></li>
+<li><p><strong>start_frame</strong> – Inclusive start frame.</p></li>
+<li><p><strong>end_frame</strong> – Inclusive end frame (<code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">start_frame</span></code>).</p></li>
+<li><p><strong>label</strong> – Optional event label.</p></li>
+<li><p><strong>note</strong> – Optional event note.</p></li>
+<li><p><strong>attributes</strong> – Optional arbitrary string key/value pairs.</p></li>
+<li><p><strong>color</strong> – Optional per-event colour override (hex), or <code class="docutils literal notranslate"><span class="pre">None</span></code> to inherit the track.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The stored <a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventRecord</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.update_event">
+<span class="sig-name descname"><span class="pre">update_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">EventRecord</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.update_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.update_event" title="Link to this definition">¶</a></dt>
+<dd><p>Update named columns of an event, returning the updated record.</p>
+<p>Only the columns named in <code class="docutils literal notranslate"><span class="pre">fields</span></code> are written (plus <code class="docutils literal notranslate"><span class="pre">updated_at</span></code>); any
+others keep their stored value. <code class="docutils literal notranslate"><span class="pre">attributes</span></code> is accepted as a dict and stored
+as JSON. Passing an unknown column raises, so a typo fails loudly rather than
+silently doing nothing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>event_id</strong> – The event to update.</p></li>
+<li><p><strong>**fields</strong> – Column/value pairs among <code class="docutils literal notranslate"><span class="pre">track</span></code>, <code class="docutils literal notranslate"><span class="pre">start_frame</span></code>, <code class="docutils literal notranslate"><span class="pre">end_frame</span></code>,
+<code class="docutils literal notranslate"><span class="pre">label</span></code>, <code class="docutils literal notranslate"><span class="pre">note</span></code>, <code class="docutils literal notranslate"><span class="pre">attributes</span></code>, <code class="docutils literal notranslate"><span class="pre">color</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated <a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventRecord</span></code></a>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no such event exists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.delete_event">
+<span class="sig-name descname"><span class="pre">delete_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.delete_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.delete_event" title="Link to this definition">¶</a></dt>
+<dd><p>Delete one event by id (a no-op if it does not exist).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event_id</strong> – The event to delete.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.get_event">
+<span class="sig-name descname"><span class="pre">get_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">EventRecord</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.get_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.get_event" title="Link to this definition">¶</a></dt>
+<dd><p>Return one event by id, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if it does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event_id</strong> – The event to fetch.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The stored <a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventRecord</span></code></a>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.events_for">
+<span class="sig-name descname"><span class="pre">events_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.events_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.events_for" title="Link to this definition">¶</a></dt>
+<dd><p>Return a video’s events, ordered by track then start frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>row_key</strong> – The queue row identity to fetch events for.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The events on that video, grouped by track and sorted within each track.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.all_events">
+<span class="sig-name descname"><span class="pre">all_events</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.all_events"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.all_events" title="Link to this definition">¶</a></dt>
+<dd><p>Return every stored event, ordered by video then track then start frame.</p>
+<p>Backs the session-wide export (every annotated video in one file).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>All events in the store.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.add_track">
+<span class="sig-name descname"><span class="pre">add_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.add_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.add_track" title="Link to this definition">¶</a></dt>
+<dd><p>Create an empty track (lane) for a video, appended after existing ones.</p>
+<p>Idempotent: re-adding an existing track leaves its ordinal untouched.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row_key</strong> – The queue row identity.</p></li>
+<li><p><strong>track</strong> – The track (category) name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.rename_track">
+<span class="sig-name descname"><span class="pre">rename_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.rename_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.rename_track" title="Link to this definition">¶</a></dt>
+<dd><p>Rename a track and move its events onto the new name, keeping the ordinal.</p>
+<p>A no-op when <code class="docutils literal notranslate"><span class="pre">old</span></code> and <code class="docutils literal notranslate"><span class="pre">new</span></code> are equal. If <code class="docutils literal notranslate"><span class="pre">new</span></code> already exists, the two
+lanes merge: <code class="docutils literal notranslate"><span class="pre">old</span></code>’s events move onto <code class="docutils literal notranslate"><span class="pre">new</span></code> and the now-empty <code class="docutils literal notranslate"><span class="pre">old</span></code> lane
+is removed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row_key</strong> – The queue row identity.</p></li>
+<li><p><strong>old</strong> – The current track name.</p></li>
+<li><p><strong>new</strong> – The new track name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.delete_track">
+<span class="sig-name descname"><span class="pre">delete_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.delete_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.delete_track" title="Link to this definition">¶</a></dt>
+<dd><p>Delete a track and all of its events for a video.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row_key</strong> – The queue row identity.</p></li>
+<li><p><strong>track</strong> – The track (category) name to remove.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.tracks_for">
+<span class="sig-name descname"><span class="pre">tracks_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.tracks_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.tracks_for" title="Link to this definition">¶</a></dt>
+<dd><p>Return a video’s track names in their vertical order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>row_key</strong> – The queue row identity.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The track names ordered by <code class="docutils literal notranslate"><span class="pre">ordinal</span></code> (their top-to-bottom lane order).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.event_row_keys">
+<span class="sig-name descname"><span class="pre">event_row_keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.event_row_keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.event_row_keys" title="Link to this definition">¶</a></dt>
+<dd><p>Return the row keys that have at least one event or track.</p>
+<p>Lets the tab know which queued videos already carry annotation work.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The set of row keys present in either event table.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.set_note">
 <span class="sig-name descname"><span class="pre">set_note</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.set_note"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.set_note" title="Link to this definition">¶</a></dt>
 <dd><p>Set the free-text note for a row.</p>
@@ -803,6 +1056,20 @@ reviewer has decided (undecided clips are omitted).</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewRecord.updated_at"><code class="docutils literal notranslate"><span class="pre">ReviewRecord.updated_at</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord"><code class="docutils literal notranslate"><span class="pre">EventRecord</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.event_id"><code class="docutils literal notranslate"><span class="pre">EventRecord.event_id</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.video_id"><code class="docutils literal notranslate"><span class="pre">EventRecord.video_id</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.row_key"><code class="docutils literal notranslate"><span class="pre">EventRecord.row_key</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.track"><code class="docutils literal notranslate"><span class="pre">EventRecord.track</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.start_frame"><code class="docutils literal notranslate"><span class="pre">EventRecord.start_frame</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.end_frame"><code class="docutils literal notranslate"><span class="pre">EventRecord.end_frame</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.label"><code class="docutils literal notranslate"><span class="pre">EventRecord.label</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.note"><code class="docutils literal notranslate"><span class="pre">EventRecord.note</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.attributes"><code class="docutils literal notranslate"><span class="pre">EventRecord.attributes</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.color"><code class="docutils literal notranslate"><span class="pre">EventRecord.color</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventRecord.updated_at"><code class="docutils literal notranslate"><span class="pre">EventRecord.updated_at</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore"><code class="docutils literal notranslate"><span class="pre">ReviewStore</span></code></a><ul>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.get"><code class="docutils literal notranslate"><span class="pre">ReviewStore.get()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.all"><code class="docutils literal notranslate"><span class="pre">ReviewStore.all()</span></code></a></li>
@@ -818,6 +1085,17 @@ reviewer has decided (undecided clips are omitted).</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.clear_decision"><code class="docutils literal notranslate"><span class="pre">ReviewStore.clear_decision()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.decisions"><code class="docutils literal notranslate"><span class="pre">ReviewStore.decisions()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.list_by_decision"><code class="docutils literal notranslate"><span class="pre">ReviewStore.list_by_decision()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.add_event"><code class="docutils literal notranslate"><span class="pre">ReviewStore.add_event()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.update_event"><code class="docutils literal notranslate"><span class="pre">ReviewStore.update_event()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.delete_event"><code class="docutils literal notranslate"><span class="pre">ReviewStore.delete_event()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.get_event"><code class="docutils literal notranslate"><span class="pre">ReviewStore.get_event()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.events_for"><code class="docutils literal notranslate"><span class="pre">ReviewStore.events_for()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.all_events"><code class="docutils literal notranslate"><span class="pre">ReviewStore.all_events()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.add_track"><code class="docutils literal notranslate"><span class="pre">ReviewStore.add_track()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.rename_track"><code class="docutils literal notranslate"><span class="pre">ReviewStore.rename_track()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.delete_track"><code class="docutils literal notranslate"><span class="pre">ReviewStore.delete_track()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.tracks_for"><code class="docutils literal notranslate"><span class="pre">ReviewStore.tracks_for()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.event_row_keys"><code class="docutils literal notranslate"><span class="pre">ReviewStore.event_row_keys()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_note"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_note()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_json"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_json()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_csv"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_csv()</span></code></a></li>

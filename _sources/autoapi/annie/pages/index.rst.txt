@@ -24,6 +24,7 @@ Submodules
    /autoapi/annie/pages/convert/index
    /autoapi/annie/pages/csv_dialog/index
    /autoapi/annie/pages/dataset/index
+   /autoapi/annie/pages/event_task/index
    /autoapi/annie/pages/folder_picker/index
    /autoapi/annie/pages/fsbrowse/index
    /autoapi/annie/pages/home/index
@@ -32,7 +33,9 @@ Submodules
    /autoapi/annie/pages/paging/index
    /autoapi/annie/pages/reveal/index
    /autoapi/annie/pages/settings/index
+   /autoapi/annie/pages/timeline/index
    /autoapi/annie/pages/utils/index
+   /autoapi/annie/pages/videoclock/index
    /autoapi/annie/pages/viewport/index
 
 

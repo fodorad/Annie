@@ -49,7 +49,7 @@ Module Contents
    :returns: The parent :class:`~pathlib.Path`, or ``None`` at the root.
 
 
-.. py:function:: scan_entries(path: str | pathlib.Path, *, want_files: bool, suffixes: tuple[str, Ellipsis] | None = None, show_hidden: bool = False) -> tuple[list[pathlib.Path], list[pathlib.Path]]
+.. py:function:: scan_entries(path: str | pathlib.Path, *, want_files: bool, suffixes: tuple[str, ...] | None = None, show_hidden: bool = False) -> tuple[list[pathlib.Path], list[pathlib.Path]]
 
    List a directory's subfolders (and optionally files) in a single pass.
 
@@ -83,7 +83,7 @@ Module Contents
    :returns: The child directories, sorted by lower-cased name.
 
 
-.. py:function:: list_files(path: str | pathlib.Path, *, suffixes: tuple[str, Ellipsis] | None = None, show_hidden: bool = False) -> list[pathlib.Path]
+.. py:function:: list_files(path: str | pathlib.Path, *, suffixes: tuple[str, ...] | None = None, show_hidden: bool = False) -> list[pathlib.Path]
 
    List immediate files of ``path``, sorted case-insensitively.
 

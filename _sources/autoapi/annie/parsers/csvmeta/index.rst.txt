@@ -79,7 +79,7 @@ Module Contents
    :returns: The suggested key-column name, or ``None`` if the file has no header.
 
 
-.. py:function:: load_value_map(path: str | pathlib.Path, key_column: str, value_columns: tuple[str, Ellipsis] | list[str]) -> dict[str, dict[str, str]]
+.. py:function:: load_value_map(path: str | pathlib.Path, key_column: str, value_columns: tuple[str, ...] | list[str]) -> dict[str, dict[str, str]]
 
    Build a ``key -> {value_column: value}`` mapping from a CSV.
 
