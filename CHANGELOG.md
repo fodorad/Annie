@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0](https://github.com/fodorad/Annie/compare/v1.4.0...v1.5.0) (2026-09-29)
+
+
+### Features
+
+* event annotation task with a video-editor timeline ([7e8f805](https://github.com/fodorad/Annie/commit/7e8f80573a59b17bb897cf478cdaa2af08aea3aa))
+
 ## [1.4.0](https://github.com/fodorad/Annie/compare/v1.3.0...v1.4.0) (2026-07-20)
 
 
