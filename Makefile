@@ -8,7 +8,7 @@ help:
 	@echo "Dev (modify files):  fix"
 	@echo "Checks (read-only):  lint | type-check | test | docs | check"
 	@echo "Setup:               install | dev | upgrade | install-docs"
-	@echo "Run:                 run"
+	@echo "Run:                 run  (override with 'make run PORT=8090 HOST=0.0.0.0')"
 	@echo "Docker:              docker-build | docker-run"
 	@echo "Docs:                docs-serve | docs-deploy | screenshots"
 	@echo "Cleanup:             clean"
@@ -55,8 +55,14 @@ check: lint type-check test docs
 
 # ── Run ────────────────────────────────────────────────────────────────────────
 
+# Override the port when 8080 is taken by another project, e.g. `make run PORT=8090`.
+# HOST is overridable the same way. Both feed the ANNIE_* env vars the app already reads
+# (annie/core/config.py); an ANNIE_PORT already in the environment still wins.
+PORT ?= 8080
+HOST ?= 127.0.0.1
+
 run:
-	python -m annie.app
+	ANNIE_HOST=$(HOST) ANNIE_PORT=$(PORT) python -m annie.app
 
 # ── Docker ─────────────────────────────────────────────────────────────────────
 

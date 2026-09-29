@@ -16,8 +16,9 @@ from __future__ import annotations
 import csv
 import json
 import sqlite3
+import uuid
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -31,9 +32,21 @@ Verdict = Literal["good", "bad"]
 Decision = Literal["accept", "drop"]
 """A Segment-review decision on a clip. ``None`` means the clip is not yet reviewed."""
 
-#: DDL for the single ``review`` table, created on first connection (idempotent).
-#: ``row_key`` is free-form text, so segment rows key on ``{video_id}_{segment_id}``
-#: without a schema change; ``decision`` carries the Segment-review accept/drop.
+#: DDL for the persisted tables, created on first connection (all idempotent).
+#:
+#: ``review`` is one row per video (curation, protagonist, segment decision); ``row_key``
+#: is free-form text, so segment rows key on ``{video_id}_{segment_id}`` without a schema
+#: change, and ``decision`` carries the Segment-review accept/drop.
+#:
+#: ``event`` and ``event_track`` back the Event-annotation task, which is a different shape:
+#: one video carries **many** interval events across **many** tracks. An event is a
+#: ``[start_frame, end_frame]`` span on a named track (the track *is* the category), with a
+#: free-text label/note and a JSON ``attributes`` object for arbitrary key/values — hence a
+#: dedicated table rather than more columns on ``review``. ``event_track`` records a track's
+#: existence and vertical order even before it holds any event, so an added-but-empty lane
+#: survives a reload. Both are keyed by :attr:`annie.core.models.VideoEntry.key` (``row_key``)
+#: so events tie to the same queue row curation does. Opening a pre-events database simply
+#: creates these tables empty — no column migration is needed for whole new tables.
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS review (
     row_key            TEXT PRIMARY KEY,
@@ -45,6 +58,29 @@ CREATE TABLE IF NOT EXISTS review (
     active_track       INTEGER,
     decision           TEXT,
     updated_at         TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS event (
+    event_id     TEXT PRIMARY KEY,
+    video_id     TEXT NOT NULL,
+    row_key      TEXT NOT NULL,
+    track        TEXT NOT NULL,
+    start_frame  INTEGER NOT NULL,
+    end_frame    INTEGER NOT NULL,
+    label        TEXT NOT NULL DEFAULT '',
+    note         TEXT NOT NULL DEFAULT '',
+    attributes   TEXT NOT NULL DEFAULT '{}',
+    color        TEXT,
+    updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS event_by_video ON event(row_key);
+
+CREATE TABLE IF NOT EXISTS event_track (
+    row_key     TEXT NOT NULL,
+    track       TEXT NOT NULL,
+    ordinal     INTEGER NOT NULL,
+    updated_at  TEXT NOT NULL,
+    PRIMARY KEY (row_key, track)
 );
 """
 
@@ -76,6 +112,44 @@ class ReviewRecord:
     active_track: int | None
     decision: Decision | None
     updated_at: str
+
+
+@dataclass(slots=True)
+class EventRecord:
+    """One persisted Event-annotation event: a labelled interval on a track.
+
+    Attributes:
+        event_id: Stable UUID identity, so an event survives edits to its own fields.
+        video_id: The video this event belongs to.
+        row_key: The :attr:`annie.core.models.VideoEntry.key` of the queue row, tying the
+            event to the same identity curation uses.
+        track: The track (category) name the event sits on.
+        start_frame: Inclusive start frame of the interval.
+        end_frame: Inclusive end frame of the interval (``>= start_frame``).
+        label: Free-text label shown on the event box (empty when unnamed).
+        note: Free-text note (empty when none).
+        attributes: Arbitrary string key/value pairs; stored as a JSON object.
+        color: Per-event colour override (hex string), or ``None`` to inherit the track's
+            colour on the timeline.
+        updated_at: ISO-8601 UTC timestamp of the last change.
+    """
+
+    event_id: str
+    video_id: str
+    row_key: str
+    track: str
+    start_frame: int
+    end_frame: int
+    label: str
+    note: str
+    attributes: dict[str, str] = field(default_factory=dict)
+    color: str | None = None
+    updated_at: str = ""
+
+
+def _new_event_id() -> str:
+    """Return a fresh UUID4 hex string for a new event."""
+    return uuid.uuid4().hex
 
 
 def _now() -> str:
@@ -114,6 +188,11 @@ class ReviewStore:
             conn.execute("ALTER TABLE review ADD COLUMN active_track INTEGER")
         if "decision" not in columns:
             conn.execute("ALTER TABLE review ADD COLUMN decision TEXT")
+        # The event table already exists (CREATE IF NOT EXISTS ran); a database from the first
+        # cut of the feature lacks the later per-event colour column.
+        event_columns = {row["name"] for row in conn.execute("PRAGMA table_info(event)")}
+        if "color" not in event_columns:
+            conn.execute("ALTER TABLE event ADD COLUMN color TEXT")
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -448,6 +527,257 @@ class ReviewStore:
             ).fetchall()
         return [_record_from_row(row) for row in rows]
 
+    # ── event annotation ─────────────────────────────────────────────────────────
+
+    def add_event(
+        self,
+        video_id: str,
+        row_key: str,
+        track: str,
+        start_frame: int,
+        end_frame: int,
+        *,
+        label: str = "",
+        note: str = "",
+        attributes: dict[str, str] | None = None,
+        color: str | None = None,
+    ) -> EventRecord:
+        """Insert a new event on a track and return it (with its fresh id).
+
+        The event's track is also registered in ``event_track`` if absent, so a lane
+        created implicitly by dropping an event onto it persists like an explicit one.
+
+        Args:
+            video_id: The video the event belongs to.
+            row_key: The queue row identity the event ties to.
+            track: The track (category) name.
+            start_frame: Inclusive start frame.
+            end_frame: Inclusive end frame (``>= start_frame``).
+            label: Optional event label.
+            note: Optional event note.
+            attributes: Optional arbitrary string key/value pairs.
+            color: Optional per-event colour override (hex), or ``None`` to inherit the track.
+
+        Returns:
+            The stored :class:`EventRecord`.
+        """
+        record = EventRecord(
+            event_id=_new_event_id(),
+            video_id=video_id,
+            row_key=row_key,
+            track=track,
+            start_frame=start_frame,
+            end_frame=end_frame,
+            label=label,
+            note=note,
+            attributes=dict(attributes or {}),
+            color=color,
+            updated_at=_now(),
+        )
+        with self._connect() as conn:
+            self._ensure_track(conn, row_key, track)
+            conn.execute(
+                """
+                INSERT INTO event
+                    (event_id, video_id, row_key, track, start_frame, end_frame,
+                     label, note, attributes, color, updated_at)
+                VALUES (:event_id, :video_id, :row_key, :track, :start_frame, :end_frame,
+                        :label, :note, :attributes, :color, :updated_at)
+                """,
+                _event_params(record),
+            )
+        return record
+
+    def update_event(self, event_id: str, **fields: object) -> EventRecord | None:
+        """Update named columns of an event, returning the updated record.
+
+        Only the columns named in ``fields`` are written (plus ``updated_at``); any
+        others keep their stored value. ``attributes`` is accepted as a dict and stored
+        as JSON. Passing an unknown column raises, so a typo fails loudly rather than
+        silently doing nothing.
+
+        Args:
+            event_id: The event to update.
+            **fields: Column/value pairs among ``track``, ``start_frame``, ``end_frame``,
+                ``label``, ``note``, ``attributes``, ``color``.
+
+        Returns:
+            The updated :class:`EventRecord`, or ``None`` if no such event exists.
+        """
+        allowed = {"track", "start_frame", "end_frame", "label", "note", "attributes", "color"}
+        unknown = set(fields) - allowed
+        if unknown:
+            raise ValueError(f"unknown event field(s): {sorted(unknown)}")
+        if not fields:
+            return self.get_event(event_id)
+        assignments = {**fields}
+        if "attributes" in assignments:
+            assignments["attributes"] = json.dumps(assignments["attributes"])
+        assignments["updated_at"] = _now()
+        columns = ", ".join(f"{name} = :{name}" for name in assignments)
+        with self._connect() as conn:
+            conn.execute(
+                f"UPDATE event SET {columns} WHERE event_id = :event_id",  # noqa: S608 - keys are whitelisted
+                {**assignments, "event_id": event_id},
+            )
+        return self.get_event(event_id)
+
+    def delete_event(self, event_id: str) -> None:
+        """Delete one event by id (a no-op if it does not exist).
+
+        Args:
+            event_id: The event to delete.
+        """
+        with self._connect() as conn:
+            conn.execute("DELETE FROM event WHERE event_id = ?", (event_id,))
+
+    def get_event(self, event_id: str) -> EventRecord | None:
+        """Return one event by id, or ``None`` if it does not exist.
+
+        Args:
+            event_id: The event to fetch.
+
+        Returns:
+            The stored :class:`EventRecord`, or ``None``.
+        """
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM event WHERE event_id = ?", (event_id,)).fetchone()
+        return _event_from_row(row) if row is not None else None
+
+    def events_for(self, row_key: str) -> list[EventRecord]:
+        """Return a video's events, ordered by track then start frame.
+
+        Args:
+            row_key: The queue row identity to fetch events for.
+
+        Returns:
+            The events on that video, grouped by track and sorted within each track.
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM event WHERE row_key = ? ORDER BY track, start_frame, event_id",
+                (row_key,),
+            ).fetchall()
+        return [_event_from_row(row) for row in rows]
+
+    def all_events(self) -> list[EventRecord]:
+        """Return every stored event, ordered by video then track then start frame.
+
+        Backs the session-wide export (every annotated video in one file).
+
+        Returns:
+            All events in the store.
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM event ORDER BY row_key, track, start_frame, event_id"
+            ).fetchall()
+        return [_event_from_row(row) for row in rows]
+
+    @staticmethod
+    def _ensure_track(conn: sqlite3.Connection, row_key: str, track: str) -> None:
+        """Register a track for a video if it is not already present (append at the end)."""
+        existing = conn.execute(
+            "SELECT 1 FROM event_track WHERE row_key = ? AND track = ?", (row_key, track)
+        ).fetchone()
+        if existing is not None:
+            return
+        (count,) = conn.execute(
+            "SELECT COUNT(*) FROM event_track WHERE row_key = ?", (row_key,)
+        ).fetchone()
+        conn.execute(
+            "INSERT INTO event_track (row_key, track, ordinal, updated_at) VALUES (?, ?, ?, ?)",
+            (row_key, track, count, _now()),
+        )
+
+    def add_track(self, row_key: str, track: str) -> None:
+        """Create an empty track (lane) for a video, appended after existing ones.
+
+        Idempotent: re-adding an existing track leaves its ordinal untouched.
+
+        Args:
+            row_key: The queue row identity.
+            track: The track (category) name.
+        """
+        with self._connect() as conn:
+            self._ensure_track(conn, row_key, track)
+
+    def rename_track(self, row_key: str, old: str, new: str) -> None:
+        """Rename a track and move its events onto the new name, keeping the ordinal.
+
+        A no-op when ``old`` and ``new`` are equal. If ``new`` already exists, the two
+        lanes merge: ``old``'s events move onto ``new`` and the now-empty ``old`` lane
+        is removed.
+
+        Args:
+            row_key: The queue row identity.
+            old: The current track name.
+            new: The new track name.
+        """
+        if old == new:
+            return
+        with self._connect() as conn:
+            merging = conn.execute(
+                "SELECT 1 FROM event_track WHERE row_key = ? AND track = ?", (row_key, new)
+            ).fetchone()
+            conn.execute(
+                "UPDATE event SET track = ?, updated_at = ? WHERE row_key = ? AND track = ?",
+                (new, _now(), row_key, old),
+            )
+            if merging is not None:
+                conn.execute(
+                    "DELETE FROM event_track WHERE row_key = ? AND track = ?", (row_key, old)
+                )
+            else:
+                conn.execute(
+                    "UPDATE event_track SET track = ?, updated_at = ? "
+                    "WHERE row_key = ? AND track = ?",
+                    (new, _now(), row_key, old),
+                )
+
+    def delete_track(self, row_key: str, track: str) -> None:
+        """Delete a track and all of its events for a video.
+
+        Args:
+            row_key: The queue row identity.
+            track: The track (category) name to remove.
+        """
+        with self._connect() as conn:
+            conn.execute("DELETE FROM event WHERE row_key = ? AND track = ?", (row_key, track))
+            conn.execute(
+                "DELETE FROM event_track WHERE row_key = ? AND track = ?", (row_key, track)
+            )
+
+    def tracks_for(self, row_key: str) -> list[str]:
+        """Return a video's track names in their vertical order.
+
+        Args:
+            row_key: The queue row identity.
+
+        Returns:
+            The track names ordered by ``ordinal`` (their top-to-bottom lane order).
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT track FROM event_track WHERE row_key = ? ORDER BY ordinal, track",
+                (row_key,),
+            ).fetchall()
+        return [row["track"] for row in rows]
+
+    def event_row_keys(self) -> set[str]:
+        """Return the row keys that have at least one event or track.
+
+        Lets the tab know which queued videos already carry annotation work.
+
+        Returns:
+            The set of row keys present in either event table.
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT row_key FROM event UNION SELECT row_key FROM event_track"
+            ).fetchall()
+        return {row["row_key"] for row in rows}
+
     def set_note(
         self, row_key: str, video_id: str, annotation_suffix: str | None, note: str
     ) -> ReviewRecord:
@@ -567,5 +897,39 @@ def _record_from_row(row: sqlite3.Row) -> ReviewRecord:
         annotate=bool(row["annotate"]),
         active_track=row["active_track"],
         decision=row["decision"],
+        updated_at=row["updated_at"],
+    )
+
+
+def _event_params(record: EventRecord) -> dict[str, object]:
+    """Flatten an :class:`EventRecord` to SQL bind parameters (attributes → JSON)."""
+    params = asdict(record)
+    params["attributes"] = json.dumps(record.attributes)
+    return params
+
+
+def _event_from_row(row: sqlite3.Row) -> EventRecord:
+    """Build an :class:`EventRecord` from a SQLite row (attributes ← JSON).
+
+    A malformed ``attributes`` cell degrades to an empty dict rather than raising, so a
+    hand-edited database can still be opened.
+    """
+    try:
+        attributes = json.loads(row["attributes"]) if row["attributes"] else {}
+    except (ValueError, TypeError):
+        attributes = {}
+    if not isinstance(attributes, dict):
+        attributes = {}
+    return EventRecord(
+        event_id=row["event_id"],
+        video_id=row["video_id"],
+        row_key=row["row_key"],
+        track=row["track"],
+        start_frame=int(row["start_frame"]),
+        end_frame=int(row["end_frame"]),
+        label=row["label"],
+        note=row["note"],
+        attributes={str(k): str(v) for k, v in attributes.items()},
+        color=row["color"],
         updated_at=row["updated_at"],
     )

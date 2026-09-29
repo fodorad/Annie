@@ -305,5 +305,177 @@ class TestReviewStore(unittest.TestCase):
         self.assertEqual(store.active_tracks(), {"v::": 4})
 
 
+class TestEventStore(unittest.TestCase):
+    """Event-annotation table: CRUD, tracks, attributes, and pre-events migration."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.store = ReviewStore(self.tmp / "annie.db")
+
+    def test_add_and_fetch_event(self) -> None:
+        event = self.store.add_event("v", "v::", "speech", 10, 40, label="A")
+        self.assertEqual(len(event.event_id), 32)  # uuid4 hex
+        fetched = self.store.get_event(event.event_id)
+        assert fetched is not None
+        self.assertEqual(fetched.track, "speech")
+        self.assertEqual((fetched.start_frame, fetched.end_frame), (10, 40))
+        self.assertEqual(fetched.label, "A")
+
+    def test_add_event_registers_its_track(self) -> None:
+        self.store.add_event("v", "v::", "speech", 0, 5)
+        self.assertEqual(self.store.tracks_for("v::"), ["speech"])
+
+    def test_events_for_orders_by_track_then_start(self) -> None:
+        self.store.add_event("v", "v::", "speech", 50, 60)
+        self.store.add_event("v", "v::", "speech", 10, 20)
+        self.store.add_event("v", "v::", "gesture", 30, 40)
+        got = [(e.track, e.start_frame) for e in self.store.events_for("v::")]
+        self.assertEqual(got, [("gesture", 30), ("speech", 10), ("speech", 50)])
+
+    def test_update_event_changes_only_named_fields(self) -> None:
+        event = self.store.add_event("v", "v::", "speech", 10, 40, label="A", note="n")
+        self.store.update_event(event.event_id, end_frame=55, label="B")
+        got = self.store.get_event(event.event_id)
+        assert got is not None
+        self.assertEqual((got.end_frame, got.label), (55, "B"))
+        self.assertEqual((got.start_frame, got.note), (10, "n"))  # untouched
+
+    def test_update_event_rejects_unknown_field(self) -> None:
+        event = self.store.add_event("v", "v::", "speech", 0, 5)
+        with self.assertRaises(ValueError):
+            self.store.update_event(event.event_id, bogus=1)
+
+    def test_update_missing_event_returns_none(self) -> None:
+        self.assertIsNone(self.store.update_event("nope", label="X"))
+
+    def test_attributes_round_trip_including_unicode(self) -> None:
+        event = self.store.add_event(
+            "v", "v::", "speech", 0, 5, attributes={"speaker": "Á", "intensity": "high"}
+        )
+        got = self.store.get_event(event.event_id)
+        assert got is not None
+        self.assertEqual(got.attributes, {"speaker": "Á", "intensity": "high"})
+
+    def test_update_attributes(self) -> None:
+        event = self.store.add_event("v", "v::", "speech", 0, 5, attributes={"a": "1"})
+        self.store.update_event(event.event_id, attributes={"a": "2", "b": "3"})
+        got = self.store.get_event(event.event_id)
+        assert got is not None
+        self.assertEqual(got.attributes, {"a": "2", "b": "3"})
+
+    def test_delete_event(self) -> None:
+        event = self.store.add_event("v", "v::", "speech", 0, 5)
+        self.store.delete_event(event.event_id)
+        self.assertIsNone(self.store.get_event(event.event_id))
+
+    def test_add_track_appends_and_is_idempotent(self) -> None:
+        self.store.add_track("v::", "speech")
+        self.store.add_track("v::", "gesture")
+        self.store.add_track("v::", "speech")  # no reorder, no duplicate
+        self.assertEqual(self.store.tracks_for("v::"), ["speech", "gesture"])
+
+    def test_delete_track_cascades_to_its_events(self) -> None:
+        keep = self.store.add_event("v", "v::", "gesture", 0, 5)
+        self.store.add_event("v", "v::", "speech", 0, 5)
+        self.store.delete_track("v::", "speech")
+        self.assertEqual(self.store.tracks_for("v::"), ["gesture"])
+        remaining = [e.event_id for e in self.store.events_for("v::")]
+        self.assertEqual(remaining, [keep.event_id])
+
+    def test_rename_track_moves_its_events(self) -> None:
+        event = self.store.add_event("v", "v::", "speech", 0, 5)
+        self.store.rename_track("v::", "speech", "dialogue")
+        self.assertEqual(self.store.tracks_for("v::"), ["dialogue"])
+        got = self.store.get_event(event.event_id)
+        assert got is not None
+        self.assertEqual(got.track, "dialogue")
+
+    def test_rename_track_into_existing_merges(self) -> None:
+        self.store.add_event("v", "v::", "a", 0, 5)
+        self.store.add_event("v", "v::", "b", 10, 15)
+        self.store.rename_track("v::", "a", "b")  # merge a into b
+        self.assertEqual(self.store.tracks_for("v::"), ["b"])
+        self.assertEqual(len(self.store.events_for("v::")), 2)
+
+    def test_rename_track_to_same_name_is_noop(self) -> None:
+        self.store.add_event("v", "v::", "speech", 0, 5)
+        self.store.rename_track("v::", "speech", "speech")
+        self.assertEqual(self.store.tracks_for("v::"), ["speech"])
+
+    def test_empty_track_persists_without_events(self) -> None:
+        self.store.add_track("v::", "planned")
+        reopened = ReviewStore(self.tmp / "annie.db")
+        self.assertEqual(reopened.tracks_for("v::"), ["planned"])
+
+    def test_event_row_keys_lists_annotated_videos(self) -> None:
+        self.store.add_event("v", "v::", "speech", 0, 5)
+        self.store.add_track("w::", "empty")  # track only, no events — still counts
+        self.assertEqual(self.store.event_row_keys(), {"v::", "w::"})
+
+    def test_all_events_spans_videos(self) -> None:
+        self.store.add_event("v", "v::", "speech", 0, 5)
+        self.store.add_event("w", "w::", "speech", 0, 5)
+        self.assertEqual({e.video_id for e in self.store.all_events()}, {"v", "w"})
+
+    def test_events_persist_across_instances(self) -> None:
+        self.store.add_event("v", "v::", "speech", 3, 9, label="hi")
+        reopened = ReviewStore(self.tmp / "annie.db")
+        events = reopened.events_for("v::")
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].label, "hi")
+
+    def test_event_color_round_trips(self) -> None:
+        rec = self.store.add_event("v", "v::", "speech", 0, 5, color="#a8dadc")
+        got = self.store.get_event(rec.event_id)
+        assert got is not None
+        self.assertEqual(got.color, "#a8dadc")
+
+    def test_event_color_defaults_none_and_updates(self) -> None:
+        rec = self.store.add_event("v", "v::", "speech", 0, 5)
+        self.assertIsNone(self.store.get_event(rec.event_id).color)  # type: ignore[union-attr]
+        self.store.update_event(rec.event_id, color="#ffb4a2")
+        self.assertEqual(self.store.get_event(rec.event_id).color, "#ffb4a2")  # type: ignore[union-attr]
+        self.store.update_event(rec.event_id, color=None)  # reset to the track colour
+        self.assertIsNone(self.store.get_event(rec.event_id).color)  # type: ignore[union-attr]
+
+    def test_migrates_events_table_without_color(self) -> None:
+        legacy = self.tmp / "events_no_color.db"
+        with sqlite3.connect(legacy) as conn:
+            # A first-cut events table: no `color` column yet.
+            conn.execute(
+                "CREATE TABLE event (event_id TEXT PRIMARY KEY, video_id TEXT NOT NULL, "
+                "row_key TEXT NOT NULL, track TEXT NOT NULL, start_frame INTEGER NOT NULL, "
+                "end_frame INTEGER NOT NULL, label TEXT NOT NULL DEFAULT '', "
+                "note TEXT NOT NULL DEFAULT '', attributes TEXT NOT NULL DEFAULT '{}', "
+                "updated_at TEXT NOT NULL)"
+            )
+            conn.execute(
+                "INSERT INTO event VALUES ('e', 'v', 'v::', 'speech', 0, 5, 'x', '', '{}', "
+                "'2020-01-01T00:00:00')"
+            )
+        store = ReviewStore(legacy)  # opening adds the color column
+        got = store.get_event("e")
+        assert got is not None
+        self.assertIsNone(got.color)
+        store.update_event("e", color="#b5e48c")
+        self.assertEqual(store.get_event("e").color, "#b5e48c")  # type: ignore[union-attr]
+
+    def test_opening_pre_events_database_creates_tables_empty(self) -> None:
+        legacy = self.tmp / "pre_events.db"
+        with sqlite3.connect(legacy) as conn:
+            conn.execute(
+                "CREATE TABLE review (row_key TEXT PRIMARY KEY, video_id TEXT NOT NULL, "
+                "annotation_suffix TEXT, verdict TEXT, note TEXT NOT NULL DEFAULT '', "
+                "annotate INTEGER NOT NULL DEFAULT 0, active_track INTEGER, decision TEXT, "
+                "updated_at TEXT NOT NULL)"
+            )
+        store = ReviewStore(legacy)  # opening creates the event tables
+        self.assertEqual(store.events_for("v::"), [])
+        self.assertEqual(store.tracks_for("v::"), [])
+        # And they are usable straight away.
+        store.add_event("v", "v::", "speech", 0, 5)
+        self.assertEqual(len(store.events_for("v::")), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

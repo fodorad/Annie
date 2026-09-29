@@ -68,6 +68,44 @@ DECISION_DROP_TINT = "#f9eaec"
 ROW_BORDER = "1px solid #d5d9df"
 """The light border every Browse/Annotator row card carries, so its extent is visible."""
 
+# ── Event-annotation timeline colours ─────────────────────────────────────────
+# The timeline is a CSS/SVG surface, so these are hex strings (unlike the BGR box
+# palette in annie.color). One colour per track lane, cycled by lane order, so
+# stacked tracks read apart at a glance; the playhead and selection are called out
+# separately.
+EVENT_TRACK_PALETTE: tuple[str, ...] = (
+    "#3a86ff",  # blue
+    "#8338ec",  # violet
+    "#fb5607",  # orange
+    "#2a9d8f",  # teal
+    "#e63946",  # red
+    "#606c38",  # olive
+)
+"""Per-lane fill colours for timeline event boxes, cycled by the lane's order."""
+
+EVENT_PLAYHEAD = "#d90429"
+"""Coral — the vertical playhead line marking the current time across all lanes."""
+
+EVENT_SELECTED = "#111827"
+"""Near-black — the outline of the currently selected event box."""
+
+EVENT_PENDING = "#f59e0b"
+"""Amber — the translucent band drawn from an event's start to the live playhead while the
+reviewer is mid-capture (start set, end not yet), and the armed "Set end" button."""
+
+
+def event_track_color(ordinal: int) -> str:
+    """Return the timeline fill colour for a track at vertical position ``ordinal``.
+
+    Args:
+        ordinal: The lane's zero-based position from the top.
+
+    Returns:
+        A hex colour from :data:`EVENT_TRACK_PALETTE`, cycled by ``ordinal``.
+    """
+    return EVENT_TRACK_PALETTE[ordinal % len(EVENT_TRACK_PALETTE)]
+
+
 VDET_COLOR = "#1d3557"
 """Navy blue — vdet-related metrics."""
 TRACK_COLOR = "#40916c"
