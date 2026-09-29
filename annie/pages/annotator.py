@@ -16,6 +16,11 @@ persists to the same session review database. The tasks are:
   on-demand clip cut of that exact span). A top toolbar carries progress, the shortcut
   legend, and Export; Accept / Undecided / Drop and the step controls close the card, and
   a decision paints it with a coloured border and a lighter wash of the same hue.
+* **Event annotation** (needs only videos) — a video-editor timeline for marking labelled
+  time-interval events across parallel tracks, one queued video at a time. It lives in
+  :mod:`annie.pages.event_task` (with :mod:`annie.pages.videoclock` for frame-accurate
+  playback and :mod:`annie.pages.timeline` for the SVG surface); events persist to the
+  review DB's ``event``/``event_track`` tables and export to JSON and CSV.
 
 The tab is greyed out until at least one video is queued *or* a queue-free task (segment
 review) is ready. The protagonist task shows the queued videos in bordered rows; for
@@ -68,6 +73,7 @@ from annie.media.clipping import cut_clip
 from annie.media.decode import media_available
 from annie.media.preview import build_band_strip, build_preview, to_data_uri
 from annie.media.rendering import JobStatus
+from annie.pages import event_task
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.utils import _alive, notify_detached, render_embed_ttl, unembed_after_idle
@@ -1228,6 +1234,8 @@ def _content() -> None:
             _curation_task()
         elif current is TaskKind.SEGMENT_REVIEW:
             _segment_review_task()
+        elif current is TaskKind.EVENT:
+            event_task.event_annotation_task()
 
 
 def render() -> None:
@@ -1239,6 +1247,7 @@ def render() -> None:
         _timer_hosts.pop(client.id, None)
         _active_task.pop(client.id, None)
         _segment_states.pop(client.id, None)
+        event_task.cleanup(client.id)
 
     client.on_disconnect(_cleanup)
     _content()

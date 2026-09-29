@@ -47,7 +47,7 @@ face tracks), but Annie is dataset-agnostic.
 | **Convert** | Re-encode an audio/video dataset to a consistent, **torchcodec-validated** form: uniform audio (format/rate/channels) and constant-frame-rate H.264 video, with explicit audio muxing (or black-frame videos for audio-only). A background batch shows live `X/Y` progress, %, elapsed, and ETA. |
 | **Dataset** | Build the dataset from a list of **data sources** (videos folder, vdet/track folders, and any number of label/protagonist/segmentation CSVs). Add a source and it scans in place — no Scan button — with live counts and an Available/Unavailable chip per source, plus a **Tasks** panel showing which Annotator task each source set makes ready. |
 | **Browse** | Scrollable, per-video visualizer with an always-visible **filter bar** (name, video/audio/vdet/track presence, review, labels): an ORIGINAL placeholder, five-frame strip, on-the-fly annotated render, and media/annotation/label tags. A **read-only viewer** — clicking a row *selects* it (a check tick) for the Annotator rather than recording review. Row height is configurable. |
-| **Annotator** | The supervision surface, offering only the tasks whose sources are ready: **Protagonist review** (correct the active track and export a `_manual` CSV), **Curation** (like/dislike/note per video), and **Segment review** (accept/drop per-clip segments of long videos, comparing competing start/end bands, exported as two files). |
+| **Annotator** | The supervision surface, offering only the tasks whose sources are ready: **Protagonist review** (correct the active track and export a `_manual` CSV), **Curation** (like/dislike/note per video), **Segment review** (accept/drop per-clip segments of long videos, comparing competing start/end bands, exported as two files), and **Event annotation** (a video-editor timeline for marking labelled time-interval events across parallel tracks, exported as JSON and CSV). |
 | **Settings** | Browse/Annotator row height, render-cache TTL, and review-status export/import (CSV/JSON). |
 
 See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-screen walkthroughs of the main flows.
@@ -74,6 +74,11 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
   each clip while comparing competing start/end bands (e.g. a `cut` prediction vs a
   `GT` reference) side by side; decisions persist for resumable passes and export as
   separate accepted / dropped CSVs.
+- **Event annotation** — a video-editor-style timeline: watch one video, scrub it
+  frame-by-frame (±5 s, frame step, `I`/`O` in-out marks), and draw labelled events on
+  stacked category tracks. Each event carries a label, note, and arbitrary key/value
+  attributes; everything saves to the session DB as you go and exports to nested **JSON**
+  (for code) and flat **CSV** (for a spreadsheet), per video or per session.
 
 ## Installation
 

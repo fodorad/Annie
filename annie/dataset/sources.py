@@ -284,12 +284,15 @@ class TaskKind(StrEnum):
     PROTAGONIST = "protagonist"
     #: Accept/drop per-clip segments of long videos (needs a segmentation CSV).
     SEGMENT_REVIEW = "segment_review"
+    #: Mark labelled time-interval events on a timeline (needs only videos).
+    EVENT = "event"
 
 
 TASK_LABELS: dict[TaskKind, str] = {
     TaskKind.CURATION: "Curation",
     TaskKind.PROTAGONIST: "Protagonist review",
     TaskKind.SEGMENT_REVIEW: "Segment review",
+    TaskKind.EVENT: "Event annotation",
 }
 """Human label per task, for the Dataset task-wise sections and the Annotator switch."""
 
@@ -352,4 +355,5 @@ def task_readiness(registry: SourceRegistry) -> list[TaskReadiness]:
             TaskKind.SEGMENT_REVIEW,
             (video_req, TaskRequirement("segmentation CSV", has_segmentation)),
         ),
+        TaskReadiness(TaskKind.EVENT, (video_req,)),
     ]
