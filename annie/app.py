@@ -192,7 +192,10 @@ def main() -> None:
         title="Annie",
         favicon=theme.LOGO_MARK_SVG,
         reload=False,
-        show=False,
+        # Open the browser only when asked (env ANNIE_OPEN_BROWSER). Off for dev/CI and for
+        # the headless Docker server — in the container the launcher opens the browser on the
+        # host instead, so NiceGUI must not try to open one inside the container.
+        show=settings.open_browser,
         reconnect_timeout=30.0,  # survive brief disconnects without dropping the page
     )
 

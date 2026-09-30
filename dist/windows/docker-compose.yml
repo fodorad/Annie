@@ -1,0 +1,27 @@
+# Annie — Windows launcher compose file.
+#
+# This pulls the published Annie image from Docker Hub (no building on the user's machine)
+# and mounts the video folder the launcher saved. The launcher (Annie.ps1) writes the .env
+# this file reads; a non-technical user never edits anything here.
+#
+# The video folder is mounted read-only: Annie only reads the recordings, it never changes
+# them. Annie's own output (session database, saved configs, exported CSV/JSON) goes to the
+# annie-home folder next to the launcher, so exports are easy to find in Explorer.
+services:
+  annie:
+    image: fodorad/annie:latest
+    ports:
+      - "${ANNIE_PORT:-8080}:8080"
+    volumes:
+      - "${ANNIE_HOME_HOST:-./annie-home}:/annie-home"
+      - "${ANNIE_VIDEO_DIR}:/data/video:ro"
+    environment:
+      ANNIE_HOST: "0.0.0.0"
+      ANNIE_PORT: "${ANNIE_PORT:-8080}"
+      ANNIE_HOME: /annie-home
+      ANNIE_CONFIG_DIR: /annie-home/configs
+      ANNIE_VIDEO_DIR: /data/video
+      # The launcher opens the browser on the Windows host; the server inside the container
+      # stays headless, so this is intentionally off here.
+      ANNIE_OPEN_BROWSER: "0"
+    restart: unless-stopped
