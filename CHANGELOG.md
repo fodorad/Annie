@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.1](https://github.com/fodorad/Annie/compare/v1.5.0...v1.5.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* **deps:** upgrade torchcodec to 0.16.0 (matched with torch 2.14) ([#36](https://github.com/fodorad/Annie/issues/36)) ([774f86a](https://github.com/fodorad/Annie/commit/774f86ae37ed828275c736f5f14db443b4424aa7))
+
 ## [1.5.0](https://github.com/fodorad/Annie/compare/v1.4.0...v1.5.0) (2026-09-29)
 
 
