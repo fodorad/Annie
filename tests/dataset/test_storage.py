@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from annie.dataset.storage import ReviewStore
+from annie.dataset.storage import EventCategory, ReviewStore
 
 
 class TestReviewStore(unittest.TestCase):
@@ -475,6 +475,120 @@ class TestEventStore(unittest.TestCase):
         # And they are usable straight away.
         store.add_event("v", "v::", "speech", 0, 5)
         self.assertEqual(len(store.events_for("v::")), 1)
+
+
+class TestEventCategories(unittest.TestCase):
+    """DB-scoped participant categories: CRUD, ordering, colour, seed, and isolation."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.store = ReviewStore(self.tmp / "annie.db")
+
+    def _names(self) -> list[str]:
+        return [c.name for c in self.store.categories()]
+
+    def test_add_categories_are_ordered(self) -> None:
+        self.store.add_category("Mother")
+        self.store.add_category("Baby")
+        cats = self.store.categories()
+        self.assertEqual([c.name for c in cats], ["Mother", "Baby"])
+        self.assertEqual([c.ordinal for c in cats], [0, 1])
+
+    def test_add_is_idempotent_on_name(self) -> None:
+        first = self.store.add_category("Mother")
+        again = self.store.add_category("Mother")  # no duplicate, same ordinal
+        self.assertEqual(again.ordinal, first.ordinal)
+        self.assertEqual(self._names(), ["Mother"])
+
+    def test_add_with_color(self) -> None:
+        self.store.add_category("Mother", color="#a8dadc")
+        self.assertEqual(self.store.categories()[0].color, "#a8dadc")
+
+    def test_rename_moves_events(self) -> None:
+        self.store.add_category("Baby")
+        rec = self.store.add_event("v", "v::", "Baby", 0, 5)
+        self.store.rename_category("Baby", "Infant")
+        self.assertEqual(self._names(), ["Infant"])
+        self.assertEqual(self.store.get_event(rec.event_id).track, "Infant")  # type: ignore[union-attr]
+
+    def test_rename_into_existing_merges(self) -> None:
+        self.store.add_category("Baby")
+        self.store.add_category("Infant")
+        self.store.add_event("v", "v::", "Baby", 0, 5)
+        self.store.add_event("v", "v::", "Infant", 10, 15)
+        self.store.rename_category("Baby", "Infant")  # merge
+        self.assertEqual(self._names(), ["Infant"])
+        self.assertEqual(len(self.store.events_for("v::")), 2)
+
+    def test_rename_to_same_name_is_noop(self) -> None:
+        self.store.add_category("Mother")
+        self.store.rename_category("Mother", "Mother")
+        self.assertEqual(self._names(), ["Mother"])
+
+    def test_delete_cascades_events_and_repacks_ordinals(self) -> None:
+        self.store.add_category("Mother")
+        self.store.add_category("Baby")
+        self.store.add_category("Examiner")
+        self.store.add_event("v", "v::", "Baby", 0, 5)
+        self.store.delete_category("Baby")
+        self.assertEqual(self._names(), ["Mother", "Examiner"])
+        self.assertEqual([c.ordinal for c in self.store.categories()], [0, 1])  # no gap
+        self.assertEqual(self.store.events_for("v::"), [])  # its event went too
+
+    def test_category_event_count_guards_delete(self) -> None:
+        self.store.add_category("Baby")
+        self.assertEqual(self.store.category_event_count("Baby"), 0)
+        self.store.add_event("v", "v::", "Baby", 0, 5)
+        self.store.add_event("w", "w::", "Baby", 0, 5)
+        self.assertEqual(self.store.category_event_count("Baby"), 2)
+
+    def test_reorder(self) -> None:
+        for n in ("Mother", "Baby", "Examiner"):
+            self.store.add_category(n)
+        self.store.reorder_categories(["Examiner", "Mother"])  # Baby omitted → appended
+        self.assertEqual(self._names(), ["Examiner", "Mother", "Baby"])
+
+    def test_set_color(self) -> None:
+        self.store.add_category("Mother")
+        self.store.set_category_color("Mother", "#ffb4a2")
+        self.assertEqual(self.store.categories()[0].color, "#ffb4a2")
+        self.store.set_category_color("Mother", None)  # clear → palette by ordinal
+        self.assertIsNone(self.store.categories()[0].color)
+
+    def test_seed_from_existing_events(self) -> None:
+        # A DB annotated under the old single-lane model: events on "events", no categories.
+        self.store.add_event("v", "v::", "events", 0, 5)
+        self.store.add_event("v", "v::", "events", 10, 15)
+        created = self.store.seed_categories_from_events()
+        self.assertEqual(created, 1)
+        self.assertEqual(self._names(), ["events"])
+        # Idempotent: seeding again does nothing once categories exist.
+        self.assertEqual(self.store.seed_categories_from_events(), 0)
+
+    def test_seed_is_noop_when_no_events(self) -> None:
+        self.assertEqual(self.store.seed_categories_from_events(), 0)
+        self.assertEqual(self._names(), [])
+
+    def test_categories_persist_across_instances(self) -> None:
+        self.store.add_category("Mother", color="#a8dadc")
+        reopened = ReviewStore(self.tmp / "annie.db")
+        self.assertEqual([c.name for c in reopened.categories()], ["Mother"])
+
+    def test_per_db_isolation(self) -> None:
+        # The core guarantee: Mother/Baby in one DB never bleed into a robot/human DB.
+        mb = ReviewStore(self.tmp / "mother_baby.db")
+        rh = ReviewStore(self.tmp / "robot_human.db")
+        mb.add_category("Mother")
+        mb.add_category("Baby")
+        rh.add_category("Robot")
+        rh.add_category("Human")
+        self.assertEqual([c.name for c in mb.categories()], ["Mother", "Baby"])
+        self.assertEqual([c.name for c in rh.categories()], ["Robot", "Human"])
+
+    def test_default_dataclass_shape(self) -> None:
+        cat = EventCategory(name="Mother", ordinal=0)
+        self.assertIsNone(cat.color)
+        self.assertEqual(cat.updated_at, "")
 
 
 if __name__ == "__main__":

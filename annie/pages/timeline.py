@@ -74,10 +74,12 @@ class TimelineTrack:
     Attributes:
         name: The track (category) name, shown as the lane label.
         events: The events to draw, in any order.
+        color: Optional lane colour override (hex); ``None`` uses the palette by lane order.
     """
 
     name: str
     events: Sequence[TimelineEvent]
+    color: str | None = None
 
 
 def pack_lanes(events: Sequence[TimelineEvent]) -> list[int]:
@@ -216,7 +218,7 @@ def build_svg(
     for ordinal, track in enumerate(tracks):
         rows, row_count = packed[ordinal]
         lane_h = lane_heights[ordinal]
-        colour = theme.event_track_color(ordinal)
+        colour = track.color or theme.event_track_color(ordinal)
         parts.append(
             f'<rect class="annie-lane" data-track="{escape(track.name)}" '
             f'x="0" y="{y:.0f}" width="{width:.0f}" height="{lane_h:.0f}" '
@@ -224,6 +226,7 @@ def build_svg(
         )
         for i, event in enumerate(track.events):
             _append_event(parts, event, colour, y, rows[i], view_start, view_end, width)
+        _append_lane_label(parts, track.name, colour, y)
         y += lane_h + LANE_GAP
 
     # Playhead — one line the poll moves via set_playhead_x (class is the hook). Its x is set
@@ -355,6 +358,28 @@ def _label_fits(label: str, box_width: float) -> bool:
     is still available via the box's ``<title>`` tooltip.
     """
     return len(label) * _CHAR_WIDTH + 6 <= box_width
+
+
+def _append_lane_label(parts: list[str], name: str, colour: str, lane_y: float) -> None:
+    """Draw the category name at the top-left of a lane, over a small white backing pill.
+
+    Drawn after the lane's events so it stays readable even where an event box starts at the
+    very left. The backing keeps the text legible over a coloured box; the text takes the
+    lane's colour so Mother / Baby are identifiable at a glance. ``pointer-events:none`` so the
+    label never intercepts a click meant for an event or a seek.
+    """
+    if not name:
+        return
+    text = escape(name)
+    pill_w = len(name) * _CHAR_WIDTH + 10
+    parts.append(
+        f'<rect x="2" y="{lane_y + 2:.0f}" width="{pill_w:.0f}" height="15" rx="3" '
+        f'fill="#ffffff" fill-opacity="0.82" pointer-events="none"/>'
+    )
+    parts.append(
+        f'<text x="7" y="{lane_y + 13:.0f}" fill="{colour}" '
+        f'style="pointer-events:none;font-weight:600">{text}</text>'
+    )
 
 
 def gesture_script(svg_id: str, event_name: str) -> str:

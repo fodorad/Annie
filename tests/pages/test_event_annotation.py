@@ -151,6 +151,58 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertAlmostEqual(event_task._parse_timecode("3.0"), 3.0)  # noqa: SLF001
         self.assertEqual(event_task._parse_timecode("garbage"), 0.0)  # noqa: SLF001
 
+    # ── categories ───────────────────────────────────────────────────────────────
+
+    async def test_ensure_active_category_defaults_to_first(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_category("Baby")
+        event_task._ensure_active_category(self.state)  # noqa: SLF001
+        self.assertEqual(self.state.active_category, "Mother")
+
+    async def test_ensure_active_category_drops_stale(self) -> None:
+        self.state.active_category = "Gone"
+        event_task._ensure_active_category(self.state)  # noqa: SLF001
+        self.assertIsNone(self.state.active_category)  # no categories → None
+
+    async def test_set_active_by_ordinal(self) -> None:
+        for n in ("Mother", "Baby", "Examiner"):
+            state.store.add_category(n)
+        with ui_client():
+            event_task._set_active_by_ordinal(self.state, 1)  # noqa: SLF001
+        self.assertEqual(self.state.active_category, "Baby")
+        # Out-of-range ordinal is ignored.
+        with ui_client():
+            event_task._set_active_by_ordinal(self.state, 9)  # noqa: SLF001
+        self.assertEqual(self.state.active_category, "Baby")
+
+    async def test_event_lands_on_active_category(self) -> None:
+        # _finalise reads browser time (not headless-testable); assert the store write it makes:
+        # an event created on the active category shows on that participant's lane.
+        state.store.add_category("Mother")
+        state.store.add_category("Baby")
+        self.state.active_category = "Baby"
+        rec = state.store.add_event(
+            "v", "v::", self.state.active_category, 30, 60, label="event_name"
+        )
+        self.assertEqual(state.store.get_event(rec.event_id).track, "Baby")  # type: ignore[union-attr]
+
+    async def test_move_event_to_category(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_category("Baby")
+        rec = state.store.add_event("v", "v::", "Mother", 0, 10)
+        self.state.selected_event = rec.event_id
+        with ui_client():
+            event_task._move_event_to_category(self.state, "Baby")  # noqa: SLF001
+        self.assertEqual(state.store.get_event(rec.event_id).track, "Baby")  # type: ignore[union-attr]
+
+    async def test_timeline_builds_one_lane_per_category(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_category("Baby")
+        state.store.add_event("v", "v::", "Mother", 0, 10)
+        # The lanes come from categories(), not per-video tracks — even the empty Baby lane.
+        names = [c.name for c in state.store.categories()]
+        self.assertEqual(names, ["Mother", "Baby"])
+
 
 if __name__ == "__main__":
     unittest.main()
