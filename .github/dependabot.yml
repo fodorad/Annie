@@ -5,6 +5,18 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # torch, torchvision, torchaudio and torchcodec are one matched set: torchcodec's
+    # native extensions are ABI-bound to a torch minor (and torchvision hard-pins torch),
+    # so a split bump resolves cleanly then dies at import. Group them into a single PR so
+    # dependabot can only ever propose the set as a unit. (torchvision/torchaudio are not
+    # dependencies today; listed so the group is correct if they are ever added.)
+    groups:
+      torch-stack:
+        patterns:
+          - "torch"
+          - "torchvision"
+          - "torchaudio"
+          - "torchcodec"
 
   - package-ecosystem: github-actions
     directory: "/"
