@@ -97,6 +97,15 @@ class TestExportTree(unittest.TestCase):
         self.assertEqual(tree["v"]["fps"], 0.0)
         self.assertEqual(tree["v"]["tracks"]["speech"][0]["start_sec"], 0.0)
 
+    def test_participants_group_by_category_name(self) -> None:
+        # The category name *is* the track, so exports already separate participants.
+        events = [
+            _event("v", "Mother", 0, 25, label="smile"),
+            _event("v", "Baby", 50, 75, label="coo"),
+        ]
+        tree = build_export_tree(events, {"v": 25.0})
+        self.assertEqual(set(tree["v"]["tracks"]), {"Mother", "Baby"})
+
 
 class TestExportJson(unittest.TestCase):
     def setUp(self) -> None:

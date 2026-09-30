@@ -61,9 +61,9 @@ _VIDEO_HEIGHTS = (180, 240, 360, 480, 600, 720, 840)
 #: blank on the timeline; the editor pre-selects it so typing replaces it in one go.
 _DEFAULT_EVENT_LABEL = "event_name"
 
-#: The single track every video starts with. A track is just the timeline lane events live
-#: on — not a category — so one is enough; it is created on load and never shown to the user
-#: as a name (the multi-track UI is intentionally hidden for now).
+#: Fallback track name for an event captured before any category exists. Normally an event
+#: lands on the active category; this only applies if the user somehow captures with an empty
+#: category set (the UI blocks that by asking for a category first).
 _DEFAULT_TRACK = "events"
 
 #: Eight pastel, mutually-distinct colours the editor offers for per-event colour-coding. The
@@ -104,6 +104,8 @@ class _EventState:
         restore_frame: Transient frame the video should be re-seeked to after a full rebuild
             recreates the ``<video>`` (which the browser resets to 0); ``None`` when no
             restore is pending. Cleared once issued.
+        active_category: The participant category a newly-captured event lands on. Defaults to
+            the first category; ``None`` when the dataset has no categories yet.
     """
 
     row_key: str | None = None
@@ -119,6 +121,7 @@ class _EventState:
     pending_start: int | None = field(default=None)
     focus_name: bool = False
     restore_frame: int | None = field(default=None)
+    active_category: str | None = field(default=None)
 
     def view_window(self) -> tuple[int, int]:
         """The visible ``[start, end]`` frame window at the current zoom, centred on the head.
@@ -185,11 +188,19 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
             state_.duration = frames_to_seconds(meta.num_frames, meta.fps)
         except Exception as exc:  # noqa: BLE001 - a bad file must not break the tab
             logbook.report(f"Could not read metadata for {entry.video_path}: {exc}")
-    # Every video has exactly one track for now; create it so a fresh video already has a lane
-    # to draw events on (the multi-track UI is hidden).
-    if _DEFAULT_TRACK not in state.store.tracks_for(entry.key):
-        state.store.add_track(entry.key, _DEFAULT_TRACK)
+    # Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed
+    # them from any pre-existing event track names (back-compat for the old single-lane model)
+    # and point the active category at the first one.
+    state.store.seed_categories_from_events()
+    _ensure_active_category(state_)
     return entry
+
+
+def _ensure_active_category(state_: _EventState) -> None:
+    """Keep ``active_category`` valid: default to the first category, drop it if it's gone."""
+    names = [c.name for c in state.store.categories()]
+    if state_.active_category not in names:
+        state_.active_category = names[0] if names else None
 
 
 def _events_by_track(row_key: str) -> dict[str, list[EventRecord]]:
@@ -235,6 +246,7 @@ def event_annotation_task() -> None:
                 _video_and_transport(state_, entry)
             with ui.column().classes("gap-2").style("width:340px;flex:0 0 340px"):
                 _editor(state_)
+        _category_bar(state_)
         _timeline_block(state_)
 
 
@@ -405,6 +417,225 @@ def _jump_fields(state_: _EventState, vid_id: str) -> None:
         )
 
 
+def _category_color(ordinal: int, override: str | None) -> str:
+    """The lane colour for a category: its override, else the palette by ordinal."""
+    return override or theme.event_track_color(ordinal)
+
+
+def _category_bar(state_: _EventState) -> None:
+    """The participant chips (click to make active, number badge) plus a Manage button.
+
+    The active category — where a newly-captured event lands — is highlighted. When the
+    dataset has no categories yet, a single "Add category" prompt stands in.
+    """
+    categories = state.store.categories()
+    with ui.row().classes("w-full items-center gap-2 wrap"):
+        ui.label("Participant").classes("text-sm font-medium")
+        if not categories:
+            ui.button(
+                "＋ Add category", icon="group_add", on_click=lambda: _open_manager(state_)
+            ).props("flat dense").tooltip(
+                "Define the participants for this dataset (e.g. Mother, Baby)"
+            )
+            return
+        for i, cat in enumerate(categories):
+            active = cat.name == state_.active_category
+            colour = _category_color(cat.ordinal, cat.color)
+            btn = (
+                ui.button(
+                    f"{i + 1}  {cat.name}",
+                    on_click=lambda n=cat.name: _set_active_category(state_, n),
+                )
+                .props("unelevated" if active else "outline")
+                .props("dense")
+            )
+            # The active chip is filled with its lane colour; the rest are outlined.
+            if active:
+                btn.style(f"background:{colour} !important;color:#1a1a1a !important")
+            else:
+                btn.style(f"color:{colour} !important;border-color:{colour} !important")
+        ui.button(icon="more_horiz", on_click=lambda: _open_manager(state_)).props(
+            "flat dense round"
+        ).tooltip("Manage participants (add, rename, delete, reorder, colour)")
+
+
+def _set_active_category(state_: _EventState, name: str) -> None:
+    """Make a category active (where the next captured event lands) and refresh the bar."""
+    state_.active_category = name
+    event_annotation_task.refresh()
+
+
+def _set_active_by_ordinal(state_: _EventState, ordinal: int) -> None:
+    """Set the active category by its 0-based lane position (backs the number keys)."""
+    categories = state.store.categories()
+    if 0 <= ordinal < len(categories):
+        _set_active_category(state_, categories[ordinal].name)
+
+
+def _open_manager(state_: _EventState) -> None:
+    """Open the participant manager dialog (add / rename / delete / reorder / colour)."""
+    ui.timer(0.0, lambda: _category_manager(state_), once=True)
+
+
+async def _category_manager(state_: _EventState) -> None:
+    """The dialog where categories are defined — the only place a name is typed.
+
+    Everywhere else a category is picked from the list, so names stay consistent (no
+    "Mother" vs "mom" drift). Rename moves existing events; delete warns when the category
+    still holds events.
+    """
+    with ui.dialog() as dialog, ui.card().classes("w-[32rem] max-w-full gap-2"):
+        ui.label("Participants for this dataset").classes("text-lg font-medium")
+        ui.label(
+            "These lanes are shared by every video in this dataset. Rename is safe — existing "
+            "events follow the new name."
+        ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+
+        rows = ui.column().classes("w-full gap-1")
+
+        def rebuild_rows() -> None:
+            rows.clear()
+            categories = state.store.categories()
+            with rows:
+                for i, cat in enumerate(categories):
+                    _manager_row(
+                        state_, cat.name, cat.ordinal, cat.color, i, len(categories), rebuild_rows
+                    )
+                if not categories:
+                    ui.label("No participants yet — add the first below.").classes("text-sm").style(
+                        f"color:{theme.NEUTRAL}"
+                    )
+
+        rebuild_rows()
+
+        with ui.row().classes("w-full items-center gap-2 mt-2"):
+            new_in = (
+                ui.input(placeholder="New participant (e.g. Mother)")
+                .props("dense")
+                .classes("flex-grow")
+            )
+
+            def add_new() -> None:
+                name = (new_in.value or "").strip()
+                if not name:
+                    return
+                state.store.add_category(name)
+                new_in.set_value("")
+                _ensure_active_category(state_)
+                rebuild_rows()
+
+            new_in.on("keydown.enter", lambda: add_new())
+            ui.button("Add", icon="add", on_click=add_new).props("unelevated dense")
+
+        with ui.row().classes("w-full justify-end mt-2"):
+            ui.button("Done", on_click=lambda: dialog.submit(None)).props("flat")
+
+    await dialog
+    # Reflect any changes (names, order, colours, active) on the main surface.
+    _ensure_active_category(state_)
+    event_annotation_task.refresh()
+
+
+def _manager_row(  # noqa: PLR0913 - a row needs its category + position context
+    state_: _EventState,
+    name: str,
+    ordinal: int,
+    color: str | None,
+    index: int,
+    total: int,
+    rebuild: Callable[[], None],
+) -> None:
+    """One editable row in the manager: reorder, colour, rename, delete."""
+    colour = _category_color(ordinal, color)
+    with ui.row().classes("w-full items-center gap-1 no-wrap"):
+        # A colour dot that cycles through the palette on click (simple, no nested picker).
+        ui.button(on_click=lambda: _cycle_category_color(name, rebuild)).props(
+            "round dense flat"
+        ).style(
+            f"background:{colour};width:20px;height:20px;min-width:20px;min-height:20px;"
+            f"border-radius:50%;border:2px solid #00000055"
+        ).tooltip("Change this participant's colour")
+
+        name_in = ui.input(value=name).props("dense").classes("flex-grow")
+
+        def do_rename() -> None:
+            new = (name_in.value or "").strip()
+            if new and new != name:
+                state.store.rename_category(name, new)
+                if state_.active_category == name:
+                    state_.active_category = new
+                rebuild()
+
+        name_in.on("blur", do_rename)
+
+        up = ui.button(
+            icon="arrow_upward", on_click=lambda: _move_category(name, -1, rebuild)
+        ).props("flat dense round")
+        if index == 0:
+            up.props(add="disable")
+        down = ui.button(
+            icon="arrow_downward", on_click=lambda: _move_category(name, 1, rebuild)
+        ).props("flat dense round")
+        if index == total - 1:
+            down.props(add="disable")
+        ui.button(icon="delete", on_click=lambda: _delete_category(state_, name, rebuild)).props(
+            "flat dense round"
+        ).tooltip("Delete this participant")
+
+
+def _cycle_category_color(name: str, rebuild: Callable[[], None]) -> None:
+    """Advance a category's colour to the next palette swatch."""
+    current = next((c for c in state.store.categories() if c.name == name), None)
+    if current is None:
+        return
+    palette = _EVENT_COLORS
+    try:
+        i = palette.index(current.color) if current.color else -1
+    except ValueError:
+        i = -1
+    state.store.set_category_color(name, palette[(i + 1) % len(palette)])
+    rebuild()
+
+
+def _move_category(name: str, delta: int, rebuild: Callable[[], None]) -> None:
+    """Move a category up (-1) or down (+1) in the lane order."""
+    names = [c.name for c in state.store.categories()]
+    i = names.index(name)
+    j = i + delta
+    if 0 <= j < len(names):
+        names[i], names[j] = names[j], names[i]
+        state.store.reorder_categories(names)
+        rebuild()
+
+
+def _delete_category(state_: _EventState, name: str, rebuild: Callable[[], None]) -> None:
+    """Delete a category; warn (and require a second click) when it still holds events."""
+    count = state.store.category_event_count(name)
+    if count == 0:
+        state.store.delete_category(name)
+        _ensure_active_category(state_)
+        rebuild()
+        return
+
+    async def confirm() -> None:
+        with ui.dialog() as dialog, ui.card().classes("gap-2"):
+            ui.label(f"Delete “{name}” and its {count} event(s)?").classes("text-sm font-medium")
+            ui.label(
+                "This cannot be undone. Rename instead if you only want to fix the name."
+            ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+            with ui.row().classes("w-full justify-end gap-2"):
+                ui.button("Cancel", on_click=lambda: dialog.submit(False)).props("flat")
+                ui.button("Delete", on_click=lambda: dialog.submit(True)).props(
+                    "unelevated color=negative"
+                )
+        if await dialog:
+            state.store.delete_category(name)
+            _ensure_active_category(state_)
+            rebuild()
+
+    ui.timer(0.0, confirm, once=True)
+
+
 def _timeline_block(state_: _EventState) -> None:
     """The zoom controls and the SVG timeline itself."""
     with ui.row().classes("w-full items-center gap-2"):
@@ -414,11 +645,12 @@ def _timeline_block(state_: _EventState) -> None:
         )
         ui.button(icon="zoom_in", on_click=lambda: _zoom(state_, 1.5)).props("flat dense round")
 
+    # Lanes come from the DB-scoped categories (one per participant), not per-video tracks, so
+    # every video of this dataset shows the same lanes in the same order — including empty ones.
     grouped = _events_by_track(state_.row_key or "")
-    track_names = state.store.tracks_for(state_.row_key or "")
     tracks = [
         timeline.TimelineTrack(
-            name,
+            category.name,
             [
                 timeline.TimelineEvent(
                     e.event_id,
@@ -428,10 +660,11 @@ def _timeline_block(state_: _EventState) -> None:
                     selected=e.event_id == state_.selected_event,
                     color=e.color,
                 )
-                for e in grouped.get(name, [])
+                for e in grouped.get(category.name, [])
             ],
+            color=category.color,
         )
-        for name in track_names
+        for category in state.store.categories()
     ]
     svg_id = f"annie-timeline-{context.client.id}"
     view_start, view_end = state_.view_window()
@@ -493,6 +726,17 @@ def _editor(state_: _EventState) -> None:
                 ),
                 once=True,
             )
+
+        # Participant: pick from the category list (never free text) to move the event between
+        # lanes. Only shown when categories exist.
+        category_names = [c.name for c in state.store.categories()]
+        if category_names:
+            picker = (
+                ui.select(category_names, value=event.track, label="participant")
+                .props("dense")
+                .classes("w-full")
+            )
+            picker.on_value_change(lambda e: _move_event_to_category(state_, e.value))
 
         _color_picker(state_, event)
 
@@ -664,6 +908,11 @@ def _update(state_: _EventState, **fields: object) -> None:
     event_annotation_task.refresh()
 
 
+def _move_event_to_category(state_: _EventState, category: str) -> None:
+    """Move the selected event onto another participant's lane (via its ``track``)."""
+    _update(state_, track=category)
+
+
 def _delete_event(state_: _EventState) -> None:
     """Delete the selected event and clear the editor."""
     if state_.selected_event is None:
@@ -721,10 +970,19 @@ async def _finalise(state_: _EventState) -> None:
     """Close the armed event at the current frame, select it, and focus its name field.
 
     The span runs from ``pending_start`` (or the current frame, if end is pressed without a
-    prior start) to the current frame, clamped into the video. The new event is created on the
-    single default track with the default name and selected; ``focus_name`` asks the next
-    rebuild to focus the editor's name input so the reviewer can type over ``event_name``.
+    prior start) to the current frame, clamped into the video. The new event lands on the
+    **active category** (the participant the user is annotating) and is selected; ``focus_name``
+    asks the next rebuild to focus the editor's name input so the reviewer can type over the
+    default name. If no category exists yet, the user is asked to add one first.
     """
+    category = state_.active_category or _DEFAULT_TRACK
+    if state_.active_category is None and not state.store.categories():
+        ui.notify(
+            "Add a participant category first (the bar above the timeline).", color=theme.WARNING
+        )
+        state_.pending_start = None
+        _capture_controls.refresh()
+        return
     vid_id = videoclock.element_id(context.client.id)
     seconds = await videoclock.current_time(vid_id)
     frame = seconds_to_frame(float(seconds or 0.0), state_.fps)
@@ -732,7 +990,7 @@ async def _finalise(state_: _EventState) -> None:
     start = state_.pending_start if state_.pending_start is not None else frame
     lo, hi = clamp_event(start, frame, state_.num_frames)
     record = state.store.add_event(
-        state_.video_id, state_.row_key or "", _DEFAULT_TRACK, lo, hi, label=_DEFAULT_EVENT_LABEL
+        state_.video_id, state_.row_key or "", category, lo, hi, label=_DEFAULT_EVENT_LABEL
     )
     state_.pending_start = None
     state_.selected_event = record.event_id
@@ -972,5 +1230,9 @@ def _keyboard(state_: _EventState) -> None:
                 _cancel_pending(state_)
         elif key == "Delete" or key == "Backspace":
             _delete_event(state_)
+        elif str(key) in "123456789":
+            # Choose the active participant by lane position (1 = top). Ignored while a text
+            # field is focused, since the input consumes the keydown before it reaches here.
+            _set_active_by_ordinal(state_, int(str(key)) - 1)
 
     ui.keyboard(on_key=on_key)

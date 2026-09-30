@@ -119,6 +119,29 @@ class TestBuildSvg(unittest.TestCase):
         self.assertIn('class="annie-lane"', svg)
         self.assertIn('data-track="speech"', svg)
 
+    def test_lane_label_drawn(self) -> None:
+        # The category name reads directly on the lane as a coloured text label.
+        svg = self._svg(tracks=[TimelineTrack("Mother", [])])
+        self.assertIn(">Mother</text>", svg)
+
+    def test_lane_label_escaped(self) -> None:
+        svg = self._svg(tracks=[TimelineTrack("<b>", [])])
+        self.assertNotIn("<b></text>", svg)
+        self.assertIn("&lt;b&gt;", svg)
+
+    def test_empty_category_still_renders_a_labelled_lane(self) -> None:
+        svg = self._svg(tracks=[TimelineTrack("Baby", [])])
+        self.assertIn('class="annie-lane"', svg)
+        self.assertIn(">Baby</text>", svg)
+
+    def test_two_lanes_ordered_top_to_bottom(self) -> None:
+        svg = self._svg(tracks=[TimelineTrack("Mother", []), TimelineTrack("Baby", [])])
+        self.assertLess(svg.index(">Mother</text>"), svg.index(">Baby</text>"))
+
+    def test_track_color_override_used(self) -> None:
+        svg = self._svg(tracks=[TimelineTrack("Mother", [], color="#123456")])
+        self.assertIn("#123456", svg)
+
     def test_playhead_and_hover_style_present(self) -> None:
         svg = self._svg()
         self.assertIn('class="annie-playhead"', svg)

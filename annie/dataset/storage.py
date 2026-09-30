@@ -38,15 +38,22 @@ Decision = Literal["accept", "drop"]
 #: is free-form text, so segment rows key on ``{video_id}_{segment_id}`` without a schema
 #: change, and ``decision`` carries the Segment-review accept/drop.
 #:
-#: ``event`` and ``event_track`` back the Event-annotation task, which is a different shape:
-#: one video carries **many** interval events across **many** tracks. An event is a
-#: ``[start_frame, end_frame]`` span on a named track (the track *is* the category), with a
+#: ``event``, ``event_track`` and ``event_category`` back the Event-annotation task, which is
+#: a different shape: one video carries **many** interval events across **many** tracks. An
+#: event is a ``[start_frame, end_frame]`` span on a named track (``event.track``), with a
 #: free-text label/note and a JSON ``attributes`` object for arbitrary key/values — hence a
-#: dedicated table rather than more columns on ``review``. ``event_track`` records a track's
-#: existence and vertical order even before it holds any event, so an added-but-empty lane
-#: survives a reload. Both are keyed by :attr:`annie.core.models.VideoEntry.key` (``row_key``)
-#: so events tie to the same queue row curation does. Opening a pre-events database simply
-#: creates these tables empty — no column migration is needed for whole new tables.
+#: dedicated table rather than more columns on ``review``. ``event`` and the legacy per-video
+#: ``event_track`` are keyed by :attr:`annie.core.models.VideoEntry.key` (``row_key``).
+#:
+#: ``event_category`` holds the **participant categories** (e.g. Mother / Baby) an event's
+#: track names refer to. It is **DB-scoped, not per-video** (no ``row_key``), so the one set
+#: is shared by every video of this dataset — and because each config carries its own DB, the
+#: set is automatically per-dataset (a robot/human dataset's DB holds robot/human instead).
+#: ``ordinal`` gives the lane's top-to-bottom order; ``color`` optionally overrides the
+#: palette. It supersedes the per-video ``event_track`` as the source of timeline lanes;
+#: ``event_track`` stays in the schema for back-compat but the UI no longer depends on it.
+#: Opening a pre-events database simply creates these tables empty — no column migration is
+#: needed for whole new tables.
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS review (
     row_key            TEXT PRIMARY KEY,
@@ -81,6 +88,13 @@ CREATE TABLE IF NOT EXISTS event_track (
     ordinal     INTEGER NOT NULL,
     updated_at  TEXT NOT NULL,
     PRIMARY KEY (row_key, track)
+);
+
+CREATE TABLE IF NOT EXISTS event_category (
+    name        TEXT PRIMARY KEY,
+    ordinal     INTEGER NOT NULL,
+    color       TEXT,
+    updated_at  TEXT NOT NULL
 );
 """
 
@@ -143,6 +157,26 @@ class EventRecord:
     label: str
     note: str
     attributes: dict[str, str] = field(default_factory=dict)
+    color: str | None = None
+    updated_at: str = ""
+
+
+@dataclass(slots=True)
+class EventCategory:
+    """One participant category (a timeline lane) in the Event-annotation task.
+
+    DB-scoped, not per-video: the categories in a review DB are shared by every video of that
+    dataset. An event belongs to a category when its ``track`` equals the category ``name``.
+
+    Attributes:
+        name: The category / participant label (e.g. ``"Mother"``); unique within the DB.
+        ordinal: Vertical lane order, ``0`` at the top.
+        color: Optional hex colour override for the lane; ``None`` uses the palette by ordinal.
+        updated_at: ISO-8601 UTC timestamp of the last change.
+    """
+
+    name: str
+    ordinal: int
     color: str | None = None
     updated_at: str = ""
 
@@ -778,6 +812,175 @@ class ReviewStore:
             ).fetchall()
         return {row["row_key"] for row in rows}
 
+    # ── event categories (participant lanes, DB-scoped) ──────────────────────────
+
+    def categories(self) -> list[EventCategory]:
+        """Return the dataset's participant categories, in lane order.
+
+        Returns:
+            The categories ordered by ``ordinal`` then ``name`` (top to bottom).
+        """
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM event_category ORDER BY ordinal, name").fetchall()
+        return [_category_from_row(row) for row in rows]
+
+    def add_category(self, name: str, color: str | None = None) -> EventCategory:
+        """Add a category at the end of the lane order (idempotent on the name).
+
+        Re-adding an existing name is a no-op that returns the existing category, so a
+        double-click never creates a duplicate.
+
+        Args:
+            name: The category / participant label (must be non-empty; caller validates).
+            color: Optional hex colour override for the lane.
+
+        Returns:
+            The stored :class:`EventCategory` (existing one if the name was already present).
+        """
+        with self._connect() as conn:
+            existing = conn.execute(
+                "SELECT * FROM event_category WHERE name = ?", (name,)
+            ).fetchone()
+            if existing is not None:
+                return _category_from_row(existing)
+            (count,) = conn.execute("SELECT COUNT(*) FROM event_category").fetchone()
+            record = EventCategory(name=name, ordinal=count, color=color, updated_at=_now())
+            conn.execute(
+                "INSERT INTO event_category (name, ordinal, color, updated_at) VALUES (?, ?, ?, ?)",
+                (record.name, record.ordinal, record.color, record.updated_at),
+            )
+        return record
+
+    def rename_category(self, old: str, new: str) -> None:
+        """Rename a category and move every event on it onto the new name.
+
+        A no-op when ``old == new``. If ``new`` already exists, the two lanes merge: ``old``'s
+        events move onto ``new`` and the now-empty ``old`` category is removed. This is the
+        safe way to fix a label everywhere at once — events follow, so nothing is orphaned.
+
+        Args:
+            old: The current category name.
+            new: The new name.
+        """
+        if old == new:
+            return
+        with self._connect() as conn:
+            merging = conn.execute("SELECT 1 FROM event_category WHERE name = ?", (new,)).fetchone()
+            conn.execute(
+                "UPDATE event SET track = ?, updated_at = ? WHERE track = ?",
+                (new, _now(), old),
+            )
+            if merging is not None:
+                conn.execute("DELETE FROM event_category WHERE name = ?", (old,))
+            else:
+                conn.execute(
+                    "UPDATE event_category SET name = ?, updated_at = ? WHERE name = ?",
+                    (new, _now(), old),
+                )
+
+    def delete_category(self, name: str) -> None:
+        """Delete a category and all events on it, then close the ordinal gap.
+
+        The caller is responsible for confirming when the category still holds events (the UI
+        guards this); at the store level the delete always cascades to keep the data
+        consistent — an event can never reference a category that no longer exists.
+
+        Args:
+            name: The category to remove.
+        """
+        with self._connect() as conn:
+            conn.execute("DELETE FROM event WHERE track = ?", (name,))
+            conn.execute("DELETE FROM event_category WHERE name = ?", (name,))
+            # Re-pack ordinals so they stay 0..n-1 with no gaps.
+            remaining = conn.execute(
+                "SELECT name FROM event_category ORDER BY ordinal, name"
+            ).fetchall()
+            for i, row in enumerate(remaining):
+                conn.execute(
+                    "UPDATE event_category SET ordinal = ? WHERE name = ?", (i, row["name"])
+                )
+
+    def category_event_count(self, name: str) -> int:
+        """Return how many events currently sit on a category (for the delete guard).
+
+        Args:
+            name: The category name.
+
+        Returns:
+            The number of events whose ``track`` equals ``name``.
+        """
+        with self._connect() as conn:
+            (count,) = conn.execute(
+                "SELECT COUNT(*) FROM event WHERE track = ?", (name,)
+            ).fetchone()
+        return int(count)
+
+    def reorder_categories(self, names: list[str]) -> None:
+        """Set the lane order to ``names`` (first = top). Unlisted categories keep going after.
+
+        Args:
+            names: The category names in the desired top-to-bottom order. Names not present in
+                the DB are ignored; categories omitted from the list are appended after the
+                listed ones in their previous relative order.
+        """
+        with self._connect() as conn:
+            current = [
+                row["name"]
+                for row in conn.execute(
+                    "SELECT name FROM event_category ORDER BY ordinal, name"
+                ).fetchall()
+            ]
+            ordered = [n for n in names if n in current]
+            ordered += [n for n in current if n not in ordered]
+            for i, name in enumerate(ordered):
+                conn.execute(
+                    "UPDATE event_category SET ordinal = ?, updated_at = ? WHERE name = ?",
+                    (i, _now(), name),
+                )
+
+    def set_category_color(self, name: str, color: str | None) -> None:
+        """Set (or clear) a category's lane colour override.
+
+        Args:
+            name: The category name.
+            color: A hex colour, or ``None`` to fall back to the palette by ordinal.
+        """
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE event_category SET color = ?, updated_at = ? WHERE name = ?",
+                (color, _now(), name),
+            )
+
+    def seed_categories_from_events(self) -> int:
+        """Seed the category table from distinct event track names, if it is empty.
+
+        Back-compat for a DB annotated under the old single-lane model: its events sit on the
+        ``"events"`` track (or whatever names were used), but there are no category rows yet.
+        This creates one category per distinct existing track name so those events keep a lane
+        the user can then rename to a participant. Does nothing once any category exists.
+
+        Returns:
+            The number of categories created (``0`` if the table was already populated or
+            there are no events).
+        """
+        with self._connect() as conn:
+            (existing,) = conn.execute("SELECT COUNT(*) FROM event_category").fetchone()
+            if existing:
+                return 0
+            names = [
+                row["track"]
+                for row in conn.execute(
+                    "SELECT DISTINCT track FROM event ORDER BY track"
+                ).fetchall()
+            ]
+            for i, name in enumerate(names):
+                conn.execute(
+                    "INSERT INTO event_category (name, ordinal, color, updated_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (name, i, None, _now()),
+                )
+        return len(names)
+
     def set_note(
         self, row_key: str, video_id: str, annotation_suffix: str | None, note: str
     ) -> ReviewRecord:
@@ -930,6 +1133,16 @@ def _event_from_row(row: sqlite3.Row) -> EventRecord:
         label=row["label"],
         note=row["note"],
         attributes={str(k): str(v) for k, v in attributes.items()},
+        color=row["color"],
+        updated_at=row["updated_at"],
+    )
+
+
+def _category_from_row(row: sqlite3.Row) -> EventCategory:
+    """Build an :class:`EventCategory` from a SQLite row."""
+    return EventCategory(
+        name=row["name"],
+        ordinal=int(row["ordinal"]),
         color=row["color"],
         updated_at=row["updated_at"],
     )
