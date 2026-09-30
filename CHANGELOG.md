@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0](https://github.com/fodorad/Annie/compare/v1.5.1...v1.6.0) (2026-09-30)
+
+
+### Features
+
+* one-click Windows launcher (Docker) for non-technical users ([#40](https://github.com/fodorad/Annie/issues/40)) ([0df3ca3](https://github.com/fodorad/Annie/commit/0df3ca340d0d8b77bb93dabec4c5f5caaa3fbf38))
+
 ## [1.5.1](https://github.com/fodorad/Annie/compare/v1.5.0...v1.5.1) (2026-09-30)
 
 
