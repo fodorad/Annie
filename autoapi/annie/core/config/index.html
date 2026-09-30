@@ -523,6 +523,16 @@ by walking up from <code class="docutils literal notranslate"><span class="pre">
 <dd><p>Port the NiceGUI server listens on.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.config.Settings.open_browser">
+<span class="sig-name descname"><span class="pre">open_browser</span></span><a class="headerlink" href="#annie.core.config.Settings.open_browser" title="Link to this definition">¶</a></dt>
+<dd><p>Whether to open the default web browser at the app URL on startup
+(env <code class="docutils literal notranslate"><span class="pre">ANNIE_OPEN_BROWSER</span></code>). Off by default so dev, CI, and the headless Docker
+server are unaffected; the Windows launcher (which runs the server in a container
+and must open the browser on the <em>host</em>) sets it, and it is also handy for a
+local end-user launch where no terminal-savvy user is watching for the URL.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py data">
@@ -620,6 +630,7 @@ without re-importing.</p>
 <li><a class="reference internal" href="#annie.core.config.Settings.temp_ttl_seconds"><code class="docutils literal notranslate"><span class="pre">Settings.temp_ttl_seconds</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.host"><code class="docutils literal notranslate"><span class="pre">Settings.host</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.port"><code class="docutils literal notranslate"><span class="pre">Settings.port</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.config.Settings.open_browser"><code class="docutils literal notranslate"><span class="pre">Settings.open_browser</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#annie.core.config.settings"><code class="docutils literal notranslate"><span class="pre">settings</span></code></a></li>

@@ -500,7 +500,10 @@
         <span class="n">title</span><span class="o">=</span><span class="s2">"Annie"</span><span class="p">,</span>
         <span class="n">favicon</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">LOGO_MARK_SVG</span><span class="p">,</span>
         <span class="n">reload</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="c1"># Open the browser only when asked (env ANNIE_OPEN_BROWSER). Off for dev/CI and for</span>
+        <span class="c1"># the headless Docker server — in the container the launcher opens the browser on the</span>
+        <span class="c1"># host instead, so NiceGUI must not try to open one inside the container.</span>
+        <span class="n">show</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">open_browser</span><span class="p">,</span>
         <span class="n">reconnect_timeout</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span>  <span class="c1"># survive brief disconnects without dropping the page</span>
     <span class="p">)</span></div>
 

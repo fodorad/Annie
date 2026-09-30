@@ -340,6 +340,14 @@
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_env_bool</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return ``$name`` as a bool (``1``/``true``/``yes``/``on`` are true), else ``default``."""</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span>
+    <span class="k">return</span> <span class="n">raw</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="annie_home">
 <a class="viewcode-back" href="../../../autoapi/annie/core/config/index.html#annie.core.config.annie_home">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">annie_home</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
@@ -423,6 +431,11 @@
 <span class="sd">        temp_ttl_seconds: Age after which a rendered clip is swept (default 3 minutes).</span>
 <span class="sd">        host: Interface the NiceGUI server binds to.</span>
 <span class="sd">        port: Port the NiceGUI server listens on.</span>
+<span class="sd">        open_browser: Whether to open the default web browser at the app URL on startup</span>
+<span class="sd">            (env ``ANNIE_OPEN_BROWSER``). Off by default so dev, CI, and the headless Docker</span>
+<span class="sd">            server are unaffected; the Windows launcher (which runs the server in a container</span>
+<span class="sd">            and must open the browser on the *host*) sets it, and it is also handy for a</span>
+<span class="sd">            local end-user launch where no terminal-savvy user is watching for the URL.</span>
 <span class="sd">    """</span>
 
     <span class="n">videos_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_path</span><span class="p">(</span><span class="s2">"ANNIE_VIDEO_DIR"</span><span class="p">))</span>
@@ -454,6 +467,7 @@
     <span class="n">temp_ttl_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"ANNIE_TEMP_TTL"</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ANNIE_HOST"</span><span class="p">,</span> <span class="s2">"127.0.0.1"</span><span class="p">))</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"ANNIE_PORT"</span><span class="p">,</span> <span class="mi">8080</span><span class="p">))</span>
+    <span class="n">open_browser</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_bool</span><span class="p">(</span><span class="s2">"ANNIE_OPEN_BROWSER"</span><span class="p">))</span>
     <span class="n">annie_home</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">annie_home</span><span class="p">)</span></div>
 
 

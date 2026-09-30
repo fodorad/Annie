@@ -173,6 +173,14 @@ Module Contents
 
       Port the NiceGUI server listens on.
 
+   .. attribute:: open_browser
+
+      Whether to open the default web browser at the app URL on startup
+      (env ``ANNIE_OPEN_BROWSER``). Off by default so dev, CI, and the headless Docker
+      server are unaffected; the Windows launcher (which runs the server in a container
+      and must open the browser on the *host*) sets it, and it is also handy for a
+      local end-user launch where no terminal-savvy user is watching for the URL.
+
 
 .. py:data:: settings
 
