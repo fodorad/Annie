@@ -127,6 +127,10 @@ Module Contents
 
       The events to draw, in any order.
 
+   .. attribute:: color
+
+      Optional lane colour override (hex); ``None`` uses the palette by lane order.
+
 
 .. py:function:: pack_lanes(events: collections.abc.Sequence[TimelineEvent]) -> list[int]
 

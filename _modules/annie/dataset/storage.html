@@ -338,15 +338,22 @@
 <span class="c1">#: is free-form text, so segment rows key on ``{video_id}_{segment_id}`` without a schema</span>
 <span class="c1">#: change, and ``decision`` carries the Segment-review accept/drop.</span>
 <span class="c1">#:</span>
-<span class="c1">#: ``event`` and ``event_track`` back the Event-annotation task, which is a different shape:</span>
-<span class="c1">#: one video carries **many** interval events across **many** tracks. An event is a</span>
-<span class="c1">#: ``[start_frame, end_frame]`` span on a named track (the track *is* the category), with a</span>
+<span class="c1">#: ``event``, ``event_track`` and ``event_category`` back the Event-annotation task, which is</span>
+<span class="c1">#: a different shape: one video carries **many** interval events across **many** tracks. An</span>
+<span class="c1">#: event is a ``[start_frame, end_frame]`` span on a named track (``event.track``), with a</span>
 <span class="c1">#: free-text label/note and a JSON ``attributes`` object for arbitrary key/values — hence a</span>
-<span class="c1">#: dedicated table rather than more columns on ``review``. ``event_track`` records a track's</span>
-<span class="c1">#: existence and vertical order even before it holds any event, so an added-but-empty lane</span>
-<span class="c1">#: survives a reload. Both are keyed by :attr:`annie.core.models.VideoEntry.key` (``row_key``)</span>
-<span class="c1">#: so events tie to the same queue row curation does. Opening a pre-events database simply</span>
-<span class="c1">#: creates these tables empty — no column migration is needed for whole new tables.</span>
+<span class="c1">#: dedicated table rather than more columns on ``review``. ``event`` and the legacy per-video</span>
+<span class="c1">#: ``event_track`` are keyed by :attr:`annie.core.models.VideoEntry.key` (``row_key``).</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``event_category`` holds the **participant categories** (e.g. Mother / Baby) an event's</span>
+<span class="c1">#: track names refer to. It is **DB-scoped, not per-video** (no ``row_key``), so the one set</span>
+<span class="c1">#: is shared by every video of this dataset — and because each config carries its own DB, the</span>
+<span class="c1">#: set is automatically per-dataset (a robot/human dataset's DB holds robot/human instead).</span>
+<span class="c1">#: ``ordinal`` gives the lane's top-to-bottom order; ``color`` optionally overrides the</span>
+<span class="c1">#: palette. It supersedes the per-video ``event_track`` as the source of timeline lanes;</span>
+<span class="c1">#: ``event_track`` stays in the schema for back-compat but the UI no longer depends on it.</span>
+<span class="c1">#: Opening a pre-events database simply creates these tables empty — no column migration is</span>
+<span class="c1">#: needed for whole new tables.</span>
 <span class="n">_SCHEMA</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">CREATE TABLE IF NOT EXISTS review (</span>
 <span class="s2">    row_key            TEXT PRIMARY KEY,</span>
@@ -381,6 +388,13 @@
 <span class="s2">    ordinal     INTEGER NOT NULL,</span>
 <span class="s2">    updated_at  TEXT NOT NULL,</span>
 <span class="s2">    PRIMARY KEY (row_key, track)</span>
+<span class="s2">);</span>
+
+<span class="s2">CREATE TABLE IF NOT EXISTS event_category (</span>
+<span class="s2">    name        TEXT PRIMARY KEY,</span>
+<span class="s2">    ordinal     INTEGER NOT NULL,</span>
+<span class="s2">    color       TEXT,</span>
+<span class="s2">    updated_at  TEXT NOT NULL</span>
 <span class="s2">);</span>
 <span class="s2">"""</span>
 
@@ -448,6 +462,29 @@
     <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">note</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
+
+
+
+<div class="viewcode-block" id="EventCategory">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventCategory">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventCategory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One participant category (a timeline lane) in the Event-annotation task.</span>
+
+<span class="sd">    DB-scoped, not per-video: the categories in a review DB are shared by every video of that</span>
+<span class="sd">    dataset. An event belongs to a category when its ``track`` equals the category ``name``.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name: The category / participant label (e.g. ``"Mother"``); unique within the DB.</span>
+<span class="sd">        ordinal: Vertical lane order, ``0`` at the top.</span>
+<span class="sd">        color: Optional hex colour override for the lane; ``None`` uses the palette by ordinal.</span>
+<span class="sd">        updated_at: ISO-8601 UTC timestamp of the last change.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
@@ -1161,6 +1198,199 @@
         <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
 
 
+    <span class="c1"># ── event categories (participant lanes, DB-scoped) ──────────────────────────</span>
+
+<div class="viewcode-block" id="ReviewStore.categories">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.categories">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">categories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventCategory</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the dataset's participant categories, in lane order.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The categories ordered by ``ordinal`` then ``name`` (top to bottom).</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM event_category ORDER BY ordinal, name"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_category_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.add_category">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.add_category">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventCategory</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add a category at the end of the lane order (idempotent on the name).</span>
+
+<span class="sd">        Re-adding an existing name is a no-op that returns the existing category, so a</span>
+<span class="sd">        double-click never creates a duplicate.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The category / participant label (must be non-empty; caller validates).</span>
+<span class="sd">            color: Optional hex colour override for the lane.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The stored :class:`EventCategory` (existing one if the name was already present).</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT * FROM event_category WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_category_from_row</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">count</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM event_category"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">EventCategory</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">ordinal</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">updated_at</span><span class="o">=</span><span class="n">_now</span><span class="p">())</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"INSERT INTO event_category (name, ordinal, color, updated_at) VALUES (?, ?, ?, ?)"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">updated_at</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">record</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.rename_category">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.rename_category">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rename_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Rename a category and move every event on it onto the new name.</span>
+
+<span class="sd">        A no-op when ``old == new``. If ``new`` already exists, the two lanes merge: ``old``'s</span>
+<span class="sd">        events move onto ``new`` and the now-empty ``old`` category is removed. This is the</span>
+<span class="sd">        safe way to fix a label everywhere at once — events follow, so nothing is orphaned.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            old: The current category name.</span>
+<span class="sd">            new: The new name.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">old</span> <span class="o">==</span> <span class="n">new</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">merging</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT 1 FROM event_category WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">new</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event SET track = ?, updated_at = ? WHERE track = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">old</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">merging</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event_category WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">old</span><span class="p">,))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event_category SET name = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">old</span><span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.delete_category">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.delete_category">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete a category and all events on it, then close the ordinal gap.</span>
+
+<span class="sd">        The caller is responsible for confirming when the category still holds events (the UI</span>
+<span class="sd">        guards this); at the store level the delete always cascades to keep the data</span>
+<span class="sd">        consistent — an event can never reference a category that no longer exists.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The category to remove.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event WHERE track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event_category WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span>
+            <span class="c1"># Re-pack ordinals so they stay 0..n-1 with no gaps.</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT name FROM event_category ORDER BY ordinal, name"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">remaining</span><span class="p">):</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event_category SET ordinal = ? WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">])</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.category_event_count">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.category_event_count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">category_event_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return how many events currently sit on a category (for the delete guard).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The category name.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The number of events whose ``track`` equals ``name``.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">count</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT COUNT(*) FROM event WHERE track = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">count</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.reorder_categories">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.reorder_categories">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reorder_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set the lane order to ``names`` (first = top). Unlisted categories keep going after.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            names: The category names in the desired top-to-bottom order. Names not present in</span>
+<span class="sd">                the DB are ignored; categories omitted from the list are appended after the</span>
+<span class="sd">                listed ones in their previous relative order.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"SELECT name FROM event_category ORDER BY ordinal, name"</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="n">ordered</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current</span><span class="p">]</span>
+            <span class="n">ordered</span> <span class="o">+=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ordered</span><span class="p">):</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event_category SET ordinal = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">name</span><span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.set_category_color">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_category_color">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_category_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set (or clear) a category's lane colour override.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The category name.</span>
+<span class="sd">            color: A hex colour, or ``None`` to fall back to the palette by ordinal.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event_category SET color = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">name</span><span class="p">),</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.seed_categories_from_events">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.seed_categories_from_events">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">seed_categories_from_events</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Seed the category table from distinct event track names, if it is empty.</span>
+
+<span class="sd">        Back-compat for a DB annotated under the old single-lane model: its events sit on the</span>
+<span class="sd">        ``"events"`` track (or whatever names were used), but there are no category rows yet.</span>
+<span class="sd">        This creates one category per distinct existing track name so those events keep a lane</span>
+<span class="sd">        the user can then rename to a participant. Does nothing once any category exists.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The number of categories created (``0`` if the table was already populated or</span>
+<span class="sd">            there are no events).</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">existing</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM event_category"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">"track"</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"SELECT DISTINCT track FROM event ORDER BY track"</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"INSERT INTO event_category (name, ordinal, color, updated_at) "</span>
+                    <span class="s2">"VALUES (?, ?, ?, ?)"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">_now</span><span class="p">()),</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="ReviewStore.set_note">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_note">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_note</span><span class="p">(</span>
@@ -1326,6 +1556,16 @@
         <span class="n">label</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"label"</span><span class="p">],</span>
         <span class="n">note</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"note"</span><span class="p">],</span>
         <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"color"</span><span class="p">],</span>
+        <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_category_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventCategory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build an :class:`EventCategory` from a SQLite row."""</span>
+    <span class="k">return</span> <span class="n">EventCategory</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
+        <span class="n">ordinal</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ordinal"</span><span class="p">]),</span>
         <span class="n">color</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"color"</span><span class="p">],</span>
         <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">],</span>
     <span class="p">)</span>

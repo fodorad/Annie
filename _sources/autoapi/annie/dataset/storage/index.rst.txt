@@ -35,6 +35,7 @@ Classes
 
    annie.dataset.storage.ReviewRecord
    annie.dataset.storage.EventRecord
+   annie.dataset.storage.EventCategory
    annie.dataset.storage.ReviewStore
 
 
@@ -137,6 +138,30 @@ Module Contents
 
       Per-event colour override (hex string), or ``None`` to inherit the track's
       colour on the timeline.
+
+   .. attribute:: updated_at
+
+      ISO-8601 UTC timestamp of the last change.
+
+
+.. py:class:: EventCategory
+
+   One participant category (a timeline lane) in the Event-annotation task.
+
+   DB-scoped, not per-video: the categories in a review DB are shared by every video of that
+   dataset. An event belongs to a category when its ``track`` equals the category ``name``.
+
+   .. attribute:: name
+
+      The category / participant label (e.g. ``"Mother"``); unique within the DB.
+
+   .. attribute:: ordinal
+
+      Vertical lane order, ``0`` at the top.
+
+   .. attribute:: color
+
+      Optional hex colour override for the lane; ``None`` uses the palette by ordinal.
 
    .. attribute:: updated_at
 
@@ -459,6 +484,96 @@ Module Contents
       Lets the tab know which queued videos already carry annotation work.
 
       :returns: The set of row keys present in either event table.
+
+
+
+   .. py:method:: categories() -> list[EventCategory]
+
+      Return the dataset's participant categories, in lane order.
+
+      :returns: The categories ordered by ``ordinal`` then ``name`` (top to bottom).
+
+
+
+   .. py:method:: add_category(name: str, color: str | None = None) -> EventCategory
+
+      Add a category at the end of the lane order (idempotent on the name).
+
+      Re-adding an existing name is a no-op that returns the existing category, so a
+      double-click never creates a duplicate.
+
+      :param name: The category / participant label (must be non-empty; caller validates).
+      :param color: Optional hex colour override for the lane.
+
+      :returns: The stored :class:`EventCategory` (existing one if the name was already present).
+
+
+
+   .. py:method:: rename_category(old: str, new: str) -> None
+
+      Rename a category and move every event on it onto the new name.
+
+      A no-op when ``old == new``. If ``new`` already exists, the two lanes merge: ``old``'s
+      events move onto ``new`` and the now-empty ``old`` category is removed. This is the
+      safe way to fix a label everywhere at once — events follow, so nothing is orphaned.
+
+      :param old: The current category name.
+      :param new: The new name.
+
+
+
+   .. py:method:: delete_category(name: str) -> None
+
+      Delete a category and all events on it, then close the ordinal gap.
+
+      The caller is responsible for confirming when the category still holds events (the UI
+      guards this); at the store level the delete always cascades to keep the data
+      consistent — an event can never reference a category that no longer exists.
+
+      :param name: The category to remove.
+
+
+
+   .. py:method:: category_event_count(name: str) -> int
+
+      Return how many events currently sit on a category (for the delete guard).
+
+      :param name: The category name.
+
+      :returns: The number of events whose ``track`` equals ``name``.
+
+
+
+   .. py:method:: reorder_categories(names: list[str]) -> None
+
+      Set the lane order to ``names`` (first = top). Unlisted categories keep going after.
+
+      :param names: The category names in the desired top-to-bottom order. Names not present in
+                    the DB are ignored; categories omitted from the list are appended after the
+                    listed ones in their previous relative order.
+
+
+
+   .. py:method:: set_category_color(name: str, color: str | None) -> None
+
+      Set (or clear) a category's lane colour override.
+
+      :param name: The category name.
+      :param color: A hex colour, or ``None`` to fall back to the palette by ordinal.
+
+
+
+   .. py:method:: seed_categories_from_events() -> int
+
+      Seed the category table from distinct event track names, if it is empty.
+
+      Back-compat for a DB annotated under the old single-lane model: its events sit on the
+      ``"events"`` track (or whatever names were used), but there are no category rows yet.
+      This creates one category per distinct existing track name so those events keep a lane
+      the user can then rename to a participant. Does nothing once any category exists.
+
+      :returns: The number of categories created (``0`` if the table was already populated or
+                there are no events).
 
 
 

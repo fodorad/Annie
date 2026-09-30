@@ -379,10 +379,12 @@
 <span class="sd">    Attributes:</span>
 <span class="sd">        name: The track (category) name, shown as the lane label.</span>
 <span class="sd">        events: The events to draw, in any order.</span>
+<span class="sd">        color: Optional lane colour override (hex); ``None`` uses the palette by lane order.</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">events</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TimelineEvent</span><span class="p">]</span></div>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TimelineEvent</span><span class="p">]</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -527,7 +529,7 @@
     <span class="k">for</span> <span class="n">ordinal</span><span class="p">,</span> <span class="n">track</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tracks</span><span class="p">):</span>
         <span class="n">rows</span><span class="p">,</span> <span class="n">row_count</span> <span class="o">=</span> <span class="n">packed</span><span class="p">[</span><span class="n">ordinal</span><span class="p">]</span>
         <span class="n">lane_h</span> <span class="o">=</span> <span class="n">lane_heights</span><span class="p">[</span><span class="n">ordinal</span><span class="p">]</span>
-        <span class="n">colour</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">event_track_color</span><span class="p">(</span><span class="n">ordinal</span><span class="p">)</span>
+        <span class="n">colour</span> <span class="o">=</span> <span class="n">track</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="n">theme</span><span class="o">.</span><span class="n">event_track_color</span><span class="p">(</span><span class="n">ordinal</span><span class="p">)</span>
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s1">'&lt;rect class="annie-lane" data-track="</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s1">" '</span>
             <span class="sa">f</span><span class="s1">'x="0" y="</span><span class="si">{</span><span class="n">y</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">width</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" height="</span><span class="si">{</span><span class="n">lane_h</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
@@ -535,6 +537,7 @@
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">events</span><span class="p">):</span>
             <span class="n">_append_event</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">view_start</span><span class="p">,</span> <span class="n">view_end</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">_append_lane_label</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">+=</span> <span class="n">lane_h</span> <span class="o">+</span> <span class="n">LANE_GAP</span>
 
     <span class="c1"># Playhead — one line the poll moves via set_playhead_x (class is the hook). Its x is set</span>
@@ -667,6 +670,28 @@
 <span class="sd">    is still available via the box's ``&lt;title&gt;`` tooltip.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="o">*</span> <span class="n">_CHAR_WIDTH</span> <span class="o">+</span> <span class="mi">6</span> <span class="o">&lt;=</span> <span class="n">box_width</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_append_lane_label</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">lane_y</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw the category name at the top-left of a lane, over a small white backing pill.</span>
+
+<span class="sd">    Drawn after the lane's events so it stays readable even where an event box starts at the</span>
+<span class="sd">    very left. The backing keeps the text legible over a coloured box; the text takes the</span>
+<span class="sd">    lane's colour so Mother / Baby are identifiable at a glance. ``pointer-events:none`` so the</span>
+<span class="sd">    label never intercepts a click meant for an event or a seek.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">escape</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">pill_w</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">*</span> <span class="n">_CHAR_WIDTH</span> <span class="o">+</span> <span class="mi">10</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;rect x="2" y="</span><span class="si">{</span><span class="n">lane_y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">pill_w</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" height="15" rx="3" '</span>
+        <span class="sa">f</span><span class="s1">'fill="#ffffff" fill-opacity="0.82" pointer-events="none"/&gt;'</span>
+    <span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'&lt;text x="7" y="</span><span class="si">{</span><span class="n">lane_y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">13</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" fill="</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s1">" '</span>
+        <span class="sa">f</span><span class="s1">'style="pointer-events:none;font-weight:600"&gt;</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s1">&lt;/text&gt;'</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="gesture_script">

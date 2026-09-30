@@ -341,7 +341,10 @@ in one call and importable via upsert, so a reviewer’s curation travels with t
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EventRecord</span></code></a></p></td>
 <td><p>One persisted Event-annotation event: a labelled interval on a track.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.storage.ReviewStore" title="annie.dataset.storage.ReviewStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReviewStore</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.storage.EventCategory" title="annie.dataset.storage.EventCategory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EventCategory</span></code></a></p></td>
+<td><p>One participant category (a timeline lane) in the Event-annotation task.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.storage.ReviewStore" title="annie.dataset.storage.ReviewStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReviewStore</span></code></a></p></td>
 <td><p>A thin, connection-per-call wrapper over the <code class="docutils literal notranslate"><span class="pre">review</span></code> table.</p></td>
 </tr>
 </tbody>
@@ -493,6 +496,38 @@ colour on the timeline.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.dataset.storage.EventRecord.updated_at">
 <span class="sig-name descname"><span class="pre">updated_at</span></span><a class="headerlink" href="#annie.dataset.storage.EventRecord.updated_at" title="Link to this definition">¶</a></dt>
+<dd><p>ISO-8601 UTC timestamp of the last change.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventCategory">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.storage.</span></span><span class="sig-name descname"><span class="pre">EventCategory</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#EventCategory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.EventCategory" title="Link to this definition">¶</a></dt>
+<dd><p>One participant category (a timeline lane) in the Event-annotation task.</p>
+<p>DB-scoped, not per-video: the categories in a review DB are shared by every video of that
+dataset. An event belongs to a category when its <code class="docutils literal notranslate"><span class="pre">track</span></code> equals the category <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventCategory.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#annie.dataset.storage.EventCategory.name" title="Link to this definition">¶</a></dt>
+<dd><p>The category / participant label (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;Mother&quot;</span></code>); unique within the DB.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventCategory.ordinal">
+<span class="sig-name descname"><span class="pre">ordinal</span></span><a class="headerlink" href="#annie.dataset.storage.EventCategory.ordinal" title="Link to this definition">¶</a></dt>
+<dd><p>Vertical lane order, <code class="docutils literal notranslate"><span class="pre">0</span></code> at the top.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventCategory.color">
+<span class="sig-name descname"><span class="pre">color</span></span><a class="headerlink" href="#annie.dataset.storage.EventCategory.color" title="Link to this definition">¶</a></dt>
+<dd><p>Optional hex colour override for the lane; <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the palette by ordinal.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.storage.EventCategory.updated_at">
+<span class="sig-name descname"><span class="pre">updated_at</span></span><a class="headerlink" href="#annie.dataset.storage.EventCategory.updated_at" title="Link to this definition">¶</a></dt>
 <dd><p>ISO-8601 UTC timestamp of the last change.</p>
 </dd></dl>
 
@@ -918,6 +953,124 @@ is removed.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.categories">
+<span class="sig-name descname"><span class="pre">categories</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.storage.EventCategory" title="annie.dataset.storage.EventCategory"><span class="pre">EventCategory</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.categories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.categories" title="Link to this definition">¶</a></dt>
+<dd><p>Return the dataset’s participant categories, in lane order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The categories ordered by <code class="docutils literal notranslate"><span class="pre">ordinal</span></code> then <code class="docutils literal notranslate"><span class="pre">name</span></code> (top to bottom).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.add_category">
+<span class="sig-name descname"><span class="pre">add_category</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.EventCategory" title="annie.dataset.storage.EventCategory"><span class="pre">EventCategory</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.add_category"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.add_category" title="Link to this definition">¶</a></dt>
+<dd><p>Add a category at the end of the lane order (idempotent on the name).</p>
+<p>Re-adding an existing name is a no-op that returns the existing category, so a
+double-click never creates a duplicate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – The category / participant label (must be non-empty; caller validates).</p></li>
+<li><p><strong>color</strong> – Optional hex colour override for the lane.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The stored <a class="reference internal" href="#annie.dataset.storage.EventCategory" title="annie.dataset.storage.EventCategory"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventCategory</span></code></a> (existing one if the name was already present).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.rename_category">
+<span class="sig-name descname"><span class="pre">rename_category</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.rename_category"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.rename_category" title="Link to this definition">¶</a></dt>
+<dd><p>Rename a category and move every event on it onto the new name.</p>
+<p>A no-op when <code class="docutils literal notranslate"><span class="pre">old</span> <span class="pre">==</span> <span class="pre">new</span></code>. If <code class="docutils literal notranslate"><span class="pre">new</span></code> already exists, the two lanes merge: <code class="docutils literal notranslate"><span class="pre">old</span></code>’s
+events move onto <code class="docutils literal notranslate"><span class="pre">new</span></code> and the now-empty <code class="docutils literal notranslate"><span class="pre">old</span></code> category is removed. This is the
+safe way to fix a label everywhere at once — events follow, so nothing is orphaned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old</strong> – The current category name.</p></li>
+<li><p><strong>new</strong> – The new name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.delete_category">
+<span class="sig-name descname"><span class="pre">delete_category</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.delete_category"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.delete_category" title="Link to this definition">¶</a></dt>
+<dd><p>Delete a category and all events on it, then close the ordinal gap.</p>
+<p>The caller is responsible for confirming when the category still holds events (the UI
+guards this); at the store level the delete always cascades to keep the data
+consistent — an event can never reference a category that no longer exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – The category to remove.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.category_event_count">
+<span class="sig-name descname"><span class="pre">category_event_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.category_event_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.category_event_count" title="Link to this definition">¶</a></dt>
+<dd><p>Return how many events currently sit on a category (for the delete guard).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – The category name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The number of events whose <code class="docutils literal notranslate"><span class="pre">track</span></code> equals <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.reorder_categories">
+<span class="sig-name descname"><span class="pre">reorder_categories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.reorder_categories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.reorder_categories" title="Link to this definition">¶</a></dt>
+<dd><p>Set the lane order to <code class="docutils literal notranslate"><span class="pre">names</span></code> (first = top). Unlisted categories keep going after.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>names</strong> – The category names in the desired top-to-bottom order. Names not present in
+the DB are ignored; categories omitted from the list are appended after the
+listed ones in their previous relative order.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.set_category_color">
+<span class="sig-name descname"><span class="pre">set_category_color</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.set_category_color"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.set_category_color" title="Link to this definition">¶</a></dt>
+<dd><p>Set (or clear) a category’s lane colour override.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – The category name.</p></li>
+<li><p><strong>color</strong> – A hex colour, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to fall back to the palette by ordinal.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.seed_categories_from_events">
+<span class="sig-name descname"><span class="pre">seed_categories_from_events</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.seed_categories_from_events"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.seed_categories_from_events" title="Link to this definition">¶</a></dt>
+<dd><p>Seed the category table from distinct event track names, if it is empty.</p>
+<p>Back-compat for a DB annotated under the old single-lane model: its events sit on the
+<code class="docutils literal notranslate"><span class="pre">&quot;events&quot;</span></code> track (or whatever names were used), but there are no category rows yet.
+This creates one category per distinct existing track name so those events keep a lane
+the user can then rename to a participant. Does nothing once any category exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The number of categories created (<code class="docutils literal notranslate"><span class="pre">0</span></code> if the table was already populated or
+there are no events).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.set_note">
 <span class="sig-name descname"><span class="pre">set_note</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">note</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.set_note"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.set_note" title="Link to this definition">¶</a></dt>
 <dd><p>Set the free-text note for a row.</p>
@@ -1070,6 +1223,13 @@ is removed.</p>
 <li><a class="reference internal" href="#annie.dataset.storage.EventRecord.updated_at"><code class="docutils literal notranslate"><span class="pre">EventRecord.updated_at</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventCategory"><code class="docutils literal notranslate"><span class="pre">EventCategory</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.storage.EventCategory.name"><code class="docutils literal notranslate"><span class="pre">EventCategory.name</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventCategory.ordinal"><code class="docutils literal notranslate"><span class="pre">EventCategory.ordinal</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventCategory.color"><code class="docutils literal notranslate"><span class="pre">EventCategory.color</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.EventCategory.updated_at"><code class="docutils literal notranslate"><span class="pre">EventCategory.updated_at</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore"><code class="docutils literal notranslate"><span class="pre">ReviewStore</span></code></a><ul>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.get"><code class="docutils literal notranslate"><span class="pre">ReviewStore.get()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.all"><code class="docutils literal notranslate"><span class="pre">ReviewStore.all()</span></code></a></li>
@@ -1096,6 +1256,14 @@ is removed.</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.delete_track"><code class="docutils literal notranslate"><span class="pre">ReviewStore.delete_track()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.tracks_for"><code class="docutils literal notranslate"><span class="pre">ReviewStore.tracks_for()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.event_row_keys"><code class="docutils literal notranslate"><span class="pre">ReviewStore.event_row_keys()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.categories"><code class="docutils literal notranslate"><span class="pre">ReviewStore.categories()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.add_category"><code class="docutils literal notranslate"><span class="pre">ReviewStore.add_category()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.rename_category"><code class="docutils literal notranslate"><span class="pre">ReviewStore.rename_category()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.delete_category"><code class="docutils literal notranslate"><span class="pre">ReviewStore.delete_category()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.category_event_count"><code class="docutils literal notranslate"><span class="pre">ReviewStore.category_event_count()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.reorder_categories"><code class="docutils literal notranslate"><span class="pre">ReviewStore.reorder_categories()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_category_color"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_category_color()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.seed_categories_from_events"><code class="docutils literal notranslate"><span class="pre">ReviewStore.seed_categories_from_events()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_note"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_note()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_json"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_json()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_csv"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_csv()</span></code></a></li>
