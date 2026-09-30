@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.0](https://github.com/fodorad/Annie/compare/v1.6.0...v1.7.0) (2026-09-30)
+
+
+### Features
+
+* participant categories (per-dataset lanes) for event annotation ([#42](https://github.com/fodorad/Annie/issues/42)) ([24ef692](https://github.com/fodorad/Annie/commit/24ef6923985621389aa2c19a5f5a3140a4d6b84a))
+
 ## [1.6.0](https://github.com/fodorad/Annie/compare/v1.5.1...v1.6.0) (2026-09-30)
 
 
