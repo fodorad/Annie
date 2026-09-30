@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 from annie.core import theme
-from annie.core.config import Settings, _env_int, _env_path
+from annie.core.config import Settings, _env_bool, _env_int, _env_path
 from annie.media.decode import media_available, strip_indices
 
 
@@ -24,6 +24,25 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(_env_int("X_INT", 42), 42)
         with mock.patch.dict(os.environ, {"X_INT": "7"}):
             self.assertEqual(_env_int("X_INT", 42), 7)
+
+    def test_env_bool_truthy_and_default(self) -> None:
+        for truthy in ("1", "true", "TRUE", "yes", "on"):
+            with mock.patch.dict(os.environ, {"X_BOOL": truthy}):
+                self.assertTrue(_env_bool("X_BOOL"))
+        for falsy in ("0", "false", "no", "off", "nonsense"):
+            with mock.patch.dict(os.environ, {"X_BOOL": falsy}):
+                self.assertFalse(_env_bool("X_BOOL"))
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("X_BOOL", None)
+            self.assertFalse(_env_bool("X_BOOL"))
+            self.assertTrue(_env_bool("X_BOOL", default=True))
+
+    def test_open_browser_defaults_off_and_reads_env(self) -> None:
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("ANNIE_OPEN_BROWSER", None)
+            self.assertFalse(Settings().open_browser)
+        with mock.patch.dict(os.environ, {"ANNIE_OPEN_BROWSER": "1"}):
+            self.assertTrue(Settings().open_browser)
 
     def test_settings_reads_env_overrides(self) -> None:
         with mock.patch.dict(

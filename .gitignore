@@ -17,7 +17,15 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+# Ignore Python build output under dist/, but keep dist/windows/ — the Windows launcher
+# package is source we ship, not a build artifact. (A bare `dist/` would exclude the whole
+# tree and no negation could re-include a file beneath it, so scope the ignore instead.)
+/dist/*
+!/dist/windows/
+# Runtime files the launcher generates on the user's machine (never committed).
+dist/windows/.env
+dist/windows/annie-config.txt
+dist/windows/annie-home/
 downloads/
 eggs/
 .eggs/

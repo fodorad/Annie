@@ -82,6 +82,15 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
 
 ## Installation
 
+### Windows (for non-technical users)
+
+If you just want to *use* Annie on Windows — no terminal, no Python, no FFmpeg — use the
+one-click launcher in [`dist/windows/`](dist/windows/): install Docker Desktop once,
+double-click `Annie`, and pick your video folder when asked. It opens in your browser and
+updates itself on each launch. See
+[`dist/windows/README-Windows.txt`](dist/windows/README-Windows.txt) for the three-step
+guide. The developer install paths below are **not** needed for this.
+
 ### Prerequisites
 
 Required for the **source** and **PyPI** install paths. Docker bundles everything automatically.

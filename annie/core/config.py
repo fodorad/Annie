@@ -40,6 +40,14 @@ def _env_tuple(name: str) -> tuple[str, ...] | None:
     return tuple(col.strip() for col in raw.split(",") if col.strip())
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    """Return ``$name`` as a bool (``1``/``true``/``yes``/``on`` are true), else ``default``."""
+    raw = os.environ.get(name, "").strip().lower()
+    if not raw:
+        return default
+    return raw in ("1", "true", "yes", "on")
+
+
 def annie_home() -> Path:
     """The Annie home directory (env ``ANNIE_HOME``), defaulting to ``~/.annie``.
 
@@ -118,6 +126,11 @@ class Settings:
         temp_ttl_seconds: Age after which a rendered clip is swept (default 3 minutes).
         host: Interface the NiceGUI server binds to.
         port: Port the NiceGUI server listens on.
+        open_browser: Whether to open the default web browser at the app URL on startup
+            (env ``ANNIE_OPEN_BROWSER``). Off by default so dev, CI, and the headless Docker
+            server are unaffected; the Windows launcher (which runs the server in a container
+            and must open the browser on the *host*) sets it, and it is also handy for a
+            local end-user launch where no terminal-savvy user is watching for the URL.
     """
 
     videos_dir: Path | None = field(default_factory=lambda: _env_path("ANNIE_VIDEO_DIR"))
@@ -149,6 +162,7 @@ class Settings:
     temp_ttl_seconds: int = field(default_factory=lambda: _env_int("ANNIE_TEMP_TTL", 180))
     host: str = field(default_factory=lambda: os.environ.get("ANNIE_HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: _env_int("ANNIE_PORT", 8080))
+    open_browser: bool = field(default_factory=lambda: _env_bool("ANNIE_OPEN_BROWSER"))
     annie_home: Path = field(default_factory=annie_home)
 
 
