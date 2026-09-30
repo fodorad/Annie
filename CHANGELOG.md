@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.1](https://github.com/fodorad/Annie/compare/v1.7.0...v1.7.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* move Windows launcher out of dist/ so PyPI publish stops failing ([#44](https://github.com/fodorad/Annie/issues/44)) ([cb309a6](https://github.com/fodorad/Annie/commit/cb309a6f87c8f9acd82f4555f7eafdb3b66d1b3e))
+
 ## [1.7.0](https://github.com/fodorad/Annie/compare/v1.6.0...v1.7.0) (2026-09-30)
 
 
