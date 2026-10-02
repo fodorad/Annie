@@ -239,6 +239,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/download/index.html">annie.pages.download</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
@@ -340,11 +341,17 @@ split is deliberate: nested attributes do not live cleanly in a CSV cell.</p></l
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.build_export_tree" title="annie.dataset.events.build_export_tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_export_tree</span></code></a>(→ dict[str, dict[str, object]])</p></td>
 <td><p>Group events into the nested <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">{fps,</span> <span class="pre">tracks}</span></code> export structure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_json" title="annie.dataset.events.export_events_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_json</span></code></a>(→ pathlib.Path)</p></td>
-<td><p>Write events to a nested JSON file (one object per video).</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_json_text" title="annie.dataset.events.events_to_json_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_json_text</span></code></a>(→ str)</p></td>
+<td><p>Render events as nested JSON text (one object per video).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_json" title="annie.dataset.events.export_events_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_json</span></code></a>(→ pathlib.Path)</p></td>
+<td><p>Write events to a nested JSON file (see <a class="reference internal" href="#annie.dataset.events.events_to_json_text" title="annie.dataset.events.events_to_json_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_json_text()</span></code></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_csv_text" title="annie.dataset.events.events_to_csv_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_csv_text</span></code></a>(→ str)</p></td>
+<td><p>Render events as flat CSV text (one row per event) for a spreadsheet.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_csv" title="annie.dataset.events.export_events_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_csv</span></code></a>(→ pathlib.Path)</p></td>
-<td><p>Write events to a flat CSV (one row per event) for a spreadsheet.</p></td>
+<td><p>Write events to a flat CSV file (see <a class="reference internal" href="#annie.dataset.events.events_to_csv_text" title="annie.dataset.events.events_to_csv_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_csv_text()</span></code></a>).</p></td>
 </tr>
 </tbody>
 </table>
@@ -432,12 +439,29 @@ missing here is exported with <code class="docutils literal notranslate"><span c
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="annie.dataset.events.export_events_json">
-<span class="sig-prename descclassname"><span class="pre">annie.dataset.events.</span></span><span class="sig-name descname"><span class="pre">export_events_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps_by_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/events.html#export_events_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.events.export_events_json" title="Link to this definition">¶</a></dt>
-<dd><p>Write events to a nested JSON file (one object per video).</p>
+<dt class="sig sig-object py" id="annie.dataset.events.events_to_json_text">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.events.</span></span><span class="sig-name descname"><span class="pre">events_to_json_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps_by_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/events.html#events_to_json_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.events.events_to_json_text" title="Link to this definition">¶</a></dt>
+<dd><p>Render events as nested JSON text (one object per video).</p>
 <p>Suits downstream code: attributes stay nested, seconds are derived per video’s fps. A
 per-video export is this same shape with a single top-level key; a session export has
 many.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>events</strong> – The events to render.</p></li>
+<li><p><strong>fps_by_video</strong> – Frames per second per <code class="docutils literal notranslate"><span class="pre">video_id</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The JSON document as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.dataset.events.export_events_json">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.events.</span></span><span class="sig-name descname"><span class="pre">export_events_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps_by_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/events.html#export_events_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.events.export_events_json" title="Link to this definition">¶</a></dt>
+<dd><p>Write events to a nested JSON file (see <a class="reference internal" href="#annie.dataset.events.events_to_json_text" title="annie.dataset.events.events_to_json_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_json_text()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -453,12 +477,29 @@ many.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="annie.dataset.events.export_events_csv">
-<span class="sig-prename descclassname"><span class="pre">annie.dataset.events.</span></span><span class="sig-name descname"><span class="pre">export_events_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps_by_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/events.html#export_events_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.events.export_events_csv" title="Link to this definition">¶</a></dt>
-<dd><p>Write events to a flat CSV (one row per event) for a spreadsheet.</p>
+<dt class="sig sig-object py" id="annie.dataset.events.events_to_csv_text">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.events.</span></span><span class="sig-name descname"><span class="pre">events_to_csv_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps_by_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/events.html#events_to_csv_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.events.events_to_csv_text" title="Link to this definition">¶</a></dt>
+<dd><p>Render events as flat CSV text (one row per event) for a spreadsheet.</p>
 <p>Fixed columns come first, then one <code class="docutils literal notranslate"><span class="pre">attr_&lt;key&gt;</span></code> column per attribute key seen across
 <em>all</em> events (empty where an event lacks that key), so colleagues can open and sort the
 file in Excel. Attribute keys are sorted for a stable header.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>events</strong> – The events to render.</p></li>
+<li><p><strong>fps_by_video</strong> – Frames per second per <code class="docutils literal notranslate"><span class="pre">video_id</span></code> (for the derived seconds).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The CSV document as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.dataset.events.export_events_csv">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.events.</span></span><span class="sig-name descname"><span class="pre">export_events_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps_by_video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/events.html#export_events_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.events.export_events_csv" title="Link to this definition">¶</a></dt>
+<dd><p>Write events to a flat CSV file (see <a class="reference internal" href="#annie.dataset.events.events_to_csv_text" title="annie.dataset.events.events_to_csv_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_csv_text()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -538,7 +579,9 @@ file in Excel. Attribute keys are sorted for a stable header.</p>
 <li><a class="reference internal" href="#annie.dataset.events.seconds_to_frame"><code class="docutils literal notranslate"><span class="pre">seconds_to_frame()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.events.clamp_event"><code class="docutils literal notranslate"><span class="pre">clamp_event()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.events.build_export_tree"><code class="docutils literal notranslate"><span class="pre">build_export_tree()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.events.events_to_json_text"><code class="docutils literal notranslate"><span class="pre">events_to_json_text()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.events.export_events_json"><code class="docutils literal notranslate"><span class="pre">export_events_json()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.events.events_to_csv_text"><code class="docutils literal notranslate"><span class="pre">events_to_csv_text()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.events.export_events_csv"><code class="docutils literal notranslate"><span class="pre">export_events_csv()</span></code></a></li>
 </ul>
 </li>

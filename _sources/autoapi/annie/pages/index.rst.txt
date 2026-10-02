@@ -24,6 +24,7 @@ Submodules
    /autoapi/annie/pages/convert/index
    /autoapi/annie/pages/csv_dialog/index
    /autoapi/annie/pages/dataset/index
+   /autoapi/annie/pages/download/index
    /autoapi/annie/pages/event_task/index
    /autoapi/annie/pages/folder_picker/index
    /autoapi/annie/pages/fsbrowse/index

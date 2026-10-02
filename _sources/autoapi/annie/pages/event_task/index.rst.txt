@@ -33,7 +33,6 @@ Functions
    annie.pages.event_task.next_default_category_name
    annie.pages.event_task.cleanup
    annie.pages.event_task.event_annotation_task
-   annie.pages.event_task.settings_temp_dir
 
 
 Module Contents
@@ -59,10 +58,5 @@ Module Contents
 .. py:function:: event_annotation_task() -> None
 
    Build the Event-annotation work area for the current queued video.
-
-
-.. py:function:: settings_temp_dir()
-
-   Return the export directory (``settings.temp_dir``), created if missing.
 
 

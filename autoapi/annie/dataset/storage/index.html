@@ -239,6 +239,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pages/download/index.html">annie.pages.download</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
@@ -1091,6 +1092,18 @@ there are no events).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.export_json_text">
+<span class="sig-name descname"><span class="pre">export_json_text</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.export_json_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.export_json_text" title="Link to this definition">¶</a></dt>
+<dd><p>Render all review records as a JSON array string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.export_csv_text">
+<span class="sig-name descname"><span class="pre">export_csv_text</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.export_csv_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.export_csv_text" title="Link to this definition">¶</a></dt>
+<dd><p>Render all review records as CSV text.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.export_json">
 <span class="sig-name descname"><span class="pre">export_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.export_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.export_json" title="Link to this definition">¶</a></dt>
 <dd><p>Write all review records to a JSON array file.</p>
@@ -1266,6 +1279,8 @@ there are no events).</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_category_color"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_category_color()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.seed_categories_from_events"><code class="docutils literal notranslate"><span class="pre">ReviewStore.seed_categories_from_events()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_note"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_note()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_json_text"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_json_text()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_csv_text"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_csv_text()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_json"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_json()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.export_csv"><code class="docutils literal notranslate"><span class="pre">ReviewStore.export_csv()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.import_records"><code class="docutils literal notranslate"><span class="pre">ReviewStore.import_records()</span></code></a></li>

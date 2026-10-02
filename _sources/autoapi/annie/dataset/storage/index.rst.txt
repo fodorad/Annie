@@ -590,6 +590,18 @@ Module Contents
 
 
 
+   .. py:method:: export_json_text() -> str
+
+      Render all review records as a JSON array string.
+
+
+
+   .. py:method:: export_csv_text() -> str
+
+      Render all review records as CSV text.
+
+
+
    .. py:method:: export_json(path: str | pathlib.Path) -> pathlib.Path
 
       Write all review records to a JSON array file.

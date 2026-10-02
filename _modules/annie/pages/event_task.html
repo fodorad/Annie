@@ -238,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/download/index.html">annie.pages.download</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
@@ -329,13 +330,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.events</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">clamp_event</span><span class="p">,</span>
-    <span class="n">export_events_csv</span><span class="p">,</span>
-    <span class="n">export_events_json</span><span class="p">,</span>
+    <span class="n">events_to_csv_text</span><span class="p">,</span>
+    <span class="n">events_to_json_text</span><span class="p">,</span>
     <span class="n">frames_to_seconds</span><span class="p">,</span>
     <span class="n">seconds_to_frame</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span><span class="p">,</span> <span class="n">video_metadata</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">download</span><span class="p">,</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.timeline_view</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimelineView</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -1491,7 +1492,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write the current video's or the whole session's events to JSON/CSV."""</span>
+<span class="w">    </span><span class="sd">"""Open the save dialog for the current video's or the whole session's events."""</span>
     <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span><span class="p">:</span>
         <span class="n">events</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">events_for</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
         <span class="n">stem</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="ow">or</span> <span class="s2">"video"</span>
@@ -1502,12 +1503,19 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"No events to export yet."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">fps_by_video</span> <span class="o">=</span> <span class="n">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">settings_temp_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"annie_events_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
-        <span class="n">export_events_json</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">export_events_csv</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> event(s) → </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span>
+        <span class="k">else</span> <span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">download</span><span class="o">.</span><span class="n">open_save_dialog</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Export events (</span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">sanitize_filename</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"annie_events_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="n">default_stem</span><span class="o">=</span><span class="s2">"annie_events"</span>
+        <span class="p">),</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+        <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># ── helpers ────────────────────────────────────────────────────────────────────</span>
@@ -1615,17 +1623,6 @@
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">0.0</span>
-
-
-<div class="viewcode-block" id="settings_temp_dir">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.settings_temp_dir">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">settings_temp_dir</span><span class="p">():</span>  <span class="c1"># noqa: ANN201 - thin indirection kept import-local</span>
-<span class="w">    </span><span class="sd">"""Return the export directory (``settings.temp_dir``), created if missing."""</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
-
-    <span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span></div>
-
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_keyboard</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

@@ -238,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/convert/index.html">annie.pages.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/download/index.html">annie.pages.download</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
@@ -321,6 +322,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
@@ -448,6 +450,27 @@
 
 
 
+<div class="viewcode-block" id="events_to_json_text">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_json_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span> <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render events as nested JSON text (one object per video).</span>
+
+<span class="sd">    Suits downstream code: attributes stay nested, seconds are derived per video's fps. A</span>
+<span class="sd">    per-video export is this same shape with a single top-level key; a session export has</span>
+<span class="sd">    many.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        events: The events to render.</span>
+<span class="sd">        fps_by_video: Frames per second per ``video_id``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The JSON document as a string.</span>
+<span class="sd">    """</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">build_export_tree</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="export_events_json">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.export_events_json">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">export_events_json</span><span class="p">(</span>
@@ -455,11 +478,7 @@
     <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write events to a nested JSON file (one object per video).</span>
-
-<span class="sd">    Suits downstream code: attributes stay nested, seconds are derived per video's fps. A</span>
-<span class="sd">    per-video export is this same shape with a single top-level key; a session export has</span>
-<span class="sd">    many.</span>
+<span class="w">    </span><span class="sd">"""Write events to a nested JSON file (see :func:`events_to_json_text`).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        events: The events to write.</span>
@@ -471,35 +490,27 @@
 <span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">tree</span> <span class="o">=</span> <span class="n">build_export_tree</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
 
 
-<div class="viewcode-block" id="export_events_csv">
-<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.export_events_csv">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">export_events_csv</span><span class="p">(</span>
-    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
-    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write events to a flat CSV (one row per event) for a spreadsheet.</span>
+<div class="viewcode-block" id="events_to_csv_text">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_csv_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span> <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render events as flat CSV text (one row per event) for a spreadsheet.</span>
 
 <span class="sd">    Fixed columns come first, then one ``attr_&lt;key&gt;`` column per attribute key seen across</span>
 <span class="sd">    *all* events (empty where an event lacks that key), so colleagues can open and sort the</span>
 <span class="sd">    file in Excel. Attribute keys are sorted for a stable header.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        events: The events to write.</span>
+<span class="sd">        events: The events to render.</span>
 <span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
-<span class="sd">        path: Destination ``.csv`` path (parent directories are created).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The path written.</span>
+<span class="sd">        The CSV document as a string.</span>
 <span class="sd">    """</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">events</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
     <span class="n">attr_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">key</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">})</span>
     <span class="n">fixed</span> <span class="o">=</span> <span class="p">[</span>
@@ -514,25 +525,50 @@
         <span class="s2">"color"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">fixed</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">)]</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+        <span class="n">fps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fps_by_video</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"video_id"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
+            <span class="s2">"track"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span>
+            <span class="s2">"start_frame"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span>
+            <span class="s2">"end_frame"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span>
+            <span class="s2">"start_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="s2">"end_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="s2">"note"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
+            <span class="s2">"color"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">:</span>
+            <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="export_events_csv">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.export_events_csv">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_events_csv</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write events to a flat CSV file (see :func:`events_to_csv_text`).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        events: The events to write.</span>
+<span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
+<span class="sd">        path: Destination ``.csv`` path (parent directories are created).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The path written.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-        <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
-        <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
-            <span class="n">fps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fps_by_video</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-            <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">"video_id"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
-                <span class="s2">"track"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span>
-                <span class="s2">"start_frame"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span>
-                <span class="s2">"end_frame"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span>
-                <span class="s2">"start_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-                <span class="s2">"end_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-                <span class="s2">"label"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                <span class="s2">"note"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
-                <span class="s2">"color"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
-            <span class="p">}</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">:</span>
-                <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-            <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
 </pre></div>

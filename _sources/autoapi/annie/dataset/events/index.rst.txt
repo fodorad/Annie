@@ -34,7 +34,9 @@ Functions
    annie.dataset.events.seconds_to_frame
    annie.dataset.events.clamp_event
    annie.dataset.events.build_export_tree
+   annie.dataset.events.events_to_json_text
    annie.dataset.events.export_events_json
+   annie.dataset.events.events_to_csv_text
    annie.dataset.events.export_events_csv
 
 
@@ -95,13 +97,23 @@ Module Contents
    :returns: A mapping of ``video_id`` to ``{"fps": float, "tracks": {track: [event dict, ...]}}``.
 
 
-.. py:function:: export_events_json(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+.. py:function:: events_to_json_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float]) -> str
 
-   Write events to a nested JSON file (one object per video).
+   Render events as nested JSON text (one object per video).
 
    Suits downstream code: attributes stay nested, seconds are derived per video's fps. A
    per-video export is this same shape with a single top-level key; a session export has
    many.
+
+   :param events: The events to render.
+   :param fps_by_video: Frames per second per ``video_id``.
+
+   :returns: The JSON document as a string.
+
+
+.. py:function:: export_events_json(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+
+   Write events to a nested JSON file (see :func:`events_to_json_text`).
 
    :param events: The events to write.
    :param fps_by_video: Frames per second per ``video_id``.
@@ -110,13 +122,23 @@ Module Contents
    :returns: The path written.
 
 
-.. py:function:: export_events_csv(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+.. py:function:: events_to_csv_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float]) -> str
 
-   Write events to a flat CSV (one row per event) for a spreadsheet.
+   Render events as flat CSV text (one row per event) for a spreadsheet.
 
    Fixed columns come first, then one ``attr_<key>`` column per attribute key seen across
    *all* events (empty where an event lacks that key), so colleagues can open and sort the
    file in Excel. Attribute keys are sorted for a stable header.
+
+   :param events: The events to render.
+   :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+
+   :returns: The CSV document as a string.
+
+
+.. py:function:: export_events_csv(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+
+   Write events to a flat CSV file (see :func:`events_to_csv_text`).
 
    :param events: The events to write.
    :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).

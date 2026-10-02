@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
-        <link rel="canonical" href="https://fodorad.github.io/Annie/_modules/annie/pages/utils.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/_modules/annie/pages/download.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>annie.pages.utils - Annie latest documentation</title>
+        <title>annie.pages.download - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -299,115 +299,160 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for annie.pages.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Shared UI helpers used by multiple page modules (UI)."""</span>
+          <h1>Source code for annie.pages.download</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Save a generated document to the *user's* machine, with their choice of folder and name.</span>
+
+<span class="sd">Annie's server runs where the data is — often inside a Docker container — so a server-side</span>
+<span class="sd">folder picker would browse the wrong filesystem. The browser is where the person is, so the</span>
+<span class="sd">save happens there: Chromium browsers (Chrome, Edge, Brave, ...) open the operating system's</span>
+<span class="sd">native *Save as* dialog through the File System Access API, starting in the user's Documents</span>
+<span class="sd">folder with the suggested name prefilled. Browsers without it (Firefox, Safari) fall back to a</span>
+<span class="sd">normal download using the chosen name. The content is generated on the server and travels</span>
+<span class="sd">server → browser → disk, so local runs and Docker behave identically.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
+<span class="n">_ILLEGAL</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'[</span><span class="se">\\</span><span class="s1">/:*?"&lt;&gt;|\x00-\x1f]'</span><span class="p">)</span>
+<span class="sd">"""Characters no major filesystem allows in a file name (path separators included)."""</span>
 
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="n">_MAX_STEM</span> <span class="o">=</span> <span class="mi">120</span>
+<span class="sd">"""Longest accepted file-name stem, comfortably below every filesystem's limit."""</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
-
-
-<div class="viewcode-block" id="render_embed_ttl">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.render_embed_ttl">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">render_embed_ttl</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Idle-revert delay for an embedded *rendered* clip.</span>
-
-<span class="sd">    Capped at the temp-dir sweep TTL so a rendered clip's ``ui.video`` always reverts</span>
-<span class="sd">    to its placeholder no later than the periodic sweep deletes the underlying file —</span>
-<span class="sd">    the element never points at a clip that has been reclaimed from disk.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">temp_ttl_seconds</span><span class="p">)</span></div>
+<span class="n">MIME_TYPES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"json"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">:</span> <span class="s2">"text/csv"</span><span class="p">}</span>
+<span class="sd">"""Extension → MIME type for the formats Annie exports."""</span>
 
 
+<div class="viewcode-block" id="sanitize_filename">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.sanitize_filename">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sanitize_filename</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default_stem</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Make ``name`` a safe file name that ends in ``.extension``.</span>
 
-<div class="viewcode-block" id="notify_detached">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.notify_detached">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">notify_detached</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Client</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Toast from a handler that tore down the slot it was invoked in.</span>
-
-<span class="sd">    ``ui.notify`` resolves its client through the slot the handler runs in, which</span>
-<span class="sd">    NiceGUI takes from the sender's **parent** element. A handler that deletes its</span>
-<span class="sd">    own row — or refreshes the container holding its button — drops the last</span>
-<span class="sd">    reference to that parent, so a later ``ui.notify`` dies with "the parent element</span>
-<span class="sd">    this slot belongs to has been deleted".</span>
-
-<span class="sd">    Re-entering ``client`` lands in :attr:`nicegui.Client.content`, which outlives</span>
-<span class="sd">    any refresh, so the toast survives the teardown that caused it.</span>
+<span class="sd">    Path separators and characters illegal on Windows are replaced, surrounding dots and</span>
+<span class="sd">    spaces trimmed, an empty result falls back to ``default_stem``, and the extension is</span>
+<span class="sd">    forced (added if missing, never doubled).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        client: The client captured *before* the teardown (``context.client``).</span>
-<span class="sd">        message: The toast text.</span>
-<span class="sd">        color: The toast colour.</span>
-<span class="sd">    """</span>
-    <span class="k">with</span> <span class="n">client</span><span class="p">:</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="unembed_after_idle">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/utils/index.html#annie.pages.utils.unembed_after_idle">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">unembed_after_idle</span><span class="p">(</span>
-    <span class="n">box</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">restore</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">ttl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Swap an embedded clip back to its placeholder once it has sat idle.</span>
-
-<span class="sd">    An embedded ``ui.video`` keeps its clip buffered in the browser tab (and its</span>
-<span class="sd">    element alive server-side) for as long as the row is on the page. A reviewer</span>
-<span class="sd">    who plays a dozen clips while scrolling never gets that memory back. So each</span>
-<span class="sd">    embed schedules its own reversal: after ``ttl`` seconds, ``restore`` rebuilds the</span>
-<span class="sd">    cheap placeholder and the clip is dropped.</span>
-
-<span class="sd">    The wait runs via :func:`annie.pages.lazy.schedule`, so a row refreshed away</span>
-<span class="sd">    mid-wait has no parent slot to be deleted; ``restore`` is skipped when the box</span>
-<span class="sd">    no longer exists.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        box: The container holding the embedded clip.</span>
-<span class="sd">        restore: Rebuilds the placeholder content inside ``box``. Must clear it.</span>
-<span class="sd">        ttl: Idle seconds before reverting. Defaults to</span>
-<span class="sd">            :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass</span>
-<span class="sd">            :func:`render_embed_ttl` so they never outlive the temp-dir sweep.</span>
-<span class="sd">    """</span>
-    <span class="n">delay</span> <span class="o">=</span> <span class="n">ttl</span> <span class="k">if</span> <span class="n">ttl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">embed_ttl_seconds</span>
-
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_revert</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">box</span><span class="p">):</span>
-            <span class="k">return</span>  <span class="c1"># the row was refreshed or the page closed while we waited</span>
-        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-            <span class="n">restore</span><span class="p">()</span>
-
-    <span class="n">schedule</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">_revert</span><span class="p">)</span></div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_alive</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Whether it is safe to mutate ``element`` (its client and element both exist).</span>
-
-<span class="sd">    Accessing ``element.client`` *raises* once the client is deleted, and mutating a</span>
-<span class="sd">    deleted element *warns*, so any lazy task that resumes after a reload or refresh</span>
-<span class="sd">    must call this before touching the DOM.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        element: The NiceGUI element to check.</span>
+<span class="sd">        name: The name the user typed (may be empty or contain a path).</span>
+<span class="sd">        extension: The required extension without the dot, e.g. ``"csv"``.</span>
+<span class="sd">        default_stem: Stem to use when ``name`` has nothing usable.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ``True`` if the element's client is alive and the element has not been deleted.</span>
+<span class="sd">        A file name such as ``annie_events_clip1.csv``.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">element</span><span class="o">.</span><span class="n">_client</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">element</span><span class="o">.</span><span class="n">is_deleted</span>  <span class="c1"># noqa: SLF001</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">_ILLEGAL</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">stem</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
+        <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">)]</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">" ."</span><span class="p">)[:</span><span class="n">_MAX_STEM</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">" ."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">default_stem</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="save_script">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.save_script">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_script</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mime</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name_input_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return JavaScript that saves ``text`` as ``filename`` on the user's machine.</span>
+
+<span class="sd">    It must run inside the click that triggered the save (browsers only open a file picker</span>
+<span class="sd">    during a user gesture), so attach it with a client-side ``js_handler`` rather than</span>
+<span class="sd">    sending it from the server afterwards. Cancelling the picker is silent.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename: Suggested file name, already sanitised.</span>
+<span class="sd">        text: The file's full text content.</span>
+<span class="sd">        mime: MIME type, e.g. ``"text/csv"``.</span>
+<span class="sd">        name_input_id: DOM id of a text input whose current value overrides ``filename`` (the</span>
+<span class="sd">            dialog's editable name box). It is cleaned the same way :func:`sanitize_filename`</span>
+<span class="sd">            does; an empty box falls back to ``filename``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A JavaScript expression (an async arrow function body wrapped in an IIFE).</span>
+<span class="sd">    """</span>
+    <span class="c1"># json.dumps yields valid, fully escaped JS string literals; "&lt;/" is escaped too so the</span>
+    <span class="c1"># text can never close a surrounding &lt;script&gt; element.</span>
+    <span class="n">name_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">text_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;/"</span><span class="p">,</span> <span class="s2">"&lt;</span><span class="se">\\</span><span class="s2">/"</span><span class="p">)</span>
+    <span class="n">mime_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">mime</span><span class="p">)</span>
+    <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">'.'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">ext_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
+    <span class="n">input_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">name_input_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">    (async () =&gt; </span><span class="se">{{</span>
+<span class="s2">      const text = </span><span class="si">{</span><span class="n">text_js</span><span class="si">}</span><span class="s2">, mime = </span><span class="si">{</span><span class="n">mime_js</span><span class="si">}</span><span class="s2">, ext = </span><span class="si">{</span><span class="n">ext_js</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">      let name = </span><span class="si">{</span><span class="n">name_js</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">      const box = </span><span class="si">{</span><span class="n">input_js</span><span class="si">}</span><span class="s2"> ? document.getElementById(</span><span class="si">{</span><span class="n">input_js</span><span class="si">}</span><span class="s2">) : null;</span>
+<span class="s2">      if (box &amp;&amp; box.value.trim()) </span><span class="se">{{</span>
+<span class="s2">        let stem = box.value.trim().replace(/[</span><span class="se">\\\\</span><span class="s2">/:*?"&lt;&gt;|</span><span class="se">\\</span><span class="s2">x00-</span><span class="se">\\</span><span class="s2">x1f]/g, '_');</span>
+<span class="s2">        if (stem.toLowerCase().endsWith(ext)) stem = stem.slice(0, -ext.length);</span>
+<span class="s2">        stem = stem.replace(/^[ .]+|[ .]+$/g, '').slice(0, </span><span class="si">{</span><span class="n">_MAX_STEM</span><span class="si">}</span><span class="s2">);</span>
+<span class="s2">        if (stem) name = stem + ext;</span>
+<span class="s2">      </span><span class="se">}}</span>
+<span class="s2">      const blob = new Blob([text], </span><span class="se">{{</span><span class="s2">type: mime</span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">      if (window.showSaveFilePicker) </span><span class="se">{{</span>
+<span class="s2">        try </span><span class="se">{{</span>
+<span class="s2">          const handle = await window.showSaveFilePicker(</span><span class="se">{{</span>
+<span class="s2">            suggestedName: name,</span>
+<span class="s2">            startIn: 'documents',</span>
+<span class="s2">            types: [</span><span class="se">{{</span><span class="s2">description: name, accept: </span><span class="se">{{</span><span class="s2">[mime]: [ext]</span><span class="se">}}}}</span><span class="s2">],</span>
+<span class="s2">          </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">          const out = await handle.createWritable();</span>
+<span class="s2">          await out.write(blob);</span>
+<span class="s2">          await out.close();</span>
+<span class="s2">        </span><span class="se">}}</span><span class="s2"> catch (err) </span><span class="se">{{</span>
+<span class="s2">          if (err &amp;&amp; err.name !== 'AbortError') throw err;</span>
+<span class="s2">        </span><span class="se">}}</span>
+<span class="s2">        return;</span>
+<span class="s2">      </span><span class="se">}}</span>
+<span class="s2">      const a = document.createElement('a');</span>
+<span class="s2">      a.href = URL.createObjectURL(blob);</span>
+<span class="s2">      a.download = name;</span>
+<span class="s2">      document.body.appendChild(a);</span>
+<span class="s2">      a.click();</span>
+<span class="s2">      a.remove();</span>
+<span class="s2">      setTimeout(() =&gt; URL.revokeObjectURL(a.href), 1000);</span>
+<span class="s2">    </span><span class="se">}}</span><span class="s2">)();</span>
+<span class="s2">    """</span></div>
+
+
+
+<div class="viewcode-block" id="open_save_dialog">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.open_save_dialog">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">open_save_dialog</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open a dialog to confirm the file name, then save through the browser's Save dialog.</span>
+
+<span class="sd">    The name box is prefilled with ``filename``. *Save…* runs :func:`save_script` as a</span>
+<span class="sd">    client-side click handler (inside the user gesture, as browsers require), so the native</span>
+<span class="sd">    folder/name picker opens on the user's machine, starting in Documents.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        title: Dialog heading, e.g. ``"Export events (CSV)"``.</span>
+<span class="sd">        filename: Default file name shown in the box.</span>
+<span class="sd">        text: The file content, already rendered.</span>
+<span class="sd">        extension: File extension without the dot (selects the MIME type).</span>
+<span class="sd">    """</span>
+    <span class="n">input_id</span> <span class="o">=</span> <span class="s2">"annie-save-name"</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">save_script</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">MIME_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s2">"text/plain"</span><span class="p">),</span> <span class="n">name_input_id</span><span class="o">=</span><span class="n">input_id</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-96"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-base font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"File name"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"input-id=</span><span class="si">{</span><span class="n">input_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+            <span class="s2">"Save… opens your system's Save dialog, starting in your Documents folder, "</span>
+            <span class="s2">"where you can pick the folder and change the name."</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs text-gray-600"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end gap-2"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">dialog</span><span class="o">.</span><span class="n">close</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
+            <span class="n">save</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Save…"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"save"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">dialog</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
+            <span class="n">save</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"click"</span><span class="p">,</span> <span class="n">js_handler</span><span class="o">=</span><span class="sa">f</span><span class="s2">"() =&gt; </span><span class="se">{{</span><span class="s2"> </span><span class="si">{</span><span class="n">script</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span></div>
+
 </pre></div>
         </article>
       </div>
