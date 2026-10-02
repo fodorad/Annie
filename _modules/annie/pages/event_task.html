@@ -324,7 +324,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">context</span><span class="p">,</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
@@ -597,18 +598,20 @@
 
         <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
 
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Export"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu</span><span class="p">():</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span>
-                    <span class="s2">"This video — JSON"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"video"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span><span class="s2">"This video — CSV"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"video"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"csv"</span><span class="p">))</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span>
-                    <span class="s2">"All session — JSON"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span>
-                    <span class="s2">"All session — CSV"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"csv"</span><span class="p">)</span>
-                <span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Export"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">scope</span><span class="p">,</span> <span class="n">scope_label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"This video"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"session"</span><span class="p">,</span> <span class="s2">"All session"</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">):</span>
+                    <span class="n">stem</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span> <span class="k">else</span> <span class="s2">"session"</span>
+                    <span class="n">download</span><span class="o">.</span><span class="n">export_menu_item</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scope_label</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="n">filename</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">sanitize_filename</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"annie_events_</span><span class="si">{</span><span class="n">stem</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'video'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                            <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+                            <span class="n">default_stem</span><span class="o">=</span><span class="s2">"annie_events"</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"/annie/export/events/</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+                    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_video_and_transport</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1491,37 +1494,41 @@
     <span class="n">_refresh_timeline</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Open the save dialog for the current video's or the whole session's events."""</span>
-    <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span><span class="p">:</span>
-        <span class="n">events</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">events_for</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
-        <span class="n">stem</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="ow">or</span> <span class="s2">"video"</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">events</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">all_events</span><span class="p">()</span>
-        <span class="n">stem</span> <span class="o">=</span> <span class="s2">"session"</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_export_text</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render the current video's or the whole session's events, or ``None`` if there are none."""</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">events_for</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span>
+        <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">all_events</span><span class="p">()</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">events</span><span class="p">:</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"No events to export yet."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
-        <span class="k">return</span>
-    <span class="n">fps_by_video</span> <span class="o">=</span> <span class="n">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span>
-        <span class="k">else</span> <span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">download</span><span class="o">.</span><span class="n">open_save_dialog</span><span class="p">(</span>
-        <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Export events (</span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
-        <span class="n">filename</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">sanitize_filename</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"annie_events_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="n">default_stem</span><span class="o">=</span><span class="s2">"annie_events"</span>
-        <span class="p">),</span>
-        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
-        <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
-    <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">fps_by_video</span> <span class="o">=</span> <span class="n">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">state_</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/annie/export/events/</span><span class="si">{client_id}</span><span class="s2">/</span><span class="si">{scope}</span><span class="s2">/</span><span class="si">{fmt}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_export_route</span><span class="p">(</span><span class="n">client_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Serve an event export's text to the browser, which saves it via the Save dialog.</span>
+
+<span class="sd">    ``204`` means there is nothing to export (or an unknown client/format), which the</span>
+<span class="sd">    browser-side handler reports instead of writing an empty file.</span>
+<span class="sd">    """</span>
+    <span class="n">state_</span> <span class="o">=</span> <span class="n">_event_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">client_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">state_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">scope</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"session"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fmt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">204</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">_export_text</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">204</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">MIME_TYPES</span><span class="p">[</span><span class="n">fmt</span><span class="p">])</span>
 
 
 <span class="c1"># ── helpers ────────────────────────────────────────────────────────────────────</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span> <span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Best-effort fps per video id for the export, from the scan manifest.</span>
 
 <span class="sd">    The open video's fps is known on ``_EventState``; other videos in a session export are</span>
@@ -1529,7 +1536,6 @@
 <span class="sd">    with frame numbers only (seconds ``0``), which the export handles.</span>
 <span class="sd">    """</span>
     <span class="n">fps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">state_</span> <span class="o">=</span> <span class="n">_event_state</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="ow">and</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">:</span>
         <span class="n">fps</span><span class="p">[</span><span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span>
     <span class="n">scan</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span>

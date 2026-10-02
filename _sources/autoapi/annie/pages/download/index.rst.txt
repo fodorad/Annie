@@ -12,8 +12,9 @@ annie.pages.download
    save happens there: Chromium browsers (Chrome, Edge, Brave, ...) open the operating system's
    native *Save as* dialog through the File System Access API, starting in the user's Documents
    folder with the suggested name prefilled. Browsers without it (Firefox, Safari) fall back to a
-   normal download using the chosen name. The content is generated on the server and travels
-   server → browser → disk, so local runs and Docker behave identically.
+   normal download using the suggested name. The content is generated on the server, fetched by
+   the browser from a small route, and written to disk there — server → browser → disk — so local
+   runs and Docker behave identically.
 
 
 
@@ -31,8 +32,9 @@ Functions
 .. autoapisummary::
 
    annie.pages.download.sanitize_filename
-   annie.pages.download.save_script
-   annie.pages.download.open_save_dialog
+   annie.pages.download.save_from_url_js
+   annie.pages.download.attach_save
+   annie.pages.download.export_menu_item
 
 
 Module Contents
@@ -58,35 +60,43 @@ Module Contents
    :returns: A file name such as ``annie_events_clip1.csv``.
 
 
-.. py:function:: save_script(filename: str, text: str, mime: str, *, name_input_id: str | None = None) -> str
+.. py:function:: save_from_url_js(filename: str, url: str, mime: str) -> str
 
-   Return JavaScript that saves ``text`` as ``filename`` on the user's machine.
+   Return a click handler that fetches ``url`` and saves it where the user picks.
 
-   It must run inside the click that triggered the save (browsers only open a file picker
-   during a user gesture), so attach it with a client-side ``js_handler`` rather than
-   sending it from the server afterwards. Cancelling the picker is silent.
+   The handler runs client-side *inside the click*: it fetches the text first (a local,
+   millisecond request, well inside the browser's transient-activation window), then opens
+   the native Save dialog with ``filename`` prefilled and writes the file. A ``204``
+   response means "nothing to export" and shows a notice instead of an empty file.
+   Cancelling the dialog is silent. Browsers without ``showSaveFilePicker`` (Firefox,
+   Safari) fall back to a normal download under ``filename``.
 
    :param filename: Suggested file name, already sanitised.
-   :param text: The file's full text content.
+   :param url: Same-origin URL returning the file's text content.
    :param mime: MIME type, e.g. ``"text/csv"``.
-   :param name_input_id: DOM id of a text input whose current value overrides ``filename`` (the
-                         dialog's editable name box). It is cleaned the same way :func:`sanitize_filename`
-                         does; an empty box falls back to ``filename``.
 
-   :returns: A JavaScript expression (an async arrow function body wrapped in an IIFE).
+   :returns: A JavaScript arrow function (as a string) for ``Element.on(..., js_handler=...)``.
 
 
-.. py:function:: open_save_dialog(*, title: str, filename: str, text: str, extension: str) -> None
+.. py:function:: attach_save(element: nicegui.ui.element, *, filename: str, url: str, extension: str) -> None
 
-   Open a dialog to confirm the file name, then save through the browser's Save dialog.
+   Make clicking ``element`` open the native Save dialog straight away.
 
-   The name box is prefilled with ``filename``. *Save…* runs :func:`save_script` as a
-   client-side click handler (inside the user gesture, as browsers require), so the native
-   folder/name picker opens on the user's machine, starting in Documents.
-
-   :param title: Dialog heading, e.g. ``"Export events (CSV)"``.
-   :param filename: Default file name shown in the box.
-   :param text: The file content, already rendered.
+   :param element: A button or menu item.
+   :param filename: Default file name offered in the Save dialog.
+   :param url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).
    :param extension: File extension without the dot (selects the MIME type).
+
+
+.. py:function:: export_menu_item(label: str, *, filename: str, url: str, extension: str) -> nicegui.ui.menu_item
+
+   Add a menu entry that opens the native Save dialog straight away when clicked.
+
+   :param label: Menu text.
+   :param filename: Default file name offered in the Save dialog.
+   :param url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).
+   :param extension: File extension without the dot (selects the MIME type).
+
+   :returns: The created menu item.
 
 

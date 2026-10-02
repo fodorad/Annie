@@ -312,7 +312,8 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
@@ -322,6 +323,17 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/annie/export/review/</span><span class="si">{fmt}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_review_export_route</span><span class="p">(</span><span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Serve the review-status export's text; the browser saves it via the Save dialog."""</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">export_json_text</span><span class="p">(),</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">"application/json"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"csv"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">export_csv_text</span><span class="p">(),</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">"text/csv"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">204</span><span class="p">)</span>
+
 
 <span class="c1"># ── helpers ───────────────────────────────────────────────────────────────────</span>
 
@@ -628,26 +640,15 @@
                 <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">export_review</span><span class="p">(</span><span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">export_json_text</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span>
-                    <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">export_csv_text</span><span class="p">()</span>
-                <span class="p">)</span>
-                <span class="n">download</span><span class="o">.</span><span class="n">open_save_dialog</span><span class="p">(</span>
-                    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Export review status (</span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
-                    <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"annie_review.</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                    <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
-                    <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
-                <span class="p">)</span>
-
             <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"gap-2"</span><span class="p">):</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-                    <span class="s2">"Export JSON"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">export_review</span><span class="p">(</span><span class="s2">"json"</span><span class="p">)</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-                    <span class="s2">"Export CSV"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">export_review</span><span class="p">(</span><span class="s2">"csv"</span><span class="p">)</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">):</span>
+                    <span class="n">button</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Export </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
+                    <span class="n">download</span><span class="o">.</span><span class="n">attach_save</span><span class="p">(</span>
+                        <span class="n">button</span><span class="p">,</span>
+                        <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"annie_review.</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"/annie/export/review/</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+                    <span class="p">)</span>
 
         <span class="n">_maintenance_section</span><span class="p">()</span>
 

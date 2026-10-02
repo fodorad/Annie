@@ -307,8 +307,9 @@
 <span class="sd">save happens there: Chromium browsers (Chrome, Edge, Brave, ...) open the operating system's</span>
 <span class="sd">native *Save as* dialog through the File System Access API, starting in the user's Documents</span>
 <span class="sd">folder with the suggested name prefilled. Browsers without it (Firefox, Safari) fall back to a</span>
-<span class="sd">normal download using the chosen name. The content is generated on the server and travels</span>
-<span class="sd">server → browser → disk, so local runs and Docker behave identically.</span>
+<span class="sd">normal download using the suggested name. The content is generated on the server, fetched by</span>
+<span class="sd">the browser from a small route, and written to disk there — server → browser → disk — so local</span>
+<span class="sd">runs and Docker behave identically.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -354,46 +355,38 @@
 
 
 
-<div class="viewcode-block" id="save_script">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.save_script">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">save_script</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mime</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name_input_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Return JavaScript that saves ``text`` as ``filename`` on the user's machine.</span>
+<div class="viewcode-block" id="save_from_url_js">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.save_from_url_js">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_from_url_js</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mime</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a click handler that fetches ``url`` and saves it where the user picks.</span>
 
-<span class="sd">    It must run inside the click that triggered the save (browsers only open a file picker</span>
-<span class="sd">    during a user gesture), so attach it with a client-side ``js_handler`` rather than</span>
-<span class="sd">    sending it from the server afterwards. Cancelling the picker is silent.</span>
+<span class="sd">    The handler runs client-side *inside the click*: it fetches the text first (a local,</span>
+<span class="sd">    millisecond request, well inside the browser's transient-activation window), then opens</span>
+<span class="sd">    the native Save dialog with ``filename`` prefilled and writes the file. A ``204``</span>
+<span class="sd">    response means "nothing to export" and shows a notice instead of an empty file.</span>
+<span class="sd">    Cancelling the dialog is silent. Browsers without ``showSaveFilePicker`` (Firefox,</span>
+<span class="sd">    Safari) fall back to a normal download under ``filename``.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        filename: Suggested file name, already sanitised.</span>
-<span class="sd">        text: The file's full text content.</span>
+<span class="sd">        url: Same-origin URL returning the file's text content.</span>
 <span class="sd">        mime: MIME type, e.g. ``"text/csv"``.</span>
-<span class="sd">        name_input_id: DOM id of a text input whose current value overrides ``filename`` (the</span>
-<span class="sd">            dialog's editable name box). It is cleaned the same way :func:`sanitize_filename`</span>
-<span class="sd">            does; an empty box falls back to ``filename``.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A JavaScript expression (an async arrow function body wrapped in an IIFE).</span>
+<span class="sd">        A JavaScript arrow function (as a string) for ``Element.on(..., js_handler=...)``.</span>
 <span class="sd">    """</span>
-    <span class="c1"># json.dumps yields valid, fully escaped JS string literals; "&lt;/" is escaped too so the</span>
-    <span class="c1"># text can never close a surrounding &lt;script&gt; element.</span>
     <span class="n">name_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-    <span class="n">text_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;/"</span><span class="p">,</span> <span class="s2">"&lt;</span><span class="se">\\</span><span class="s2">/"</span><span class="p">)</span>
+    <span class="n">url_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="n">mime_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">mime</span><span class="p">)</span>
-    <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">'.'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
-    <span class="n">ext_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
-    <span class="n">input_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">name_input_id</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">    (async () =&gt; </span><span class="se">{{</span>
-<span class="s2">      const text = </span><span class="si">{</span><span class="n">text_js</span><span class="si">}</span><span class="s2">, mime = </span><span class="si">{</span><span class="n">mime_js</span><span class="si">}</span><span class="s2">, ext = </span><span class="si">{</span><span class="n">ext_js</span><span class="si">}</span><span class="s2">;</span>
-<span class="s2">      let name = </span><span class="si">{</span><span class="n">name_js</span><span class="si">}</span><span class="s2">;</span>
-<span class="s2">      const box = </span><span class="si">{</span><span class="n">input_js</span><span class="si">}</span><span class="s2"> ? document.getElementById(</span><span class="si">{</span><span class="n">input_js</span><span class="si">}</span><span class="s2">) : null;</span>
-<span class="s2">      if (box &amp;&amp; box.value.trim()) </span><span class="se">{{</span>
-<span class="s2">        let stem = box.value.trim().replace(/[</span><span class="se">\\\\</span><span class="s2">/:*?"&lt;&gt;|</span><span class="se">\\</span><span class="s2">x00-</span><span class="se">\\</span><span class="s2">x1f]/g, '_');</span>
-<span class="s2">        if (stem.toLowerCase().endsWith(ext)) stem = stem.slice(0, -ext.length);</span>
-<span class="s2">        stem = stem.replace(/^[ .]+|[ .]+$/g, '').slice(0, </span><span class="si">{</span><span class="n">_MAX_STEM</span><span class="si">}</span><span class="s2">);</span>
-<span class="s2">        if (stem) name = stem + ext;</span>
+    <span class="n">ext_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">'.'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""async () =&gt; </span><span class="se">{{</span>
+<span class="s2">      const name = </span><span class="si">{</span><span class="n">name_js</span><span class="si">}</span><span class="s2">, mime = </span><span class="si">{</span><span class="n">mime_js</span><span class="si">}</span><span class="s2">, ext = </span><span class="si">{</span><span class="n">ext_js</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">      const response = await fetch(</span><span class="si">{</span><span class="n">url_js</span><span class="si">}</span><span class="s2">);</span>
+<span class="s2">      if (response.status === 204) </span><span class="se">{{</span>
+<span class="s2">        Quasar.Notify.create(</span><span class="se">{{</span><span class="s2">message: 'Nothing to export yet.', color: 'warning'</span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">        return;</span>
 <span class="s2">      </span><span class="se">}}</span>
-<span class="s2">      const blob = new Blob([text], </span><span class="se">{{</span><span class="s2">type: mime</span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">      const blob = new Blob([await response.text()], </span><span class="se">{{</span><span class="s2">type: mime</span><span class="se">}}</span><span class="s2">);</span>
 <span class="s2">      if (window.showSaveFilePicker) </span><span class="se">{{</span>
 <span class="s2">        try </span><span class="se">{{</span>
 <span class="s2">          const handle = await window.showSaveFilePicker(</span><span class="se">{{</span>
@@ -416,42 +409,45 @@
 <span class="s2">      a.click();</span>
 <span class="s2">      a.remove();</span>
 <span class="s2">      setTimeout(() =&gt; URL.revokeObjectURL(a.href), 1000);</span>
-<span class="s2">    </span><span class="se">}}</span><span class="s2">)();</span>
-<span class="s2">    """</span></div>
+<span class="s2">    </span><span class="se">}}</span><span class="s2">"""</span></div>
 
 
 
-<div class="viewcode-block" id="open_save_dialog">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.open_save_dialog">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">open_save_dialog</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Open a dialog to confirm the file name, then save through the browser's Save dialog.</span>
-
-<span class="sd">    The name box is prefilled with ``filename``. *Save…* runs :func:`save_script` as a</span>
-<span class="sd">    client-side click handler (inside the user gesture, as browsers require), so the native</span>
-<span class="sd">    folder/name picker opens on the user's machine, starting in Documents.</span>
+<div class="viewcode-block" id="attach_save">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.attach_save">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">attach_save</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Make clicking ``element`` open the native Save dialog straight away.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        title: Dialog heading, e.g. ``"Export events (CSV)"``.</span>
-<span class="sd">        filename: Default file name shown in the box.</span>
-<span class="sd">        text: The file content, already rendered.</span>
+<span class="sd">        element: A button or menu item.</span>
+<span class="sd">        filename: Default file name offered in the Save dialog.</span>
+<span class="sd">        url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).</span>
 <span class="sd">        extension: File extension without the dot (selects the MIME type).</span>
 <span class="sd">    """</span>
-    <span class="n">input_id</span> <span class="o">=</span> <span class="s2">"annie-save-name"</span>
-    <span class="n">script</span> <span class="o">=</span> <span class="n">save_script</span><span class="p">(</span>
-        <span class="n">filename</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">MIME_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s2">"text/plain"</span><span class="p">),</span> <span class="n">name_input_id</span><span class="o">=</span><span class="n">input_id</span>
-    <span class="p">)</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-96"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-base font-medium"</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"File name"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"input-id=</span><span class="si">{</span><span class="n">input_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
-            <span class="s2">"Save… opens your system's Save dialog, starting in your Documents folder, "</span>
-            <span class="s2">"where you can pick the folder and change the name."</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs text-gray-600"</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end gap-2"</span><span class="p">):</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">dialog</span><span class="o">.</span><span class="n">close</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
-            <span class="n">save</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Save…"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"save"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">dialog</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
-            <span class="n">save</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"click"</span><span class="p">,</span> <span class="n">js_handler</span><span class="o">=</span><span class="sa">f</span><span class="s2">"() =&gt; </span><span class="se">{{</span><span class="s2"> </span><span class="si">{</span><span class="n">script</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span></div>
+    <span class="n">element</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
+        <span class="s2">"click"</span><span class="p">,</span>
+        <span class="n">js_handler</span><span class="o">=</span><span class="n">save_from_url_js</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">MIME_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s2">"text/plain"</span><span class="p">)),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="export_menu_item">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/download/index.html#annie.pages.download.export_menu_item">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_menu_item</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add a menu entry that opens the native Save dialog straight away when clicked.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        label: Menu text.</span>
+<span class="sd">        filename: Default file name offered in the Save dialog.</span>
+<span class="sd">        url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).</span>
+<span class="sd">        extension: File extension without the dot (selects the MIME type).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The created menu item.</span>
+<span class="sd">    """</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu_item</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">attach_save</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="n">extension</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">item</span></div>
 
 </pre></div>
         </article>
