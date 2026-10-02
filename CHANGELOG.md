@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.1](https://github.com/fodorad/Annie/compare/v1.8.0...v1.8.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* working timeline zoom - independent window, pan scrollbar, follow playback ([#50](https://github.com/fodorad/Annie/issues/50)) ([2cf73c0](https://github.com/fodorad/Annie/commit/2cf73c0dcc74f9f0d43949f8e407ae47ed297ab3))
+
 ## [1.8.0](https://github.com/fodorad/Annie/compare/v1.7.2...v1.8.0) (2026-10-02)
 
 
