@@ -1,0 +1,165 @@
+annie.pages.timeline_view
+=========================
+
+.. py:module:: annie.pages.timeline_view
+
+.. autoapi-nested-parse::
+
+   Visible-window geometry of the event timeline (pure, no UI).
+
+   The timeline shows a window ``[start, start + span]`` of the clip's frames. The window is
+   **state of its own**: it never derives from the playhead, so the playhead can travel inside it
+   (or leave it) while the user pans, zooms, or follows playback. Everything here is plain
+   arithmetic so the rules are unit-testable without a browser.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.pages.timeline_view.MAX_ZOOM
+   annie.pages.timeline_view.FOLLOW_LEAD
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.timeline_view.TimelineView
+
+
+Module Contents
+---------------
+
+.. py:data:: MAX_ZOOM
+   :value: 100.0
+
+
+   Upper bound on the zoom factor.
+
+.. py:data:: FOLLOW_LEAD
+   :value: 0.1
+
+
+   Fraction of the window left *behind* the playhead after a page-flip.
+
+.. py:class:: TimelineView
+
+   The visible window of a clip's timeline.
+
+   .. attribute:: total_frames
+
+      Clip length in frames (0 while unknown).
+
+   .. attribute:: zoom
+
+      Zoom factor, ``>= 1``; ``1`` shows the whole clip.
+
+   .. attribute:: start
+
+      First visible frame. Clamped whenever it is read, so it may be set freely.
+
+
+   .. py:property:: last_frame
+      :type: int
+
+
+      Index of the clip's last frame (``0`` for an empty/unknown clip).
+
+
+   .. py:property:: zoomed_in
+      :type: bool
+
+
+      Whether the window is narrower than the clip (pan/scrollbar make sense).
+
+
+   .. py:property:: span
+      :type: int
+
+
+      Number of frames between the window's edges (``>= 1``).
+
+
+   .. py:method:: window() -> tuple[int, int]
+
+      Return the visible ``(first, last)`` frames, clamped inside the clip.
+
+
+
+   .. py:method:: contains(frame: int) -> bool
+
+      Whether ``frame`` lies inside the visible window.
+
+
+
+   .. py:method:: fraction_of(frame: int) -> float | None
+
+      Return ``frame``'s horizontal position ``[0, 1]``, or ``None`` if off-screen.
+
+
+
+   .. py:method:: fraction_clamped(frame: int) -> float
+
+      Return ``frame``'s position clipped to ``[0, 1]`` (for bands that clip at an edge).
+
+
+
+   .. py:method:: frame_at(fraction: float) -> int
+
+      Map a window fraction ``[0, 1]`` back to an absolute frame.
+
+
+
+   .. py:method:: zoom_by(factor: float, anchor_frame: int | None = None) -> None
+
+      Multiply the zoom, keeping ``anchor_frame`` at the same screen position.
+
+      :param factor: Multiplier (``> 1`` zooms in).
+      :param anchor_frame: Frame to hold still; ``None`` anchors on the window's centre. An
+                           anchor outside the window is treated like ``None``.
+
+
+
+   .. py:method:: pan_by(delta_frames: int) -> None
+
+      Slide the window by ``delta_frames`` (no-op when not zoomed in).
+
+
+
+   .. py:method:: pan_by_fraction(fraction: float) -> None
+
+      Slide the window by a fraction of its own width (negative pans left).
+
+
+
+   .. py:method:: set_start_fraction(fraction: float) -> None
+
+      Place the window's left edge at ``fraction`` of the pannable range (scrollbar).
+
+
+
+   .. py:method:: center_on(frame: int) -> None
+
+      Centre the window on ``frame`` (no-op when not zoomed in).
+
+
+
+   .. py:method:: page_to(frame: int, lead: float = FOLLOW_LEAD) -> None
+
+      Flip the window so ``frame`` sits ``lead`` of the way in (forward playback).
+
+      Moving backwards past the left edge shows the history instead, leaving ``lead`` of
+      the window ahead of ``frame``.
+
+
+
+   .. py:method:: thumb() -> tuple[float, float]
+
+      Return the scrollbar thumb as ``(left, width)`` fractions of its track.
+
+
+

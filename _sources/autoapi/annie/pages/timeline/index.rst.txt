@@ -67,6 +67,8 @@ Functions
    annie.pages.timeline.pack_lanes
    annie.pages.timeline.build_svg
    annie.pages.timeline.gesture_script
+   annie.pages.timeline.scrollbar_html
+   annie.pages.timeline.scrollbar_script
 
 
 Module Contents
@@ -189,7 +191,7 @@ Module Contents
    :returns: A complete ``<svg>…</svg>`` markup string that scales to its container's width.
 
 
-.. py:function:: gesture_script(svg_id: str, event_name: str) -> str
+.. py:function:: gesture_script(svg_id: str, event_name: str, *, pannable: bool = False) -> str
 
    Return JS that reports a timeline click to the server via ``emitEvent``.
 
@@ -204,6 +206,34 @@ Module Contents
    authoring gesture; boundaries come from the START/END EVENT buttons and the i/o keys.
 
    :param svg_id: DOM id of the timeline ``<svg>``.
+   :param event_name: The custom event name the NiceGUI handler listens for.
+   :param pannable: Whether the timeline is zoomed in. When true, a horizontal wheel/trackpad
+                    scroll (or Shift+wheel) pans the window and emits ``kind = "wheel"`` with ``dx``
+                    (a fraction of the window width); the page's own scroll is left alone otherwise.
+
+   :returns: The JavaScript to run once via ``ui.run_javascript``.
+
+
+.. py:function:: scrollbar_html(scroll_id: str, left: float, width: float) -> str
+
+   Return the pan scrollbar markup: a track holding a draggable thumb.
+
+   :param scroll_id: DOM id for the track element.
+   :param left: The thumb's left edge as a ``[0, 1]`` fraction of the track.
+   :param width: The thumb's width as a ``[0, 1]`` fraction of the track.
+
+   :returns: An HTML string; positions are percentages so it fills any container width.
+
+
+.. py:function:: scrollbar_script(scroll_id: str, event_name: str) -> str
+
+   Return JS that makes the scrollbar draggable and click-to-centre.
+
+   Emits ``event_name`` with ``{kind: "pan", x}`` where ``x`` is the thumb's position as a
+   fraction of the pannable range (``0`` = window at the start, ``1`` = at the end),
+   throttled to ~20 Hz while dragging.
+
+   :param scroll_id: DOM id of the scrollbar track.
    :param event_name: The custom event name the NiceGUI handler listens for.
 
    :returns: The JavaScript to run once via ``ui.run_javascript``.

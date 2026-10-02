@@ -34,6 +34,7 @@ Submodules
    /autoapi/annie/pages/reveal/index
    /autoapi/annie/pages/settings/index
    /autoapi/annie/pages/timeline/index
+   /autoapi/annie/pages/timeline_view/index
    /autoapi/annie/pages/utils/index
    /autoapi/annie/pages/videoclock/index
    /autoapi/annie/pages/viewport/index

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.utils" href="../utils/index.html"><link rel="prev" title="annie.pages.settings" href="../settings/index.html">
+<link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.timeline_view" href="../timeline_view/index.html"><link rel="prev" title="annie.pages.settings" href="../settings/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/timeline/index.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
@@ -249,6 +249,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">annie.pages.timeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/index.html">annie.pages.utils</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../videoclock/index.html">annie.pages.videoclock</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../viewport/index.html">annie.pages.viewport</a></li>
@@ -392,6 +393,12 @@ re-render (see <a class="reference internal" href="../videoclock/index.html#anni
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.gesture_script" title="annie.pages.timeline.gesture_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gesture_script</span></code></a>(→ str)</p></td>
 <td><p>Return JS that reports a timeline click to the server via <code class="docutils literal notranslate"><span class="pre">emitEvent</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.scrollbar_html" title="annie.pages.timeline.scrollbar_html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scrollbar_html</span></code></a>(→ str)</p></td>
+<td><p>Return the pan scrollbar markup: a track holding a draggable thumb.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.scrollbar_script" title="annie.pages.timeline.scrollbar_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scrollbar_script</span></code></a>(→ str)</p></td>
+<td><p>Return JS that makes the scrollbar draggable and click-to-centre.</p></td>
 </tr>
 </tbody>
 </table>
@@ -557,7 +564,7 @@ start frame of the growing amber band; <code class="docutils literal notranslate
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.timeline.gesture_script">
-<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">gesture_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svg_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/timeline.html#gesture_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.timeline.gesture_script" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">gesture_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svg_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">pannable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/timeline.html#gesture_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.timeline.gesture_script" title="Link to this definition">¶</a></dt>
 <dd><p>Return JS that reports a timeline click to the server via <code class="docutils literal notranslate"><span class="pre">emitEvent</span></code>.</p>
 <p>Attached once after the SVG is embedded. It listens for pointer down/up on the SVG and
 emits <code class="docutils literal notranslate"><span class="pre">event_name</span></code> with a <code class="docutils literal notranslate"><span class="pre">detail</span></code> of <code class="docutils literal notranslate"><span class="pre">{kind,</span> <span class="pre">x,</span> <span class="pre">...}</span></code> where <code class="docutils literal notranslate"><span class="pre">x</span></code> is a <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>
@@ -572,6 +579,47 @@ authoring gesture; boundaries come from the START/END EVENT buttons and the i/o 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>svg_id</strong> – DOM id of the timeline <code class="docutils literal notranslate"><span class="pre">&lt;svg&gt;</span></code>.</p></li>
+<li><p><strong>event_name</strong> – The custom event name the NiceGUI handler listens for.</p></li>
+<li><p><strong>pannable</strong> – Whether the timeline is zoomed in. When true, a horizontal wheel/trackpad
+scroll (or Shift+wheel) pans the window and emits <code class="docutils literal notranslate"><span class="pre">kind</span> <span class="pre">=</span> <span class="pre">&quot;wheel&quot;</span></code> with <code class="docutils literal notranslate"><span class="pre">dx</span></code>
+(a fraction of the window width); the page’s own scroll is left alone otherwise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The JavaScript to run once via <code class="docutils literal notranslate"><span class="pre">ui.run_javascript</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.timeline.scrollbar_html">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">scrollbar_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scroll_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/timeline.html#scrollbar_html"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.timeline.scrollbar_html" title="Link to this definition">¶</a></dt>
+<dd><p>Return the pan scrollbar markup: a track holding a draggable thumb.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scroll_id</strong> – DOM id for the track element.</p></li>
+<li><p><strong>left</strong> – The thumb’s left edge as a <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> fraction of the track.</p></li>
+<li><p><strong>width</strong> – The thumb’s width as a <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> fraction of the track.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTML string; positions are percentages so it fills any container width.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.timeline.scrollbar_script">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">scrollbar_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scroll_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/timeline.html#scrollbar_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.timeline.scrollbar_script" title="Link to this definition">¶</a></dt>
+<dd><p>Return JS that makes the scrollbar draggable and click-to-centre.</p>
+<p>Emits <code class="docutils literal notranslate"><span class="pre">event_name</span></code> with <code class="docutils literal notranslate"><span class="pre">{kind:</span> <span class="pre">&quot;pan&quot;,</span> <span class="pre">x}</span></code> where <code class="docutils literal notranslate"><span class="pre">x</span></code> is the thumb’s position as a
+fraction of the pannable range (<code class="docutils literal notranslate"><span class="pre">0</span></code> = window at the start, <code class="docutils literal notranslate"><span class="pre">1</span></code> = at the end),
+throttled to ~20 Hz while dragging.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scroll_id</strong> – DOM id of the scrollbar track.</p></li>
 <li><p><strong>event_name</strong> – The custom event name the NiceGUI handler listens for.</p></li>
 </ul>
 </dd>
@@ -589,12 +637,12 @@ authoring gesture; boundaries come from the START/END EVENT buttons and the i/o 
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../utils/index.html">
+          <a class="next-page" href="../timeline_view/index.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">annie.pages.utils</div>
+                <div class="title">annie.pages.timeline_view</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -671,6 +719,8 @@ authoring gesture; boundaries come from the START/END EVENT buttons and the i/o 
 <li><a class="reference internal" href="#annie.pages.timeline.pack_lanes"><code class="docutils literal notranslate"><span class="pre">pack_lanes()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.timeline.build_svg"><code class="docutils literal notranslate"><span class="pre">build_svg()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.timeline.gesture_script"><code class="docutils literal notranslate"><span class="pre">gesture_script()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.timeline.scrollbar_html"><code class="docutils literal notranslate"><span class="pre">scrollbar_html()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.timeline.scrollbar_script"><code class="docutils literal notranslate"><span class="pre">scrollbar_script()</span></code></a></li>
 </ul>
 </li>
 </ul>
