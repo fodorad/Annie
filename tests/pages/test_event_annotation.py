@@ -131,29 +131,24 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event_task._fraction_to_frame(self.state, 0.0), 0)  # noqa: SLF001
         self.assertEqual(event_task._fraction_to_frame(self.state, 1.0), 249)  # noqa: SLF001
 
-    async def test_export_opens_save_dialog_without_writing_server_side(self) -> None:
-        from annie.core.config import settings
-
+    async def test_export_text_per_scope_and_format(self) -> None:
+        self.assertIsNone(event_task._export_text(self.state, "video", "csv"))  # noqa: SLF001
         state.store.add_event("v", "v::", "speech", 0, 25, label="hi")
-        before = (
-            set(settings.temp_dir.glob("annie_events_*")) if settings.temp_dir.exists() else set()
-        )
-        with ui_client() as client:
-            for fmt in ("json", "csv"):
-                event_task._export(self.state, scope="video", fmt=fmt)  # noqa: SLF001
-            dialogs = [e for e in client.elements.values() if type(e).__name__ == "Dialog"]
-        self.assertEqual(len(dialogs), 2)
-        # The file is saved by the browser, so nothing new lands in the server's temp dir.
-        after = (
-            set(settings.temp_dir.glob("annie_events_*")) if settings.temp_dir.exists() else set()
-        )
-        self.assertEqual(before, after)
+        js = event_task._export_text(self.state, "video", "json")  # noqa: SLF001
+        csv_text = event_task._export_text(self.state, "session", "csv")  # noqa: SLF001
+        self.assertIn('"speech"', js or "")
+        self.assertTrue((csv_text or "").startswith("video_id,track"))
 
-    async def test_export_with_no_events_opens_nothing(self) -> None:
-        with ui_client() as client:
-            event_task._export(self.state, scope="video", fmt="csv")  # noqa: SLF001
-            dialogs = [e for e in client.elements.values() if type(e).__name__ == "Dialog"]
-        self.assertEqual(dialogs, [])
+    async def test_export_route_serves_text_or_204(self) -> None:
+        state.store.add_event("v", "v::", "speech", 0, 25)
+        event_task._event_states["c1"] = self.state  # noqa: SLF001
+        ok = event_task._export_route("c1", "video", "csv")  # noqa: SLF001
+        self.assertEqual(ok.status_code, 200)
+        self.assertEqual(ok.media_type, "text/csv")
+        for args in (("nope", "video", "csv"), ("c1", "bogus", "csv"), ("c1", "video", "xml")):
+            self.assertEqual(event_task._export_route(*args).status_code, 204)  # noqa: SLF001
+        state.store.delete_event(state.store.events_for("v::")[0].event_id)
+        self.assertEqual(event_task._export_route("c1", "video", "csv").status_code, 204)  # noqa: SLF001
 
     async def test_timecode_round_trip(self) -> None:
         self.assertEqual(event_task._format_timecode(65.25), "01:05.25")  # noqa: SLF001

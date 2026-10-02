@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nicegui import ui
+from fastapi import Response
+from nicegui import app, ui
 
 from annie.core import logbook, theme
 from annie.core.config import settings
@@ -20,6 +21,17 @@ from annie.pages import annotator, browse, download
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+
+@app.get("/annie/export/review/{fmt}")
+def _review_export_route(fmt: str) -> Response:
+    """Serve the review-status export's text; the browser saves it via the Save dialog."""
+    if fmt == "json":
+        return Response(content=state.store.export_json_text(), media_type="application/json")
+    if fmt == "csv":
+        return Response(content=state.store.export_csv_text(), media_type="text/csv")
+    return Response(status_code=204)
+
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -324,26 +336,15 @@ def render() -> None:
                 f"color:{theme.NEUTRAL}"
             )
 
-            def export_review(fmt: str) -> None:
-                text = (
-                    state.store.export_json_text()
-                    if fmt == "json"
-                    else state.store.export_csv_text()
-                )
-                download.open_save_dialog(
-                    title=f"Export review status ({fmt.upper()})",
-                    filename=f"annie_review.{fmt}",
-                    text=text,
-                    extension=fmt,
-                )
-
             with ui.row().classes("gap-2"):
-                ui.button(
-                    "Export JSON", icon="download", on_click=lambda: export_review("json")
-                ).props("flat")
-                ui.button(
-                    "Export CSV", icon="download", on_click=lambda: export_review("csv")
-                ).props("flat")
+                for fmt in ("json", "csv"):
+                    button = ui.button(f"Export {fmt.upper()}", icon="download").props("flat")
+                    download.attach_save(
+                        button,
+                        filename=f"annie_review.{fmt}",
+                        url=f"/annie/export/review/{fmt}",
+                        extension=fmt,
+                    )
 
         _maintenance_section()
 
