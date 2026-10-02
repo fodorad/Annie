@@ -14,6 +14,7 @@ in one call and importable via upsert, so a reviewer's curation travels with the
 from __future__ import annotations
 
 import csv
+import io
 import json
 import sqlite3
 import uuid
@@ -999,6 +1000,30 @@ class ReviewStore:
 
     # ── export / import ────────────────────────────────────────────────────────
 
+    def export_json_text(self) -> str:
+        """Render all review records as a JSON array string."""
+        return json.dumps([asdict(r) for r in self.all()], indent=2)
+
+    def export_csv_text(self) -> str:
+        """Render all review records as CSV text."""
+        fields = [
+            "row_key",
+            "video_id",
+            "annotation_suffix",
+            "verdict",
+            "note",
+            "annotate",
+            "active_track",
+            "decision",
+            "updated_at",
+        ]
+        buffer = io.StringIO(newline="")
+        writer = csv.DictWriter(buffer, fieldnames=fields)
+        writer.writeheader()
+        for record in self.all():
+            writer.writerow(asdict(record))
+        return buffer.getvalue()
+
     def export_json(self, path: str | Path) -> Path:
         """Write all review records to a JSON array file.
 
@@ -1010,7 +1035,7 @@ class ReviewStore:
         """
         out = Path(path)
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps([asdict(r) for r in self.all()], indent=2), encoding="utf-8")
+        out.write_text(self.export_json_text(), encoding="utf-8")
         return out
 
     def export_csv(self, path: str | Path) -> Path:
@@ -1024,22 +1049,8 @@ class ReviewStore:
         """
         out = Path(path)
         out.parent.mkdir(parents=True, exist_ok=True)
-        fields = [
-            "row_key",
-            "video_id",
-            "annotation_suffix",
-            "verdict",
-            "note",
-            "annotate",
-            "active_track",
-            "decision",
-            "updated_at",
-        ]
         with out.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=fields)
-            writer.writeheader()
-            for record in self.all():
-                writer.writerow(asdict(record))
+            handle.write(self.export_csv_text())
         return out
 
     def import_records(self, records: Iterable[dict[str, object]]) -> int:
