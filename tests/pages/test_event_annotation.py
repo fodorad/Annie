@@ -237,6 +237,99 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(f(["Participant 1", "Participant 3"]), "Participant 2")  # fills the gap
         self.assertEqual(f(["Mother", "Baby"]), "Participant 1")  # unrelated names don't count
 
+    # ── zoom / pan / follow ──────────────────────────────────────────────────────
+
+    def _zoomed(self) -> None:
+        self.state.view.zoom_by(4.0, anchor_frame=0)  # 250 frames → window 0..62
+
+    async def test_zoom_anchors_on_visible_playhead(self) -> None:
+        self.state.playhead_frame = 120
+        with ui_client():
+            event_task._zoom(self.state, 2.0)  # noqa: SLF001
+        self.assertTrue(self.state.view.contains(120))
+        self.assertAlmostEqual(self.state.view.fraction_of(120) or -1.0, 0.5, delta=0.02)
+
+    async def test_playhead_line_moves_inside_the_window(self) -> None:
+        # Regression: the window used to centre on the head, pinning the line at 0.5.
+        self._zoomed()
+        self.state.view.pan_by(20)
+        before = self.state.view.window()
+        self.state.playhead_frame = 30
+        self.assertEqual(self.state.view.window(), before)
+        a = self.state.view.fraction_of(30)
+        self.state.playhead_frame = 40
+        b = self.state.view.fraction_of(40)
+        self.assertLess(a or 0.0, b or 0.0)
+
+    async def test_follow_pages_window_when_playback_leaves_it(self) -> None:
+        self._zoomed()
+        self.state.playhead_frame = 100
+        with ui_client():
+            paged = event_task._follow_playhead(self.state)  # noqa: SLF001
+        self.assertTrue(paged)
+        self.assertTrue(self.state.view.contains(100))
+        self.assertAlmostEqual(self.state.view.fraction_of(100) or -1.0, 0.1, delta=0.03)
+
+    async def test_follow_off_leaves_window_and_hides_line(self) -> None:
+        self._zoomed()
+        self.state.follow = False
+        self.state.playhead_frame = 100
+        with ui_client():
+            paged = event_task._follow_playhead(self.state)  # noqa: SLF001
+        self.assertFalse(paged)
+        self.assertIsNone(self.state.view.fraction_of(100))
+
+    async def test_manual_pan_turns_follow_off(self) -> None:
+        self._zoomed()
+        with ui_client():
+            event_task._on_gesture(  # noqa: SLF001
+                self.state, _Args({"kind": "pan", "x": 0.5})
+            )
+        self.assertFalse(self.state.follow)
+        self.assertGreater(self.state.view.window()[0], 0)
+        self.state.follow = True
+        with ui_client():
+            event_task._on_gesture(  # noqa: SLF001
+                self.state, _Args({"kind": "wheel", "dx": -0.5})
+            )
+        self.assertFalse(self.state.follow)
+
+    async def test_enabling_follow_snaps_to_playhead(self) -> None:
+        self._zoomed()
+        self.state.follow = False
+        self.state.playhead_frame = 200
+        with ui_client():
+            event_task._set_follow(self.state, True)  # noqa: SLF001
+        self.assertTrue(self.state.view.contains(200))
+
+    async def test_explicit_seek_outside_window_centres_it(self) -> None:
+        self._zoomed()
+        self.state.follow = False
+        with ui_client():
+            event_task._seek(self.state, "vid", 200)  # noqa: SLF001
+        self.assertTrue(self.state.view.contains(200))
+        self.assertEqual(self.state.playhead_frame, 200)
+
+    async def test_seek_inside_window_keeps_it(self) -> None:
+        self._zoomed()
+        before = self.state.view.window()
+        with ui_client():
+            event_task._seek(self.state, "vid", 10)  # noqa: SLF001
+        self.assertEqual(self.state.view.window(), before)
+
+    async def test_gesture_fraction_maps_through_the_real_window(self) -> None:
+        self._zoomed()
+        self.state.view.pan_by(40)
+        lo, hi = self.state.view.window()
+        self.assertEqual(event_task._fraction_to_frame(self.state, 0.0), lo)  # noqa: SLF001
+        self.assertEqual(event_task._fraction_to_frame(self.state, 1.0), hi)  # noqa: SLF001
+
+    async def test_range_label(self) -> None:
+        self._zoomed()
+        label = event_task._range_label(self.state)  # noqa: SLF001
+        self.assertIn("×4.0", label)
+        self.assertIn("of 10.0 s", label)
+
 
 if __name__ == "__main__":
     unittest.main()

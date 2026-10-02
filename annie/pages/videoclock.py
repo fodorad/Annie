@@ -141,22 +141,47 @@ def current_time(element_id_: str) -> Awaitable[float]:
     return ui.run_javascript(js)
 
 
-def set_playhead_x(timeline_id: str, x_fraction: float) -> None:
+def set_playhead_x(timeline_id: str, x_fraction: float | None) -> None:
     """Move the timeline playhead line to a horizontal fraction without a full re-render.
 
     The playhead is a single SVG line inside the timeline element; the poll updates only its
-    ``x`` so playback stays cheap (no server round-trip re-draw of the event boxes).
+    position so playback stays cheap (no server round-trip re-draw of the event boxes).
 
     Args:
         timeline_id: DOM id of the timeline's SVG element.
-        x_fraction: Playhead position as a fraction ``[0, 1]`` of the timeline width.
+        x_fraction: Playhead position as a fraction ``[0, 1]`` of the visible window, or
+            ``None`` when the playhead is outside it — the line is then hidden, never pinned
+            to an edge.
     """
-    percent = min(1.0, max(0.0, x_fraction)) * 100.0
+    if x_fraction is None:
+        action = "line.style.display = 'none';"
+    else:
+        percent = min(1.0, max(0.0, x_fraction)) * 100.0
+        action = (
+            f"line.style.display = ''; line.setAttribute('x1', '{percent:.3f}%');"
+            f" line.setAttribute('x2', '{percent:.3f}%');"
+        )
     js = (
         f"const t = document.getElementById('{timeline_id}');"
         f" if (t) {{ const line = t.querySelector('.annie-playhead');"
-        f" if (line) {{ line.setAttribute('x1', '{percent:.3f}%');"
-        f" line.setAttribute('x2', '{percent:.3f}%'); }} }}"
+        f" if (line) {{ {action} }} }}"
+    )
+    ui.run_javascript(js)
+
+
+def set_scrollbar(scroll_id: str, left: float, width: float) -> None:
+    """Move the pan scrollbar's thumb without rebuilding it (so a drag is not interrupted).
+
+    Args:
+        scroll_id: DOM id of the scrollbar track.
+        left: The thumb's left edge as a fraction of the track.
+        width: The thumb's width as a fraction of the track.
+    """
+    js = (
+        f"const s = document.getElementById('{scroll_id}');"
+        f" if (s) {{ const th = s.querySelector('.annie-thumb');"
+        f" if (th) {{ th.style.left = '{left * 100.0:.3f}%';"
+        f" th.style.width = '{width * 100.0:.3f}%'; }} }}"
     )
     ui.run_javascript(js)
 
