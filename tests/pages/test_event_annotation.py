@@ -131,19 +131,29 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event_task._fraction_to_frame(self.state, 0.0), 0)  # noqa: SLF001
         self.assertEqual(event_task._fraction_to_frame(self.state, 1.0), 249)  # noqa: SLF001
 
-    async def test_export_writes_json_and_csv(self) -> None:
-        state.store.add_event("v", "v::", "speech", 0, 25, label="hi")
+    async def test_export_opens_save_dialog_without_writing_server_side(self) -> None:
         from annie.core.config import settings
 
-        settings.temp_dir.mkdir(parents=True, exist_ok=True)
-        with ui_client():
-            event_task._export(self.state, scope="video", fmt="json")  # noqa: SLF001
+        state.store.add_event("v", "v::", "speech", 0, 25, label="hi")
+        before = (
+            set(settings.temp_dir.glob("annie_events_*")) if settings.temp_dir.exists() else set()
+        )
+        with ui_client() as client:
+            for fmt in ("json", "csv"):
+                event_task._export(self.state, scope="video", fmt=fmt)  # noqa: SLF001
+            dialogs = [e for e in client.elements.values() if type(e).__name__ == "Dialog"]
+        self.assertEqual(len(dialogs), 2)
+        # The file is saved by the browser, so nothing new lands in the server's temp dir.
+        after = (
+            set(settings.temp_dir.glob("annie_events_*")) if settings.temp_dir.exists() else set()
+        )
+        self.assertEqual(before, after)
+
+    async def test_export_with_no_events_opens_nothing(self) -> None:
+        with ui_client() as client:
             event_task._export(self.state, scope="video", fmt="csv")  # noqa: SLF001
-        out_json = settings.temp_dir / "annie_events_v.json"
-        out_csv = settings.temp_dir / "annie_events_v.csv"
-        self.assertTrue(out_json.exists())
-        self.assertTrue(out_csv.exists())
-        self.assertIn("speech", out_csv.read_text(encoding="utf-8"))
+            dialogs = [e for e in client.elements.values() if type(e).__name__ == "Dialog"]
+        self.assertEqual(dialogs, [])
 
     async def test_timecode_round_trip(self) -> None:
         self.assertEqual(event_task._format_timecode(65.25), "01:05.25")  # noqa: SLF001
