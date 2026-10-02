@@ -36,39 +36,30 @@ class TestSanitizeFilename(unittest.TestCase):
         self.assertLessEqual(len(self._clean("x" * 500)), 120 + len(".csv"))
 
 
-class TestSaveScript(unittest.TestCase):
-    def test_contains_picker_and_fallback(self) -> None:
-        js = download.save_script("a.csv", "x", "text/csv")
-        self.assertIn("showSaveFilePicker", js)
+class TestSaveFromUrl(unittest.TestCase):
+    def test_fetches_then_opens_picker_with_fallback(self) -> None:
+        js = download.save_from_url_js("a.csv", "/x/y", "text/csv")
+        self.assertIn(json.dumps("/x/y"), js)
+        self.assertLess(js.index("fetch("), js.index("showSaveFilePicker({"))
         self.assertIn("startIn: 'documents'", js)
+        self.assertIn("suggestedName: name", js)
         self.assertIn("a.download", js)
         self.assertIn("AbortError", js)
+        self.assertIn("204", js)
 
-    def test_content_is_escaped(self) -> None:
-        text = 'he said "hi"\nline2 </script><b>'
-        js = download.save_script("a.csv", text, "text/csv")
-        self.assertIn(json.dumps("a.csv"), js)
-        self.assertNotIn("</script>", js)
-        self.assertNotIn('he said "hi"', js)  # quotes are backslash-escaped
-
-    def test_name_input_is_wired_when_given(self) -> None:
-        self.assertIn(
-            '"my-id"', download.save_script("a.csv", "x", "text/csv", name_input_id="my-id")
-        )
-
-    def test_no_raw_control_characters(self) -> None:
-        js = download.save_script("a.csv", "x", "text/csv", name_input_id="i")
-        self.assertFalse([c for c in js if ord(c) < 32 and c not in "\n \t"])
+    def test_filename_and_mime_are_escaped_literals(self) -> None:
+        js = download.save_from_url_js('we"ird.csv', "/x", "text/csv")
+        self.assertIn(json.dumps('we"ird.csv'), js)
 
     @unittest.skipUnless(shutil.which("node"), "node not installed")
     def test_script_is_valid_javascript(self) -> None:
-        js = download.save_script("a.csv", 'q"\n</script>', "text/csv", name_input_id="i")
+        js = f"const handler = {download.save_from_url_js('a.csv', '/x', 'text/csv')};"
         result = subprocess.run(  # noqa: S603
-            ["node", "--check", "-"],
+            ["node", "--check", "-"],  # noqa: S607
             input=js,
             text=True,
             capture_output=True,
-            check=False,  # noqa: S607
+            check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 

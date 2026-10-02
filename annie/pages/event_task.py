@@ -22,7 +22,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from nicegui import context, ui
+from fastapi import Response
+from nicegui import app, context, ui
 
 from annie.core import logbook, theme
 from annie.core.state import state
@@ -289,18 +290,20 @@ def _toolbar(state_: _EventState, entries: list[VideoEntry]) -> None:
 
         ui.element("div").classes("flex-grow")
 
-        with ui.button("Export", icon="download").props("flat dense"):
-            with ui.menu():
-                ui.menu_item(
-                    "This video — JSON", lambda: _export(state_, scope="video", fmt="json")
-                )
-                ui.menu_item("This video — CSV", lambda: _export(state_, scope="video", fmt="csv"))
-                ui.menu_item(
-                    "All session — JSON", lambda: _export(state_, scope="session", fmt="json")
-                )
-                ui.menu_item(
-                    "All session — CSV", lambda: _export(state_, scope="session", fmt="csv")
-                )
+        with ui.button("Export", icon="download").props("flat dense"), ui.menu():
+            for scope, scope_label in (("video", "This video"), ("session", "All session")):
+                for fmt in ("json", "csv"):
+                    stem = state_.video_id if scope == "video" else "session"
+                    download.export_menu_item(
+                        f"{scope_label} — {fmt.upper()}",
+                        filename=download.sanitize_filename(
+                            f"annie_events_{stem or 'video'}",
+                            extension=fmt,
+                            default_stem="annie_events",
+                        ),
+                        url=f"/annie/export/events/{context.client.id}/{scope}/{fmt}",
+                        extension=fmt,
+                    )
 
 
 def _video_and_transport(state_: _EventState, entry: VideoEntry) -> None:
@@ -1183,37 +1186,41 @@ def _pan(state_: _EventState, detail: dict[str, Any]) -> None:
     _refresh_timeline(state_)
 
 
-def _export(state_: _EventState, *, scope: str, fmt: str) -> None:
-    """Open the save dialog for the current video's or the whole session's events."""
-    if scope == "video":
-        events = state.store.events_for(state_.row_key or "")
-        stem = state_.video_id or "video"
-    else:
-        events = state.store.all_events()
-        stem = "session"
+def _export_text(state_: _EventState, scope: str, fmt: str) -> str | None:
+    """Render the current video's or the whole session's events, or ``None`` if there are none."""
+    events = (
+        state.store.events_for(state_.row_key or "")
+        if scope == "video"
+        else state.store.all_events()
+    )
     if not events:
-        ui.notify("No events to export yet.", color=theme.WARNING)
-        return
-    fps_by_video = _fps_by_video(events)
-    text = (
-        events_to_json_text(events, fps_by_video)
-        if fmt == "json"
-        else events_to_csv_text(events, fps_by_video)
-    )
-    download.open_save_dialog(
-        title=f"Export events ({fmt.upper()})",
-        filename=download.sanitize_filename(
-            f"annie_events_{stem}", extension=fmt, default_stem="annie_events"
-        ),
-        text=text,
-        extension=fmt,
-    )
+        return None
+    fps_by_video = _fps_by_video(events, state_)
+    if fmt == "json":
+        return events_to_json_text(events, fps_by_video)
+    return events_to_csv_text(events, fps_by_video)
+
+
+@app.get("/annie/export/events/{client_id}/{scope}/{fmt}")
+def _export_route(client_id: str, scope: str, fmt: str) -> Response:
+    """Serve an event export's text to the browser, which saves it via the Save dialog.
+
+    ``204`` means there is nothing to export (or an unknown client/format), which the
+    browser-side handler reports instead of writing an empty file.
+    """
+    state_ = _event_states.get(client_id)
+    if state_ is None or scope not in ("video", "session") or fmt not in ("json", "csv"):
+        return Response(status_code=204)
+    text = _export_text(state_, scope, fmt)
+    if text is None:
+        return Response(status_code=204)
+    return Response(content=text, media_type=download.MIME_TYPES[fmt])
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
 
-def _fps_by_video(events: list[EventRecord]) -> dict[str, float]:
+def _fps_by_video(events: list[EventRecord], state_: _EventState) -> dict[str, float]:
     """Best-effort fps per video id for the export, from the scan manifest.
 
     The open video's fps is known on ``_EventState``; other videos in a session export are
@@ -1221,7 +1228,6 @@ def _fps_by_video(events: list[EventRecord]) -> dict[str, float]:
     with frame numbers only (seconds ``0``), which the export handles.
     """
     fps: dict[str, float] = {}
-    state_ = _event_state()
     if state_.video_id and state_.fps:
         fps[state_.video_id] = state_.fps
     scan = state.scan
