@@ -366,6 +366,32 @@
 <span class="c1">#: category set (the UI blocks that by asking for a category first).</span>
 <span class="n">_DEFAULT_TRACK</span> <span class="o">=</span> <span class="s2">"events"</span>
 
+<span class="c1">#: The category a fresh dataset starts with, so annotation can begin immediately.</span>
+<span class="n">_DEFAULT_CATEGORY_NAME</span> <span class="o">=</span> <span class="s2">"Participant 1"</span>
+
+
+<div class="viewcode-block" id="next_default_category_name">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.next_default_category_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">next_default_category_name</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the next free ``"Participant N"`` name given the existing category names.</span>
+
+<span class="sd">    Used when a category is added without a typed name, so "just click Add" still yields a</span>
+<span class="sd">    clean, consistent label (``Participant 2``, ``Participant 3``, …) and never a collision.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        existing: The category names already in use.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``"Participant N"`` for the smallest ``N &gt;= 1`` not already taken.</span>
+<span class="sd">    """</span>
+    <span class="n">taken</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="sa">f</span><span class="s2">"Participant </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">taken</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Participant </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
 <span class="c1">#: Eight pastel, mutually-distinct colours the editor offers for per-event colour-coding. The</span>
 <span class="c1">#: first (``None`` sentinel handled in the UI) means "use the track's colour"; these override</span>
 <span class="c1">#: it. Pastel so a filled timeline stays easy on the eye while still separable.</span>
@@ -492,9 +518,13 @@
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad file must not break the tab</span>
             <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not read metadata for </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="c1"># Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed</span>
-    <span class="c1"># them from any pre-existing event track names (back-compat for the old single-lane model)</span>
-    <span class="c1"># and point the active category at the first one.</span>
+    <span class="c1"># them from any pre-existing event track names (back-compat for the old single-lane model);</span>
+    <span class="c1"># if the dataset still has none, create a first "Participant 1" so annotation can start</span>
+    <span class="c1"># immediately rather than facing an empty "Add category" prompt. Then point the active</span>
+    <span class="c1"># category at the first one.</span>
     <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">seed_categories_from_events</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">():</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_category</span><span class="p">(</span><span class="n">_DEFAULT_CATEGORY_NAME</span><span class="p">)</span>
     <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">entry</span>
 
@@ -733,24 +763,26 @@
 <span class="sd">    """</span>
     <span class="n">categories</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 wrap"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Participant"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Category"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
                 <span class="s2">"＋ Add category"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"group_add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
-                <span class="s2">"Define the participants for this dataset (e.g. Mother, Baby)"</span>
+                <span class="s2">"Define the categories for this dataset (e.g. Mother, Baby)"</span>
             <span class="p">)</span>
             <span class="k">return</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">categories</span><span class="p">):</span>
             <span class="n">active</span> <span class="o">=</span> <span class="n">cat</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_category</span>
             <span class="n">colour</span> <span class="o">=</span> <span class="n">_category_color</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+            <span class="c1"># "(1) Participant 1": the parenthesised number is the quick-switch key, kept</span>
+            <span class="c1"># visually apart from the name so it never reads as part of it.</span>
             <span class="n">btn</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                     <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span> <span class="k">if</span> <span class="n">active</span> <span class="k">else</span> <span class="s2">"outline"</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense no-caps"</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="c1"># The active chip is filled with its lane colour; the rest are outlined.</span>
             <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
@@ -759,7 +791,7 @@
                 <span class="n">btn</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2"> !important;border-color:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2"> !important"</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"more_horiz"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
             <span class="s2">"flat dense round"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Manage participants (add, rename, delete, reorder, colour)"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Manage categories (add, rename, delete, reorder, colour)"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -788,7 +820,7 @@
 <span class="sd">    still holds events.</span>
 <span class="sd">    """</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[32rem] max-w-full gap-2"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Participants for this dataset"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Categories for this dataset"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
             <span class="s2">"These lanes are shared by every video in this dataset. Rename is safe — existing "</span>
             <span class="s2">"events follow the new name."</span>
@@ -805,7 +837,7 @@
                         <span class="n">state_</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">),</span> <span class="n">rebuild_rows</span>
                     <span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"No participants yet — add the first below."</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"No categories yet — add the first below."</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
                     <span class="p">)</span>
 
@@ -813,15 +845,16 @@
 
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 mt-2"</span><span class="p">):</span>
             <span class="n">new_in</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"New participant (e.g. Mother)"</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"New category (blank = next Participant N)"</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
             <span class="p">)</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">add_new</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
-                    <span class="k">return</span>
+                <span class="c1"># A blank name falls back to the next free "Participant N", so "just click Add"</span>
+                <span class="c1"># still yields a clean, consistent label with no typing (and no collisions).</span>
+                <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()]</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="n">next_default_category_name</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
                 <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_category</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                 <span class="n">new_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
                 <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
@@ -857,7 +890,7 @@
         <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2">;width:20px;height:20px;min-width:20px;min-height:20px;"</span>
             <span class="sa">f</span><span class="s2">"border-radius:50%;border:2px solid #00000055"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Change this participant's colour"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Change this category's colour"</span><span class="p">)</span>
 
         <span class="n">name_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
 
@@ -883,7 +916,7 @@
             <span class="n">down</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"disable"</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"delete"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_delete_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
             <span class="s2">"flat dense round"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this participant"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this category"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_cycle_category_color</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1030,12 +1063,12 @@
                 <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="c1"># Participant: pick from the category list (never free text) to move the event between</span>
+        <span class="c1"># Category: pick from the category list (never free text) to move the event between</span>
         <span class="c1"># lanes. Only shown when categories exist.</span>
         <span class="n">category_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()]</span>
         <span class="k">if</span> <span class="n">category_names</span><span class="p">:</span>
             <span class="n">picker</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">category_names</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"participant"</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">category_names</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"category"</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
             <span class="p">)</span>

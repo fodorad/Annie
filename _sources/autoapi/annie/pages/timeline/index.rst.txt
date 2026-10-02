@@ -18,6 +18,13 @@ annie.pages.timeline
    on top of each other, so every event stays clickable; a lane's height grows with how many
    events are concurrent at once (see :func:`pack_lanes`).
 
+   **Horizontal geometry is in percent.** The SVG has no ``viewBox``, so its user units are real
+   pixels, while every x position and width is written as a percentage of the element's width
+   (``x="12.5%"``). The server therefore never needs to know the browser's pixel width, nothing is
+   scaled, and text is never stretched — the failure mode of a fixed ``viewBox`` squeezed to the
+   container with ``preserveAspectRatio="none"``. Vertical measurements (lane heights, font size)
+   are plain pixels.
+
    **Where the logic lives.** Python owns the model and renders the SVG *markup* — this keeps
    the geometry testable (:func:`build_svg`, :func:`pack_lanes`, both pure) and mirrors how the
    segment-review layout keeps its logic server-side. JavaScript does two things only: it reports
@@ -36,7 +43,10 @@ Attributes
    annie.pages.timeline.LANE_PAD
    annie.pages.timeline.RULER_HEIGHT
    annie.pages.timeline.LANE_GAP
-   annie.pages.timeline.BASE_WIDTH
+   annie.pages.timeline.LANE_LABEL_HEIGHT
+   annie.pages.timeline.REFERENCE_WIDTH
+   annie.pages.timeline.MIN_BOX_PERCENT
+   annie.pages.timeline.FONT_SIZE
    annie.pages.timeline.EVENT_RADIUS
 
 
@@ -75,11 +85,23 @@ Module Contents
 
 
 .. py:data:: LANE_GAP
-   :value: 4
+   :value: 8
 
 
-.. py:data:: BASE_WIDTH
-   :value: 1000
+.. py:data:: LANE_LABEL_HEIGHT
+   :value: 16
+
+
+.. py:data:: REFERENCE_WIDTH
+   :value: 1300
+
+
+.. py:data:: MIN_BOX_PERCENT
+   :value: 0.25
+
+
+.. py:data:: FONT_SIZE
+   :value: 12
 
 
 .. py:data:: EVENT_RADIUS

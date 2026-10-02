@@ -41,6 +41,7 @@ Attributes
    annie.core.theme.EVENT_TRACK_PALETTE
    annie.core.theme.EVENT_PLAYHEAD
    annie.core.theme.EVENT_SELECTED
+   annie.core.theme.EVENT_BORDER
    annie.core.theme.EVENT_PENDING
    annie.core.theme.VDET_COLOR
    annie.core.theme.TRACK_COLOR
@@ -167,7 +168,14 @@ Module Contents
    :value: '#111827'
 
 
-   Near-black — the outline of the currently selected event box.
+   Near-black — the 2px outline of the currently selected event box.
+
+.. py:data:: EVENT_BORDER
+   :value: '#444b54'
+
+
+   Dark grey — the 1px outline every event box carries, so a pale/pastel fill stays visible
+   against the white lane (a yellow box on white would otherwise disappear).
 
 .. py:data:: EVENT_PENDING
    :value: '#f59e0b'

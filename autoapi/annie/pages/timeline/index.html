@@ -316,6 +316,12 @@ map to x within that window, and the gesture x-fraction maps back through the sa
 <p>Within one track, events that overlap in time are <strong>stacked into sub-rows</strong> rather than drawn
 on top of each other, so every event stays clickable; a lane’s height grows with how many
 events are concurrent at once (see <a class="reference internal" href="#annie.pages.timeline.pack_lanes" title="annie.pages.timeline.pack_lanes"><code class="xref py py-func docutils literal notranslate"><span class="pre">pack_lanes()</span></code></a>).</p>
+<p><strong>Horizontal geometry is in percent.</strong> The SVG has no <code class="docutils literal notranslate"><span class="pre">viewBox</span></code>, so its user units are real
+pixels, while every x position and width is written as a percentage of the element’s width
+(<code class="docutils literal notranslate"><span class="pre">x=&quot;12.5%&quot;</span></code>). The server therefore never needs to know the browser’s pixel width, nothing is
+scaled, and text is never stretched — the failure mode of a fixed <code class="docutils literal notranslate"><span class="pre">viewBox</span></code> squeezed to the
+container with <code class="docutils literal notranslate"><span class="pre">preserveAspectRatio=&quot;none&quot;</span></code>. Vertical measurements (lane heights, font size)
+are plain pixels.</p>
 <p><strong>Where the logic lives.</strong> Python owns the model and renders the SVG <em>markup</em> — this keeps
 the geometry testable (<a class="reference internal" href="#annie.pages.timeline.build_svg" title="annie.pages.timeline.build_svg"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_svg()</span></code></a>, <a class="reference internal" href="#annie.pages.timeline.pack_lanes" title="annie.pages.timeline.pack_lanes"><code class="xref py py-func docutils literal notranslate"><span class="pre">pack_lanes()</span></code></a>, both pure) and mirrors how the
 segment-review layout keeps its logic server-side. JavaScript does two things only: it reports
@@ -339,10 +345,19 @@ re-render (see <a class="reference internal" href="../videoclock/index.html#anni
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.LANE_GAP" title="annie.pages.timeline.LANE_GAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LANE_GAP</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.BASE_WIDTH" title="annie.pages.timeline.BASE_WIDTH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BASE_WIDTH</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.LANE_LABEL_HEIGHT" title="annie.pages.timeline.LANE_LABEL_HEIGHT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LANE_LABEL_HEIGHT</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.EVENT_RADIUS" title="annie.pages.timeline.EVENT_RADIUS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EVENT_RADIUS</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.REFERENCE_WIDTH" title="annie.pages.timeline.REFERENCE_WIDTH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">REFERENCE_WIDTH</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.MIN_BOX_PERCENT" title="annie.pages.timeline.MIN_BOX_PERCENT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MIN_BOX_PERCENT</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.FONT_SIZE" title="annie.pages.timeline.FONT_SIZE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FONT_SIZE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.EVENT_RADIUS" title="annie.pages.timeline.EVENT_RADIUS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EVENT_RADIUS</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -401,12 +416,27 @@ re-render (see <a class="reference internal" href="../videoclock/index.html#anni
 
 <dl class="py data">
 <dt class="sig sig-object py" id="annie.pages.timeline.LANE_GAP">
-<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">LANE_GAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#annie.pages.timeline.LANE_GAP" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">LANE_GAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8</span></span><a class="headerlink" href="#annie.pages.timeline.LANE_GAP" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="annie.pages.timeline.BASE_WIDTH">
-<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">BASE_WIDTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></span><a class="headerlink" href="#annie.pages.timeline.BASE_WIDTH" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="annie.pages.timeline.LANE_LABEL_HEIGHT">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">LANE_LABEL_HEIGHT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16</span></span><a class="headerlink" href="#annie.pages.timeline.LANE_LABEL_HEIGHT" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.pages.timeline.REFERENCE_WIDTH">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">REFERENCE_WIDTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1300</span></span><a class="headerlink" href="#annie.pages.timeline.REFERENCE_WIDTH" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.pages.timeline.MIN_BOX_PERCENT">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">MIN_BOX_PERCENT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></span><a class="headerlink" href="#annie.pages.timeline.MIN_BOX_PERCENT" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.pages.timeline.FONT_SIZE">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.timeline.</span></span><span class="sig-name descname"><span class="pre">FONT_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12</span></span><a class="headerlink" href="#annie.pages.timeline.FONT_SIZE" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
@@ -618,7 +648,10 @@ authoring gesture; boundaries come from the START/END EVENT buttons and the i/o 
 <li><a class="reference internal" href="#annie.pages.timeline.LANE_PAD"><code class="docutils literal notranslate"><span class="pre">LANE_PAD</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.timeline.RULER_HEIGHT"><code class="docutils literal notranslate"><span class="pre">RULER_HEIGHT</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.timeline.LANE_GAP"><code class="docutils literal notranslate"><span class="pre">LANE_GAP</span></code></a></li>
-<li><a class="reference internal" href="#annie.pages.timeline.BASE_WIDTH"><code class="docutils literal notranslate"><span class="pre">BASE_WIDTH</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.timeline.LANE_LABEL_HEIGHT"><code class="docutils literal notranslate"><span class="pre">LANE_LABEL_HEIGHT</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.timeline.REFERENCE_WIDTH"><code class="docutils literal notranslate"><span class="pre">REFERENCE_WIDTH</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.timeline.MIN_BOX_PERCENT"><code class="docutils literal notranslate"><span class="pre">MIN_BOX_PERCENT</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.timeline.FONT_SIZE"><code class="docutils literal notranslate"><span class="pre">FONT_SIZE</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.timeline.EVENT_RADIUS"><code class="docutils literal notranslate"><span class="pre">EVENT_RADIUS</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.timeline.TimelineEvent"><code class="docutils literal notranslate"><span class="pre">TimelineEvent</span></code></a><ul>
 <li><a class="reference internal" href="#annie.pages.timeline.TimelineEvent.event_id"><code class="docutils literal notranslate"><span class="pre">TimelineEvent.event_id</span></code></a></li>
