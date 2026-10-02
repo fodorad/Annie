@@ -11,6 +11,8 @@ from pathlib import Path
 from annie.dataset.events import (
     build_export_tree,
     clamp_event,
+    events_to_csv_text,
+    events_to_json_text,
     export_events_csv,
     export_events_json,
     frames_to_seconds,
@@ -167,6 +169,23 @@ class TestExportCsv(unittest.TestCase):
         rows = self._rows(export_events_csv(events, {"v": 25.0}, self.tmp / "col.csv"))
         self.assertEqual(rows[0]["color"], "#a8dadc")
         self.assertEqual(rows[1]["color"], "")
+
+
+class TestTextExport(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def test_json_text_matches_file(self) -> None:
+        events = [_event("v", "speech", 0, 25)]
+        path = export_events_json(events, {"v": 25.0}, self.tmp / "o.json")
+        self.assertEqual(path.read_text(encoding="utf-8"), events_to_json_text(events, {"v": 25.0}))
+
+    def test_csv_text_matches_file_and_has_header(self) -> None:
+        events = [_event("v", "speech", 0, 25)]
+        path = export_events_csv(events, {"v": 25.0}, self.tmp / "o.csv")
+        text = events_to_csv_text(events, {"v": 25.0})
+        self.assertEqual(path.read_bytes().decode("utf-8"), text)  # keeps CRLF as written
+        self.assertTrue(text.startswith("video_id,track,start_frame"))
 
 
 if __name__ == "__main__":

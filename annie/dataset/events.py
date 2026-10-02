@@ -20,6 +20,7 @@ Pure domain: no NiceGUI, no torch. The task UI and the store consume it.
 from __future__ import annotations
 
 import csv
+import io
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -135,16 +136,30 @@ def build_export_tree(
     }
 
 
+def events_to_json_text(events: Iterable[EventRecord], fps_by_video: Mapping[str, float]) -> str:
+    """Render events as nested JSON text (one object per video).
+
+    Suits downstream code: attributes stay nested, seconds are derived per video's fps. A
+    per-video export is this same shape with a single top-level key; a session export has
+    many.
+
+    Args:
+        events: The events to render.
+        fps_by_video: Frames per second per ``video_id``.
+
+    Returns:
+        The JSON document as a string.
+    """
+    tree = build_export_tree(events, fps_by_video)
+    return json.dumps(tree, indent=2, ensure_ascii=False)
+
+
 def export_events_json(
     events: Iterable[EventRecord],
     fps_by_video: Mapping[str, float],
     path: str | Path,
 ) -> Path:
-    """Write events to a nested JSON file (one object per video).
-
-    Suits downstream code: attributes stay nested, seconds are derived per video's fps. A
-    per-video export is this same shape with a single top-level key; a session export has
-    many.
+    """Write events to a nested JSON file (see :func:`events_to_json_text`).
 
     Args:
         events: The events to write.
@@ -156,32 +171,24 @@ def export_events_json(
     """
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    tree = build_export_tree(events, fps_by_video)
-    out.write_text(json.dumps(tree, indent=2, ensure_ascii=False), encoding="utf-8")
+    out.write_text(events_to_json_text(events, fps_by_video), encoding="utf-8")
     return out
 
 
-def export_events_csv(
-    events: Iterable[EventRecord],
-    fps_by_video: Mapping[str, float],
-    path: str | Path,
-) -> Path:
-    """Write events to a flat CSV (one row per event) for a spreadsheet.
+def events_to_csv_text(events: Iterable[EventRecord], fps_by_video: Mapping[str, float]) -> str:
+    """Render events as flat CSV text (one row per event) for a spreadsheet.
 
     Fixed columns come first, then one ``attr_<key>`` column per attribute key seen across
     *all* events (empty where an event lacks that key), so colleagues can open and sort the
     file in Excel. Attribute keys are sorted for a stable header.
 
     Args:
-        events: The events to write.
+        events: The events to render.
         fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
-        path: Destination ``.csv`` path (parent directories are created).
 
     Returns:
-        The path written.
+        The CSV document as a string.
     """
-    out = Path(path)
-    out.parent.mkdir(parents=True, exist_ok=True)
     events = list(events)
     attr_keys = sorted({key for event in events for key in event.attributes})
     fixed = [
@@ -196,23 +203,45 @@ def export_events_csv(
         "color",
     ]
     fields = [*fixed, *(f"attr_{key}" for key in attr_keys)]
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer.writeheader()
+    for event in events:
+        fps = float(fps_by_video.get(event.video_id, 0.0))
+        row: dict[str, object] = {
+            "video_id": event.video_id,
+            "track": event.track,
+            "start_frame": event.start_frame,
+            "end_frame": event.end_frame,
+            "start_sec": round(frames_to_seconds(event.start_frame, fps), 3),
+            "end_sec": round(frames_to_seconds(event.end_frame, fps), 3),
+            "label": event.label,
+            "note": event.note,
+            "color": event.color or "",
+        }
+        for key in attr_keys:
+            row[f"attr_{key}"] = event.attributes.get(key, "")
+        writer.writerow(row)
+    return buffer.getvalue()
+
+
+def export_events_csv(
+    events: Iterable[EventRecord],
+    fps_by_video: Mapping[str, float],
+    path: str | Path,
+) -> Path:
+    """Write events to a flat CSV file (see :func:`events_to_csv_text`).
+
+    Args:
+        events: The events to write.
+        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+        path: Destination ``.csv`` path (parent directories are created).
+
+    Returns:
+        The path written.
+    """
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
-        writer.writeheader()
-        for event in events:
-            fps = float(fps_by_video.get(event.video_id, 0.0))
-            row: dict[str, object] = {
-                "video_id": event.video_id,
-                "track": event.track,
-                "start_frame": event.start_frame,
-                "end_frame": event.end_frame,
-                "start_sec": round(frames_to_seconds(event.start_frame, fps), 3),
-                "end_sec": round(frames_to_seconds(event.end_frame, fps), 3),
-                "label": event.label,
-                "note": event.note,
-                "color": event.color or "",
-            }
-            for key in attr_keys:
-                row[f"attr_{key}"] = event.attributes.get(key, "")
-            writer.writerow(row)
+        handle.write(events_to_csv_text(events, fps_by_video))
     return out

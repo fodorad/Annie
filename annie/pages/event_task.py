@@ -28,13 +28,13 @@ from annie.core import logbook, theme
 from annie.core.state import state
 from annie.dataset.events import (
     clamp_event,
-    export_events_csv,
-    export_events_json,
+    events_to_csv_text,
+    events_to_json_text,
     frames_to_seconds,
     seconds_to_frame,
 )
 from annie.media.decode import media_available, video_metadata
-from annie.pages import timeline, videoclock
+from annie.pages import download, timeline, videoclock
 from annie.pages.timeline_view import TimelineView
 
 if TYPE_CHECKING:
@@ -1184,7 +1184,7 @@ def _pan(state_: _EventState, detail: dict[str, Any]) -> None:
 
 
 def _export(state_: _EventState, *, scope: str, fmt: str) -> None:
-    """Write the current video's or the whole session's events to JSON/CSV."""
+    """Open the save dialog for the current video's or the whole session's events."""
     if scope == "video":
         events = state.store.events_for(state_.row_key or "")
         stem = state_.video_id or "video"
@@ -1195,12 +1195,19 @@ def _export(state_: _EventState, *, scope: str, fmt: str) -> None:
         ui.notify("No events to export yet.", color=theme.WARNING)
         return
     fps_by_video = _fps_by_video(events)
-    out = settings_temp_dir() / f"annie_events_{stem}.{fmt}"
-    if fmt == "json":
-        export_events_json(events, fps_by_video, out)
-    else:
-        export_events_csv(events, fps_by_video, out)
-    ui.notify(f"Exported {len(events)} event(s) → {out}", color=theme.PRIMARY)
+    text = (
+        events_to_json_text(events, fps_by_video)
+        if fmt == "json"
+        else events_to_csv_text(events, fps_by_video)
+    )
+    download.open_save_dialog(
+        title=f"Export events ({fmt.upper()})",
+        filename=download.sanitize_filename(
+            f"annie_events_{stem}", extension=fmt, default_stem="annie_events"
+        ),
+        text=text,
+        extension=fmt,
+    )
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
@@ -1308,14 +1315,6 @@ def _parse_timecode(text: str) -> float:
         return float(text)
     except ValueError:
         return 0.0
-
-
-def settings_temp_dir():  # noqa: ANN201 - thin indirection kept import-local
-    """Return the export directory (``settings.temp_dir``), created if missing."""
-    from annie.core.config import settings
-
-    settings.temp_dir.mkdir(parents=True, exist_ok=True)
-    return settings.temp_dir
 
 
 def _keyboard(state_: _EventState) -> None:
