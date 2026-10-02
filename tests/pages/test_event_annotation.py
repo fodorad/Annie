@@ -203,6 +203,40 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         names = [c.name for c in state.store.categories()]
         self.assertEqual(names, ["Mother", "Baby"])
 
+    # ── default category + naming ────────────────────────────────────────────────
+
+    async def test_fresh_dataset_starts_with_participant_1(self) -> None:
+        entry = VideoEntry(video_id="v", video_path=None, row_id=1)
+        state.scan = ScanResult(entries=[entry])
+        state.store.set_annotate(entry.key, entry.video_id, None, True)
+        self.assertEqual(state.store.categories(), [])  # nothing yet
+        event_task._load_video_if_needed(self.state, [entry])  # noqa: SLF001
+        names = [c.name for c in state.store.categories()]
+        self.assertEqual(names, ["Participant 1"])
+        self.assertEqual(self.state.active_category, "Participant 1")
+
+    async def test_existing_categories_are_not_replaced_by_the_default(self) -> None:
+        entry = VideoEntry(video_id="v", video_path=None, row_id=1)
+        state.scan = ScanResult(entries=[entry])
+        state.store.add_category("Mother")
+        event_task._load_video_if_needed(self.state, [entry])  # noqa: SLF001
+        self.assertEqual([c.name for c in state.store.categories()], ["Mother"])
+
+    async def test_legacy_events_seed_instead_of_the_default(self) -> None:
+        # A DB annotated under the single-lane model keeps its track name as the category.
+        entry = VideoEntry(video_id="v", video_path=None, row_id=1)
+        state.scan = ScanResult(entries=[entry])
+        state.store.add_event("v", entry.key, "events", 0, 5)
+        event_task._load_video_if_needed(self.state, [entry])  # noqa: SLF001
+        self.assertEqual([c.name for c in state.store.categories()], ["events"])
+
+    async def test_next_default_category_name(self) -> None:
+        f = event_task.next_default_category_name
+        self.assertEqual(f([]), "Participant 1")
+        self.assertEqual(f(["Participant 1"]), "Participant 2")
+        self.assertEqual(f(["Participant 1", "Participant 3"]), "Participant 2")  # fills the gap
+        self.assertEqual(f(["Mother", "Baby"]), "Participant 1")  # unrelated names don't count
+
 
 if __name__ == "__main__":
     unittest.main()

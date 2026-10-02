@@ -87,7 +87,11 @@ EVENT_PLAYHEAD = "#d90429"
 """Coral — the vertical playhead line marking the current time across all lanes."""
 
 EVENT_SELECTED = "#111827"
-"""Near-black — the outline of the currently selected event box."""
+"""Near-black — the 2px outline of the currently selected event box."""
+
+EVENT_BORDER = "#444b54"
+"""Dark grey — the 1px outline every event box carries, so a pale/pastel fill stays visible
+against the white lane (a yellow box on white would otherwise disappear)."""
 
 EVENT_PENDING = "#f59e0b"
 """Amber — the translucent band drawn from an event's start to the live playhead while the

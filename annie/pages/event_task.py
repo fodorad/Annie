@@ -66,6 +66,29 @@ _DEFAULT_EVENT_LABEL = "event_name"
 #: category set (the UI blocks that by asking for a category first).
 _DEFAULT_TRACK = "events"
 
+#: The category a fresh dataset starts with, so annotation can begin immediately.
+_DEFAULT_CATEGORY_NAME = "Participant 1"
+
+
+def next_default_category_name(existing: list[str]) -> str:
+    """Return the next free ``"Participant N"`` name given the existing category names.
+
+    Used when a category is added without a typed name, so "just click Add" still yields a
+    clean, consistent label (``Participant 2``, ``Participant 3``, …) and never a collision.
+
+    Args:
+        existing: The category names already in use.
+
+    Returns:
+        ``"Participant N"`` for the smallest ``N >= 1`` not already taken.
+    """
+    taken = set(existing)
+    n = 1
+    while f"Participant {n}" in taken:
+        n += 1
+    return f"Participant {n}"
+
+
 #: Eight pastel, mutually-distinct colours the editor offers for per-event colour-coding. The
 #: first (``None`` sentinel handled in the UI) means "use the track's colour"; these override
 #: it. Pastel so a filled timeline stays easy on the eye while still separable.
@@ -189,9 +212,13 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
         except Exception as exc:  # noqa: BLE001 - a bad file must not break the tab
             logbook.report(f"Could not read metadata for {entry.video_path}: {exc}")
     # Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed
-    # them from any pre-existing event track names (back-compat for the old single-lane model)
-    # and point the active category at the first one.
+    # them from any pre-existing event track names (back-compat for the old single-lane model);
+    # if the dataset still has none, create a first "Participant 1" so annotation can start
+    # immediately rather than facing an empty "Add category" prompt. Then point the active
+    # category at the first one.
     state.store.seed_categories_from_events()
+    if not state.store.categories():
+        state.store.add_category(_DEFAULT_CATEGORY_NAME)
     _ensure_active_category(state_)
     return entry
 
@@ -430,24 +457,26 @@ def _category_bar(state_: _EventState) -> None:
     """
     categories = state.store.categories()
     with ui.row().classes("w-full items-center gap-2 wrap"):
-        ui.label("Participant").classes("text-sm font-medium")
+        ui.label("Category").classes("text-sm font-medium")
         if not categories:
             ui.button(
                 "＋ Add category", icon="group_add", on_click=lambda: _open_manager(state_)
             ).props("flat dense").tooltip(
-                "Define the participants for this dataset (e.g. Mother, Baby)"
+                "Define the categories for this dataset (e.g. Mother, Baby)"
             )
             return
         for i, cat in enumerate(categories):
             active = cat.name == state_.active_category
             colour = _category_color(cat.ordinal, cat.color)
+            # "(1) Participant 1": the parenthesised number is the quick-switch key, kept
+            # visually apart from the name so it never reads as part of it.
             btn = (
                 ui.button(
-                    f"{i + 1}  {cat.name}",
+                    f"({i + 1}) {cat.name}",
                     on_click=lambda n=cat.name: _set_active_category(state_, n),
                 )
                 .props("unelevated" if active else "outline")
-                .props("dense")
+                .props("dense no-caps")
             )
             # The active chip is filled with its lane colour; the rest are outlined.
             if active:
@@ -456,7 +485,7 @@ def _category_bar(state_: _EventState) -> None:
                 btn.style(f"color:{colour} !important;border-color:{colour} !important")
         ui.button(icon="more_horiz", on_click=lambda: _open_manager(state_)).props(
             "flat dense round"
-        ).tooltip("Manage participants (add, rename, delete, reorder, colour)")
+        ).tooltip("Manage categories (add, rename, delete, reorder, colour)")
 
 
 def _set_active_category(state_: _EventState, name: str) -> None:
@@ -485,7 +514,7 @@ async def _category_manager(state_: _EventState) -> None:
     still holds events.
     """
     with ui.dialog() as dialog, ui.card().classes("w-[32rem] max-w-full gap-2"):
-        ui.label("Participants for this dataset").classes("text-lg font-medium")
+        ui.label("Categories for this dataset").classes("text-lg font-medium")
         ui.label(
             "These lanes are shared by every video in this dataset. Rename is safe — existing "
             "events follow the new name."
@@ -502,7 +531,7 @@ async def _category_manager(state_: _EventState) -> None:
                         state_, cat.name, cat.ordinal, cat.color, i, len(categories), rebuild_rows
                     )
                 if not categories:
-                    ui.label("No participants yet — add the first below.").classes("text-sm").style(
+                    ui.label("No categories yet — add the first below.").classes("text-sm").style(
                         f"color:{theme.NEUTRAL}"
                     )
 
@@ -510,15 +539,16 @@ async def _category_manager(state_: _EventState) -> None:
 
         with ui.row().classes("w-full items-center gap-2 mt-2"):
             new_in = (
-                ui.input(placeholder="New participant (e.g. Mother)")
+                ui.input(placeholder="New category (blank = next Participant N)")
                 .props("dense")
                 .classes("flex-grow")
             )
 
             def add_new() -> None:
-                name = (new_in.value or "").strip()
-                if not name:
-                    return
+                # A blank name falls back to the next free "Participant N", so "just click Add"
+                # still yields a clean, consistent label with no typing (and no collisions).
+                existing = [c.name for c in state.store.categories()]
+                name = (new_in.value or "").strip() or next_default_category_name(existing)
                 state.store.add_category(name)
                 new_in.set_value("")
                 _ensure_active_category(state_)
@@ -554,7 +584,7 @@ def _manager_row(  # noqa: PLR0913 - a row needs its category + position context
         ).style(
             f"background:{colour};width:20px;height:20px;min-width:20px;min-height:20px;"
             f"border-radius:50%;border:2px solid #00000055"
-        ).tooltip("Change this participant's colour")
+        ).tooltip("Change this category's colour")
 
         name_in = ui.input(value=name).props("dense").classes("flex-grow")
 
@@ -580,7 +610,7 @@ def _manager_row(  # noqa: PLR0913 - a row needs its category + position context
             down.props(add="disable")
         ui.button(icon="delete", on_click=lambda: _delete_category(state_, name, rebuild)).props(
             "flat dense round"
-        ).tooltip("Delete this participant")
+        ).tooltip("Delete this category")
 
 
 def _cycle_category_color(name: str, rebuild: Callable[[], None]) -> None:
@@ -727,12 +757,12 @@ def _editor(state_: _EventState) -> None:
                 once=True,
             )
 
-        # Participant: pick from the category list (never free text) to move the event between
+        # Category: pick from the category list (never free text) to move the event between
         # lanes. Only shown when categories exist.
         category_names = [c.name for c in state.store.categories()]
         if category_names:
             picker = (
-                ui.select(category_names, value=event.track, label="participant")
+                ui.select(category_names, value=event.track, label="category")
                 .props("dense")
                 .classes("w-full")
             )

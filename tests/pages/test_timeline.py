@@ -6,6 +6,9 @@ import unittest
 
 from annie.core import theme
 from annie.pages.timeline import (
+    FONT_SIZE,
+    LANE_LABEL_HEIGHT,
+    MIN_BOX_PERCENT,
     TimelineEvent,
     TimelineTrack,
     _tick_step_seconds,
@@ -142,6 +145,98 @@ class TestBuildSvg(unittest.TestCase):
         svg = self._svg(tracks=[TimelineTrack("Mother", [], color="#123456")])
         self.assertIn("#123456", svg)
 
+    # ── ergonomics: un-stretched text, label band, box borders ───────────────────
+
+    def test_svg_is_not_stretched(self) -> None:
+        # preserveAspectRatio="none" is what smeared the glyphs horizontally; it must be gone
+        # (the viewBox is synced to the real pixel width by JS instead).
+        self.assertNotIn("preserveAspectRatio", self._svg())
+
+    def test_text_uses_a_natural_font_size(self) -> None:
+        self.assertIn(f"font-size:{FONT_SIZE}px", self._svg())
+
+    def test_lane_label_sits_above_the_lane_not_inside_it(self) -> None:
+        svg = self._svg(tracks=[TimelineTrack("Participant 1", [])])
+        label_y = float(svg.split(">Participant 1</text>", 1)[0].rsplit('y="', 1)[1].split('"')[0])
+        lane = svg.split('class="annie-lane"', 1)[1]
+        lane_y = float(lane.split('y="', 1)[1].split('"', 1)[0])
+        # The label's baseline is above the lane rectangle's top edge.
+        self.assertLess(label_y, lane_y + LANE_LABEL_HEIGHT)
+        self.assertLessEqual(label_y, lane_y)
+
+    def test_label_band_adds_to_total_height(self) -> None:
+        # (the _svg helper substitutes a default lane for an empty list, so call build_svg)
+        empty = self._viewbox_height(
+            build_svg([], view_start=0, view_end=99, fps=25.0, svg_id="tl")
+        )
+        one = self._viewbox_height(self._svg(tracks=[TimelineTrack("A", [])]))
+        # One lane adds its label band + rows + gap on top of the empty surface.
+        self.assertGreaterEqual(one - empty, LANE_LABEL_HEIGHT)
+
+    def test_every_event_box_has_a_dark_border(self) -> None:
+        svg = self._svg(
+            tracks=[TimelineTrack("s", [TimelineEvent("e1", 0, 40, "x", color="#fdffb6")])]
+        )
+        box = svg.split('class="annie-event"', 1)[1].split("</rect>", 1)[0]
+        self.assertIn(f'stroke="{theme.EVENT_BORDER}"', box)
+        self.assertIn('stroke-width="1.0"', box)
+
+    def test_selected_box_has_thicker_near_black_border(self) -> None:
+        svg = self._svg(
+            tracks=[TimelineTrack("s", [TimelineEvent("e1", 0, 40, "x", selected=True)])]
+        )
+        box = svg.split('class="annie-event"', 1)[1].split("</rect>", 1)[0]
+        self.assertIn(f'stroke="{theme.EVENT_SELECTED}"', box)
+        self.assertIn('stroke-width="2.0"', box)
+
+    def test_geometry_is_percent_based_with_no_viewbox(self) -> None:
+        # No viewBox → user units are real pixels; x/width are percentages of the element, so
+        # nothing is scaled and text can never be stretched.
+        svg = self._svg()
+        self.assertNotIn("viewBox", svg)
+        box = svg.split('class="annie-event"', 1)[1]
+        self.assertRegex(box.split(">", 1)[0], r'x="[\d.]+%"')
+        self.assertRegex(box.split(">", 1)[0], r'width="[\d.]+%"')
+
+    def test_lane_fills_the_full_width(self) -> None:
+        lane = self._svg().split('class="annie-lane"', 1)[1].split("/>", 1)[0]
+        self.assertIn('width="100%"', lane)
+
+    def test_event_box_position_matches_its_frames(self) -> None:
+        # frames 10..60 of a 0..100 window → x = 10%, width = 50%.
+        svg = self._svg(
+            tracks=[TimelineTrack("s", [TimelineEvent("e1", 10, 60, "x")])], view_end=100
+        )
+        head = svg.split('class="annie-event"', 1)[1].split(">", 1)[0]
+        self.assertAlmostEqual(float(head.split('x="', 1)[1].split('%"', 1)[0]), 10.0, places=2)
+        self.assertAlmostEqual(float(head.split('width="', 1)[1].split('%"', 1)[0]), 50.0, places=2)
+
+    def test_zero_length_event_is_still_visible(self) -> None:
+        svg = self._svg(tracks=[TimelineTrack("s", [TimelineEvent("z", 50, 50, "")])])
+        head = svg.split('class="annie-event"', 1)[1].split(">", 1)[0]
+        self.assertGreaterEqual(
+            float(head.split('width="', 1)[1].split('%"', 1)[0]), MIN_BOX_PERCENT
+        )
+
+    def test_event_name_is_a_clipped_text_layer(self) -> None:
+        # The name lives in a nested <svg> the size of the box, which clips it; it ignores the
+        # pointer so a click still reaches the box beneath.
+        svg = self._svg(tracks=[TimelineTrack("s", [TimelineEvent("e1", 0, 80, "hello")])])
+        layer = svg.split(">hello</text>", 1)[0].rsplit("<svg", 1)[1]
+        self.assertIn('pointer-events="none"', layer)
+        self.assertIn('text-anchor="middle"', svg)
+
+    def test_name_that_cannot_fit_is_not_drawn(self) -> None:
+        svg = self._svg(
+            tracks=[TimelineTrack("s", [TimelineEvent("e1", 0, 2, "a very long event name")])]
+        )
+        self.assertNotIn(">a very long event name</text>", svg)
+        self.assertIn("<title>a very long event name</title>", svg)  # still in the tooltip
+
+    def test_hover_rule_lightens_and_thickens(self) -> None:
+        svg = self._svg()
+        self.assertIn(".annie-event:hover{fill-opacity:0.85;stroke-width:2}", svg)
+
     def test_playhead_and_hover_style_present(self) -> None:
         svg = self._svg()
         self.assertIn('class="annie-playhead"', svg)
@@ -168,9 +263,9 @@ class TestBuildSvg(unittest.TestCase):
         self.assertIn("&lt;script&gt;", svg)
 
     def _viewbox_height(self, svg: str) -> float:
-        # viewBox="0 0 <w> <h>" — the fourth number is the total drawing height.
-        vb = svg.split('viewBox="', 1)[1].split('"', 1)[0]
-        return float(vb.split()[3])
+        # The root <svg ... height="<h>"> carries the total drawing height (there is no viewBox).
+        root = svg.split(">", 1)[0]
+        return float(root.split('height="', 1)[1].split('"', 1)[0])
 
     def test_overlapping_events_grow_the_lane(self) -> None:
         one = self._svg(tracks=[TimelineTrack("s", [TimelineEvent("a", 0, 40, "")])])
@@ -202,22 +297,22 @@ class TestPendingBand(unittest.TestCase):
     def test_idle_band_is_zero_width(self) -> None:
         svg = self._svg(pending_start=None)
         pending = svg.split('class="annie-pending"', 1)[1].split("/>", 1)[0]
-        self.assertIn('width="0"', pending)
+        self.assertIn('width="0%"', pending)
 
     def test_armed_band_spans_start_to_end(self) -> None:
         # start=20, end=60 over a 0..99 window of width 1000 → x≈202, width≈404.
         svg = self._svg(pending_start=20, pending_end=60)
         pending = svg.split('class="annie-pending"', 1)[1].split("/>", 1)[0]
-        self.assertNotIn('width="0"', pending)
-        x = float(pending.split('x="', 1)[1].split('"', 1)[0])
-        self.assertAlmostEqual(x, 20 / 99 * 1000, delta=2)
+        self.assertNotIn('width="0%"', pending)
+        x = float(pending.split('x="', 1)[1].split('%"', 1)[0])
+        self.assertAlmostEqual(x, 20 / 99 * 100, delta=0.2)  # percent of the width
 
     def test_band_defaults_end_to_start(self) -> None:
         # No pending_end → minimal band at the start (width ~0).
         svg = self._svg(pending_start=30)
         pending = svg.split('class="annie-pending"', 1)[1].split("/>", 1)[0]
-        width = float(pending.split('width="', 1)[1].split('"', 1)[0])
-        self.assertLess(width, 1.0)
+        width = float(pending.split('width="', 1)[1].split('%"', 1)[0])
+        self.assertLess(width, 0.1)
 
     def test_band_drawn_before_events(self) -> None:
         # Behind the events → its markup appears earlier than the first event box.
