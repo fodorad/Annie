@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0](https://github.com/fodorad/Annie/compare/v1.8.1...v1.9.0) (2026-10-02)
+
+
+### Features
+
+* choose folder and file name when exporting ([#52](https://github.com/fodorad/Annie/issues/52)) ([8a5e1af](https://github.com/fodorad/Annie/commit/8a5e1af26f060866776b37004a025c85037cb088))
+
 ## [1.8.1](https://github.com/fodorad/Annie/compare/v1.8.0...v1.8.1) (2026-10-02)
 
 
