@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.0](https://github.com/fodorad/Annie/compare/v1.7.2...v1.8.0) (2026-10-02)
+
+
+### Features
+
+* clearer event timeline - un-stretched text, category label rows, visible boxes ([#48](https://github.com/fodorad/Annie/issues/48)) ([4f3cc89](https://github.com/fodorad/Annie/commit/4f3cc89f02069b460c2088b4edf88dd8e15aa045))
+
 ## [1.7.2](https://github.com/fodorad/Annie/compare/v1.7.1...v1.7.2) (2026-10-02)
 
 
