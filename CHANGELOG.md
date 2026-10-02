@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.1](https://github.com/fodorad/Annie/compare/v1.9.0...v1.9.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* open the Save dialog instantly on export ([#54](https://github.com/fodorad/Annie/issues/54)) ([42f1c0b](https://github.com/fodorad/Annie/commit/42f1c0b31440b4ecb3d398add895167b26a5035b))
+
 ## [1.9.0](https://github.com/fodorad/Annie/compare/v1.8.1...v1.9.0) (2026-10-02)
 
 
