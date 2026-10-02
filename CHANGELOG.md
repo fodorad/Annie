@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.2](https://github.com/fodorad/Annie/compare/v1.7.1...v1.7.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* load Homebrew FFmpeg for torchcodec on macOS regardless of launch method ([#46](https://github.com/fodorad/Annie/issues/46)) ([9c73e9a](https://github.com/fodorad/Annie/commit/9c73e9aafae1b2b45a7647ef4fef487681a76bcf))
+
 ## [1.7.1](https://github.com/fodorad/Annie/compare/v1.7.0...v1.7.1) (2026-09-30)
 
 
