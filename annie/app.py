@@ -18,6 +18,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import os
+import sys
+from pathlib import Path
 
 from nicegui import app, run, ui
 
@@ -157,8 +160,60 @@ async def _sweep_render_clips() -> None:
             state.renderer.sweep()
 
 
+#: Sentinel marking that the macOS FFmpeg re-exec (see :func:`_ensure_macos_ffmpeg_libs`) has
+#: already happened, so the relaunched process does not loop.
+_REEXEC_SENTINEL = "ANNIE_FFMPEG_REEXEC"
+
+#: Homebrew FFmpeg lib dirs probed on macOS (Apple Silicon, then Intel); ``ANNIE_FFMPEG_LIB_DIR``
+#: overrides both for a non-standard install.
+_MACOS_FFMPEG_LIB_DIRS = ("/opt/homebrew/opt/ffmpeg/lib", "/usr/local/opt/ffmpeg/lib")
+
+
+def _macos_ffmpeg_lib_dir() -> str | None:
+    """Return the FFmpeg lib dir to add to ``DYLD_LIBRARY_PATH`` on macOS, or ``None``.
+
+    Honours ``ANNIE_FFMPEG_LIB_DIR`` first, else the Homebrew prefixes; returns ``None`` when
+    none exist (so the caller does nothing and the usual torchcodec error still surfaces).
+    """
+    override = os.environ.get("ANNIE_FFMPEG_LIB_DIR", "").strip()
+    candidates = (override,) if override else _MACOS_FFMPEG_LIB_DIRS
+    return next((d for d in candidates if d and Path(d).is_dir()), None)
+
+
+def _ensure_macos_ffmpeg_libs() -> None:
+    """On macOS, re-exec once with ``DYLD_LIBRARY_PATH`` set so torchcodec finds FFmpeg.
+
+    torchcodec's native extensions link the Homebrew FFmpeg dylibs via ``@rpath`` and look for
+    them in the Python install's ``lib`` dir, not Homebrew's prefix — so launching Annie any
+    way that doesn't already export ``DYLD_LIBRARY_PATH`` fails frame decode with
+    ``Library not loaded: @rpath/libavutil.NN.dylib``. The env var must be present *before*
+    Python starts (a process cannot fix its own already-resolved ``@rpath`` lookups), so when
+    it is missing we relaunch the exact same process once with it set. A sentinel env var
+    guards against an infinite loop. No-op off macOS, when no Homebrew FFmpeg is found, or when
+    the path is already in ``DYLD_LIBRARY_PATH`` (e.g. ``make run`` already exported it).
+    """
+    if sys.platform != "darwin" or os.environ.get(_REEXEC_SENTINEL):
+        return
+    lib_dir = _macos_ffmpeg_lib_dir()
+    if lib_dir is None:
+        return
+    current = os.environ.get("DYLD_LIBRARY_PATH", "")
+    if lib_dir in current.split(":"):
+        return  # already set (e.g. by `make run`); nothing to do
+    env = {**os.environ, _REEXEC_SENTINEL: "1"}
+    env["DYLD_LIBRARY_PATH"] = f"{lib_dir}:{current}" if current else lib_dir
+    logbook.report(
+        f"Re-launching with DYLD_LIBRARY_PATH={lib_dir} so torchcodec can load FFmpeg",
+        level="info",
+    )
+    os.execve(sys.executable, [sys.executable, *sys.argv], env)
+
+
 def main() -> None:
     """Console-script / module entry point: register the page and run the server."""
+    # macOS: make the Homebrew FFmpeg dylibs discoverable before anything imports torchcodec,
+    # re-launching once with DYLD_LIBRARY_PATH set if needed (see the helper). Must run first.
+    _ensure_macos_ffmpeg_libs()
     # Name the log after the active session DB so the two are paired (and renaming
     # the DB later renames the log too — see LogBook.retarget / AppState.set_store).
     log_path = logbook.LOG.attach_file(settings.logs_dir, state.store.db_path.stem)
