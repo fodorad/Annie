@@ -151,12 +151,12 @@ def set_playhead_x(timeline_id: str, x_fraction: float) -> None:
         timeline_id: DOM id of the timeline's SVG element.
         x_fraction: Playhead position as a fraction ``[0, 1]`` of the timeline width.
     """
-    fraction = min(1.0, max(0.0, x_fraction))
+    percent = min(1.0, max(0.0, x_fraction)) * 100.0
     js = (
         f"const t = document.getElementById('{timeline_id}');"
         f" if (t) {{ const line = t.querySelector('.annie-playhead');"
-        f" if (line) {{ const w = t.viewBox.baseVal.width || t.clientWidth;"
-        f" const x = {fraction} * w; line.setAttribute('x1', x); line.setAttribute('x2', x); }} }}"
+        f" if (line) {{ line.setAttribute('x1', '{percent:.3f}%');"
+        f" line.setAttribute('x2', '{percent:.3f}%'); }} }}"
     )
     ui.run_javascript(js)
 
@@ -174,12 +174,12 @@ def set_pending_band(timeline_id: str, start_fraction: float, end_fraction: floa
         start_fraction: The band's start edge as a fraction of the timeline width.
         end_fraction: The band's end edge (the live playhead) as a fraction of the width.
     """
-    lo = min(1.0, max(0.0, min(start_fraction, end_fraction)))
-    hi = min(1.0, max(0.0, max(start_fraction, end_fraction)))
+    lo = min(1.0, max(0.0, min(start_fraction, end_fraction))) * 100.0
+    hi = min(1.0, max(0.0, max(start_fraction, end_fraction))) * 100.0
     js = (
         f"const t = document.getElementById('{timeline_id}');"
         f" if (t) {{ const band = t.querySelector('.annie-pending');"
-        f" if (band) {{ const w = t.viewBox.baseVal.width || t.clientWidth;"
-        f" band.setAttribute('x', {lo} * w); band.setAttribute('width', ({hi} - {lo}) * w); }} }}"
+        f" if (band) {{ band.setAttribute('x', '{lo:.3f}%');"
+        f" band.setAttribute('width', '{hi - lo:.3f}%'); }} }}"
     )
     ui.run_javascript(js)
