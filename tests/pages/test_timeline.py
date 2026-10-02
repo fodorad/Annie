@@ -5,6 +5,7 @@ from __future__ import annotations
 import unittest
 
 from annie.core import theme
+from annie.pages import timeline
 from annie.pages.timeline import (
     FONT_SIZE,
     LANE_LABEL_HEIGHT,
@@ -318,6 +319,22 @@ class TestPendingBand(unittest.TestCase):
         # Behind the events → its markup appears earlier than the first event box.
         svg = self._svg(pending_start=10, pending_end=40)
         self.assertLess(svg.index('class="annie-pending"'), svg.index('class="annie-event"'))
+
+
+class TestScrollbar(unittest.TestCase):
+    def test_thumb_geometry_is_percent(self) -> None:
+        html = timeline.scrollbar_html("bar", 0.25, 0.5)
+        self.assertIn('id="bar"', html)
+        self.assertIn("left:25.000%", html)
+        self.assertIn("width:50.000%", html)
+
+    def test_scripts_target_the_right_elements(self) -> None:
+        self.assertIn("'bar'", timeline.scrollbar_script("bar", "evt"))
+        self.assertIn("kind: 'pan'", timeline.scrollbar_script("bar", "evt"))
+
+    def test_wheel_pan_only_when_pannable(self) -> None:
+        self.assertIn("const pannable = true", timeline.gesture_script("s", "e", pannable=True))
+        self.assertIn("const pannable = false", timeline.gesture_script("s", "e"))
 
 
 if __name__ == "__main__":

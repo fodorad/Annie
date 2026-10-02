@@ -80,7 +80,9 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
   and picked — never re-typed — so labelling stays consistent; press `1`–`9` to switch the
   active participant). Each event carries a name, note, colour, and arbitrary key/value
   attributes; everything saves to the session DB as you go and exports to nested **JSON**
-  (for code) and flat **CSV** (for a spreadsheet), per video or per session.
+  (for code) and flat **CSV** (for a spreadsheet), per video or per session. Zoom the
+  timeline and pan with the scrollbar or trackpad; during playback the window **follows**
+  the red playhead (page-flip), and panning by hand pauses following until you re-enable it.
 
 ## Installation
 

@@ -20,7 +20,7 @@ their own modules.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from nicegui import context, ui
 
@@ -35,6 +35,7 @@ from annie.dataset.events import (
 )
 from annie.media.decode import media_available, video_metadata
 from annie.pages import timeline, videoclock
+from annie.pages.timeline_view import TimelineView
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -115,10 +116,11 @@ class _EventState:
         fps: The open video's frames per second (0 until metadata loads).
         num_frames: Its total frame count (0 until metadata loads).
         duration: Its duration in seconds.
-        zoom: Timeline zoom — how many times *less* than the whole video is visible; 1.0
-            shows the whole clip, higher shows a proportionally narrower window.
-        playhead_frame: The last known playhead frame, tracked so the timeline window can
-            centre on it and the red line can be redrawn after any seek without a poll.
+        view: The timeline's visible window (zoom + start frame). Independent state: the
+            playhead moves inside it, and panning/zooming/following change only the window.
+        follow: Whether the window pages along with playback. Manual panning turns it off.
+        playhead_frame: The last known playhead frame, tracked so the red line can be redrawn
+            after any seek without a poll.
         video_height: Current video box height in px.
         selected_event: The id of the event open in the editor, or ``None``.
         pending_start: A frame set by ``I`` awaiting an ``O`` to close the event.
@@ -137,7 +139,8 @@ class _EventState:
     fps: float = 0.0
     num_frames: int = 0
     duration: float = 0.0
-    zoom: float = 1.0
+    view: TimelineView = field(default_factory=lambda: TimelineView(0))
+    follow: bool = True
     playhead_frame: int = 0
     video_height: int = 480
     selected_event: str | None = None
@@ -146,19 +149,12 @@ class _EventState:
     restore_frame: int | None = field(default=None)
     active_category: str | None = field(default=None)
 
-    def view_window(self) -> tuple[int, int]:
-        """The visible ``[start, end]`` frame window at the current zoom, centred on the head.
+    def __post_init__(self) -> None:
+        self.reset_view()
 
-        At zoom 1.0 the whole clip is shown; higher zoom shows ``num_frames / zoom`` frames
-        centred on :attr:`playhead_frame`, clamped so the window never runs off either end.
-        """
-        total = max(1, self.num_frames)
-        if self.zoom <= 1.0 or total <= 1:
-            return 0, total - 1
-        span = max(1, round((total - 1) / self.zoom))
-        start = self.playhead_frame - span // 2
-        start = max(0, min(start, total - 1 - span))
-        return start, start + span
+    def reset_view(self) -> None:
+        """Show the whole clip again, sized to the current :attr:`num_frames`."""
+        self.view = TimelineView(self.num_frames)
 
 
 #: Per-client Event-annotation state, keyed by client id; cleaned up on disconnect.
@@ -211,6 +207,7 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
             state_.duration = frames_to_seconds(meta.num_frames, meta.fps)
         except Exception as exc:  # noqa: BLE001 - a bad file must not break the tab
             logbook.report(f"Could not read metadata for {entry.video_path}: {exc}")
+    state_.reset_view()
     # Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed
     # them from any pre-existing event track names (back-compat for the old single-lane model);
     # if the dataset still has none, create a first "Participant 1" so annotation can start
@@ -401,6 +398,8 @@ def _start_playhead_poll(state_: _EventState, vid_id: str) -> None:
         if frame == state_.playhead_frame:
             return
         state_.playhead_frame = frame
+        if _follow_playhead(state_):
+            return  # the window paged: the redraw positions the line and the band itself
         _sync_playhead(state_, svg_id)
         # While a start is armed, grow the amber band's right edge with the playhead — a cheap
         # JS resize, no rebuild, so it tracks playback smoothly.
@@ -667,14 +666,49 @@ def _delete_category(state_: _EventState, name: str, rebuild: Callable[[], None]
 
 
 def _timeline_block(state_: _EventState) -> None:
-    """The zoom controls and the SVG timeline itself."""
+    """The timeline: controls, the SVG surface, and the pan scrollbar.
+
+    Each part is its own refreshable so a view change (zoom, pan, page-flip) redraws only the
+    timeline — never the task, whose ``<video>`` would be recreated and reset to frame 0.
+    """
+    _timeline_controls(state_)
+    _timeline_surface(state_)
+    _timeline_scrollbar(state_)
+
+
+@ui.refreshable
+def _timeline_controls(state_: _EventState) -> None:
+    """Zoom buttons, the Follow toggle, and the window's range readout."""
     with ui.row().classes("w-full items-center gap-2"):
         ui.label("Timeline").classes("text-sm font-medium")
         ui.button(icon="zoom_out", on_click=lambda: _zoom(state_, 1 / 1.5)).props(
             "flat dense round"
-        )
-        ui.button(icon="zoom_in", on_click=lambda: _zoom(state_, 1.5)).props("flat dense round")
+        ).tooltip("Zoom out")
+        ui.button(icon="zoom_in", on_click=lambda: _zoom(state_, 1.5)).props(
+            "flat dense round"
+        ).tooltip("Zoom in")
+        if state_.view.zoomed_in:
+            follow = ui.button(
+                "Follow",
+                icon="my_location",
+                on_click=lambda: _set_follow(state_, not state_.follow),
+            ).props("dense " + ("unelevated" if state_.follow else "outline"))
+            follow.tooltip("Keep the zoomed window on the playhead during playback")
+            ui.label(_range_label(state_)).classes("text-xs").style(f"color:{theme.NEUTRAL}")
 
+
+def _range_label(state_: _EventState) -> str:
+    """Describe the visible window, e.g. ``×4 · 12.4–19.6 s of 42.0 s``."""
+    lo, hi = state_.view.window()
+    return (
+        f"×{state_.view.zoom:.1f} · {frames_to_seconds(lo, state_.fps):.1f}–"
+        f"{frames_to_seconds(hi, state_.fps):.1f} s of {state_.duration:.1f} s"
+    )
+
+
+@ui.refreshable
+def _timeline_surface(state_: _EventState) -> None:
+    """The SVG timeline for the current window."""
     # Lanes come from the DB-scoped categories (one per participant), not per-video tracks, so
     # every video of this dataset shows the same lanes in the same order — including empty ones.
     grouped = _events_by_track(state_.row_key or "")
@@ -697,7 +731,7 @@ def _timeline_block(state_: _EventState) -> None:
         for category in state.store.categories()
     ]
     svg_id = f"annie-timeline-{context.client.id}"
-    view_start, view_end = state_.view_window()
+    view_start, view_end = state_.view.window()
     svg = timeline.build_svg(
         tracks,
         view_start=view_start,
@@ -715,9 +749,55 @@ def _timeline_block(state_: _EventState) -> None:
     # no fragile DOM-event forwarding. Registered once per client (guarded), since ui.on is
     # process-global and this refreshable rebuilds often.
     _ensure_gesture_handler(state_)
-    ui.run_javascript(timeline.gesture_script(svg_id, _gesture_event_name()))
+    ui.run_javascript(
+        timeline.gesture_script(svg_id, _gesture_event_name(), pannable=state_.view.zoomed_in)
+    )
     # Put the red playhead line where the current frame sits within the visible window.
     _sync_playhead(state_, svg_id)
+
+
+@ui.refreshable
+def _timeline_scrollbar(state_: _EventState) -> None:
+    """The pan scrollbar, present only while zoomed in.
+
+    Rebuilt only when zoom changes; panning moves its thumb through JS so a drag is never
+    interrupted by a DOM rebuild.
+    """
+    if not state_.view.zoomed_in:
+        return
+    scroll_id = f"annie-timeline-scroll-{context.client.id}"
+    left, width = state_.view.thumb()
+    ui.html(timeline.scrollbar_html(scroll_id, left, width)).classes("w-full").style("width:100%")
+    ui.run_javascript(timeline.scrollbar_script(scroll_id, _gesture_event_name()))
+
+
+def _refresh_timeline(state_: _EventState, *, rebuild_scrollbar: bool = False) -> None:
+    """Redraw the timeline for the current window without touching the video."""
+    _timeline_surface.refresh()
+    _timeline_controls.refresh()
+    if rebuild_scrollbar:
+        _timeline_scrollbar.refresh()
+    else:
+        left, width = state_.view.thumb()
+        videoclock.set_scrollbar(f"annie-timeline-scroll-{context.client.id}", left, width)
+
+
+def _follow_playhead(state_: _EventState) -> bool:
+    """Page the window forward when playback leaves it (Follow on). Returns whether it paged."""
+    view = state_.view
+    if not (view.zoomed_in and state_.follow) or view.contains(state_.playhead_frame):
+        return False
+    view.page_to(state_.playhead_frame)
+    _refresh_timeline(state_)
+    return True
+
+
+def _set_follow(state_: _EventState, on: bool) -> None:
+    """Switch Follow; turning it on snaps the window to the playhead."""
+    state_.follow = on
+    if on and not state_.view.contains(state_.playhead_frame):
+        state_.view.page_to(state_.playhead_frame)
+    _refresh_timeline(state_)
 
 
 def _editor(state_: _EventState) -> None:
@@ -971,14 +1051,14 @@ def _resize_video(state_: _EventState, delta: int) -> None:
 
 
 def _zoom(state_: _EventState, factor: float) -> None:
-    """Change the timeline zoom, then rebuild the (fixed-width) surface.
+    """Change the timeline zoom around the playhead (or the window centre if it is off-screen).
 
-    Zoom is "how many times less than the whole clip is visible", so it never drops below
-    1.0 (the whole clip) and the surface width is unaffected — only the visible window
-    narrows. The window re-centres on the playhead via :meth:`_EventState.view_window`.
+    Only the timeline is redrawn; the video is untouched.
     """
-    state_.zoom = max(1.0, min(state_.zoom * factor, 100.0))
-    event_annotation_task.refresh()
+    view = state_.view
+    anchor = state_.playhead_frame if view.contains(state_.playhead_frame) else None
+    view.zoom_by(factor, anchor)
+    _refresh_timeline(state_, rebuild_scrollbar=True)
 
 
 async def _arm_start(state_: _EventState) -> None:
@@ -1076,11 +1156,31 @@ def _on_gesture(state_: _EventState, event: GenericEventArguments) -> None:
         selected = state.store.get_event(state_.selected_event) if state_.selected_event else None
         if selected is not None:
             _seek(state_, vid_id, selected.start_frame)
-        event_annotation_task.refresh()  # redraw so the new selection highlights
+        # Reveal an off-screen event, then rebuild so the editor and highlight update (the full
+        # rebuild recreates the <video>, so restore it to the event's start).
+        if selected is not None:
+            state_.restore_frame = selected.start_frame
+        event_annotation_task.refresh()
+        return
+    if kind in ("pan", "wheel"):
+        _pan(state_, detail)
         return
     # Any non-select gesture is a plain seek to the clicked position.
     frame = _fraction_to_frame(state_, float(detail.get("x", 0.0)))
     _seek(state_, vid_id, frame)
+
+
+def _pan(state_: _EventState, detail: dict[str, Any]) -> None:
+    """Pan the window from a scrollbar drag (``x``: thumb position) or a wheel (``dx``).
+
+    Panning is the user steering the view, so it turns Follow off.
+    """
+    if detail.get("kind") == "pan":
+        state_.view.set_start_fraction(float(detail.get("x", 0.0)))
+    else:
+        state_.view.pan_by_fraction(float(detail.get("dx", 0.0)))
+    state_.follow = False
+    _refresh_timeline(state_)
 
 
 def _export(state_: _EventState, *, scope: str, fmt: str) -> None:
@@ -1134,63 +1234,48 @@ def _fps_by_video(events: list[EventRecord]) -> dict[str, float]:
 
 
 def _fraction_to_frame(state_: _EventState, fraction: float) -> int:
-    """Map an ``[0, 1]`` x fraction of the *visible window* to an absolute frame index.
-
-    The fraction is relative to the timeline's current view (which zoom may have narrowed),
-    so it is mapped through ``view_window`` rather than the whole clip.
-    """
-    if state_.num_frames <= 1:
-        return 0
-    view_start, view_end = state_.view_window()
-    frame = round(view_start + fraction * (view_end - view_start))
-    return max(0, min(frame, state_.num_frames - 1))
+    """Map an ``[0, 1]`` x fraction of the *visible window* to an absolute frame index."""
+    return state_.view.frame_at(fraction)
 
 
 def _seek(state_: _EventState, vid_id: str, frame: int) -> int:
     """Seek the video to ``frame``, record it as the playhead, and move the timeline line.
 
-    Returns the clamped frame actually sought. When the timeline is zoomed and the new
-    playhead would fall outside the current window, the task is rebuilt so the window
-    re-centres; otherwise only the cheap red-line move runs (no full re-render).
+    Returns the clamped frame actually sought. An explicit seek to a frame outside the zoomed
+    window centres the window on it (whatever Follow says — the user asked to go there);
+    otherwise only the cheap red-line move runs. Neither rebuilds the video.
     """
     frame = max(0, min(frame, max(0, state_.num_frames - 1)))
-    before = state_.view_window()
     state_.playhead_frame = frame
     videoclock.seek_frame(vid_id, frame, state_.fps)
-    after = state_.view_window()
-    if after != before:
-        event_annotation_task.refresh()  # window shifted; redraw at the new offset
+    if state_.view.zoomed_in and not state_.view.contains(frame):
+        state_.view.center_on(frame)
+        _refresh_timeline(state_)
     else:
         _sync_playhead(state_, f"annie-timeline-{context.client.id}")
     return frame
 
 
 def _sync_playhead(state_: _EventState, svg_id: str) -> None:
-    """Move the red playhead line to the current frame's position within the window."""
-    view_start, view_end = state_.view_window()
-    span = view_end - view_start
-    if span <= 0:
-        return
-    fraction = (state_.playhead_frame - view_start) / span
-    videoclock.set_playhead_x(svg_id, fraction)
+    """Move the red line to the playhead, or hide it when the playhead is off-screen."""
+    videoclock.set_playhead_x(svg_id, state_.view.fraction_of(state_.playhead_frame))
 
 
 def _sync_pending_band(state_: _EventState, svg_id: str) -> None:
     """Resize the amber capture band from the armed start to the live playhead (no rebuild).
 
-    When nothing is armed, collapse the band to zero width so cancelling hides it without a
-    rebuild.
+    The band is clipped at the window edges (a region, unlike the line, is still partly
+    visible). When nothing is armed it collapses to zero width so cancelling hides it.
     """
-    view_start, view_end = state_.view_window()
-    span = view_end - view_start
-    if span <= 0:
-        return
     if state_.pending_start is None:
         videoclock.set_pending_band(svg_id, 0.0, 0.0)
         return
-    start_frac = (state_.pending_start - view_start) / span
-    end_frac = (state_.playhead_frame - view_start) / span
-    videoclock.set_pending_band(svg_id, start_frac, end_frac)
+    view = state_.view
+    videoclock.set_pending_band(
+        svg_id,
+        view.fraction_clamped(state_.pending_start),
+        view.fraction_clamped(state_.playhead_frame),
+    )
 
 
 def _sync_jump_fields(

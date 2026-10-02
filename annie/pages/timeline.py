@@ -410,7 +410,7 @@ def _append_lane_label(parts: list[str], name: str, colour: str, band_y: float) 
     )
 
 
-def gesture_script(svg_id: str, event_name: str) -> str:
+def gesture_script(svg_id: str, event_name: str, *, pannable: bool = False) -> str:
     """Return JS that reports a timeline click to the server via ``emitEvent``.
 
     Attached once after the SVG is embedded. It listens for pointer down/up on the SVG and
@@ -426,6 +426,9 @@ def gesture_script(svg_id: str, event_name: str) -> str:
     Args:
         svg_id: DOM id of the timeline ``<svg>``.
         event_name: The custom event name the NiceGUI handler listens for.
+        pannable: Whether the timeline is zoomed in. When true, a horizontal wheel/trackpad
+            scroll (or Shift+wheel) pans the window and emits ``kind = "wheel"`` with ``dx``
+            (a fraction of the window width); the page's own scroll is left alone otherwise.
 
     Returns:
         The JavaScript to run once via ``ui.run_javascript``.
@@ -465,5 +468,95 @@ def gesture_script(svg_id: str, event_name: str) -> str:
         emitEvent('{event_name}', detail);
         downX = null; downEvent = null;
       }});
+      const pannable = {"true" if pannable else "false"};
+      let wheelDx = 0, wheelTimer = null;
+      svg.addEventListener('wheel', (e) => {{
+        if (!pannable) return;
+        const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+        if (!horizontal && !e.shiftKey) return;
+        e.preventDefault();
+        const px = horizontal ? e.deltaX : (e.deltaY || e.deltaX);
+        wheelDx += px / svg.getBoundingClientRect().width;
+        if (wheelTimer) return;
+        wheelTimer = setTimeout(() => {{
+          emitEvent('{event_name}', {{kind: 'wheel', dx: wheelDx}});
+          wheelDx = 0; wheelTimer = null;
+        }}, 50);
+      }}, {{passive: false}});
+    }})();
+    """
+
+
+def scrollbar_html(scroll_id: str, left: float, width: float) -> str:
+    """Return the pan scrollbar markup: a track holding a draggable thumb.
+
+    Args:
+        scroll_id: DOM id for the track element.
+        left: The thumb's left edge as a ``[0, 1]`` fraction of the track.
+        width: The thumb's width as a ``[0, 1]`` fraction of the track.
+
+    Returns:
+        An HTML string; positions are percentages so it fills any container width.
+    """
+    return (
+        f'<div id="{scroll_id}" style="position:relative;width:100%;height:14px;'
+        f'background:#e5e7eb;border-radius:7px;touch-action:none;cursor:pointer">'
+        f'<div class="annie-thumb" style="position:absolute;top:0;height:100%;'
+        f"left:{left * 100.0:.3f}%;width:{width * 100.0:.3f}%;min-width:14px;"
+        f'background:#6b7280;border-radius:7px;cursor:grab"></div></div>'
+    )
+
+
+def scrollbar_script(scroll_id: str, event_name: str) -> str:
+    """Return JS that makes the scrollbar draggable and click-to-centre.
+
+    Emits ``event_name`` with ``{kind: "pan", x}`` where ``x`` is the thumb's position as a
+    fraction of the pannable range (``0`` = window at the start, ``1`` = at the end),
+    throttled to ~20 Hz while dragging.
+
+    Args:
+        scroll_id: DOM id of the scrollbar track.
+        event_name: The custom event name the NiceGUI handler listens for.
+
+    Returns:
+        The JavaScript to run once via ``ui.run_javascript``.
+    """
+    return f"""
+    (() => {{
+      const bar = document.getElementById('{scroll_id}');
+      if (!bar || bar.dataset.annieBound) return;
+      bar.dataset.annieBound = '1';
+      const thumb = bar.querySelector('.annie-thumb');
+      let dragging = false, grab = 0, last = 0, lastLeft = 0;
+      const emit = (leftFrac) => {{
+        const room = 1 - thumb.offsetWidth / bar.clientWidth;
+        const x = room > 0 ? Math.min(1, Math.max(0, leftFrac / room)) : 0;
+        emitEvent('{event_name}', {{kind: 'pan', x: x}});
+      }};
+      bar.addEventListener('pointerdown', (e) => {{
+        const r = bar.getBoundingClientRect();
+        const tw = thumb.offsetWidth;
+        const tl = thumb.offsetLeft;
+        const px = e.clientX - r.left;
+        if (px >= tl && px <= tl + tw) {{
+          dragging = true; grab = px - tl;
+          bar.setPointerCapture(e.pointerId);
+        }} else {{
+          emit(Math.min(1 - tw / r.width, Math.max(0, (px - tw / 2) / r.width)));
+        }}
+      }});
+      bar.addEventListener('pointermove', (e) => {{
+        if (!dragging) return;
+        const r = bar.getBoundingClientRect();
+        const tw = thumb.offsetWidth;
+        const left = Math.min(r.width - tw, Math.max(0, e.clientX - r.left - grab));
+        thumb.style.left = (left / r.width * 100) + '%';
+        lastLeft = left / r.width;
+        const now = Date.now();
+        if (now - last > 50) {{ last = now; emit(left / r.width); }}
+      }});
+      const stop = () => {{ if (dragging) emit(lastLeft); dragging = false; }};
+      bar.addEventListener('pointerup', stop);
+      bar.addEventListener('pointercancel', stop);
     }})();
     """
