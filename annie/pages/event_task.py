@@ -107,6 +107,35 @@ _EVENT_COLORS: tuple[str, ...] = (
 
 
 @dataclass
+class _PositionFields:
+    """The frame / seconds / timecode inputs, shown as the live position and typed to jump.
+
+    Attributes:
+        frame_in: Frame-number input.
+        sec_in: Seconds input.
+        tc_in: ``mm:ss.ff`` input.
+        editing: Whether the user is typing in one of them (the live readout then holds still).
+        shown: The ``(frame, seconds, timecode)`` last written by :meth:`show`, so a field the
+            user focused but did not change never triggers a seek.
+    """
+
+    frame_in: ui.number
+    sec_in: ui.number
+    tc_in: ui.input
+    editing: bool = False
+    shown: tuple[int, float, str] = (0, 0.0, "")
+
+    def show(self, frame: int, fps: float) -> None:
+        """Write one frame to all three inputs, consistently."""
+        seconds = round(frames_to_seconds(frame, fps), 3)
+        timecode = _format_timecode(seconds)
+        self.shown = (frame, seconds, timecode)
+        self.frame_in.set_value(frame)
+        self.sec_in.set_value(seconds)
+        self.tc_in.set_value(timecode)
+
+
+@dataclass
 class _EventState:
     """Per-client Event-annotation position and view settings.
 
@@ -130,6 +159,8 @@ class _EventState:
         restore_frame: Transient frame the video should be re-seeked to after a full rebuild
             recreates the ``<video>`` (which the browser resets to 0); ``None`` when no
             restore is pending. Cleared once issued.
+        position: The live frame/seconds/timecode inputs of the current build, or ``None``
+            before they exist. Transient: replaced on every rebuild.
         active_category: The participant category a newly-captured event lands on. Defaults to
             the first category; ``None`` when the dataset has no categories yet.
     """
@@ -149,6 +180,7 @@ class _EventState:
     focus_name: bool = False
     restore_frame: int | None = field(default=None)
     active_category: str | None = field(default=None)
+    position: _PositionFields | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         self.reset_view()
@@ -157,6 +189,10 @@ class _EventState:
         """Show the whole clip again, sized to the current :attr:`num_frames`."""
         self.view = TimelineView(self.num_frames)
 
+
+_POLL_SECONDS = 0.1
+"""How often the real video time is read back, so the position readout and the red line track
+playback and frame steps within about a tenth of a second."""
 
 #: Per-client Event-annotation state, keyed by client id; cleaned up on disconnect.
 _event_states: dict[str, _EventState] = {}
@@ -403,6 +439,7 @@ def _start_playhead_poll(state_: _EventState, vid_id: str) -> None:
         if frame == state_.playhead_frame:
             return
         state_.playhead_frame = frame
+        _show_position(state_)
         if _follow_playhead(state_):
             return  # the window paged: the redraw positions the line and the band itself
         _sync_playhead(state_, svg_id)
@@ -411,41 +448,70 @@ def _start_playhead_poll(state_: _EventState, vid_id: str) -> None:
         if state_.pending_start is not None:
             _sync_pending_band(state_, svg_id)
 
-    ui.timer(0.25, _tick)
+    ui.timer(_POLL_SECONDS, _tick)
 
 
 def _jump_fields(state_: _EventState, vid_id: str) -> None:
-    """The linked frame / seconds / timecode fields that seek the playhead when typed.
+    """The live position readout: frame / seconds / ``mm:ss.ff``, also typed to jump.
 
-    All three stay consistent: editing any one seeks the video, moves the red timeline line,
-    and rewrites the other two. They start at the current playhead, not zero, so returning to
-    a video shows where you were.
+    The three fields always show where the video is — during playback, frame stepping, timeline
+    clicks — and stay consistent with each other. Typing a value in any one and pressing Enter
+    (or leaving the field) seeks there and rewrites the other two. While a field is focused the
+    readout holds still so it never overwrites what is being typed.
     """
     head = state_.playhead_frame
-    head_sec = frames_to_seconds(head, state_.fps)
     with ui.row().classes("w-full items-center justify-center gap-3 wrap"):
-        ui.label("Jump to").classes("text-xs").style(f"color:{theme.NEUTRAL}")
-        frame_in = ui.number("frame", value=head, min=0, precision=0).props("dense").classes("w-28")
-        sec_in = (
-            ui.number("seconds", value=round(head_sec, 3), min=0).props("dense").classes("w-28")
-        )
-        tc_in = (
-            ui.input("mm:ss.ff", value=_format_timecode(head_sec)).props("dense").classes("w-28")
-        )
+        ui.label("Position").classes("text-xs").style(f"color:{theme.NEUTRAL}")
+        frame_in = ui.number("frame", min=0, precision=0).props("dense").classes("w-28")
+        sec_in = ui.number("seconds", min=0).props("dense").classes("w-28")
+        tc_in = ui.input("mm:ss.ff").props("dense").classes("w-28")
+        for field_ in (frame_in, sec_in, tc_in):
+            field_.tooltip("Current position — type a value and press Enter to jump there")
 
-        def seek_to_frame(frame: int) -> None:
-            frame = _seek(state_, vid_id, frame)
-            _sync_jump_fields(state_, frame, frame_in, sec_in, tc_in)
+    fields = _PositionFields(frame_in, sec_in, tc_in)
+    state_.position = fields
+    fields.show(head, state_.fps)
 
-        frame_in.on("blur", lambda: seek_to_frame(int(frame_in.value or 0)))
-        sec_in.on(
-            "blur",
-            lambda: seek_to_frame(seconds_to_frame(float(sec_in.value or 0.0), state_.fps)),
-        )
-        tc_in.on(
-            "blur",
-            lambda: seek_to_frame(seconds_to_frame(_parse_timecode(tc_in.value), state_.fps)),
-        )
+    for name, field_ in (("frame", frame_in), ("seconds", sec_in), ("timecode", tc_in)):
+        field_.on("focus", lambda: setattr(fields, "editing", True))
+        field_.on("blur", lambda n=name: _commit_position(state_, vid_id, n))
+        field_.on("keydown.enter", lambda n=name: _commit_position(state_, vid_id, n))
+
+
+def _commit_position(state_: _EventState, vid_id: str, which: str) -> None:
+    """Jump to the value typed in one position field — but only if the user changed it.
+
+    Args:
+        state_: The task state (holds the position fields).
+        vid_id: The video element's DOM id.
+        which: ``"frame"``, ``"seconds"`` or ``"timecode"`` — the field being committed.
+    """
+    fields = state_.position
+    if fields is None:
+        return
+    fields.editing = False
+    shown_frame, shown_sec, shown_tc = fields.shown
+    if which == "frame":
+        if int(fields.frame_in.value or 0) == shown_frame:
+            return
+        frame = int(fields.frame_in.value or 0)
+    elif which == "seconds":
+        if float(fields.sec_in.value or 0.0) == shown_sec:
+            return
+        frame = seconds_to_frame(float(fields.sec_in.value or 0.0), state_.fps)
+    else:
+        if (fields.tc_in.value or "") == shown_tc:
+            return
+        frame = seconds_to_frame(_parse_timecode(fields.tc_in.value), state_.fps)
+    _seek(state_, vid_id, frame)  # clamps, seeks, and rewrites all three fields
+
+
+def _show_position(state_: _EventState) -> None:
+    """Refresh the position readout from the playhead, unless the user is typing in it."""
+    fields = state_.position
+    if fields is None or fields.editing:
+        return
+    fields.show(state_.playhead_frame, state_.fps)
 
 
 def _category_color(ordinal: int, override: str | None) -> str:
@@ -1285,6 +1351,7 @@ def _seek(state_: _EventState, vid_id: str, frame: int) -> int:
     frame = max(0, min(frame, max(0, state_.num_frames - 1)))
     state_.playhead_frame = frame
     videoclock.seek_frame(vid_id, frame, state_.fps)
+    _show_position(state_)
     if state_.view.zoomed_in and not state_.view.contains(frame):
         state_.view.center_on(frame)
         _refresh_timeline(state_)
@@ -1313,16 +1380,6 @@ def _sync_pending_band(state_: _EventState, svg_id: str) -> None:
         view.fraction_clamped(state_.pending_start),
         view.fraction_clamped(state_.playhead_frame),
     )
-
-
-def _sync_jump_fields(
-    state_: _EventState, frame: int, frame_in: ui.number, sec_in: ui.number, tc_in: ui.input
-) -> None:
-    """Rewrite the three linked jump fields to a consistent frame/second/timecode."""
-    seconds = frames_to_seconds(frame, state_.fps)
-    frame_in.set_value(frame)
-    sec_in.set_value(round(seconds, 3))
-    tc_in.set_value(_format_timecode(seconds))
 
 
 def _format_timecode(seconds: float) -> str:

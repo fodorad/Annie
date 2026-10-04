@@ -13,7 +13,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from nicegui import core
+from nicegui import core, ui
 
 from annie.core.models import VideoEntry
 from annie.core.state import state
@@ -372,6 +372,94 @@ class TestLayoutBadgesAndMeta(unittest.IsolatedAsyncioTestCase):
         csv_text = event_task._export_text(st, "session", "csv") or ""  # noqa: SLF001
         self.assertIn("meta_grp", csv_text)
         self.assertIn("meta_part", csv_text)
+
+
+class TestPositionReadout(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self._saved_loop = core.loop
+        core.loop = asyncio.get_running_loop()
+        quiet_slow_callback_warnings()
+
+    async def asyncTearDown(self) -> None:
+        core.loop = self._saved_loop
+
+    def setUp(self) -> None:
+        self.state = event_task._EventState(  # noqa: SLF001
+            row_key="v::", video_id="v", fps=25.0, num_frames=500, duration=20.0
+        )
+
+    def _fields(self) -> event_task._PositionFields:  # noqa: SLF001
+        fields = event_task._PositionFields(  # noqa: SLF001
+            ui.number(), ui.number(), ui.input()
+        )
+        self.state.position = fields
+        return fields
+
+    def _values(self, f: event_task._PositionFields) -> tuple[object, object, object]:  # noqa: SLF001
+        return f.frame_in.value, f.sec_in.value, f.tc_in.value
+
+    async def test_show_writes_consistent_values(self) -> None:
+        with ui_client():
+            f = self._fields()
+            f.show(125, 25.0)
+        self.assertEqual(self._values(f), (125, 5.0, "00:05.00"))
+
+    async def test_readout_follows_the_playhead(self) -> None:
+        with ui_client():
+            f = self._fields()
+            self.state.playhead_frame = 50
+            event_task._show_position(self.state)  # noqa: SLF001
+        self.assertEqual(self._values(f), (50, 2.0, "00:02.00"))
+
+    async def test_readout_holds_still_while_editing(self) -> None:
+        with ui_client():
+            f = self._fields()
+            f.show(10, 25.0)
+            f.editing = True
+            self.state.playhead_frame = 99
+            event_task._show_position(self.state)  # noqa: SLF001
+        self.assertEqual(f.frame_in.value, 10)
+
+    async def test_seek_updates_the_readout(self) -> None:
+        with ui_client():
+            f = self._fields()
+            event_task._seek(self.state, "vid", 200)  # noqa: SLF001
+        self.assertEqual(self._values(f), (200, 8.0, "00:08.00"))
+
+    async def test_typed_frame_jumps_and_rewrites_the_others(self) -> None:
+        with ui_client():
+            f = self._fields()
+            f.show(0, 25.0)
+            f.frame_in.value = 75
+            event_task._commit_position(self.state, "vid", "frame")  # noqa: SLF001
+        self.assertEqual(self.state.playhead_frame, 75)
+        self.assertEqual(self._values(f), (75, 3.0, "00:03.00"))
+
+    async def test_typed_seconds_and_timecode_jump(self) -> None:
+        with ui_client():
+            f = self._fields()
+            f.show(0, 25.0)
+            f.sec_in.value = 4.0
+            event_task._commit_position(self.state, "vid", "seconds")  # noqa: SLF001
+            self.assertEqual(self.state.playhead_frame, 100)
+            f.tc_in.value = "00:06.00"
+            event_task._commit_position(self.state, "vid", "timecode")  # noqa: SLF001
+        self.assertEqual(self.state.playhead_frame, 150)
+
+    async def test_unchanged_field_does_not_seek(self) -> None:
+        with ui_client():
+            f = self._fields()
+            f.show(40, 25.0)
+            self.state.playhead_frame = 41  # video moved on; field untouched
+            f.editing = True
+            event_task._commit_position(self.state, "vid", "frame")  # noqa: SLF001
+        self.assertEqual(self.state.playhead_frame, 41)
+        self.assertFalse(f.editing)
+
+    async def test_commit_without_fields_is_a_noop(self) -> None:
+        self.state.position = None
+        event_task._commit_position(self.state, "vid", "frame")  # noqa: SLF001
+        self.assertEqual(self.state.playhead_frame, 0)
 
 
 if __name__ == "__main__":
