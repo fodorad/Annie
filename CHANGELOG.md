@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.0](https://github.com/fodorad/Annie/compare/v1.10.0...v1.11.0) (2026-10-04)
+
+
+### Features
+
+* live position readout; commit nested layout on blur/Enter ([#58](https://github.com/fodorad/Annie/issues/58)) ([f1b9cb2](https://github.com/fodorad/Annie/commit/f1b9cb2891076778ccc5a23f5eb392e44e15279c))
+
 ## [1.10.0](https://github.com/fodorad/Annie/compare/v1.9.1...v1.10.0) (2026-10-04)
 
 
