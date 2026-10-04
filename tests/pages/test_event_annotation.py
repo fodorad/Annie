@@ -17,7 +17,9 @@ from nicegui import core
 
 from annie.core.models import VideoEntry
 from annie.core.state import state
+from annie.dataset.layout import VideoLayout
 from annie.dataset.scanning import ScanResult
+from annie.dataset.sources import DataSource, SourceKind, SourceRegistry
 from annie.dataset.storage import ReviewStore
 from annie.pages import event_task
 from tests.pages._nicegui import quiet_slow_callback_warnings, ui_client
@@ -334,6 +336,42 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         label = event_task._range_label(self.state)  # noqa: SLF001
         self.assertIn("×4.0", label)
         self.assertIn("of 10.0 s", label)
+
+
+class TestLayoutBadgesAndMeta(unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        self._saved = (state.store, state.scan, state.registry)
+        self.root = Path(tempfile.mkdtemp())
+        state.store = ReviewStore(self.root / "annie.db")
+        entry = VideoEntry(
+            video_id="s1_a", video_path=None, labels={"grp": "g1", "part": "a", "Other": "z"}
+        )
+        state.scan = ScanResult(entries=[entry])
+        state.registry = SourceRegistry()
+        state.registry.add(
+            DataSource(SourceKind.VIDEO, self.root, layout=VideoLayout("{grp}/clip_{part}.mp4"))
+        )
+        self.entry = entry
+
+    def tearDown(self) -> None:
+        state.store, state.scan, state.registry = self._saved
+
+    async def test_badges_show_only_layout_fields_in_pattern_order(self) -> None:
+        self.assertEqual(event_task._layout_badges(self.entry), ["g1", "a"])  # noqa: SLF001
+
+    async def test_no_badges_for_a_flat_folder(self) -> None:
+        state.registry = SourceRegistry()
+        state.registry.add(DataSource(SourceKind.VIDEO, self.root))
+        self.assertEqual(event_task._layout_badges(self.entry), [])  # noqa: SLF001
+
+    async def test_export_text_includes_meta(self) -> None:
+        st = event_task._EventState(  # noqa: SLF001
+            row_key="s1_a", video_id="s1_a", fps=25.0, num_frames=100, duration=4.0
+        )
+        state.store.add_event("s1_a", "s1_a", "speech", 0, 10)
+        csv_text = event_task._export_text(st, "session", "csv") or ""  # noqa: SLF001
+        self.assertIn("meta_grp", csv_text)
+        self.assertIn("meta_part", csv_text)
 
 
 if __name__ == "__main__":

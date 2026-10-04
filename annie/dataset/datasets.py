@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 
 from annie.core.config import settings
+from annie.dataset.layout import VideoLayout
 from annie.dataset.manipulate import detect_type
 from annie.dataset.sources import (
     CsvRole,
@@ -167,7 +168,13 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
                 )
             )
         else:
-            registry.add(DataSource(kind, resolved))
+            layout_raw = entry.get("layout")
+            layout = (
+                VideoLayout(layout_raw["pattern"], layout_raw.get("id_template"))
+                if layout_raw and kind is SourceKind.VIDEO
+                else None
+            )
+            registry.add(DataSource(kind, resolved, layout=layout))
     db_path: Path | None = None
     if "db" in data:
         raw_db = Path(data["db"])
@@ -223,6 +230,10 @@ def to_config_dict(
                     {"name": b.name, "start_column": b.start_column, "end_column": b.end_column}
                     for b in source.bands
                 ]
+        if source.layout is not None:
+            entry["layout"] = {"pattern": source.layout.pattern}
+            if source.layout.id_template is not None:
+                entry["layout"]["id_template"] = source.layout.id_template
         sources.append(entry)
     result: dict = {"name": name, "sources": sources}
     if db_path is not None:

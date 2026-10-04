@@ -106,7 +106,9 @@ def _event_dict(event: EventRecord, fps: float) -> dict[str, object]:
 
 
 def build_export_tree(
-    events: Iterable[EventRecord], fps_by_video: Mapping[str, float]
+    events: Iterable[EventRecord],
+    fps_by_video: Mapping[str, float],
+    meta_by_video: Mapping[str, Mapping[str, str]] | None = None,
 ) -> dict[str, dict[str, object]]:
     """Group events into the nested ``video_id -> {fps, tracks}`` export structure.
 
@@ -118,9 +120,11 @@ def build_export_tree(
         events: The events to export.
         fps_by_video: Frames per second per ``video_id``, for the derived seconds. A video
             missing here is exported with ``fps = 0`` and zero seconds (frames still stand).
+        meta_by_video: Optional per-video metadata (e.g. the fields a nested layout captured
+            from the path), exported as a ``"meta"`` object when a video has any.
 
     Returns:
-        A mapping of ``video_id`` to ``{"fps": float, "tracks": {track: [event dict, ...]}}``.
+        A mapping of ``video_id`` to ``{"fps": float, "tracks": {...}}`` (plus ``"meta"``).
     """
     # Built with concretely-typed locals, then widened to object-valued dicts on return, so
     # the nested structure type-checks without a per-access cast.
@@ -131,12 +135,21 @@ def build_export_tree(
         fps_of.setdefault(event.video_id, fps)
         video_tracks = tracks_of.setdefault(event.video_id, {})
         video_tracks.setdefault(event.track, []).append(_event_dict(event, fps))
-    return {
-        video_id: {"fps": fps_of[video_id], "tracks": tracks_of[video_id]} for video_id in tracks_of
-    }
+    meta = meta_by_video or {}
+    tree: dict[str, dict[str, object]] = {}
+    for video_id in tracks_of:
+        node: dict[str, object] = {"fps": fps_of[video_id], "tracks": tracks_of[video_id]}
+        if meta.get(video_id):
+            node["meta"] = dict(meta[video_id])
+        tree[video_id] = node
+    return tree
 
 
-def events_to_json_text(events: Iterable[EventRecord], fps_by_video: Mapping[str, float]) -> str:
+def events_to_json_text(
+    events: Iterable[EventRecord],
+    fps_by_video: Mapping[str, float],
+    meta_by_video: Mapping[str, Mapping[str, str]] | None = None,
+) -> str:
     """Render events as nested JSON text (one object per video).
 
     Suits downstream code: attributes stay nested, seconds are derived per video's fps. A
@@ -146,11 +159,12 @@ def events_to_json_text(events: Iterable[EventRecord], fps_by_video: Mapping[str
     Args:
         events: The events to render.
         fps_by_video: Frames per second per ``video_id``.
+        meta_by_video: Optional per-video metadata exported as ``"meta"``.
 
     Returns:
         The JSON document as a string.
     """
-    tree = build_export_tree(events, fps_by_video)
+    tree = build_export_tree(events, fps_by_video, meta_by_video)
     return json.dumps(tree, indent=2, ensure_ascii=False)
 
 
@@ -175,7 +189,11 @@ def export_events_json(
     return out
 
 
-def events_to_csv_text(events: Iterable[EventRecord], fps_by_video: Mapping[str, float]) -> str:
+def events_to_csv_text(
+    events: Iterable[EventRecord],
+    fps_by_video: Mapping[str, float],
+    meta_by_video: Mapping[str, Mapping[str, str]] | None = None,
+) -> str:
     """Render events as flat CSV text (one row per event) for a spreadsheet.
 
     Fixed columns come first, then one ``attr_<key>`` column per attribute key seen across
@@ -185,6 +203,8 @@ def events_to_csv_text(events: Iterable[EventRecord], fps_by_video: Mapping[str,
     Args:
         events: The events to render.
         fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+        meta_by_video: Optional per-video metadata; one ``meta_<key>`` column per key seen,
+            right after the fixed columns.
 
     Returns:
         The CSV document as a string.
@@ -202,7 +222,13 @@ def events_to_csv_text(events: Iterable[EventRecord], fps_by_video: Mapping[str,
         "note",
         "color",
     ]
-    fields = [*fixed, *(f"attr_{key}" for key in attr_keys)]
+    meta = meta_by_video or {}
+    meta_keys = sorted({key for event in events for key in meta.get(event.video_id, {})})
+    fields = [
+        *fixed,
+        *(f"meta_{key}" for key in meta_keys),
+        *(f"attr_{key}" for key in attr_keys),
+    ]
     buffer = io.StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=fields)
     writer.writeheader()
@@ -219,6 +245,8 @@ def events_to_csv_text(events: Iterable[EventRecord], fps_by_video: Mapping[str,
             "note": event.note,
             "color": event.color or "",
         }
+        for key in meta_keys:
+            row[f"meta_{key}"] = meta.get(event.video_id, {}).get(key, "")
         for key in attr_keys:
             row[f"attr_{key}"] = event.attributes.get(key, "")
         writer.writerow(row)

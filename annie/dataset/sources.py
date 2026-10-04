@@ -28,6 +28,8 @@ from annie.parsers.csvmeta import count_rows
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from annie.dataset.layout import VideoLayout
+
 
 class SourceKind(StrEnum):
     """The kind of a data source."""
@@ -126,6 +128,9 @@ class DataSource:
         bands: For a :attr:`CsvRole.SEGMENTATION` CSV, the ordered start/end column
             pairs to render and compare (see :class:`SegmentationBand`). Empty
             otherwise.
+        layout: For a :attr:`SourceKind.VIDEO` folder, an optional nested
+            :class:`~annie.dataset.layout.VideoLayout`. ``None`` means a flat folder
+            (one video per file, id = file stem).
     """
 
     kind: SourceKind
@@ -136,6 +141,7 @@ class DataSource:
     column_types: dict[str, str] = field(default_factory=dict)
     segment_column: str | None = None
     bands: tuple[SegmentationBand, ...] = ()
+    layout: VideoLayout | None = None
 
     @property
     def is_folder(self) -> bool:
@@ -178,6 +184,8 @@ class DataSource:
         if not self.available:
             return 0
         if self.kind is SourceKind.VIDEO:
+            if self.layout is not None:
+                return len(self.layout.discover(self.path).videos)
             return _count_suffixes(self.path, VIDEO_SUFFIXES)
         if self.kind is SourceKind.VDET:
             return _count_suffixes(self.path, VDET_SUFFIXES)
