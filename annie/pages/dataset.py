@@ -28,7 +28,12 @@ from annie.core import logbook, theme
 from annie.core.config import settings
 from annie.core.state import _seed_registry, state
 from annie.dataset import datasets
-from annie.dataset.layout import VideoLayout, contains_nested_videos
+from annie.dataset.layout import (
+    DiscoveredVideo,
+    DiscoveryReport,
+    VideoLayout,
+    contains_nested_videos,
+)
 from annie.dataset.manipulate import detect_type
 from annie.dataset.sources import (
     KIND_ICONS,
@@ -50,6 +55,8 @@ from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
 
 if TYPE_CHECKING:
     from nicegui.events import ValueChangeEventArguments
+
+    from annie.dataset.scanning import ScanResult
 
 # ── per-client state ──────────────────────────────────────────────────────────
 
@@ -550,6 +557,19 @@ def _availability_chip(source: DataSource) -> None:
         ui.badge("Unavailable", color=theme.UNAVAILABLE).tooltip("path not found")
 
 
+@dataclass(slots=True, frozen=True)
+class LayoutCommit:
+    """What committing the Layout text boxes should do.
+
+    Attributes:
+        layout: The valid layout to apply, or ``None`` when there is nothing to apply.
+        error: A user-readable validation message, or ``None``.
+    """
+
+    layout: VideoLayout | None = None
+    error: str | None = None
+
+
 def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
     """Build and validate a :class:`VideoLayout` from the Layout text boxes.
 
@@ -568,55 +588,68 @@ def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
     return layout
 
 
+def layout_commit(pattern: str, id_template: str, current: VideoLayout | None) -> LayoutCommit:
+    """Decide what to do when a Layout box is committed (blur / Enter).
+
+    Args:
+        pattern: The pattern box text.
+        id_template: The video-id box text.
+        current: The layout already applied to the source, if any.
+
+    Returns:
+        ``LayoutCommit(layout=...)`` to apply a new valid layout; ``LayoutCommit(error=...)``
+        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the boxes
+        still describe the applied layout, or the pattern is still empty (nothing to do yet).
+    """
+    if not pattern.strip():
+        return LayoutCommit()
+    try:
+        candidate = layout_from_inputs(pattern, id_template)
+    except ValueError as exc:
+        return LayoutCommit(error=str(exc))
+    return LayoutCommit() if candidate == current else LayoutCommit(layout=candidate)
+
+
 def _layout_editor(source: DataSource) -> None:
-    """The Layout control on the Videos-folder card: flat folder, or a nested path template."""
+    """The Layout control on the Videos-folder card: flat folder, or a nested path template.
+
+    There is no Preview/Apply button: committing either box (blur or Enter) validates the
+    layout, applies it, and rescans, and the result line under the card is the preview.
+    """
     layout = source.layout
     nested = ui.switch("Nested layout", value=layout is not None).tooltip(
         "Off: one video per .mp4 directly in this folder. On: describe where videos sit below it."
     )
     with ui.column().classes("w-full gap-1").bind_visibility_from(nested, "value"):
-        pattern = ui.input(
-            "Pattern — path of each video relative to this folder",
-            value=layout.pattern if layout else "",
-            placeholder="{group}/{subject}/clip_{part}.mp4",
-        ).classes("w-full")
-        id_template = ui.input(
-            "Video id (optional — default joins the fields with _)",
-            value=(layout.id_template or "") if layout else "",
-            placeholder="{subject}_{part}",
-        ).classes("w-full")
+        pattern = (
+            ui.input(
+                "Pattern — path of each video relative to this folder",
+                value=layout.pattern if layout else "",
+            )
+            .props('hint="e.g. {group}/{subject}/clip_{part}.mp4"')
+            .classes("w-full")
+        )
+        id_template = (
+            ui.input("Video id (optional)", value=(layout.id_template or "") if layout else "")
+            .props('hint="e.g. {subject}_{part} — empty joins all fields with _"')
+            .classes("w-full")
+        )
         ui.label(
             "{name} captures part of a path or file name; each captured field becomes a Browse "
-            "tag/filter. The video id must be unique."
+            "tag/filter. The video id must be unique. Press Enter or click away to apply."
         ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
-        feedback = ui.label().classes("text-xs break-words")
+        error = ui.label().classes("text-xs break-words").style(f"color:{theme.UNAVAILABLE}")
 
-        def _parse() -> VideoLayout | None:
-            try:
-                return layout_from_inputs(pattern.value or "", id_template.value or "")
-            except ValueError as exc:
-                feedback.set_text(str(exc)).style(f"color:{theme.UNAVAILABLE}")
-                return None
+        async def _commit() -> None:
+            outcome = layout_commit(pattern.value or "", id_template.value or "", source.layout)
+            error.set_text(outcome.error or "")
+            if outcome.layout is not None:
+                source.layout = outcome.layout
+                await _apply_changes()
 
-        async def _preview() -> None:
-            candidate = _parse()
-            if candidate is None:
-                return
-            report = await run.io_bound(candidate.discover, source.path)
-            if report is None:  # the worker was cancelled (e.g. the page closed)
-                return
-            feedback.set_text(report.summary()).style(f"color:{theme.NEUTRAL}")
-
-        async def _apply() -> None:
-            candidate = _parse()
-            if candidate is None:
-                return
-            source.layout = candidate
-            await _apply_changes()
-
-        with ui.row().classes("gap-2"):
-            ui.button("Preview", on_click=_preview).props("flat dense")
-            ui.button("Apply", on_click=_apply).props("unelevated dense")
+        for box in (pattern, id_template):
+            box.on("blur", _commit)
+            box.on("keydown.enter", _commit)
 
     async def _toggle(event: ValueChangeEventArguments) -> None:
         if not event.value and source.layout is not None:  # back to a flat folder
@@ -626,10 +659,39 @@ def _layout_editor(source: DataSource) -> None:
     nested.on_value_change(_toggle)
 
 
+def layout_summary(source: DataSource, scan: ScanResult | None) -> str | None:
+    """Describe what a nested layout found, from the last scan (no extra filesystem walk).
+
+    Args:
+        source: The Videos-folder source.
+        scan: The last scan result.
+
+    Returns:
+        A one-line summary such as ``"278 videos · a ×70 · b ×4 · 0 collisions · e.g. …"``,
+        or ``None`` when the source has no layout or nothing was scanned.
+    """
+    if source.layout is None or scan is None:
+        return None
+    names = source.layout.field_names()
+    videos = [
+        DiscoveredVideo(
+            entry.video_path or Path(entry.video_id),
+            entry.video_id,
+            {n: entry.labels[n] for n in names if n in entry.labels},
+        )
+        for entry in scan.entries
+        if entry.has_video
+    ]
+    return DiscoveryReport(videos, list(scan.layout_collisions)).summary()
+
+
 def _layout_notice(source: DataSource) -> None:
     """Explain a layout problem or the "your videos are nested" hint under the card."""
     scan = state.scan
     if source.layout is not None:
+        summary = layout_summary(source, scan)
+        if summary is not None and not (scan and scan.layout_error):
+            ui.label(summary).classes("text-xs break-words").style(f"color:{theme.NEUTRAL}")
         if scan is not None and scan.layout_error:
             ui.label(scan.layout_error).classes("text-xs").style(f"color:{theme.UNAVAILABLE}")
         elif scan is not None and scan.layout_collisions:
