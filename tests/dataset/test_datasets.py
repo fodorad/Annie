@@ -9,6 +9,7 @@ from pathlib import Path
 
 from annie.core.config import settings
 from annie.dataset import datasets
+from annie.dataset.layout import VideoLayout
 from annie.dataset.sources import (
     CsvRole,
     DataSource,
@@ -256,6 +257,43 @@ class TestConfigDbPersistence(unittest.TestCase):
             _name, _reg, db = datasets.load_config(datasets.bundled_config_dir() / f"{stem}.json")
             assert db is not None
             self.assertEqual(db, (self.home / expected).resolve())
+
+
+class TestLayoutConfig(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def test_layout_round_trips(self) -> None:
+        reg = SourceRegistry()
+        layout = VideoLayout("{grp}/clip_{part}.mp4", "{grp}-{part}")
+        reg.add(DataSource(SourceKind.VIDEO, self.tmp / "root", layout=layout))
+        path = datasets.save_config(self.tmp / "c.json", reg, "n")
+        _, loaded, _ = datasets.load_config(path)
+        assert loaded.video is not None
+        self.assertEqual(loaded.video.layout, layout)
+
+    def test_flat_config_has_no_layout_key_and_old_configs_load(self) -> None:
+        reg = SourceRegistry()
+        reg.add(DataSource(SourceKind.VIDEO, self.tmp / "root"))
+        data = datasets.to_config_dict(reg, "n")
+        self.assertNotIn("layout", data["sources"][0])
+        (self.tmp / "old.json").write_text(json.dumps(data), encoding="utf-8")
+        _, loaded, _ = datasets.load_config(self.tmp / "old.json")
+        assert loaded.video is not None
+        self.assertIsNone(loaded.video.layout)
+
+    def test_pattern_only_layout_omits_id_template(self) -> None:
+        reg = SourceRegistry()
+        reg.add(DataSource(SourceKind.VIDEO, self.tmp, layout=VideoLayout("{a}.mp4")))
+        self.assertEqual(
+            datasets.to_config_dict(reg, "n")["sources"][0]["layout"], {"pattern": "{a}.mp4"}
+        )
+
+    def test_source_count_uses_the_layout(self) -> None:
+        (self.tmp / "g").mkdir()
+        (self.tmp / "g" / "clip_a.mp4").write_bytes(b"")
+        source = DataSource(SourceKind.VIDEO, self.tmp, layout=VideoLayout("{g}/clip_{p}.mp4"))
+        self.assertEqual(source.count(), 1)
 
 
 if __name__ == "__main__":

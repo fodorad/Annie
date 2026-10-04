@@ -75,6 +75,9 @@ class ScanResult:
         num_track_files: Total track files discovered.
         protagonist_available: Whether protagonist assignments were found.
         label_columns: The label-column names available for tags/filters.
+        layout_collisions: Video ids that more than one file produced under a nested
+            layout (only the first file of each was kept).
+        layout_error: Why a configured nested layout could not be used, else ``None``.
     """
 
     entries: list[VideoEntry] = field(default_factory=list)
@@ -83,6 +86,8 @@ class ScanResult:
     protagonist_available: bool = False
     label_columns: list[str] = field(default_factory=list)
     label_column_types: dict[str, str] = field(default_factory=dict)
+    layout_collisions: list[str] = field(default_factory=list)
+    layout_error: str | None = None
     #: Lazily-built ``video_id -> entry`` index; see :attr:`by_video_id`.
     _by_video_id: dict[str, VideoEntry] | None = field(default=None, repr=False, compare=False)
 
@@ -249,7 +254,22 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
     track_src = registry.track
 
     videos_path = video_src.path if video_src is not None else None
-    videos = {p.stem: p for p in _iter_files(videos_path, suffixes=VIDEO_SUFFIXES, glob=None)}
+    layout_fields: dict[str, dict[str, str]] = {}
+    layout_collisions: list[str] = []
+    layout_error: str | None = None
+    if video_src is not None and video_src.layout is not None and videos_path is not None:
+        # A nested layout: ids and per-video fields come from the path template, not the stem.
+        try:
+            report = video_src.layout.discover(videos_path)
+        except ValueError as exc:  # a bad saved layout must not break the whole scan
+            layout_error = str(exc)
+            videos = {}
+        else:
+            videos = {v.video_id: v.path for v in report.videos}
+            layout_fields = {v.video_id: v.fields for v in report.videos}
+            layout_collisions = report.collisions
+    else:
+        videos = {p.stem: p for p in _iter_files(videos_path, suffixes=VIDEO_SUFFIXES, glob=None)}
     video_stems = set(videos)
     longest_first = sorted(videos, key=len, reverse=True)
 
@@ -278,6 +298,10 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
 
     active = _active_mapping(registry.protagonist)
     label_maps, label_columns = _label_maps(registry.label_sources)
+    for fields in layout_fields.values():  # path-derived fields are tags/filters too
+        for name in fields:
+            if name not in label_columns:
+                label_columns.append(name)
     label_column_types: dict[str, str] = {}
     for source in registry.label_sources:
         for column in source.value_columns:
@@ -292,7 +316,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
         track_paths = [p for _, p in video_tracks]
         vdet_matches = vdets.get(video_id)
         vdet_file = _primary_vdet(video_id, vdet_matches) if vdet_matches else None
-        labels: dict[str, str] = {}
+        labels: dict[str, str] = dict(layout_fields.get(video_id, {}))
         for value_map in label_maps:
             if video_id in value_map:
                 labels.update(value_map[video_id])
@@ -320,6 +344,8 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
         protagonist_available=bool(active),
         label_columns=label_columns,
         label_column_types=label_column_types,
+        layout_collisions=layout_collisions,
+        layout_error=layout_error,
     )
 
 

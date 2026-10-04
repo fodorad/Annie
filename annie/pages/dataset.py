@@ -20,6 +20,7 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from nicegui import context, run, ui
 
@@ -27,11 +28,13 @@ from annie.core import logbook, theme
 from annie.core.config import settings
 from annie.core.state import _seed_registry, state
 from annie.dataset import datasets
+from annie.dataset.layout import VideoLayout, contains_nested_videos
 from annie.dataset.manipulate import detect_type
 from annie.dataset.sources import (
     KIND_ICONS,
     KIND_LABELS,
     TASK_LABELS,
+    VIDEO_SUFFIXES,
     CsvRole,
     DataSource,
     SourceKind,
@@ -44,6 +47,9 @@ from annie.pages.folder_picker import pick_directory, pick_file
 from annie.pages.utils import notify_detached
 from annie.parsers.csvmeta import read_header, read_rows
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
+
+if TYPE_CHECKING:
+    from nicegui.events import ValueChangeEventArguments
 
 # ── per-client state ──────────────────────────────────────────────────────────
 
@@ -544,6 +550,105 @@ def _availability_chip(source: DataSource) -> None:
         ui.badge("Unavailable", color=theme.UNAVAILABLE).tooltip("path not found")
 
 
+def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
+    """Build and validate a :class:`VideoLayout` from the Layout text boxes.
+
+    Args:
+        pattern: The pattern box (path relative to the root, with ``{field}`` placeholders).
+        id_template: The video-id box; empty means "join the fields with ``_``".
+
+    Returns:
+        The validated layout.
+
+    Raises:
+        ValueError: With a user-readable message if the layout is unusable.
+    """
+    layout = VideoLayout(pattern.strip(), id_template.strip() or None)
+    layout.validate()
+    return layout
+
+
+def _layout_editor(source: DataSource) -> None:
+    """The Layout control on the Videos-folder card: flat folder, or a nested path template."""
+    layout = source.layout
+    nested = ui.switch("Nested layout", value=layout is not None).tooltip(
+        "Off: one video per .mp4 directly in this folder. On: describe where videos sit below it."
+    )
+    with ui.column().classes("w-full gap-1").bind_visibility_from(nested, "value"):
+        pattern = ui.input(
+            "Pattern — path of each video relative to this folder",
+            value=layout.pattern if layout else "",
+            placeholder="{group}/{subject}/clip_{part}.mp4",
+        ).classes("w-full")
+        id_template = ui.input(
+            "Video id (optional — default joins the fields with _)",
+            value=(layout.id_template or "") if layout else "",
+            placeholder="{subject}_{part}",
+        ).classes("w-full")
+        ui.label(
+            "{name} captures part of a path or file name; each captured field becomes a Browse "
+            "tag/filter. The video id must be unique."
+        ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+        feedback = ui.label().classes("text-xs break-words")
+
+        def _parse() -> VideoLayout | None:
+            try:
+                return layout_from_inputs(pattern.value or "", id_template.value or "")
+            except ValueError as exc:
+                feedback.set_text(str(exc)).style(f"color:{theme.UNAVAILABLE}")
+                return None
+
+        async def _preview() -> None:
+            candidate = _parse()
+            if candidate is None:
+                return
+            report = await run.io_bound(candidate.discover, source.path)
+            if report is None:  # the worker was cancelled (e.g. the page closed)
+                return
+            feedback.set_text(report.summary()).style(f"color:{theme.NEUTRAL}")
+
+        async def _apply() -> None:
+            candidate = _parse()
+            if candidate is None:
+                return
+            source.layout = candidate
+            await _apply_changes()
+
+        with ui.row().classes("gap-2"):
+            ui.button("Preview", on_click=_preview).props("flat dense")
+            ui.button("Apply", on_click=_apply).props("unelevated dense")
+
+    async def _toggle(event: ValueChangeEventArguments) -> None:
+        if not event.value and source.layout is not None:  # back to a flat folder
+            source.layout = None
+            await _apply_changes()
+
+    nested.on_value_change(_toggle)
+
+
+def _layout_notice(source: DataSource) -> None:
+    """Explain a layout problem or the "your videos are nested" hint under the card."""
+    scan = state.scan
+    if source.layout is not None:
+        if scan is not None and scan.layout_error:
+            ui.label(scan.layout_error).classes("text-xs").style(f"color:{theme.UNAVAILABLE}")
+        elif scan is not None and scan.layout_collisions:
+            ui.label(
+                f"{len(scan.layout_collisions)} video id(s) were produced by more than one file "
+                f"(only the first was kept): {', '.join(scan.layout_collisions[:5])}. "
+                "Make the video id unique."
+            ).classes("text-xs").style(f"color:{theme.WARNING}")
+    elif (
+        source.available
+        and source.count() == 0
+        and contains_nested_videos(source.path, VIDEO_SUFFIXES)
+    ):
+        ui.label(
+            "No videos directly in this folder, but it contains nested videos. "
+            "Turn on Nested layout to describe where they are."
+        ).classes("text-xs").style(f"color:{theme.WARNING}")
+
+
 def _source_card(source: DataSource) -> None:
     """Render one configured source row."""
     with ui.card().classes("w-full"), ui.row().classes("w-full items-center gap-3 no-wrap"):
@@ -557,6 +662,9 @@ def _source_card(source: DataSource) -> None:
                 ui.label(
                     f"key: {source.key_column} · columns: {', '.join(source.value_columns)}"
                 ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+            if source.kind is SourceKind.VIDEO:
+                _layout_notice(source)
+                _layout_editor(source)
         ui.button(icon="delete", on_click=lambda s=source: _remove(s)).props(
             "flat round dense"
         ).tooltip("Remove source")

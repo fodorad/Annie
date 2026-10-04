@@ -188,5 +188,32 @@ class TestTextExport(unittest.TestCase):
         self.assertTrue(text.startswith("video_id,track,start_frame"))
 
 
+class TestMetaExport(unittest.TestCase):
+    META = {"v": {"grp": "g1", "part": "a"}}
+
+    def test_json_carries_meta_per_video(self) -> None:
+        tree = json.loads(
+            events_to_json_text(
+                [_event("v", "speech", 0, 25), _event("w", "speech", 0, 5)], {}, self.META
+            )
+        )
+        self.assertEqual(tree["v"]["meta"], {"grp": "g1", "part": "a"})
+        self.assertNotIn("meta", tree["w"])
+
+    def test_csv_has_meta_columns_between_fixed_and_attrs(self) -> None:
+        text = events_to_csv_text(
+            [_event("v", "speech", 0, 25), _event("w", "speech", 0, 5)], {}, self.META
+        )
+        header, first, second = text.splitlines()
+        self.assertIn("color,meta_grp,meta_part", header)
+        self.assertTrue(first.endswith(",g1,a"))
+        self.assertTrue(second.endswith(",,"))  # video without meta → empty cells
+
+    def test_no_meta_changes_nothing(self) -> None:
+        events = [_event("v", "speech", 0, 25)]
+        self.assertEqual(events_to_csv_text(events, {}), events_to_csv_text(events, {}, {}))
+        self.assertNotIn("meta", build_export_tree(events, {})["v"])
+
+
 if __name__ == "__main__":
     unittest.main()

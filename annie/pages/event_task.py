@@ -284,6 +284,8 @@ def _toolbar(state_: _EventState, entries: list[VideoEntry]) -> None:
         ui.label(f"video {state_.index + 1} / {len(entries)} — {state_.video_id}").classes(
             "text-sm font-medium"
         )
+        for value in _layout_badges(entries[state_.index]):
+            ui.badge(value).props("outline")
         ui.button(icon="chevron_right", on_click=lambda: _step_video(state_, 1)).props(
             "flat round"
         ).tooltip("Next video")
@@ -1196,9 +1198,10 @@ def _export_text(state_: _EventState, scope: str, fmt: str) -> str | None:
     if not events:
         return None
     fps_by_video = _fps_by_video(events, state_)
+    meta_by_video = _meta_by_video(events)
     if fmt == "json":
-        return events_to_json_text(events, fps_by_video)
-    return events_to_csv_text(events, fps_by_video)
+        return events_to_json_text(events, fps_by_video, meta_by_video)
+    return events_to_csv_text(events, fps_by_video, meta_by_video)
 
 
 @app.get("/annie/export/events/{client_id}/{scope}/{fmt}")
@@ -1218,6 +1221,27 @@ def _export_route(client_id: str, scope: str, fmt: str) -> Response:
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
+
+
+def _layout_badges(entry: VideoEntry) -> list[str]:
+    """The path-derived field values of ``entry`` (nested layouts only), to show beside its id."""
+    video = state.registry.video
+    if video is None or video.layout is None:
+        return []
+    return [entry.labels[name] for name in video.layout.field_names() if name in entry.labels]
+
+
+def _meta_by_video(events: list[EventRecord]) -> dict[str, dict[str, str]]:
+    """Per-video metadata for the export: each video's label values (incl. path-derived fields)."""
+    scan = state.scan
+    if scan is None:
+        return {}
+    by_id = scan.by_video_id
+    return {
+        video_id: dict(by_id[video_id].labels)
+        for video_id in {e.video_id for e in events}
+        if video_id in by_id and by_id[video_id].labels
+    }
 
 
 def _fps_by_video(events: list[EventRecord], state_: _EventState) -> dict[str, float]:

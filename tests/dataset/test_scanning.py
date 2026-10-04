@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from annie.core.models import VideoEntry
+from annie.dataset.layout import VideoLayout
 from annie.dataset.scanning import ScanResult, build_manifest, resolve_video_stem, scan_dataset
 from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry
 from tests.fixtures import (
@@ -234,6 +235,50 @@ class TestBuildManifest(unittest.TestCase):
         result = build_manifest(reg)
         self.assertTrue(result.protagonist_available)
         self.assertEqual({e.video_id: e.active_track_id for e in result.entries}["A"], 0)
+
+
+class TestNestedLayout(unittest.TestCase):
+    def setUp(self) -> None:
+        self.root = Path(tempfile.mkdtemp())
+        for rel in (
+            "g1/s1/clip_a.mp4",
+            "g1/s1/clip_b.mp4",
+            "g1/s2/clip_a.mp4",
+            "g1/s1/._clip_a.mp4",
+        ):
+            path = self.root / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"")
+
+    def _scan(self, layout: VideoLayout | None) -> ScanResult:
+        reg = SourceRegistry()
+        reg.add(DataSource(SourceKind.VIDEO, self.root, layout=layout))
+        return build_manifest(reg)
+
+    def test_ids_paths_and_fields_become_labels(self) -> None:
+        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{sub}_{part}"))
+        self.assertEqual([e.video_id for e in result.entries], ["s1_a", "s1_b", "s2_a"])
+        first = result.entries[0]
+        self.assertEqual(first.video_path, self.root / "g1/s1/clip_a.mp4")
+        self.assertEqual(first.labels, {"grp": "g1", "sub": "s1", "part": "a"})
+        self.assertEqual(result.label_columns, ["grp", "sub", "part"])
+        self.assertEqual([e.row_id for e in result.entries], [1, 2, 3])
+        self.assertEqual(result.layout_collisions, [])
+
+    def test_collisions_surface_on_the_result(self) -> None:
+        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{part}"))
+        self.assertEqual(result.layout_collisions, ["a"])  # s1/a and s2/a both map to "a"
+        self.assertEqual(sorted(e.video_id for e in result.entries), ["a", "b"])
+
+    def test_invalid_saved_layout_does_not_break_the_scan(self) -> None:
+        result = self._scan(VideoLayout("no_fields.mp4"))
+        self.assertEqual(result.entries, [])
+        self.assertIn("placeholder", result.layout_error or "")
+
+    def test_no_layout_stays_flat_and_non_recursive(self) -> None:
+        result = self._scan(None)
+        self.assertEqual(result.entries, [])  # videos live in sub-folders only
+        self.assertIsNone(result.layout_error)
 
 
 if __name__ == "__main__":
