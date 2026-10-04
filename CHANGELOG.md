@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.10.0](https://github.com/fodorad/Annie/compare/v1.9.1...v1.10.0) (2026-10-04)
+
+
+### Features
+
+* nested video layouts with {field} path templates ([#56](https://github.com/fodorad/Annie/issues/56)) ([c351227](https://github.com/fodorad/Annie/commit/c351227d1976b33a6d2ba8ddaddca72a06dd7e49))
+
 ## [1.9.1](https://github.com/fodorad/Annie/compare/v1.9.0...v1.9.1) (2026-10-02)
 
 
