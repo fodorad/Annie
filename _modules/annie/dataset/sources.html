@@ -214,6 +214,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/layout/index.html">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/segments/index.html">annie.dataset.segments</a></li>
@@ -330,6 +331,8 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.layout</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoLayout</span>
+
 
 <div class="viewcode-block" id="SourceKind">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.SourceKind">[docs]</a>
@@ -439,6 +442,9 @@
 <span class="sd">        bands: For a :attr:`CsvRole.SEGMENTATION` CSV, the ordered start/end column</span>
 <span class="sd">            pairs to render and compare (see :class:`SegmentationBand`). Empty</span>
 <span class="sd">            otherwise.</span>
+<span class="sd">        layout: For a :attr:`SourceKind.VIDEO` folder, an optional nested</span>
+<span class="sd">            :class:`~annie.dataset.layout.VideoLayout`. ``None`` means a flat folder</span>
+<span class="sd">            (one video per file, id = file stem).</span>
 <span class="sd">    """</span>
 
     <span class="n">kind</span><span class="p">:</span> <span class="n">SourceKind</span>
@@ -449,6 +455,7 @@
     <span class="n">column_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">segment_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">bands</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SegmentationBand</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">VideoLayout</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -493,6 +500,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">discover</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">videos</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">_count_suffixes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">VIDEO_SUFFIXES</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_count_suffixes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">VDET_SUFFIXES</span><span class="p">)</span>

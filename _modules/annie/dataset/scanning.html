@@ -214,6 +214,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/layout/index.html">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/segments/index.html">annie.dataset.segments</a></li>
@@ -379,6 +380,9 @@
 <span class="sd">        num_track_files: Total track files discovered.</span>
 <span class="sd">        protagonist_available: Whether protagonist assignments were found.</span>
 <span class="sd">        label_columns: The label-column names available for tags/filters.</span>
+<span class="sd">        layout_collisions: Video ids that more than one file produced under a nested</span>
+<span class="sd">            layout (only the first file of each was kept).</span>
+<span class="sd">        layout_error: Why a configured nested layout could not be used, else ``None``.</span>
 <span class="sd">    """</span>
 
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -387,6 +391,8 @@
     <span class="n">protagonist_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">label_columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">label_column_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">layout_collisions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">layout_error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1">#: Lazily-built ``video_id -&gt; entry`` index; see :attr:`by_video_id`.</span>
     <span class="n">_by_video_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">VideoEntry</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -562,7 +568,22 @@
     <span class="n">track_src</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">track</span>
 
     <span class="n">videos_path</span> <span class="o">=</span> <span class="n">video_src</span><span class="o">.</span><span class="n">path</span> <span class="k">if</span> <span class="n">video_src</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">videos</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">stem</span><span class="p">:</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_iter_files</span><span class="p">(</span><span class="n">videos_path</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="n">VIDEO_SUFFIXES</span><span class="p">,</span> <span class="n">glob</span><span class="o">=</span><span class="kc">None</span><span class="p">)}</span>
+    <span class="n">layout_fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">layout_collisions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">layout_error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">video_src</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">video_src</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">videos_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># A nested layout: ids and per-video fields come from the path template, not the stem.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">report</span> <span class="o">=</span> <span class="n">video_src</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">discover</span><span class="p">(</span><span class="n">videos_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># a bad saved layout must not break the whole scan</span>
+            <span class="n">layout_error</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="n">videos</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">videos</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="o">.</span><span class="n">video_id</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">videos</span><span class="p">}</span>
+            <span class="n">layout_fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="o">.</span><span class="n">video_id</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">fields</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">videos</span><span class="p">}</span>
+            <span class="n">layout_collisions</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">collisions</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">videos</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">stem</span><span class="p">:</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_iter_files</span><span class="p">(</span><span class="n">videos_path</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="n">VIDEO_SUFFIXES</span><span class="p">,</span> <span class="n">glob</span><span class="o">=</span><span class="kc">None</span><span class="p">)}</span>
     <span class="n">video_stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">videos</span><span class="p">)</span>
     <span class="n">longest_first</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">videos</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -591,6 +612,10 @@
 
     <span class="n">active</span> <span class="o">=</span> <span class="n">_active_mapping</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">protagonist</span><span class="p">)</span>
     <span class="n">label_maps</span><span class="p">,</span> <span class="n">label_columns</span> <span class="o">=</span> <span class="n">_label_maps</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">label_sources</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">fields</span> <span class="ow">in</span> <span class="n">layout_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>  <span class="c1"># path-derived fields are tags/filters too</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">label_columns</span><span class="p">:</span>
+                <span class="n">label_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="n">label_column_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">label_sources</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
@@ -605,7 +630,7 @@
         <span class="n">track_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">video_tracks</span><span class="p">]</span>
         <span class="n">vdet_matches</span> <span class="o">=</span> <span class="n">vdets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
         <span class="n">vdet_file</span> <span class="o">=</span> <span class="n">_primary_vdet</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="n">vdet_matches</span><span class="p">)</span> <span class="k">if</span> <span class="n">vdet_matches</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">layout_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{}))</span>
         <span class="k">for</span> <span class="n">value_map</span> <span class="ow">in</span> <span class="n">label_maps</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">value_map</span><span class="p">:</span>
                 <span class="n">labels</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value_map</span><span class="p">[</span><span class="n">video_id</span><span class="p">])</span>
@@ -633,6 +658,8 @@
         <span class="n">protagonist_available</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">active</span><span class="p">),</span>
         <span class="n">label_columns</span><span class="o">=</span><span class="n">label_columns</span><span class="p">,</span>
         <span class="n">label_column_types</span><span class="o">=</span><span class="n">label_column_types</span><span class="p">,</span>
+        <span class="n">layout_collisions</span><span class="o">=</span><span class="n">layout_collisions</span><span class="p">,</span>
+        <span class="n">layout_error</span><span class="o">=</span><span class="n">layout_error</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

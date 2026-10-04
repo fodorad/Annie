@@ -82,7 +82,7 @@ Module Contents
    :returns: The ordered, bounded ``(start, end)`` pair.
 
 
-.. py:function:: build_export_tree(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float]) -> dict[str, dict[str, object]]
+.. py:function:: build_export_tree(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None) -> dict[str, dict[str, object]]
 
    Group events into the nested ``video_id -> {fps, tracks}`` export structure.
 
@@ -93,11 +93,13 @@ Module Contents
    :param events: The events to export.
    :param fps_by_video: Frames per second per ``video_id``, for the derived seconds. A video
                         missing here is exported with ``fps = 0`` and zero seconds (frames still stand).
+   :param meta_by_video: Optional per-video metadata (e.g. the fields a nested layout captured
+                         from the path), exported as a ``"meta"`` object when a video has any.
 
-   :returns: A mapping of ``video_id`` to ``{"fps": float, "tracks": {track: [event dict, ...]}}``.
+   :returns: A mapping of ``video_id`` to ``{"fps": float, "tracks": {...}}`` (plus ``"meta"``).
 
 
-.. py:function:: events_to_json_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float]) -> str
+.. py:function:: events_to_json_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None) -> str
 
    Render events as nested JSON text (one object per video).
 
@@ -107,6 +109,7 @@ Module Contents
 
    :param events: The events to render.
    :param fps_by_video: Frames per second per ``video_id``.
+   :param meta_by_video: Optional per-video metadata exported as ``"meta"``.
 
    :returns: The JSON document as a string.
 
@@ -122,7 +125,7 @@ Module Contents
    :returns: The path written.
 
 
-.. py:function:: events_to_csv_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float]) -> str
+.. py:function:: events_to_csv_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None) -> str
 
    Render events as flat CSV text (one row per event) for a spreadsheet.
 
@@ -132,6 +135,8 @@ Module Contents
 
    :param events: The events to render.
    :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+   :param meta_by_video: Optional per-video metadata; one ``meta_<key>`` column per key seen,
+                         right after the fixed columns.
 
    :returns: The CSV document as a string.
 

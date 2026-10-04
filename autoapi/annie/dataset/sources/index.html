@@ -215,6 +215,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../layout/index.html">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../scanning/index.html">annie.dataset.scanning</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../segments/index.html">annie.dataset.segments</a></li>
@@ -539,6 +540,14 @@ pairs to render and compare (see <a class="reference internal" href="#annie.data
 otherwise.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.sources.DataSource.layout">
+<span class="sig-name descname"><span class="pre">layout</span></span><a class="headerlink" href="#annie.dataset.sources.DataSource.layout" title="Link to this definition">¶</a></dt>
+<dd><p>For a <code class="xref py py-attr docutils literal notranslate"><span class="pre">SourceKind.VIDEO</span></code> folder, an optional nested
+<a class="reference internal" href="../layout/index.html#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code></a>. <code class="docutils literal notranslate"><span class="pre">None</span></code> means a flat folder
+(one video per file, id = file stem).</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="annie.dataset.sources.DataSource.is_folder">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_folder</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#annie.dataset.sources.DataSource.is_folder" title="Link to this definition">¶</a></dt>
@@ -821,6 +830,7 @@ readiness sections and the Annotator’s decision of which tasks to offer.</p>
 <li><a class="reference internal" href="#annie.dataset.sources.DataSource.column_types"><code class="docutils literal notranslate"><span class="pre">DataSource.column_types</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.sources.DataSource.segment_column"><code class="docutils literal notranslate"><span class="pre">DataSource.segment_column</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.sources.DataSource.bands"><code class="docutils literal notranslate"><span class="pre">DataSource.bands</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.sources.DataSource.layout"><code class="docutils literal notranslate"><span class="pre">DataSource.layout</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.sources.DataSource.is_folder"><code class="docutils literal notranslate"><span class="pre">DataSource.is_folder</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.sources.DataSource.is_protagonist"><code class="docutils literal notranslate"><span class="pre">DataSource.is_protagonist</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.sources.DataSource.is_segmentation"><code class="docutils literal notranslate"><span class="pre">DataSource.is_segmentation</span></code></a></li>

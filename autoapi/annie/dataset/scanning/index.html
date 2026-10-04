@@ -215,6 +215,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../layout/index.html">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">annie.dataset.scanning</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../segments/index.html">annie.dataset.segments</a></li>
@@ -387,6 +388,19 @@ a miss.</p></li>
 <dt class="sig sig-object py" id="annie.dataset.scanning.ScanResult.label_columns">
 <span class="sig-name descname"><span class="pre">label_columns</span></span><a class="headerlink" href="#annie.dataset.scanning.ScanResult.label_columns" title="Link to this definition">¶</a></dt>
 <dd><p>The label-column names available for tags/filters.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.ScanResult.layout_collisions">
+<span class="sig-name descname"><span class="pre">layout_collisions</span></span><a class="headerlink" href="#annie.dataset.scanning.ScanResult.layout_collisions" title="Link to this definition">¶</a></dt>
+<dd><p>Video ids that more than one file produced under a nested
+layout (only the first file of each was kept).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.ScanResult.layout_error">
+<span class="sig-name descname"><span class="pre">layout_error</span></span><a class="headerlink" href="#annie.dataset.scanning.ScanResult.layout_error" title="Link to this definition">¶</a></dt>
+<dd><p>Why a configured nested layout could not be used, else <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -563,6 +577,8 @@ columns) and delegates to <a class="reference internal" href="#annie.dataset.sca
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.num_track_files"><code class="docutils literal notranslate"><span class="pre">ScanResult.num_track_files</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.protagonist_available"><code class="docutils literal notranslate"><span class="pre">ScanResult.protagonist_available</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.label_columns"><code class="docutils literal notranslate"><span class="pre">ScanResult.label_columns</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.layout_collisions"><code class="docutils literal notranslate"><span class="pre">ScanResult.layout_collisions</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.layout_error"><code class="docutils literal notranslate"><span class="pre">ScanResult.layout_error</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.by_video_id"><code class="docutils literal notranslate"><span class="pre">ScanResult.by_video_id</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.counts"><code class="docutils literal notranslate"><span class="pre">ScanResult.counts</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.ScanResult.label_values"><code class="docutils literal notranslate"><span class="pre">ScanResult.label_values()</span></code></a></li>

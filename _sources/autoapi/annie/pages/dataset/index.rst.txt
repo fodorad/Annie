@@ -25,11 +25,24 @@ Functions
 
 .. autoapisummary::
 
+   annie.pages.dataset.layout_from_inputs
    annie.pages.dataset.render
 
 
 Module Contents
 ---------------
+
+.. py:function:: layout_from_inputs(pattern: str, id_template: str) -> annie.dataset.layout.VideoLayout
+
+   Build and validate a :class:`VideoLayout` from the Layout text boxes.
+
+   :param pattern: The pattern box (path relative to the root, with ``{field}`` placeholders).
+   :param id_template: The video-id box; empty means "join the fields with ``_``".
+
+   :returns: The validated layout.
+
+   :raises ValueError: With a user-readable message if the layout is unusable.
+
 
 .. py:function:: render() -> None
 

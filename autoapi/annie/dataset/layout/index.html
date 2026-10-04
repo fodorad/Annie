@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.sources" href="../sources/index.html"><link rel="prev" title="annie.dataset.scanning" href="../scanning/index.html">
-        <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/segments/index.html">
+<link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.manipulate" href="../manipulate/index.html"><link rel="prev" title="annie.dataset.filtering" href="../filtering/index.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/layout/index.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>annie.dataset.segments - Annie latest documentation</title>
+        <title>annie.dataset.layout - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
@@ -215,10 +215,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../filtering/index.html">annie.dataset.filtering</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../layout/index.html">annie.dataset.layout</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../scanning/index.html">annie.dataset.scanning</a></li>
-<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">annie.dataset.segments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../segments/index.html">annie.dataset.segments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sources/index.html">annie.dataset.sources</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../storage/index.html">annie.dataset.storage</a></li>
 </ul>
@@ -289,7 +289,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../../../../_sources/autoapi/annie/dataset/segments/index.rst.txt" title="View this page">
+  <a class="muted-link" href="../../../../_sources/autoapi/annie/dataset/layout/index.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -307,27 +307,32 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="module-annie.dataset.segments">
-<span id="annie-dataset-segments"></span><h1>annie.dataset.segments<a class="headerlink" href="#module-annie.dataset.segments" title="Link to this heading">¶</a></h1>
-<p>Segment-review domain: clips of long videos and their accept/drop export.</p>
-<p>A segmentation CSV (<code class="xref py py-attr docutils literal notranslate"><span class="pre">annie.dataset.sources.CsvRole.SEGMENTATION</span></code>) has one row
-per <strong>clip</strong> — a span of a longer video identified by <code class="docutils literal notranslate"><span class="pre">{video_id}_{segment_id}</span></code>.
-Each row may carry several competing start/end <strong>bands</strong> (e.g. a ground-truth span and
-a WhisperX forced-alignment span) that the Annotator renders side by side so the
-reviewer can accept or drop the clip. This module turns those rows into
-<a class="reference internal" href="#annie.dataset.segments.SegmentClip" title="annie.dataset.segments.SegmentClip"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentClip</span></code></a> records and writes the reviewer’s decisions to two files — the
-accepted set and the dropped set — keyed by clip.</p>
-<p>Pure domain: no NiceGUI, no torch. The Annotator’s Segment-review task consumes it.</p>
+          <section id="module-annie.dataset.layout">
+<span id="annie-dataset-layout"></span><h1>annie.dataset.layout<a class="headerlink" href="#module-annie.dataset.layout" title="Link to this heading">¶</a></h1>
+<p>Nested video layouts: find videos below a root with a <code class="docutils literal notranslate"><span class="pre">{field}</span></code> path template (pure).</p>
+<p>A flat folder needs no layout — one video per file, id = file stem. Real datasets are often
+nested (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/&lt;group&gt;/&lt;subject&gt;/clip_&lt;part&gt;.mp4</span></code>), where the file stem alone is neither
+unique nor informative. A <a class="reference internal" href="#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code></a> describes such a tree once:</p>
+<blockquote>
+<div><p>pattern     <code class="docutils literal notranslate"><span class="pre">{group}/{subject}/clip_{part}.mp4</span></code>   (path relative to the root)
+id_template <code class="docutils literal notranslate"><span class="pre">{subject}_{part}</span></code>                    (how the unique video id is built)</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">{name}</span></code> captures one path segment, or part of a file name when mixed with literal text;
+<code class="docutils literal notranslate"><span class="pre">**</span></code> matches any number of directories. The captured fields become the video’s labels, so
+Browse can tag and filter by them. Nothing here knows any particular dataset.</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.ClipBand" title="annie.dataset.segments.ClipBand"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClipBand</span></code></a></p></td>
-<td><p>One resolved start/end span of a clip, in seconds.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.layout.DiscoveredVideo" title="annie.dataset.layout.DiscoveredVideo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscoveredVideo</span></code></a></p></td>
+<td><p>One video found by a layout.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.SegmentClip" title="annie.dataset.segments.SegmentClip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SegmentClip</span></code></a></p></td>
-<td><p>One reviewable clip of a long video.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.layout.DiscoveryReport" title="annie.dataset.layout.DiscoveryReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscoveryReport</span></code></a></p></td>
+<td><p>The outcome of scanning a root with a layout.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VideoLayout</span></code></a></p></td>
+<td><p>A path template that finds and names the videos of a nested dataset.</p></td>
 </tr>
 </tbody>
 </table>
@@ -338,17 +343,8 @@ accepted set and the dropped set — keyed by clip.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.clip_key" title="annie.dataset.segments.clip_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clip_key</span></code></a>(→ str)</p></td>
-<td><p>Return the composite clip identity <code class="docutils literal notranslate"><span class="pre">{video_id}_{segment_id}</span></code>.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.next_undecided_index" title="annie.dataset.segments.next_undecided_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">next_undecided_index</span></code></a>(→ int | None)</p></td>
-<td><p>Find the next clip after <code class="docutils literal notranslate"><span class="pre">start</span></code> with no accept/drop decision yet.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.load_segment_clips" title="annie.dataset.segments.load_segment_clips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_segment_clips</span></code></a>(→ list[SegmentClip])</p></td>
-<td><p>Load a segmentation CSV into clip records, one per usable row.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.export_decision_sets" title="annie.dataset.segments.export_decision_sets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_decision_sets</span></code></a>(→ tuple[pathlib.Path, pathlib.Path])</p></td>
-<td><p>Write the accepted clips and dropped clips to two separate CSV files.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.layout.contains_nested_videos" title="annie.dataset.layout.contains_nested_videos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contains_nested_videos</span></code></a>(→ bool)</p></td>
+<td><p>Whether any non-junk video file sits <em>below</em> <code class="docutils literal notranslate"><span class="pre">root</span></code> (not directly in it).</p></td>
 </tr>
 </tbody>
 </table>
@@ -357,143 +353,137 @@ accepted set and the dropped set — keyed by clip.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="annie.dataset.segments.clip_key">
-<span class="sig-prename descclassname"><span class="pre">annie.dataset.segments.</span></span><span class="sig-name descname"><span class="pre">clip_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segment_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/segments.html#clip_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.segments.clip_key" title="Link to this definition">¶</a></dt>
-<dd><p>Return the composite clip identity <code class="docutils literal notranslate"><span class="pre">{video_id}_{segment_id}</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">segment_id</span></code> may already carry a leading underscore (<code class="docutils literal notranslate"><span class="pre">review_band.csv</span></code> stores
-it as <code class="docutils literal notranslate"><span class="pre">&quot;_15&quot;</span></code>); the separator is not doubled in that case.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.contains_nested_videos">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.layout.</span></span><span class="sig-name descname"><span class="pre">contains_nested_videos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#contains_nested_videos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.contains_nested_videos" title="Link to this definition">¶</a></dt>
+<dd><p>Whether any non-junk video file sits <em>below</em> <code class="docutils literal notranslate"><span class="pre">root</span></code> (not directly in it).</p>
+<p>Used to hint that a flat scan found nothing because the videos are nested. Stops at the
+first hit, so it is cheap on a tree that has videos and only walks fully when it has none.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>video_id</strong> – The parent video id.</p></li>
-<li><p><strong>segment_id</strong> – The segment id, with or without a leading underscore.</p></li>
+<li><p><strong>root</strong> – The folder to look under.</p></li>
+<li><p><strong>suffixes</strong> – Lower-case dotted video suffixes, e.g. <code class="docutils literal notranslate"><span class="pre">(&quot;.mp4&quot;,)</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The clip key, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;227426_15&quot;</span></code>.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="annie.dataset.segments.next_undecided_index">
-<span class="sig-prename descclassname"><span class="pre">annie.dataset.segments.</span></span><span class="sig-name descname"><span class="pre">next_undecided_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clips</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.segments.SegmentClip" title="annie.dataset.segments.SegmentClip"><span class="pre">SegmentClip</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decisions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.Decision" title="annie.dataset.storage.Decision"><span class="pre">annie.dataset.storage.Decision</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/segments.html#next_undecided_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.segments.next_undecided_index" title="Link to this definition">¶</a></dt>
-<dd><p>Find the next clip after <code class="docutils literal notranslate"><span class="pre">start</span></code> with no accept/drop decision yet.</p>
-<p>The search wraps: it scans from <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">+</span> <span class="pre">1</span></code> to the end, then from the beginning up
-to and including <code class="docutils literal notranslate"><span class="pre">start</span></code>, so pressing “jump to next undecided” cycles through the
-whole backlog regardless of where the cursor sits. Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> when every clip is
-decided — the caller disables the jump control in that case.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>clips</strong> – The loaded clips, in review order.</p></li>
-<li><p><strong>decisions</strong> – Clip key → decision for the clips already decided.</p></li>
-<li><p><strong>start</strong> – The current clip index the jump starts from.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The index of the next undecided clip, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if all are decided.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if a video file exists in any sub-folder.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="annie.dataset.segments.ClipBand">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.segments.</span></span><span class="sig-name descname"><span class="pre">ClipBand</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/segments.html#ClipBand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.segments.ClipBand" title="Link to this definition">¶</a></dt>
-<dd><p>One resolved start/end span of a clip, in seconds.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveredVideo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.layout.</span></span><span class="sig-name descname"><span class="pre">DiscoveredVideo</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#DiscoveredVideo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.DiscoveredVideo" title="Link to this definition">¶</a></dt>
+<dd><p>One video found by a layout.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.ClipBand.name">
-<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#annie.dataset.segments.ClipBand.name" title="Link to this definition">¶</a></dt>
-<dd><p>The band’s label (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;GT&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cut&quot;</span></code>).</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveredVideo.path">
+<span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#annie.dataset.layout.DiscoveredVideo.path" title="Link to this definition">¶</a></dt>
+<dd><p>Absolute path of the file.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.ClipBand.start">
-<span class="sig-name descname"><span class="pre">start</span></span><a class="headerlink" href="#annie.dataset.segments.ClipBand.start" title="Link to this definition">¶</a></dt>
-<dd><p>Start time in seconds.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveredVideo.video_id">
+<span class="sig-name descname"><span class="pre">video_id</span></span><a class="headerlink" href="#annie.dataset.layout.DiscoveredVideo.video_id" title="Link to this definition">¶</a></dt>
+<dd><p>The unique id built from the id template.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.ClipBand.end">
-<span class="sig-name descname"><span class="pre">end</span></span><a class="headerlink" href="#annie.dataset.segments.ClipBand.end" title="Link to this definition">¶</a></dt>
-<dd><p>End time in seconds.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveredVideo.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><a class="headerlink" href="#annie.dataset.layout.DiscoveredVideo.fields" title="Link to this definition">¶</a></dt>
+<dd><p>The captured template fields, e.g. <code class="docutils literal notranslate"><span class="pre">{&quot;subject&quot;:</span> <span class="pre">&quot;s1&quot;,</span> <span class="pre">&quot;part&quot;:</span> <span class="pre">&quot;x&quot;}</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="annie.dataset.segments.SegmentClip">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.segments.</span></span><span class="sig-name descname"><span class="pre">SegmentClip</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/segments.html#SegmentClip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.segments.SegmentClip" title="Link to this definition">¶</a></dt>
-<dd><p>One reviewable clip of a long video.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveryReport">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.layout.</span></span><span class="sig-name descname"><span class="pre">DiscoveryReport</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#DiscoveryReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.DiscoveryReport" title="Link to this definition">¶</a></dt>
+<dd><p>The outcome of scanning a root with a layout.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.SegmentClip.key">
-<span class="sig-name descname"><span class="pre">key</span></span><a class="headerlink" href="#annie.dataset.segments.SegmentClip.key" title="Link to this definition">¶</a></dt>
-<dd><p>The composite <code class="docutils literal notranslate"><span class="pre">{video_id}_{segment_id}</span></code> review key.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.SegmentClip.video_id">
-<span class="sig-name descname"><span class="pre">video_id</span></span><a class="headerlink" href="#annie.dataset.segments.SegmentClip.video_id" title="Link to this definition">¶</a></dt>
-<dd><p>The parent video id (the media all bands share).</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveryReport.videos">
+<span class="sig-name descname"><span class="pre">videos</span></span><a class="headerlink" href="#annie.dataset.layout.DiscoveryReport.videos" title="Link to this definition">¶</a></dt>
+<dd><p>Discovered videos, sorted by id; a colliding id keeps its first file only.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.SegmentClip.segment_id">
-<span class="sig-name descname"><span class="pre">segment_id</span></span><a class="headerlink" href="#annie.dataset.segments.SegmentClip.segment_id" title="Link to this definition">¶</a></dt>
-<dd><p>The segment id as written in the CSV.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveryReport.collisions">
+<span class="sig-name descname"><span class="pre">collisions</span></span><a class="headerlink" href="#annie.dataset.layout.DiscoveryReport.collisions" title="Link to this definition">¶</a></dt>
+<dd><p>Ids that more than one file produced (the extras are dropped).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.layout.DiscoveryReport.summary">
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#DiscoveryReport.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.DiscoveryReport.summary" title="Link to this definition">¶</a></dt>
+<dd><p>One line for the Dataset tab: counts, per-field value counts, collisions, examples.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.layout.</span></span><span class="sig-name descname"><span class="pre">VideoLayout</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout" title="Link to this definition">¶</a></dt>
+<dd><p>A path template that finds and names the videos of a nested dataset.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.pattern">
+<span class="sig-name descname"><span class="pre">pattern</span></span><a class="headerlink" href="#annie.dataset.layout.VideoLayout.pattern" title="Link to this definition">¶</a></dt>
+<dd><p>Path of the videos relative to the root, with <code class="docutils literal notranslate"><span class="pre">{field}</span></code> placeholders.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.SegmentClip.bands">
-<span class="sig-name descname"><span class="pre">bands</span></span><a class="headerlink" href="#annie.dataset.segments.SegmentClip.bands" title="Link to this definition">¶</a></dt>
-<dd><p>The resolved start/end spans to compare, in file order.</p>
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.id_template">
+<span class="sig-name descname"><span class="pre">id_template</span></span><a class="headerlink" href="#annie.dataset.layout.VideoLayout.id_template" title="Link to this definition">¶</a></dt>
+<dd><p>Template for the unique video id, using the same fields. <code class="docutils literal notranslate"><span class="pre">None</span></code>
+joins every field with <code class="docutils literal notranslate"><span class="pre">_</span></code> in pattern order.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.segments.SegmentClip.tags">
-<span class="sig-name descname"><span class="pre">tags</span></span><a class="headerlink" href="#annie.dataset.segments.SegmentClip.tags" title="Link to this definition">¶</a></dt>
-<dd><p>The remaining (non-span) value columns, shown read-only as tags.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.field_names">
+<span class="sig-name descname"><span class="pre">field_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.field_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.field_names" title="Link to this definition">¶</a></dt>
+<dd><p>The pattern’s field names in order of appearance (unique).</p>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="annie.dataset.segments.load_segment_clips">
-<span class="sig-prename descclassname"><span class="pre">annie.dataset.segments.</span></span><span class="sig-name descname"><span class="pre">load_segment_clips</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../sources/index.html#annie.dataset.sources.DataSource" title="annie.dataset.sources.DataSource"><span class="pre">annie.dataset.sources.DataSource</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.segments.SegmentClip" title="annie.dataset.segments.SegmentClip"><span class="pre">SegmentClip</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/segments.html#load_segment_clips"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.segments.load_segment_clips" title="Link to this definition">¶</a></dt>
-<dd><p>Load a segmentation CSV into clip records, one per usable row.</p>
-<p>A row is kept when at least one band parses; bands whose start or end cannot be
-read as a number are dropped, and a row with no valid band at all is skipped.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.validate" title="Link to this definition">¶</a></dt>
+<dd><p>Check the layout is usable.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>source</strong> – A <code class="xref py py-attr docutils literal notranslate"><span class="pre">SEGMENTATION</span></code> data source with
-its <code class="docutils literal notranslate"><span class="pre">key_column</span></code>, <code class="docutils literal notranslate"><span class="pre">segment_column</span></code>, and <code class="docutils literal notranslate"><span class="pre">bands</span></code> configured. The clip’s
-video is resolved from the scanned videos folder by <code class="docutils literal notranslate"><span class="pre">video_id</span></code>.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The clips in file order.</p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the pattern is empty, absolute, climbs out of the root (<code class="docutils literal notranslate"><span class="pre">..</span></code>),
+repeats a field, has no fields, or the id template uses an unknown field.</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="annie.dataset.segments.export_decision_sets">
-<span class="sig-prename descclassname"><span class="pre">annie.dataset.segments.</span></span><span class="sig-name descname"><span class="pre">export_decision_sets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clips</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.segments.SegmentClip" title="annie.dataset.segments.SegmentClip"><span class="pre">SegmentClip</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decisions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../storage/index.html#annie.dataset.storage.Decision" title="annie.dataset.storage.Decision"><span class="pre">annie.dataset.storage.Decision</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accepted_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/segments.html#export_decision_sets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.segments.export_decision_sets" title="Link to this definition">¶</a></dt>
-<dd><p>Write the accepted clips and dropped clips to two separate CSV files.</p>
-<p>Each file carries the clip key, the video/segment ids, and the clip’s passthrough
-tag columns. Undecided clips (no entry in <code class="docutils literal notranslate"><span class="pre">decisions</span></code>) appear in neither file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.match">
+<span class="sig-name descname"><span class="pre">match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.match" title="Link to this definition">¶</a></dt>
+<dd><p>Return the captured fields if <code class="docutils literal notranslate"><span class="pre">relative_path</span></code> fits the pattern, else <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.video_id">
+<span class="sig-name descname"><span class="pre">video_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.video_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.video_id" title="Link to this definition">¶</a></dt>
+<dd><p>Build the video id for a match’s <code class="docutils literal notranslate"><span class="pre">fields</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.discover">
+<span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.layout.DiscoveryReport" title="annie.dataset.layout.DiscoveryReport"><span class="pre">DiscoveryReport</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.discover"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.discover" title="Link to this definition">¶</a></dt>
+<dd><p>Scan <code class="docutils literal notranslate"><span class="pre">root</span></code> recursively for files matching the pattern.</p>
+<p>Junk (dotfiles/folders) is skipped. A missing root yields an empty report.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>clips</strong> – All clips loaded for the source (defines row order and tag columns).</p></li>
-<li><p><strong>decisions</strong> – The <code class="docutils literal notranslate"><span class="pre">clip_key</span> <span class="pre">-&gt;</span> <span class="pre">&quot;accept&quot;/&quot;drop&quot;</span></code> map from the review store.</p></li>
-<li><p><strong>accepted_path</strong> – Destination for the accepted set.</p></li>
-<li><p><strong>dropped_path</strong> – Destination for the dropped set.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>root</strong> – The dataset root the pattern is relative to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The <code class="docutils literal notranslate"><span class="pre">(accepted_path,</span> <span class="pre">dropped_path)</span></code> written.</p>
+<dd class="field-even"><p>The sorted videos and any id collisions.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the layout is invalid (see <a class="reference internal" href="#annie.dataset.layout.VideoLayout.validate" title="annie.dataset.layout.VideoLayout.validate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate()</span></code></a>).</p>
 </dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -504,23 +494,23 @@ tag columns. Undecided clips (no entry in <code class="docutils literal notransl
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../sources/index.html">
+          <a class="next-page" href="../manipulate/index.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">annie.dataset.sources</div>
+                <div class="title">annie.dataset.manipulate</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="../scanning/index.html">
+          <a class="prev-page" href="../filtering/index.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">annie.dataset.scanning</div>
+                <div class="title">annie.dataset.filtering</div>
                 
               </div>
             </a>
@@ -554,28 +544,33 @@ tag columns. Undecided clips (no entry in <code class="docutils literal notransl
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">annie.dataset.segments</a><ul>
+<li><a class="reference internal" href="#">annie.dataset.layout</a><ul>
 <li><a class="reference internal" href="#classes">Classes</a></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a class="reference internal" href="#annie.dataset.segments.clip_key"><code class="docutils literal notranslate"><span class="pre">clip_key()</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.next_undecided_index"><code class="docutils literal notranslate"><span class="pre">next_undecided_index()</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.ClipBand"><code class="docutils literal notranslate"><span class="pre">ClipBand</span></code></a><ul>
-<li><a class="reference internal" href="#annie.dataset.segments.ClipBand.name"><code class="docutils literal notranslate"><span class="pre">ClipBand.name</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.ClipBand.start"><code class="docutils literal notranslate"><span class="pre">ClipBand.start</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.ClipBand.end"><code class="docutils literal notranslate"><span class="pre">ClipBand.end</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.contains_nested_videos"><code class="docutils literal notranslate"><span class="pre">contains_nested_videos()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveredVideo"><code class="docutils literal notranslate"><span class="pre">DiscoveredVideo</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveredVideo.path"><code class="docutils literal notranslate"><span class="pre">DiscoveredVideo.path</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveredVideo.video_id"><code class="docutils literal notranslate"><span class="pre">DiscoveredVideo.video_id</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveredVideo.fields"><code class="docutils literal notranslate"><span class="pre">DiscoveredVideo.fields</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#annie.dataset.segments.SegmentClip"><code class="docutils literal notranslate"><span class="pre">SegmentClip</span></code></a><ul>
-<li><a class="reference internal" href="#annie.dataset.segments.SegmentClip.key"><code class="docutils literal notranslate"><span class="pre">SegmentClip.key</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.SegmentClip.video_id"><code class="docutils literal notranslate"><span class="pre">SegmentClip.video_id</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.SegmentClip.segment_id"><code class="docutils literal notranslate"><span class="pre">SegmentClip.segment_id</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.SegmentClip.bands"><code class="docutils literal notranslate"><span class="pre">SegmentClip.bands</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.SegmentClip.tags"><code class="docutils literal notranslate"><span class="pre">SegmentClip.tags</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveryReport"><code class="docutils literal notranslate"><span class="pre">DiscoveryReport</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveryReport.videos"><code class="docutils literal notranslate"><span class="pre">DiscoveryReport.videos</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveryReport.collisions"><code class="docutils literal notranslate"><span class="pre">DiscoveryReport.collisions</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.DiscoveryReport.summary"><code class="docutils literal notranslate"><span class="pre">DiscoveryReport.summary()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#annie.dataset.segments.load_segment_clips"><code class="docutils literal notranslate"><span class="pre">load_segment_clips()</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.segments.export_decision_sets"><code class="docutils literal notranslate"><span class="pre">export_decision_sets()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout"><code class="docutils literal notranslate"><span class="pre">VideoLayout</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.pattern"><code class="docutils literal notranslate"><span class="pre">VideoLayout.pattern</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.id_template"><code class="docutils literal notranslate"><span class="pre">VideoLayout.id_template</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.field_names"><code class="docutils literal notranslate"><span class="pre">VideoLayout.field_names()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.validate"><code class="docutils literal notranslate"><span class="pre">VideoLayout.validate()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.match"><code class="docutils literal notranslate"><span class="pre">VideoLayout.match()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.video_id"><code class="docutils literal notranslate"><span class="pre">VideoLayout.video_id()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.discover"><code class="docutils literal notranslate"><span class="pre">VideoLayout.discover()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

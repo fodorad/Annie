@@ -69,6 +69,15 @@ Module Contents
 
       The label-column names available for tags/filters.
 
+   .. attribute:: layout_collisions
+
+      Video ids that more than one file produced under a nested
+      layout (only the first file of each was kept).
+
+   .. attribute:: layout_error
+
+      Why a configured nested layout could not be used, else ``None``.
+
 
    .. py:property:: by_video_id
       :type: dict[str, annie.core.models.VideoEntry]

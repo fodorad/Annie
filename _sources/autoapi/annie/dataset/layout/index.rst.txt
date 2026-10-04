@@ -1,0 +1,147 @@
+annie.dataset.layout
+====================
+
+.. py:module:: annie.dataset.layout
+
+.. autoapi-nested-parse::
+
+   Nested video layouts: find videos below a root with a ``{field}`` path template (pure).
+
+   A flat folder needs no layout — one video per file, id = file stem. Real datasets are often
+   nested (``<root>/<group>/<subject>/clip_<part>.mp4``), where the file stem alone is neither
+   unique nor informative. A :class:`VideoLayout` describes such a tree once:
+
+       pattern     ``{group}/{subject}/clip_{part}.mp4``   (path relative to the root)
+       id_template ``{subject}_{part}``                    (how the unique video id is built)
+
+   ``{name}`` captures one path segment, or part of a file name when mixed with literal text;
+   ``**`` matches any number of directories. The captured fields become the video's labels, so
+   Browse can tag and filter by them. Nothing here knows any particular dataset.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.dataset.layout.DiscoveredVideo
+   annie.dataset.layout.DiscoveryReport
+   annie.dataset.layout.VideoLayout
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.dataset.layout.contains_nested_videos
+
+
+Module Contents
+---------------
+
+.. py:function:: contains_nested_videos(root: pathlib.Path, suffixes: tuple[str, ...]) -> bool
+
+   Whether any non-junk video file sits *below* ``root`` (not directly in it).
+
+   Used to hint that a flat scan found nothing because the videos are nested. Stops at the
+   first hit, so it is cheap on a tree that has videos and only walks fully when it has none.
+
+   :param root: The folder to look under.
+   :param suffixes: Lower-case dotted video suffixes, e.g. ``(".mp4",)``.
+
+   :returns: ``True`` if a video file exists in any sub-folder.
+
+
+.. py:class:: DiscoveredVideo
+
+   One video found by a layout.
+
+   .. attribute:: path
+
+      Absolute path of the file.
+
+   .. attribute:: video_id
+
+      The unique id built from the id template.
+
+   .. attribute:: fields
+
+      The captured template fields, e.g. ``{"subject": "s1", "part": "x"}``.
+
+
+.. py:class:: DiscoveryReport
+
+   The outcome of scanning a root with a layout.
+
+   .. attribute:: videos
+
+      Discovered videos, sorted by id; a colliding id keeps its first file only.
+
+   .. attribute:: collisions
+
+      Ids that more than one file produced (the extras are dropped).
+
+
+   .. py:method:: summary() -> str
+
+      One line for the Dataset tab: counts, per-field value counts, collisions, examples.
+
+
+
+.. py:class:: VideoLayout
+
+   A path template that finds and names the videos of a nested dataset.
+
+   .. attribute:: pattern
+
+      Path of the videos relative to the root, with ``{field}`` placeholders.
+
+   .. attribute:: id_template
+
+      Template for the unique video id, using the same fields. ``None``
+      joins every field with ``_`` in pattern order.
+
+
+   .. py:method:: field_names() -> list[str]
+
+      The pattern's field names in order of appearance (unique).
+
+
+
+   .. py:method:: validate() -> None
+
+      Check the layout is usable.
+
+      :raises ValueError: If the pattern is empty, absolute, climbs out of the root (``..``),
+          repeats a field, has no fields, or the id template uses an unknown field.
+
+
+
+   .. py:method:: match(relative_path: str) -> dict[str, str] | None
+
+      Return the captured fields if ``relative_path`` fits the pattern, else ``None``.
+
+
+
+   .. py:method:: video_id(fields: collections.abc.Mapping[str, str]) -> str
+
+      Build the video id for a match's ``fields``.
+
+
+
+   .. py:method:: discover(root: pathlib.Path) -> DiscoveryReport
+
+      Scan ``root`` recursively for files matching the pattern.
+
+      Junk (dotfiles/folders) is skipped. A missing root yields an empty report.
+
+      :param root: The dataset root the pattern is relative to.
+
+      :returns: The sorted videos and any id collisions.
+
+      :raises ValueError: If the layout is invalid (see :meth:`validate`).
+
+
+

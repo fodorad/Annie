@@ -214,6 +214,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/layout/index.html">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/scanning/index.html">annie.dataset.scanning</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/segments/index.html">annie.dataset.segments</a></li>
@@ -419,7 +420,9 @@
 <div class="viewcode-block" id="build_export_tree">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.build_export_tree">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_export_tree</span><span class="p">(</span>
-    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span> <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Group events into the nested ``video_id -&gt; {fps, tracks}`` export structure.</span>
 
@@ -431,9 +434,11 @@
 <span class="sd">        events: The events to export.</span>
 <span class="sd">        fps_by_video: Frames per second per ``video_id``, for the derived seconds. A video</span>
 <span class="sd">            missing here is exported with ``fps = 0`` and zero seconds (frames still stand).</span>
+<span class="sd">        meta_by_video: Optional per-video metadata (e.g. the fields a nested layout captured</span>
+<span class="sd">            from the path), exported as a ``"meta"`` object when a video has any.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A mapping of ``video_id`` to ``{"fps": float, "tracks": {track: [event dict, ...]}}``.</span>
+<span class="sd">        A mapping of ``video_id`` to ``{"fps": float, "tracks": {...}}`` (plus ``"meta"``).</span>
 <span class="sd">    """</span>
     <span class="c1"># Built with concretely-typed locals, then widened to object-valued dicts on return, so</span>
     <span class="c1"># the nested structure type-checks without a per-access cast.</span>
@@ -444,15 +449,24 @@
         <span class="n">fps_of</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span>
         <span class="n">video_tracks</span> <span class="o">=</span> <span class="n">tracks_of</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">video_tracks</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_event_dict</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">fps</span><span class="p">))</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="n">video_id</span><span class="p">:</span> <span class="p">{</span><span class="s2">"fps"</span><span class="p">:</span> <span class="n">fps_of</span><span class="p">[</span><span class="n">video_id</span><span class="p">],</span> <span class="s2">"tracks"</span><span class="p">:</span> <span class="n">tracks_of</span><span class="p">[</span><span class="n">video_id</span><span class="p">]}</span> <span class="k">for</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">tracks_of</span>
-    <span class="p">}</span></div>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">meta_by_video</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">tree</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">tracks_of</span><span class="p">:</span>
+        <span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"fps"</span><span class="p">:</span> <span class="n">fps_of</span><span class="p">[</span><span class="n">video_id</span><span class="p">],</span> <span class="s2">"tracks"</span><span class="p">:</span> <span class="n">tracks_of</span><span class="p">[</span><span class="n">video_id</span><span class="p">]}</span>
+        <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">):</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">"meta"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="n">video_id</span><span class="p">])</span>
+        <span class="n">tree</span><span class="p">[</span><span class="n">video_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
+    <span class="k">return</span> <span class="n">tree</span></div>
 
 
 
 <div class="viewcode-block" id="events_to_json_text">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_json_text">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span> <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">events_to_json_text</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Render events as nested JSON text (one object per video).</span>
 
 <span class="sd">    Suits downstream code: attributes stay nested, seconds are derived per video's fps. A</span>
@@ -462,11 +476,12 @@
 <span class="sd">    Args:</span>
 <span class="sd">        events: The events to render.</span>
 <span class="sd">        fps_by_video: Frames per second per ``video_id``.</span>
+<span class="sd">        meta_by_video: Optional per-video metadata exported as ``"meta"``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The JSON document as a string.</span>
 <span class="sd">    """</span>
-    <span class="n">tree</span> <span class="o">=</span> <span class="n">build_export_tree</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">)</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">build_export_tree</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
@@ -497,7 +512,11 @@
 
 <div class="viewcode-block" id="events_to_csv_text">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_csv_text">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span> <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">events_to_csv_text</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Render events as flat CSV text (one row per event) for a spreadsheet.</span>
 
 <span class="sd">    Fixed columns come first, then one ``attr_&lt;key&gt;`` column per attribute key seen across</span>
@@ -507,6 +526,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        events: The events to render.</span>
 <span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
+<span class="sd">        meta_by_video: Optional per-video metadata; one ``meta_&lt;key&gt;`` column per key seen,</span>
+<span class="sd">            right after the fixed columns.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The CSV document as a string.</span>
@@ -524,7 +545,13 @@
         <span class="s2">"note"</span><span class="p">,</span>
         <span class="s2">"color"</span><span class="p">,</span>
     <span class="p">]</span>
-    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">fixed</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">)]</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">meta_by_video</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">meta_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">key</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{})})</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="o">*</span><span class="n">fixed</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"meta_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">meta_keys</span><span class="p">),</span>
+        <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">),</span>
+    <span class="p">]</span>
     <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
     <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
     <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
@@ -541,6 +568,8 @@
             <span class="s2">"note"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
             <span class="s2">"color"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
         <span class="p">}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">meta_keys</span><span class="p">:</span>
+            <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"meta_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">:</span>
             <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>

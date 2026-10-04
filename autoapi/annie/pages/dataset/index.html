@@ -215,6 +215,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/datasets/index.html">annie.dataset.datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/events/index.html">annie.dataset.events</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../dataset/layout/index.html">annie.dataset.layout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/scanning/index.html">annie.dataset.scanning</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/segments/index.html">annie.dataset.segments</a></li>
@@ -323,7 +324,10 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.render" title="annie.pages.dataset.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_from_inputs" title="annie.pages.dataset.layout_from_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_from_inputs</span></code></a>(→ annie.dataset.layout.VideoLayout)</p></td>
+<td><p>Build and validate a <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code> from the Layout text boxes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.render" title="annie.pages.dataset.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(→ None)</p></td>
 <td><p>Build the Dataset tab body; register per-client state.</p></td>
 </tr>
 </tbody>
@@ -332,6 +336,26 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.dataset.layout_from_inputs">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.dataset.</span></span><span class="sig-name descname"><span class="pre">layout_from_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../dataset/layout/index.html#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><span class="pre">annie.dataset.layout.VideoLayout</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/pages/dataset.html#layout_from_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.dataset.layout_from_inputs" title="Link to this definition">¶</a></dt>
+<dd><p>Build and validate a <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code> from the Layout text boxes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pattern</strong> – The pattern box (path relative to the root, with <code class="docutils literal notranslate"><span class="pre">{field}</span></code> placeholders).</p></li>
+<li><p><strong>id_template</strong> – The video-id box; empty means “join the fields with <code class="docutils literal notranslate"><span class="pre">_</span></code>”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The validated layout.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – With a user-readable message if the layout is unusable.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.dataset.render">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.dataset.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/dataset.html#render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.dataset.render" title="Link to this definition">¶</a></dt>
@@ -399,6 +423,7 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 <li><a class="reference internal" href="#">annie.pages.dataset</a><ul>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.pages.dataset.layout_from_inputs"><code class="docutils literal notranslate"><span class="pre">layout_from_inputs()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.dataset.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
 </ul>
 </li>

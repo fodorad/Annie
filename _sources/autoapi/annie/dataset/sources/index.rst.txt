@@ -184,6 +184,12 @@ Module Contents
       pairs to render and compare (see :class:`SegmentationBand`). Empty
       otherwise.
 
+   .. attribute:: layout
+
+      For a :attr:`SourceKind.VIDEO` folder, an optional nested
+      :class:`~annie.dataset.layout.VideoLayout`. ``None`` means a flat folder
+      (one video per file, id = file stem).
+
 
    .. py:property:: is_folder
       :type: bool
