@@ -413,6 +413,35 @@
 
 
 <span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_PositionFields</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The frame / seconds / timecode inputs, shown as the live position and typed to jump.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        frame_in: Frame-number input.</span>
+<span class="sd">        sec_in: Seconds input.</span>
+<span class="sd">        tc_in: ``mm:ss.ff`` input.</span>
+<span class="sd">        editing: Whether the user is typing in one of them (the live readout then holds still).</span>
+<span class="sd">        shown: The ``(frame, seconds, timecode)`` last written by :meth:`show`, so a field the</span>
+<span class="sd">            user focused but did not change never triggers a seek.</span>
+<span class="sd">    """</span>
+
+    <span class="n">frame_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span>
+    <span class="n">sec_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span>
+    <span class="n">tc_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span>
+    <span class="n">editing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">shown</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write one frame to all three inputs, consistently."""</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">timecode</span> <span class="o">=</span> <span class="n">_format_timecode</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shown</span> <span class="o">=</span> <span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">timecode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sec_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tc_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">timecode</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_EventState</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Per-client Event-annotation position and view settings.</span>
 
@@ -436,6 +465,8 @@
 <span class="sd">        restore_frame: Transient frame the video should be re-seeked to after a full rebuild</span>
 <span class="sd">            recreates the ``&lt;video&gt;`` (which the browser resets to 0); ``None`` when no</span>
 <span class="sd">            restore is pending. Cleared once issued.</span>
+<span class="sd">        position: The live frame/seconds/timecode inputs of the current build, or ``None``</span>
+<span class="sd">            before they exist. Transient: replaced on every rebuild.</span>
 <span class="sd">        active_category: The participant category a newly-captured event lands on. Defaults to</span>
 <span class="sd">            the first category; ``None`` when the dataset has no categories yet.</span>
 <span class="sd">    """</span>
@@ -455,6 +486,7 @@
     <span class="n">focus_name</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">restore_frame</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">active_category</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">_PositionFields</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_view</span><span class="p">()</span>
@@ -463,6 +495,10 @@
 <span class="w">        </span><span class="sd">"""Show the whole clip again, sized to the current :attr:`num_frames`."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">TimelineView</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
 
+
+<span class="n">_POLL_SECONDS</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="sd">"""How often the real video time is read back, so the position readout and the red line track</span>
+<span class="sd">playback and frame steps within about a tenth of a second."""</span>
 
 <span class="c1">#: Per-client Event-annotation state, keyed by client id; cleaned up on disconnect.</span>
 <span class="n">_event_states</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_EventState</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -712,6 +748,7 @@
         <span class="k">if</span> <span class="n">frame</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">frame</span>
+        <span class="n">_show_position</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">_follow_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">):</span>
             <span class="k">return</span>  <span class="c1"># the window paged: the redraw positions the line and the band itself</span>
         <span class="n">_sync_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">)</span>
@@ -720,41 +757,70 @@
         <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_sync_pending_band</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">)</span>
 
-    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">_tick</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="n">_POLL_SECONDS</span><span class="p">,</span> <span class="n">_tick</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_jump_fields</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The linked frame / seconds / timecode fields that seek the playhead when typed.</span>
+<span class="w">    </span><span class="sd">"""The live position readout: frame / seconds / ``mm:ss.ff``, also typed to jump.</span>
 
-<span class="sd">    All three stay consistent: editing any one seeks the video, moves the red timeline line,</span>
-<span class="sd">    and rewrites the other two. They start at the current playhead, not zero, so returning to</span>
-<span class="sd">    a video shows where you were.</span>
+<span class="sd">    The three fields always show where the video is — during playback, frame stepping, timeline</span>
+<span class="sd">    clicks — and stay consistent with each other. Typing a value in any one and pressing Enter</span>
+<span class="sd">    (or leaving the field) seeks there and rewrites the other two. While a field is focused the</span>
+<span class="sd">    readout holds still so it never overwrites what is being typed.</span>
 <span class="sd">    """</span>
     <span class="n">head</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span>
-    <span class="n">head_sec</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-center gap-3 wrap"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Jump to"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">frame_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"frame"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">head</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
-        <span class="n">sec_in</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"seconds"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">head_sec</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">tc_in</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"mm:ss.ff"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">_format_timecode</span><span class="p">(</span><span class="n">head_sec</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Position"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">frame_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"frame"</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+        <span class="n">sec_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"seconds"</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+        <span class="n">tc_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"mm:ss.ff"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">field_</span> <span class="ow">in</span> <span class="p">(</span><span class="n">frame_in</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">):</span>
+            <span class="n">field_</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Current position — type a value and press Enter to jump there"</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">seek_to_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="n">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
-            <span class="n">_sync_jump_fields</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">frame_in</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">)</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="n">_PositionFields</span><span class="p">(</span><span class="n">frame_in</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">fields</span>
+    <span class="n">fields</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
 
-        <span class="n">frame_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">seek_to_frame</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">frame_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)))</span>
-        <span class="n">sec_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-            <span class="s2">"blur"</span><span class="p">,</span>
-            <span class="k">lambda</span><span class="p">:</span> <span class="n">seek_to_frame</span><span class="p">(</span><span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sec_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)),</span>
-        <span class="p">)</span>
-        <span class="n">tc_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-            <span class="s2">"blur"</span><span class="p">,</span>
-            <span class="k">lambda</span><span class="p">:</span> <span class="n">seek_to_frame</span><span class="p">(</span><span class="n">seconds_to_frame</span><span class="p">(</span><span class="n">_parse_timecode</span><span class="p">(</span><span class="n">tc_in</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)),</span>
-        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"frame"</span><span class="p">,</span> <span class="n">frame_in</span><span class="p">),</span> <span class="p">(</span><span class="s2">"seconds"</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">),</span> <span class="p">(</span><span class="s2">"timecode"</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">)):</span>
+        <span class="n">field_</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"focus"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="s2">"editing"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">field_</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">name</span><span class="p">:</span> <span class="n">_commit_position</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+        <span class="n">field_</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"keydown.enter"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">name</span><span class="p">:</span> <span class="n">_commit_position</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_commit_position</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">which</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Jump to the value typed in one position field — but only if the user changed it.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state_: The task state (holds the position fields).</span>
+<span class="sd">        vid_id: The video element's DOM id.</span>
+<span class="sd">        which: ``"frame"``, ``"seconds"`` or ``"timecode"`` — the field being committed.</span>
+<span class="sd">    """</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">position</span>
+    <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">fields</span><span class="o">.</span><span class="n">editing</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">shown_frame</span><span class="p">,</span> <span class="n">shown_sec</span><span class="p">,</span> <span class="n">shown_tc</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">shown</span>
+    <span class="k">if</span> <span class="n">which</span> <span class="o">==</span> <span class="s2">"frame"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">frame_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">shown_frame</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">frame_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">which</span> <span class="o">==</span> <span class="s2">"seconds"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">sec_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">==</span> <span class="n">shown_sec</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">seconds_to_frame</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">sec_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">tc_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="n">shown_tc</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">seconds_to_frame</span><span class="p">(</span><span class="n">_parse_timecode</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">tc_in</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>  <span class="c1"># clamps, seeks, and rewrites all three fields</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_show_position</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refresh the position readout from the playhead, unless the user is typing in it."""</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">position</span>
+    <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fields</span><span class="o">.</span><span class="n">editing</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">fields</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_category_color</span><span class="p">(</span><span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">override</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1594,6 +1660,7 @@
     <span class="n">frame</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">frame</span>
     <span class="n">videoclock</span><span class="o">.</span><span class="n">seek_frame</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">_show_position</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">zoomed_in</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">state_</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">frame</span><span class="p">):</span>
         <span class="n">state_</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">center_on</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
         <span class="n">_refresh_timeline</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
@@ -1622,16 +1689,6 @@
         <span class="n">view</span><span class="o">.</span><span class="n">fraction_clamped</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span><span class="p">),</span>
         <span class="n">view</span><span class="o">.</span><span class="n">fraction_clamped</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span><span class="p">),</span>
     <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_sync_jump_fields</span><span class="p">(</span>
-    <span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">frame_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">,</span> <span class="n">sec_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">,</span> <span class="n">tc_in</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Rewrite the three linked jump fields to a consistent frame/second/timecode."""</span>
-    <span class="n">seconds</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
-    <span class="n">frame_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-    <span class="n">sec_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-    <span class="n">tc_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">_format_timecode</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_timecode</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>

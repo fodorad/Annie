@@ -20,17 +20,40 @@ annie.pages.dataset
 
 
 
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.dataset.LayoutCommit
+
+
 Functions
 ---------
 
 .. autoapisummary::
 
    annie.pages.dataset.layout_from_inputs
+   annie.pages.dataset.layout_commit
+   annie.pages.dataset.layout_summary
    annie.pages.dataset.render
 
 
 Module Contents
 ---------------
+
+.. py:class:: LayoutCommit
+
+   What committing the Layout text boxes should do.
+
+   .. attribute:: layout
+
+      The valid layout to apply, or ``None`` when there is nothing to apply.
+
+   .. attribute:: error
+
+      A user-readable validation message, or ``None``.
+
 
 .. py:function:: layout_from_inputs(pattern: str, id_template: str) -> annie.dataset.layout.VideoLayout
 
@@ -42,6 +65,30 @@ Module Contents
    :returns: The validated layout.
 
    :raises ValueError: With a user-readable message if the layout is unusable.
+
+
+.. py:function:: layout_commit(pattern: str, id_template: str, current: annie.dataset.layout.VideoLayout | None) -> LayoutCommit
+
+   Decide what to do when a Layout box is committed (blur / Enter).
+
+   :param pattern: The pattern box text.
+   :param id_template: The video-id box text.
+   :param current: The layout already applied to the source, if any.
+
+   :returns: ``LayoutCommit(layout=...)`` to apply a new valid layout; ``LayoutCommit(error=...)``
+             for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the boxes
+             still describe the applied layout, or the pattern is still empty (nothing to do yet).
+
+
+.. py:function:: layout_summary(source: annie.dataset.sources.DataSource, scan: annie.dataset.scanning.ScanResult | None) -> str | None
+
+   Describe what a nested layout found, from the last scan (no extra filesystem walk).
+
+   :param source: The Videos-folder source.
+   :param scan: The last scan result.
+
+   :returns: A one-line summary such as ``"278 videos · a ×70 · b ×4 · 0 collisions · e.g. …"``,
+             or ``None`` when the source has no layout or nothing was scanned.
 
 
 .. py:function:: render() -> None

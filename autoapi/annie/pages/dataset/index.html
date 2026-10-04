@@ -319,6 +319,18 @@ Available / Unavailable chip and a live item count.</p>
 <p>Each browser tab maintains its own scan-in-progress flag and database-mode
 selection via a per-client <code class="xref py py-class docutils literal notranslate"><span class="pre">_DatasetState</span></code> keyed by
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">nicegui.Client.id</span></code>.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.LayoutCommit" title="annie.pages.dataset.LayoutCommit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LayoutCommit</span></code></a></p></td>
+<td><p>What committing the Layout text boxes should do.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -326,6 +338,12 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_from_inputs" title="annie.pages.dataset.layout_from_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_from_inputs</span></code></a>(→ annie.dataset.layout.VideoLayout)</p></td>
 <td><p>Build and validate a <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code> from the Layout text boxes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_commit" title="annie.pages.dataset.layout_commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_commit</span></code></a>(→ LayoutCommit)</p></td>
+<td><p>Decide what to do when a Layout box is committed (blur / Enter).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_summary" title="annie.pages.dataset.layout_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_summary</span></code></a>(→ str | None)</p></td>
+<td><p>Describe what a nested layout found, from the last scan (no extra filesystem walk).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.render" title="annie.pages.dataset.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(→ None)</p></td>
 <td><p>Build the Dataset tab body; register per-client state.</p></td>
@@ -336,6 +354,24 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.pages.dataset.LayoutCommit">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.dataset.</span></span><span class="sig-name descname"><span class="pre">LayoutCommit</span></span><a class="reference internal" href="../../../../_modules/annie/pages/dataset.html#LayoutCommit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.dataset.LayoutCommit" title="Link to this definition">¶</a></dt>
+<dd><p>What committing the Layout text boxes should do.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.pages.dataset.LayoutCommit.layout">
+<span class="sig-name descname"><span class="pre">layout</span></span><a class="headerlink" href="#annie.pages.dataset.LayoutCommit.layout" title="Link to this definition">¶</a></dt>
+<dd><p>The valid layout to apply, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when there is nothing to apply.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.pages.dataset.LayoutCommit.error">
+<span class="sig-name descname"><span class="pre">error</span></span><a class="headerlink" href="#annie.pages.dataset.LayoutCommit.error" title="Link to this definition">¶</a></dt>
+<dd><p>A user-readable validation message, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.dataset.layout_from_inputs">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.dataset.</span></span><span class="sig-name descname"><span class="pre">layout_from_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../dataset/layout/index.html#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><span class="pre">annie.dataset.layout.VideoLayout</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/pages/dataset.html#layout_from_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.dataset.layout_from_inputs" title="Link to this definition">¶</a></dt>
@@ -352,6 +388,44 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – With a user-readable message if the layout is unusable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.dataset.layout_commit">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.dataset.</span></span><span class="sig-name descname"><span class="pre">layout_commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../dataset/layout/index.html#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><span class="pre">annie.dataset.layout.VideoLayout</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.pages.dataset.LayoutCommit" title="annie.pages.dataset.LayoutCommit"><span class="pre">LayoutCommit</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/pages/dataset.html#layout_commit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.dataset.layout_commit" title="Link to this definition">¶</a></dt>
+<dd><p>Decide what to do when a Layout box is committed (blur / Enter).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pattern</strong> – The pattern box text.</p></li>
+<li><p><strong>id_template</strong> – The video-id box text.</p></li>
+<li><p><strong>current</strong> – The layout already applied to the source, if any.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">LayoutCommit(layout=...)</span></code> to apply a new valid layout; <code class="docutils literal notranslate"><span class="pre">LayoutCommit(error=...)</span></code>
+for an invalid one (nothing is applied); an empty <code class="docutils literal notranslate"><span class="pre">LayoutCommit()</span></code> when the boxes
+still describe the applied layout, or the pattern is still empty (nothing to do yet).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.dataset.layout_summary">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.dataset.</span></span><span class="sig-name descname"><span class="pre">layout_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../dataset/sources/index.html#annie.dataset.sources.DataSource" title="annie.dataset.sources.DataSource"><span class="pre">annie.dataset.sources.DataSource</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">scan</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../dataset/scanning/index.html#annie.dataset.scanning.ScanResult" title="annie.dataset.scanning.ScanResult"><span class="pre">annie.dataset.scanning.ScanResult</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/dataset.html#layout_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.dataset.layout_summary" title="Link to this definition">¶</a></dt>
+<dd><p>Describe what a nested layout found, from the last scan (no extra filesystem walk).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> – The Videos-folder source.</p></li>
+<li><p><strong>scan</strong> – The last scan result.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A one-line summary such as <code class="docutils literal notranslate"><span class="pre">&quot;278</span> <span class="pre">videos</span> <span class="pre">·</span> <span class="pre">a</span> <span class="pre">×70</span> <span class="pre">·</span> <span class="pre">b</span> <span class="pre">×4</span> <span class="pre">·</span> <span class="pre">0</span> <span class="pre">collisions</span> <span class="pre">·</span> <span class="pre">e.g.</span> <span class="pre">…&quot;</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">None</span></code> when the source has no layout or nothing was scanned.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -421,9 +495,17 @@ selection via a per-client <code class="xref py py-class docutils literal notran
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">annie.pages.dataset</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.pages.dataset.LayoutCommit"><code class="docutils literal notranslate"><span class="pre">LayoutCommit</span></code></a><ul>
+<li><a class="reference internal" href="#annie.pages.dataset.LayoutCommit.layout"><code class="docutils literal notranslate"><span class="pre">LayoutCommit.layout</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.dataset.LayoutCommit.error"><code class="docutils literal notranslate"><span class="pre">LayoutCommit.error</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#annie.pages.dataset.layout_from_inputs"><code class="docutils literal notranslate"><span class="pre">layout_from_inputs()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.dataset.layout_commit"><code class="docutils literal notranslate"><span class="pre">layout_commit()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.dataset.layout_summary"><code class="docutils literal notranslate"><span class="pre">layout_summary()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.dataset.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
 </ul>
 </li>
