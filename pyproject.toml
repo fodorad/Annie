@@ -43,8 +43,8 @@ dependencies = [
 # CI passes. Without this extra, the pure layers (scanning, parsing, matching,
 # storage, theme, colour) still install and run; only frame decode/render need it.
 media = [
-  "torch==2.14.0",
-  "torchcodec==0.16.0",
+  "torch==2.14.1",
+  "torchcodec==0.17.0",
 ]
 dev = [
   "ruff",
