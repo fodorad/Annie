@@ -1,4 +1,4 @@
-.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots run check clean docker-build docker-run help
+.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer-icon run check clean docker-build docker-run help
 
 # macOS: torchcodec requires FFmpeg dylibs which Homebrew installs to a non-standard
 # prefix. make does not inherit DYLD_LIBRARY_PATH, so we set it explicitly here.
@@ -11,6 +11,7 @@ help:
 	@echo "Run:                 run  (override with 'make run PORT=8090 HOST=0.0.0.0')"
 	@echo "Docker:              docker-build | docker-run"
 	@echo "Docs:                docs-serve | docs-deploy | screenshots"
+	@echo "Windows installer:   installer-icon  (installer itself is built in CI)"
 	@echo "Cleanup:             clean"
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
@@ -87,6 +88,16 @@ docs-deploy:
 screenshots:
 	python -m playwright install chromium
 	python scripts/screenshot_docs.py
+
+# ── Windows installer ──────────────────────────────────────────────────────────
+
+# Rebuild the installer/shortcut icon from the logo mark, then commit the .ico. Needs
+# rsvg-convert (brew install librsvg) and Pillow. The installer itself is built and
+# end-to-end tested on a Windows runner (.github/workflows/windows-installer.yml).
+installer-icon:
+	rsvg-convert -w 256 -h 256 docs/assets/mark.svg -o installer/windows/mark.png
+	python -c "from PIL import Image; Image.open('installer/windows/mark.png').save('installer/windows/annie.ico', sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])"
+	rm installer/windows/mark.png
 
 # ── Misc ───────────────────────────────────────────────────────────────────────
 

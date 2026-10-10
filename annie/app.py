@@ -18,14 +18,16 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 import os
 import sys
+import webbrowser
 from pathlib import Path
 
 from nicegui import app, run, ui
 
 from annie import __version__
-from annie.core import logbook, theme
+from annie.core import logbook, runtime, theme
 from annie.core.config import settings
 from annie.core.state import state
 from annie.media.decode import media_available
@@ -101,6 +103,9 @@ def build() -> None:
         with ui.row().classes("flex-1 items-center justify-end"):
             ui.label(f"v{__version__}").classes("text-xs opacity-70")
 
+    if runtime.launcher_outdated(os.environ.get("ANNIE_LAUNCHER_VERSION")):
+        _launcher_update_banner()
+
     def navigate(name: str) -> None:
         tabs.set_value(name)
 
@@ -133,6 +138,18 @@ def build() -> None:
     tabs.on_value_change(_on_tab_change)
     annotator.sync_tab()  # set the tab's initial enabled/disabled state
     logs_page.start_toasts()  # per-client poller: surface new errors as toasts
+
+
+def _launcher_update_banner() -> None:
+    """Ask the user to reinstall when the Windows launcher is older than this Annie needs."""
+    with (
+        ui.row()
+        .classes("w-full items-center gap-2 q-pa-sm rounded")
+        .style(f"background:{theme.WARNING}22")
+    ):
+        ui.icon("system_update", color=theme.WARNING)
+        ui.label("A new Annie installer is available. Download it and run it once to update.")
+        ui.link("Download installer", runtime.INSTALLER_URL, new_tab=True)
 
 
 @ui.page("/")
@@ -209,11 +226,38 @@ def _ensure_macos_ffmpeg_libs() -> None:
     os.execve(sys.executable, [sys.executable, *sys.argv], env)
 
 
+def _report_busy_port() -> None:
+    """Explain a busy port: reuse a running Annie, or name the conflict clearly.
+
+    Runs before the log file is attached and the process exits right after, so the
+    message goes to the console, where the user launching Annie is looking.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    console = logging.getLogger("annie.startup")
+    url = runtime.app_url(settings.host, settings.port)
+    if runtime.annie_running(settings.host, settings.port):
+        console.info("Annie is already running at %s — opening it.", url)
+        if settings.open_browser:
+            webbrowser.open(url)
+        return
+    console.error(
+        "Port %s is used by another program. Close it, or start Annie on another port "
+        "with ANNIE_PORT (e.g. `make run PORT=8090`).",
+        settings.port,
+    )
+    sys.exit(1)
+
+
 def main() -> None:
     """Console-script / module entry point: register the page and run the server."""
     # macOS: make the Homebrew FFmpeg dylibs discoverable before anything imports torchcodec,
     # re-launching once with DYLD_LIBRARY_PATH set if needed (see the helper). Must run first.
     _ensure_macos_ffmpeg_libs()
+    # A second launch (e.g. double-clicking the shortcut twice) opens the running Annie
+    # instead of crashing on the busy port.
+    if runtime.port_in_use(settings.host, settings.port):
+        _report_busy_port()
+        return
     # Name the log after the active session DB so the two are paired (and renaming
     # the DB later renames the log too — see LogBook.retarget / AppState.set_store).
     log_path = logbook.LOG.attach_file(settings.logs_dir, state.store.db_path.stem)

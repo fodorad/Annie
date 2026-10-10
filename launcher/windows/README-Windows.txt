@@ -2,6 +2,11 @@
  Annie — how to install and use (Windows)
 ========================================
 
+NOTE: this is the Docker-based ALTERNATIVE, meant for IT-managed machines.
+Most people should use the simpler installer instead (no Docker, no admin rights):
+  https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe
+Guide: https://fodorad.github.io/Annie/install-windows.html
+
 Annie lets you watch your video recordings and mark events on a timeline.
 You do NOT need to know anything technical. Follow these three steps.
 

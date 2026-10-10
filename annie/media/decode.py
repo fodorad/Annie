@@ -23,6 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from annie.core.runtime import ensure_windows_ffmpeg_dlls
+
 if TYPE_CHECKING:  # pragma: no cover - typing only
     import numpy as np
 
@@ -55,6 +57,7 @@ def _require_media() -> None:
 def _decoder(path: str | Path, seek_mode: SeekMode):  # noqa: ANN202 - external type
     """Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""
     _require_media()
+    ensure_windows_ffmpeg_dlls()  # Windows: FFmpeg's DLLs must be registered before import
     from torchcodec.decoders import VideoDecoder  # local import: optional dependency
 
     return VideoDecoder(str(Path(path)), seek_mode=seek_mode)

@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Generator, Iterable
 
 Verdict = Literal["good", "bad"]
 """A review verdict. ``None`` (no row) is treated as ``"good"`` by the UI."""
@@ -230,7 +230,7 @@ class ReviewStore:
             conn.execute("ALTER TABLE event ADD COLUMN color TEXT")
 
     @contextmanager
-    def _connect(self) -> Iterator[sqlite3.Connection]:
+    def _connect(self) -> Generator[sqlite3.Connection]:
         """Yield a row-factory connection inside a transaction, closing it after."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row

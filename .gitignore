@@ -1,4 +1,5 @@
 .vscode/
+temp/
 
 # macOS
 .DS_Store
@@ -24,6 +25,8 @@ dist/
 launcher/windows/.env
 launcher/windows/annie-config.txt
 launcher/windows/annie-home/
+# Windows installer build output (installer/windows/build is covered by build/ above).
+installer/windows/Output/
 downloads/
 eggs/
 .eggs/
