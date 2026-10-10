@@ -10,7 +10,8 @@ from annie.pages.reveal import is_docker, reveal_command
 
 class TestRevealCommand(unittest.TestCase):
     def test_macos_selects_file_in_finder(self) -> None:
-        self.assertEqual(reveal_command("/data/v.mp4", "darwin"), ["open", "-R", "/data/v.mp4"])
+        cmd = reveal_command("/data/v.mp4", "darwin")
+        self.assertEqual(cmd, ["open", "-R", str(Path("/data/v.mp4"))])
 
     def test_windows_selects_file_in_explorer(self) -> None:
         cmd = reveal_command(r"C:\data\v.mp4", "win32")
