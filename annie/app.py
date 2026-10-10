@@ -236,7 +236,7 @@ def _report_busy_port() -> None:
     console = logging.getLogger("annie.startup")
     url = runtime.app_url(settings.host, settings.port)
     if runtime.annie_running(settings.host, settings.port):
-        console.info("Annie is already running at %s — opening it.", url)
+        console.info("Annie is already running at %s. Opening it.", url)  # ASCII: cp1252 consoles
         if settings.open_browser:
             webbrowser.open(url)
         return
