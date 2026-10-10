@@ -258,6 +258,10 @@ def main() -> None:
     if runtime.port_in_use(settings.host, settings.port):
         _report_busy_port()
         return
+    # Land the user back in the dataset they used last, with its review DB, so closing
+    # Annie never costs them their place. Sources seeded from ANNIE_* env vars win.
+    if not state.registry.sources:
+        state.restore_last_config()
     # Name the log after the active session DB so the two are paired (and renaming
     # the DB later renames the log too — see LogBook.retarget / AppState.set_store).
     log_path = logbook.LOG.attach_file(settings.logs_dir, state.store.db_path.stem)

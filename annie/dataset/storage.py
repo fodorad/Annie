@@ -240,6 +240,44 @@ class ReviewStore:
         finally:
             conn.close()
 
+    # ── whole-database operations ──────────────────────────────────────────────
+
+    def has_data(self) -> bool:
+        """Return whether any review, event, or participant category has been stored.
+
+        Used to decide whether switching to another database would leave progress
+        behind (see :meth:`copy_to`).
+        """
+        with self._connect() as conn:
+            return any(
+                conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone() is not None  # noqa: S608
+                for table in ("review", "event", "event_category")
+            )
+
+    def copy_to(self, db_path: str | Path) -> ReviewStore:
+        """Copy this whole database to ``db_path`` and return a store opened on the copy.
+
+        Uses SQLite's online backup API, so the copy is consistent even while this store
+        is in use. An existing file at ``db_path`` is overwritten; this database is left
+        untouched.
+
+        Args:
+            db_path: Destination SQLite file. Parent directories are created as needed.
+
+        Returns:
+            A :class:`ReviewStore` backed by the copy.
+        """
+        target = Path(db_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source = sqlite3.connect(self.db_path)
+        destination = sqlite3.connect(target)
+        try:
+            source.backup(destination)
+        finally:
+            destination.close()
+            source.close()
+        return ReviewStore(target)
+
     # ── reads ──────────────────────────────────────────────────────────────────
 
     def get(self, row_key: str) -> ReviewRecord | None:

@@ -284,3 +284,40 @@ def save_config(
         encoding="utf-8",
     )
     return out
+
+
+# ── last-used config (reopened on the next start) ─────────────────────────────
+
+LAST_CONFIG_FILENAME = "last_config.json"
+"""File under ``ANNIE_HOME`` remembering the config most recently loaded or saved."""
+
+
+def remember_last_config(path: str | Path) -> None:
+    """Record ``path`` as the config to reopen on the next start.
+
+    Args:
+        path: The config file just loaded or saved.
+    """
+    pointer = settings.annie_home / LAST_CONFIG_FILENAME
+    pointer.parent.mkdir(parents=True, exist_ok=True)
+    pointer.write_text(
+        json.dumps({"config": str(Path(path).resolve())}, indent=2), encoding="utf-8"
+    )
+
+
+def last_config() -> Path | None:
+    """Return the config remembered by :func:`remember_last_config`, if it still exists.
+
+    Returns:
+        The config path, or ``None`` when nothing is remembered, the pointer file is
+        unreadable, or the config has since been moved or deleted.
+    """
+    pointer = settings.annie_home / LAST_CONFIG_FILENAME
+    try:
+        raw = json.loads(pointer.read_text(encoding="utf-8")).get("config")
+    except (OSError, ValueError, AttributeError):
+        return None
+    if not isinstance(raw, str):
+        return None
+    path = Path(raw)
+    return path if path.is_file() else None

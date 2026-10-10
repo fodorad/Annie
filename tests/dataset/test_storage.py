@@ -591,5 +591,54 @@ class TestEventCategories(unittest.TestCase):
         self.assertEqual(cat.updated_at, "")
 
 
+class TestStoreCopy(unittest.TestCase):
+    """Carrying review progress from one database file into another."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.store = ReviewStore(self.tmp / "session.db")
+
+    def test_fresh_store_has_no_data(self) -> None:
+        self.assertFalse(self.store.has_data())
+
+    def test_verdict_counts_as_data(self) -> None:
+        self.store.set_verdict("v::", "v", None, "bad")
+        self.assertTrue(self.store.has_data())
+
+    def test_event_category_counts_as_data(self) -> None:
+        self.store.add_category("Mother")
+        self.assertTrue(self.store.has_data())
+
+    def test_copy_to_carries_reviews_and_events(self) -> None:
+        self.store.set_verdict("v::", "v", None, "bad")
+        self.store.set_note("v::", "v", None, "blurry")
+        self.store.add_event("v", "v::", "Mother", 10, 20, label="smile")
+
+        copied = self.store.copy_to(self.tmp / "nested" / "named.db")
+
+        self.assertEqual(copied.db_path, self.tmp / "nested" / "named.db")
+        record = copied.get("v::")
+        assert record is not None
+        self.assertEqual((record.verdict, record.note), ("bad", "blurry"))
+        self.assertEqual([e.label for e in copied.events_for("v::")], ["smile"])
+
+    def test_copy_to_replaces_an_existing_target(self) -> None:
+        stale = ReviewStore(self.tmp / "named.db")
+        stale.set_verdict("old::", "old", None, "good")
+        self.store.set_verdict("new::", "new", None, "bad")
+
+        copied = self.store.copy_to(self.tmp / "named.db")
+
+        self.assertIsNone(copied.get("old::"))
+        self.assertIsNotNone(copied.get("new::"))
+
+    def test_copy_leaves_the_source_untouched(self) -> None:
+        self.store.set_verdict("v::", "v", None, "bad")
+        self.store.copy_to(self.tmp / "named.db").set_verdict("v::", "v", None, "good")
+        record = self.store.get("v::")
+        assert record is not None
+        self.assertEqual(record.verdict, "bad")
+
+
 if __name__ == "__main__":
     unittest.main()
