@@ -182,6 +182,29 @@ Module Contents
                    created as needed.
 
 
+   .. py:method:: has_data() -> bool
+
+      Return whether any review, event, or participant category has been stored.
+
+      Used to decide whether switching to another database would leave progress
+      behind (see :meth:`copy_to`).
+
+
+
+   .. py:method:: copy_to(db_path: str | pathlib.Path) -> ReviewStore
+
+      Copy this whole database to ``db_path`` and return a store opened on the copy.
+
+      Uses SQLite's online backup API, so the copy is consistent even while this store
+      is in use. An existing file at ``db_path`` is overwritten; this database is left
+      untouched.
+
+      :param db_path: Destination SQLite file. Parent directories are created as needed.
+
+      :returns: A :class:`ReviewStore` backed by the copy.
+
+
+
    .. py:method:: get(row_key: str) -> ReviewRecord | None
 
       Return the review record for ``row_key``, or ``None`` if unreviewed.

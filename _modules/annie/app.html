@@ -525,6 +525,10 @@
     <span class="c1"># macOS: make the Homebrew FFmpeg dylibs discoverable before anything imports torchcodec,</span>
     <span class="c1"># re-launching once with DYLD_LIBRARY_PATH set if needed (see the helper). Must run first.</span>
     <span class="n">_ensure_macos_ffmpeg_libs</span><span class="p">()</span>
+    <span class="c1"># Land the user back in the dataset they used last, with its review DB, so closing</span>
+    <span class="c1"># Annie never costs them their place. Sources seeded from ANNIE_* env vars win.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">restore_last_config</span><span class="p">()</span>
     <span class="c1"># Name the log after the active session DB so the two are paired (and renaming</span>
     <span class="c1"># the DB later renames the log too — see LogBook.retarget / AppState.set_store).</span>
     <span class="n">log_path</span> <span class="o">=</span> <span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">attach_file</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">logs_dir</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">stem</span><span class="p">)</span>

@@ -333,7 +333,11 @@ column and the value columns it contributes.</p></li>
 whether it is <em>Ready</em> — a task is offered in the Annotator exactly when it is ready
 here.</p></li>
 <li><p><strong>Persistence</strong> pins the review database. A saved config owns an <code class="docutils literal notranslate"><span class="pre">annie_&lt;name&gt;.db</span></code>
-under <code class="docutils literal notranslate"><span class="pre">ANNIE_HOME</span></code>, so reloading the config reopens the same decisions.</p></li>
+under <code class="docutils literal notranslate"><span class="pre">ANNIE_HOME</span></code>, so reloading the config reopens the same decisions. Saving a config
+carries the progress made so far into that database (if both already hold progress,
+Annie asks which to keep and sets the other aside under Persistence), and the next
+start reopens the last loaded or saved config automatically — unless <code class="docutils literal notranslate"><span class="pre">ANNIE_*</span></code> env
+vars define the dataset.</p></li>
 </ul>
 </section>
 <hr class="docutils" />

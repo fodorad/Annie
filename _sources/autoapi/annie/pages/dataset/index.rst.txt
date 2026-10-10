@@ -20,6 +20,14 @@ annie.pages.dataset
 
 
 
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.pages.dataset.CarryAction
+
+
 Classes
 -------
 
@@ -41,6 +49,10 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:data:: CarryAction
+
+   What saving a config should do with the progress in the currently open database.
 
 .. py:class:: LayoutCommit
 

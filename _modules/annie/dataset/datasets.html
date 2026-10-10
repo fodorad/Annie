@@ -608,6 +608,49 @@
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
+
+
+<span class="c1"># ── last-used config (reopened on the next start) ─────────────────────────────</span>
+
+<span class="n">LAST_CONFIG_FILENAME</span> <span class="o">=</span> <span class="s2">"last_config.json"</span>
+<span class="sd">"""File under ``ANNIE_HOME`` remembering the config most recently loaded or saved."""</span>
+
+
+<div class="viewcode-block" id="remember_last_config">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/datasets/index.html#annie.dataset.datasets.remember_last_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remember_last_config</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Record ``path`` as the config to reopen on the next start.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: The config file just loaded or saved.</span>
+<span class="sd">    """</span>
+    <span class="n">pointer</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">annie_home</span> <span class="o">/</span> <span class="n">LAST_CONFIG_FILENAME</span>
+    <span class="n">pointer</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pointer</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"config"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="last_config">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/datasets/index.html#annie.dataset.datasets.last_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">last_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the config remembered by :func:`remember_last_config`, if it still exists.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The config path, or ``None`` when nothing is remembered, the pointer file is</span>
+<span class="sd">        unreadable, or the config has since been moved or deleted.</span>
+<span class="sd">    """</span>
+    <span class="n">pointer</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">annie_home</span> <span class="o">/</span> <span class="n">LAST_CONFIG_FILENAME</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pointer</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"config"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span></div>
+
 </pre></div>
         </article>
       </div>

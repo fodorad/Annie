@@ -123,6 +123,24 @@ Module Contents
 
       Session-only UI preferences.
 
+   .. attribute:: active_config
+
+      The dataset config file currently loaded, or ``None`` for the
+      env-seeded / blank dataset. Lets the Dataset tab show it as selected.
+
+
+   .. py:method:: restore_last_config() -> pathlib.Path | None
+
+      Reopen the config remembered from the previous run, with its review database.
+
+      This is what lets a user close Annie and, on the next start, land straight back
+      in their dataset with all their progress — no need to re-pick the config. A
+      config that has gone missing or fails to load is skipped (and logged), leaving
+      the current dataset in place.
+
+      :returns: The config path that was restored, or ``None`` if nothing was.
+
+
 
    .. py:method:: rescan() -> None
 

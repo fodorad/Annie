@@ -318,6 +318,18 @@ configs that reference the bundled examples travel with the repo) or absolute.</
 auto-discovered and listed in the Dataset tab dropdown. When installed from PyPI
 the <code class="docutils literal notranslate"><span class="pre">data/</span></code> directory is absent and discovery returns an empty list silently;
 users load configs via the file picker or save their own.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.LAST_CONFIG_FILENAME" title="annie.dataset.datasets.LAST_CONFIG_FILENAME"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LAST_CONFIG_FILENAME</span></code></a></p></td>
+<td><p>File under <code class="docutils literal notranslate"><span class="pre">ANNIE_HOME</span></code> remembering the config most recently loaded or saved.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -343,6 +355,12 @@ users load configs via the file picker or save their own.</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.save_config" title="annie.dataset.datasets.save_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_config</span></code></a>(→ pathlib.Path)</p></td>
 <td><p>Write a registry to a config file as JSON.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remember_last_config</span></code></a>(→ None)</p></td>
+<td><p>Record <code class="docutils literal notranslate"><span class="pre">path</span></code> as the config to reopen on the next start.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.last_config" title="annie.dataset.datasets.last_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">last_config</span></code></a>(→ pathlib.Path | None)</p></td>
+<td><p>Return the config remembered by <a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-func docutils literal notranslate"><span class="pre">remember_last_config()</span></code></a>, if it still exists.</p></td>
 </tr>
 </tbody>
 </table>
@@ -466,6 +484,35 @@ loading it re-opens the same DB automatically.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.dataset.datasets.LAST_CONFIG_FILENAME">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.datasets.</span></span><span class="sig-name descname"><span class="pre">LAST_CONFIG_FILENAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'last_config.json'</span></span><a class="headerlink" href="#annie.dataset.datasets.LAST_CONFIG_FILENAME" title="Link to this definition">¶</a></dt>
+<dd><p>File under <code class="docutils literal notranslate"><span class="pre">ANNIE_HOME</span></code> remembering the config most recently loaded or saved.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.dataset.datasets.remember_last_config">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.datasets.</span></span><span class="sig-name descname"><span class="pre">remember_last_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/datasets.html#remember_last_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.datasets.remember_last_config" title="Link to this definition">¶</a></dt>
+<dd><p>Record <code class="docutils literal notranslate"><span class="pre">path</span></code> as the config to reopen on the next start.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> – The config file just loaded or saved.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.dataset.datasets.last_config">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.datasets.</span></span><span class="sig-name descname"><span class="pre">last_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/datasets.html#last_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.datasets.last_config" title="Link to this definition">¶</a></dt>
+<dd><p>Return the config remembered by <a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-func docutils literal notranslate"><span class="pre">remember_last_config()</span></code></a>, if it still exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The config path, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when nothing is remembered, the pointer file is
+unreadable, or the config has since been moved or deleted.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -525,6 +572,7 @@ loading it re-opens the same DB automatically.</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">annie.dataset.datasets</a><ul>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.dataset.datasets.repo_data_dir"><code class="docutils literal notranslate"><span class="pre">repo_data_dir()</span></code></a></li>
@@ -534,6 +582,9 @@ loading it re-opens the same DB automatically.</p></li>
 <li><a class="reference internal" href="#annie.dataset.datasets.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.datasets.to_config_dict"><code class="docutils literal notranslate"><span class="pre">to_config_dict()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.datasets.save_config"><code class="docutils literal notranslate"><span class="pre">save_config()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.datasets.LAST_CONFIG_FILENAME"><code class="docutils literal notranslate"><span class="pre">LAST_CONFIG_FILENAME</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.datasets.remember_last_config"><code class="docutils literal notranslate"><span class="pre">remember_last_config()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.datasets.last_config"><code class="docutils literal notranslate"><span class="pre">last_config()</span></code></a></li>
 </ul>
 </li>
 </ul>

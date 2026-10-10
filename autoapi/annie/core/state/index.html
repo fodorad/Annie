@@ -466,6 +466,28 @@ selection view); its width is derived 16:9.</p>
 <dd><p>Session-only UI preferences.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.AppState.active_config">
+<span class="sig-name descname"><span class="pre">active_config</span></span><a class="headerlink" href="#annie.core.state.AppState.active_config" title="Link to this definition">¶</a></dt>
+<dd><p>The dataset config file currently loaded, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for the
+env-seeded / blank dataset. Lets the Dataset tab show it as selected.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.core.state.AppState.restore_last_config">
+<span class="sig-name descname"><span class="pre">restore_last_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/state.html#AppState.restore_last_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.state.AppState.restore_last_config" title="Link to this definition">¶</a></dt>
+<dd><p>Reopen the config remembered from the previous run, with its review database.</p>
+<p>This is what lets a user close Annie and, on the next start, land straight back
+in their dataset with all their progress — no need to re-pick the config. A
+config that has gone missing or fails to load is skipped (and logged), leaving
+the current dataset in place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The config path that was restored, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if nothing was.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.core.state.AppState.rescan">
 <span class="sig-name descname"><span class="pre">rescan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/state.html#AppState.rescan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.state.AppState.rescan" title="Link to this definition">¶</a></dt>
@@ -597,6 +619,8 @@ stay fast.</p>
 <li><a class="reference internal" href="#annie.core.state.AppState.audio_cache"><code class="docutils literal notranslate"><span class="pre">AppState.audio_cache</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.frames_cache"><code class="docutils literal notranslate"><span class="pre">AppState.frames_cache</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.ui"><code class="docutils literal notranslate"><span class="pre">AppState.ui</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.AppState.active_config"><code class="docutils literal notranslate"><span class="pre">AppState.active_config</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.AppState.restore_last_config"><code class="docutils literal notranslate"><span class="pre">AppState.restore_last_config()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.rescan"><code class="docutils literal notranslate"><span class="pre">AppState.rescan()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.set_store"><code class="docutils literal notranslate"><span class="pre">AppState.set_store()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.review_state"><code class="docutils literal notranslate"><span class="pre">AppState.review_state()</span></code></a></li>

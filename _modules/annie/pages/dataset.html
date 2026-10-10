@@ -323,7 +323,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">context</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
@@ -349,6 +349,7 @@
     <span class="n">SourceRegistry</span><span class="p">,</span>
     <span class="n">task_readiness</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReviewStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_csv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
@@ -389,9 +390,7 @@
     <span class="c1"># the ＋ button mint throwaway session DBs.</span>
     <span class="n">db_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"existing"</span>
     <span class="n">db_path_custom</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
-    <span class="n">config_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_ENV_CONFIG</span> <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">()</span> <span class="k">else</span> <span class="n">_NEW_CONFIG</span>
-    <span class="p">)</span>
+    <span class="n">config_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_default_config_value</span><span class="p">())</span>
     <span class="n">session_db_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">db_path_is_explicit</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
     <span class="p">)</span>
@@ -457,6 +456,13 @@
 <span class="n">_ENV_CONFIG</span> <span class="o">=</span> <span class="s2">"__env__"</span>  <span class="c1">#: the "sources seeded from ANNIE_* env vars" option</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_config_value</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The config selector's initial value: the restored config, else env, else new."""</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">active_config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ENV_CONFIG</span> <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">()</span> <span class="k">else</span> <span class="n">_NEW_CONFIG</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_has_env_sources</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""True if any ANNIE_* environment variable seeds a data source."""</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
@@ -505,6 +511,8 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not load config: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">await</span> <span class="n">_apply_registry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">config_db</span><span class="o">=</span><span class="n">config_db</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">config_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">datasets</span><span class="o">.</span><span class="n">remember_last_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_new_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -512,9 +520,11 @@
 
 <span class="sd">    A brand-new config gets a *throwaway* database, not the stable ``annie_env.db``:</span>
 <span class="sd">    only the env config and saved/example configs own a named, reloadable DB. Renaming</span>
-<span class="sd">    the path in the Persistence box is what promotes this throwaway into a kept one.</span>
+<span class="sd">    the path in the Persistence box is what promotes this throwaway into a kept one —</span>
+<span class="sd">    or saving the config, which carries the progress into the config's own database.</span>
 <span class="sd">    """</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">SourceRegistry</span><span class="p">()</span>
     <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -525,12 +535,13 @@
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"New config"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"New config — save it to keep your progress for next time."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_env_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Reload sources from the ANNIE_* environment variables."""</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">_seed_registry</span><span class="p">()</span>
     <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -597,12 +608,86 @@
     <span class="c1"># Always pin a config-owned DB under ANNIE_HOME so this dataset reopens against the</span>
     <span class="c1"># same review database every time, and switch the live store to it now.</span>
     <span class="n">db_to_save</span> <span class="o">=</span> <span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">annie_home</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"annie_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.db"</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">keep_current</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_confirm_carry</span><span class="p">(</span><span class="n">config_name</span><span class="p">,</span> <span class="n">db_to_save</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">keep_current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
     <span class="n">datasets</span><span class="o">.</span><span class="n">save_config</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="p">,</span> <span class="n">config_name</span><span class="p">,</span> <span class="n">relative_to</span><span class="o">=</span><span class="n">folder</span><span class="p">,</span> <span class="n">db_path</span><span class="o">=</span><span class="n">db_to_save</span><span class="p">)</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">"existing"</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">keep_current</span><span class="p">:</span>
+        <span class="c1"># Carry everything reviewed so far into the config's DB, so saving never looks</span>
+        <span class="c1"># like it wiped the user's progress. Older progress in that DB is set aside, not lost.</span>
+        <span class="k">if</span> <span class="n">db_to_save</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="n">_set_aside</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">copy_to</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">datasets</span><span class="o">.</span><span class="n">remember_last_config</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+    <span class="n">_config_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Saved '</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">' → </span><span class="si">{</span><span class="n">out</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (DB: </span><span class="si">{</span><span class="n">db_to_save</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="n">CarryAction</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">"copy"</span><span class="p">,</span> <span class="s2">"ask"</span><span class="p">]</span>
+<span class="sd">"""What saving a config should do with the progress in the currently open database."""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_carry_action</span><span class="p">(</span><span class="n">current</span><span class="p">:</span> <span class="n">ReviewStore</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CarryAction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Decide how the open database's progress reaches a config's own database.</span>
+
+<span class="sd">    * ``"none"`` — nothing to carry: the config already uses this database, or no</span>
+<span class="sd">      progress has been recorded yet.</span>
+<span class="sd">    * ``"copy"`` — progress exists and the target holds none, so copy it over.</span>
+<span class="sd">    * ``"ask"`` — both hold progress; only the user can say which one to keep.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        current: The store open right now.</span>
+<span class="sd">        target: The config's database path.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The action to take.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">current</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">==</span> <span class="n">target</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">current</span><span class="o">.</span><span class="n">has_data</span><span class="p">():</span>
+        <span class="k">return</span> <span class="s2">"none"</span>
+    <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">ReviewStore</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">has_data</span><span class="p">():</span>
+        <span class="k">return</span> <span class="s2">"ask"</span>
+    <span class="k">return</span> <span class="s2">"copy"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_aside</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Move a database into the sessions folder under a timestamped name and return it.</span>
+
+<span class="sd">    Used before a save replaces a config's database, so the replaced progress stays</span>
+<span class="sd">    listed (and re-openable) under Persistence instead of being overwritten.</span>
+<span class="sd">    """</span>
+    <span class="n">aside</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">sessions_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">db_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_replaced_</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="si">:</span><span class="s2">%Y-%m-%d_%H-%M-%S</span><span class="si">}</span><span class="s2">.db"</span>
+    <span class="n">aside</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">db_path</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">aside</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">aside</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_confirm_carry</span><span class="p">(</span><span class="n">config_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve :func:`_carry_action` for a save, asking the user when both DBs hold work.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` to copy the current progress into ``target``, ``False`` to keep what</span>
+<span class="sd">        ``target`` already holds, or ``None`` if the user cancelled the save.</span>
+<span class="sd">    """</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="n">_carry_action</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">action</span> <span class="o">!=</span> <span class="s2">"ask"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">action</span> <span class="o">==</span> <span class="s2">"copy"</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-96 gap-4"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Which progress should this config keep?"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">' already has saved progress (</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">), and the dataset "</span>
+            <span class="sa">f</span><span class="s2">"open now has progress too (</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">). The one you don't "</span>
+            <span class="s2">"keep stays on disk and can still be opened from Persistence."</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"justify-end gap-2 w-full"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Keep saved"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"outline"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Use current"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">dialog</span>
 
 
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
@@ -614,9 +699,14 @@
     <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">():</span>
         <span class="n">options</span><span class="p">[</span><span class="n">_ENV_CONFIG</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"[ENV vars] Custom…"</span>
     <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
-        <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">config_name</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">resolve</span><span class="p">())]</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">config_name</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="c1"># A config loaded from elsewhere on disk (or restored at startup) must still show as</span>
+    <span class="c1"># the selected option, even though discovery doesn't list its folder.</span>
+    <span class="n">active</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">active_config</span>
+    <span class="k">if</span> <span class="n">active</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">active</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+        <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">active</span><span class="p">)]</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">config_name</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
 
-    <span class="n">default</span> <span class="o">=</span> <span class="n">_ENV_CONFIG</span> <span class="k">if</span> <span class="n">_has_env_sources</span><span class="p">()</span> <span class="k">else</span> <span class="n">_NEW_CONFIG</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="n">_default_config_value</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_select</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>

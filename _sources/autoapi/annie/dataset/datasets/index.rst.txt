@@ -19,6 +19,14 @@ annie.dataset.datasets
 
 
 
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.dataset.datasets.LAST_CONFIG_FILENAME
+
+
 Functions
 ---------
 
@@ -31,6 +39,8 @@ Functions
    annie.dataset.datasets.load_config
    annie.dataset.datasets.to_config_dict
    annie.dataset.datasets.save_config
+   annie.dataset.datasets.remember_last_config
+   annie.dataset.datasets.last_config
 
 
 Module Contents
@@ -123,5 +133,26 @@ Module Contents
    :param db_path: Optional review-database path to embed in the config.
 
    :returns: The path written.
+
+
+.. py:data:: LAST_CONFIG_FILENAME
+   :value: 'last_config.json'
+
+
+   File under ``ANNIE_HOME`` remembering the config most recently loaded or saved.
+
+.. py:function:: remember_last_config(path: str | pathlib.Path) -> None
+
+   Record ``path`` as the config to reopen on the next start.
+
+   :param path: The config file just loaded or saved.
+
+
+.. py:function:: last_config() -> pathlib.Path | None
+
+   Return the config remembered by :func:`remember_last_config`, if it still exists.
+
+   :returns: The config path, or ``None`` when nothing is remembered, the pointer file is
+             unreadable, or the config has since been moved or deleted.
 
 

@@ -321,6 +321,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.filtering</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReviewState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.manipulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">detect_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.scanning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScanResult</span><span class="p">,</span> <span class="n">build_manifest</span>
@@ -428,6 +429,8 @@
 <span class="sd">        audio_cache: Probed audio-stream presence per video id (lazy; see Browse).</span>
 <span class="sd">        frames_cache: Decoded frame count per video id (lazy; see Browse).</span>
 <span class="sd">        ui: Session-only UI preferences.</span>
+<span class="sd">        active_config: The dataset config file currently loaded, or ``None`` for the</span>
+<span class="sd">            env-seeded / blank dataset. Lets the Dataset tab show it as selected.</span>
 <span class="sd">    """</span>
 
     <span class="n">registry</span><span class="p">:</span> <span class="n">SourceRegistry</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">_seed_registry</span><span class="p">)</span>
@@ -438,6 +441,35 @@
     <span class="n">audio_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">frames_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">ui</span><span class="p">:</span> <span class="n">UiSettings</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">UiSettings</span><span class="p">)</span>
+    <span class="n">active_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="AppState.restore_last_config">
+<a class="viewcode-back" href="../../../autoapi/annie/core/state/index.html#annie.core.state.AppState.restore_last_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">restore_last_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reopen the config remembered from the previous run, with its review database.</span>
+
+<span class="sd">        This is what lets a user close Annie and, on the next start, land straight back</span>
+<span class="sd">        in their dataset with all their progress — no need to re-pick the config. A</span>
+<span class="sd">        config that has gone missing or fails to load is skipped (and logged), leaving</span>
+<span class="sd">        the current dataset in place.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The config path that was restored, or ``None`` if nothing was.</span>
+<span class="sd">        """</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">last_config</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">db_path</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_config</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad config must never block startup</span>
+            <span class="n">logbook</span><span class="o">.</span><span class="n">report_exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not reopen the last config: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">registry</span>
+        <span class="k">if</span> <span class="n">db_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">return</span> <span class="n">path</span></div>
+
 
 <div class="viewcode-block" id="AppState.rescan">
 <a class="viewcode-back" href="../../../autoapi/annie/core/state/index.html#annie.core.state.AppState.rescan">[docs]</a>

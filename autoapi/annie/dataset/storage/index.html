@@ -551,6 +551,31 @@ created as needed.</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.has_data">
+<span class="sig-name descname"><span class="pre">has_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.has_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.has_data" title="Link to this definition">¶</a></dt>
+<dd><p>Return whether any review, event, or participant category has been stored.</p>
+<p>Used to decide whether switching to another database would leave progress
+behind (see <a class="reference internal" href="#annie.dataset.storage.ReviewStore.copy_to" title="annie.dataset.storage.ReviewStore.copy_to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">copy_to()</span></code></a>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.copy_to">
+<span class="sig-name descname"><span class="pre">copy_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewStore" title="annie.dataset.storage.ReviewStore"><span class="pre">ReviewStore</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.copy_to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.copy_to" title="Link to this definition">¶</a></dt>
+<dd><p>Copy this whole database to <code class="docutils literal notranslate"><span class="pre">db_path</span></code> and return a store opened on the copy.</p>
+<p>Uses SQLite’s online backup API, so the copy is consistent even while this store
+is in use. An existing file at <code class="docutils literal notranslate"><span class="pre">db_path</span></code> is overwritten; this database is left
+untouched.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>db_path</strong> – Destination SQLite file. Parent directories are created as needed.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#annie.dataset.storage.ReviewStore" title="annie.dataset.storage.ReviewStore"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReviewStore</span></code></a> backed by the copy.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.get" title="Link to this definition">¶</a></dt>
 <dd><p>Return the review record for <code class="docutils literal notranslate"><span class="pre">row_key</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unreviewed.</p>
@@ -1246,6 +1271,8 @@ there are no events).</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore"><code class="docutils literal notranslate"><span class="pre">ReviewStore</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.has_data"><code class="docutils literal notranslate"><span class="pre">ReviewStore.has_data()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.copy_to"><code class="docutils literal notranslate"><span class="pre">ReviewStore.copy_to()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.get"><code class="docutils literal notranslate"><span class="pre">ReviewStore.get()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.all"><code class="docutils literal notranslate"><span class="pre">ReviewStore.all()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.list_by_verdict"><code class="docutils literal notranslate"><span class="pre">ReviewStore.list_by_verdict()</span></code></a></li>
