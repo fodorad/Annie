@@ -193,6 +193,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install-windows.html">Installing Annie on Windows</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
@@ -205,6 +206,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/runtime/index.html">annie.core.runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
 </ul>
@@ -317,7 +319,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">background_tasks</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.fsbrowse</span><span class="w"> </span><span class="kn">import</span> <span class="n">parent_of</span><span class="p">,</span> <span class="n">resolve_start_dir</span><span class="p">,</span> <span class="n">scan_entries</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.fsbrowse</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">drive_roots</span><span class="p">,</span>
+    <span class="n">other_drives</span><span class="p">,</span>
+    <span class="n">parent_of</span><span class="p">,</span>
+    <span class="n">resolve_start_dir</span><span class="p">,</span>
+    <span class="n">scan_entries</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -417,6 +425,9 @@
                 <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">listing</span><span class="p">):</span>
                     <span class="k">return</span>  <span class="c1"># app shutting down, or the dialog was closed mid-resolve</span>
             <span class="n">scanned</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">scan_entries</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">want_files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+            <span class="c1"># Drive letters only matter at a root; listing them can stall on an empty</span>
+            <span class="c1"># card reader, so it runs off the event loop like the scan.</span>
+            <span class="n">drives</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">drive_roots</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">parent_of</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
             <span class="k">if</span> <span class="n">scanned</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">listing</span><span class="p">):</span>
                 <span class="k">return</span>  <span class="c1"># app shutting down, or the dialog was closed mid-scan</span>
             <span class="n">state</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
@@ -427,6 +438,12 @@
                 <span class="n">parent</span> <span class="o">=</span> <span class="n">parent_of</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">_entry_row</span><span class="p">(</span><span class="s2">"arrow_upward"</span><span class="p">,</span> <span class="s2">".."</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span> <span class="n">muted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Windows: at C:\ the only way onward is another drive (e.g. a USB disk).</span>
+                    <span class="k">for</span> <span class="n">drive</span> <span class="ow">in</span> <span class="n">other_drives</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">drives</span><span class="p">):</span>
+                        <span class="n">_entry_row</span><span class="p">(</span>
+                            <span class="s2">"hard_drive"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">drive</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">d</span><span class="o">=</span><span class="n">drive</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">muted</span><span class="o">=</span><span class="kc">True</span>
+                        <span class="p">)</span>
                 <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">subdirs</span><span class="p">:</span>
                     <span class="n">_entry_row</span><span class="p">(</span>
                         <span class="s2">"folder"</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">child</span><span class="p">:</span> <span class="n">navigate</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span>

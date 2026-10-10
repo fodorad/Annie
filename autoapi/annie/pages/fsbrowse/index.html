@@ -194,6 +194,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../install-windows.html">Installing Annie on Windows</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
@@ -206,6 +207,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../core/runtime/index.html">annie.core.runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/state/index.html">annie.core.state</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/theme/index.html">annie.core.theme</a></li>
 </ul>
@@ -324,6 +326,12 @@ picker dialog (<code class="docutils literal notranslate"><span class="pre">anni
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.parent_of" title="annie.pages.fsbrowse.parent_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent_of</span></code></a>(→ pathlib.Path | None)</p></td>
 <td><p>Return the parent directory, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if already at the filesystem root.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.drive_roots" title="annie.pages.fsbrowse.drive_roots"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drive_roots</span></code></a>(→ list[pathlib.Path])</p></td>
+<td><p>Return the drive roots (<code class="docutils literal notranslate"><span class="pre">C:/</span></code>, <code class="docutils literal notranslate"><span class="pre">E:/</span></code>, …) on Windows; empty elsewhere.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.other_drives" title="annie.pages.fsbrowse.other_drives"><code class="xref py py-obj docutils literal notranslate"><span class="pre">other_drives</span></code></a>(→ list[P])</p></td>
+<td><p>Return the drives in <code class="docutils literal notranslate"><span class="pre">drives</span></code> other than the one <code class="docutils literal notranslate"><span class="pre">current</span></code> lives on.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.fsbrowse.scan_entries" title="annie.pages.fsbrowse.scan_entries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_entries</span></code></a>(→ tuple[list[pathlib.Path], ...)</p></td>
 <td><p>List a directory's subfolders (and optionally files) in a single pass.</p></td>
 </tr>
@@ -370,6 +378,31 @@ existing ancestor, else the user’s home directory.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.fsbrowse.drive_roots">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.fsbrowse.</span></span><span class="sig-name descname"><span class="pre">drive_roots</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/fsbrowse.html#drive_roots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.fsbrowse.drive_roots" title="Link to this definition">¶</a></dt>
+<dd><p>Return the drive roots (<code class="docutils literal notranslate"><span class="pre">C:/</span></code>, <code class="docutils literal notranslate"><span class="pre">E:/</span></code>, …) on Windows; empty elsewhere.</p>
+<p>Lets the picker leave <code class="docutils literal notranslate"><span class="pre">C:/</span></code> for another drive, such as an external USB disk;
+on macOS/Linux every disk is already reachable below <code class="docutils literal notranslate"><span class="pre">/</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.fsbrowse.other_drives">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.fsbrowse.</span></span><span class="sig-name descname"><span class="pre">other_drives</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.PurePath</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.PurePath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/fsbrowse.html#other_drives"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.fsbrowse.other_drives" title="Link to this definition">¶</a></dt>
+<dd><p>Return the drives in <code class="docutils literal notranslate"><span class="pre">drives</span></code> other than the one <code class="docutils literal notranslate"><span class="pre">current</span></code> lives on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>current</strong> – The directory being shown (usually a drive root).</p></li>
+<li><p><strong>drives</strong> – All drive roots, e.g. from <a class="reference internal" href="#annie.pages.fsbrowse.drive_roots" title="annie.pages.fsbrowse.drive_roots"><code class="xref py py-func docutils literal notranslate"><span class="pre">drive_roots()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The other drive roots, in the given order.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.fsbrowse.scan_entries">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.fsbrowse.</span></span><span class="sig-name descname"><span class="pre">scan_entries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">want_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_hidden</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/fsbrowse.html#scan_entries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.fsbrowse.scan_entries" title="Link to this definition">¶</a></dt>
 <dd><p>List a directory’s subfolders (and optionally files) in a single pass.</p>
@@ -385,7 +418,7 @@ raising, so a permission error never breaks the picker.</p>
 <li><p><strong>path</strong> – The directory to list.</p></li>
 <li><p><strong>want_files</strong> – Also collect files (skipped entirely when <code class="docutils literal notranslate"><span class="pre">False</span></code>).</p></li>
 <li><p><strong>suffixes</strong> – Lower-case dotted suffixes to keep among files, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for all.</p></li>
-<li><p><strong>show_hidden</strong> – Include dot-prefixed entries when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>show_hidden</strong> – Include hidden entries (see <code class="xref py py-func docutils literal notranslate"><span class="pre">_is_hidden()</span></code>) when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -399,14 +432,14 @@ empty when <code class="docutils literal notranslate"><span class="pre">want_fil
 <dt class="sig sig-object py" id="annie.pages.fsbrowse.list_subdirectories">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.fsbrowse.</span></span><span class="sig-name descname"><span class="pre">list_subdirectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_hidden</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/fsbrowse.html#list_subdirectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.fsbrowse.list_subdirectories" title="Link to this definition">¶</a></dt>
 <dd><p>List immediate subdirectories of <code class="docutils literal notranslate"><span class="pre">path</span></code>, sorted case-insensitively.</p>
-<p>Hidden entries (dotfiles, including macOS AppleDouble <code class="docutils literal notranslate"><span class="pre">._*</span></code>) are excluded by
-default. Unreadable directories yield an empty list rather than raising, so a
-permission error never breaks the picker.</p>
+<p>Hidden entries (dotfiles, including macOS AppleDouble <code class="docutils literal notranslate"><span class="pre">._*</span></code>, and entries Windows
+marks hidden) are excluded by default. Unreadable directories yield an empty list
+rather than raising, so a permission error never breaks the picker.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> – The directory to list.</p></li>
-<li><p><strong>show_hidden</strong> – Include dot-prefixed entries when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>show_hidden</strong> – Include hidden entries (see <code class="xref py py-func docutils literal notranslate"><span class="pre">_is_hidden()</span></code>) when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -426,7 +459,7 @@ result (e.g. <code class="docutils literal notranslate"><span class="pre">(&quot
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> – The directory to list.</p></li>
 <li><p><strong>suffixes</strong> – Lower-case dotted suffixes to keep, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for all files.</p></li>
-<li><p><strong>show_hidden</strong> – Include dot-prefixed entries when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>show_hidden</strong> – Include hidden entries (see <code class="xref py py-func docutils literal notranslate"><span class="pre">_is_hidden()</span></code>) when <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -498,6 +531,8 @@ result (e.g. <code class="docutils literal notranslate"><span class="pre">(&quot
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.resolve_start_dir"><code class="docutils literal notranslate"><span class="pre">resolve_start_dir()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.parent_of"><code class="docutils literal notranslate"><span class="pre">parent_of()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.fsbrowse.drive_roots"><code class="docutils literal notranslate"><span class="pre">drive_roots()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.fsbrowse.other_drives"><code class="docutils literal notranslate"><span class="pre">other_drives()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.scan_entries"><code class="docutils literal notranslate"><span class="pre">scan_entries()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.list_subdirectories"><code class="docutils literal notranslate"><span class="pre">list_subdirectories()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.fsbrowse.list_files"><code class="docutils literal notranslate"><span class="pre">list_files()</span></code></a></li>

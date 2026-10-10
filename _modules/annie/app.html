@@ -193,6 +193,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../install-windows.html">Installing Annie on Windows</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
@@ -205,6 +206,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/core/runtime/index.html">annie.core.runtime</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
 </ul>
@@ -321,14 +323,16 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">webbrowser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
@@ -406,6 +410,9 @@
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-1 items-center justify-end"</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"v</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs opacity-70"</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">launcher_outdated</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ANNIE_LAUNCHER_VERSION"</span><span class="p">)):</span>
+        <span class="n">_launcher_update_banner</span><span class="p">()</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">navigate</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tabs</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
@@ -439,6 +446,18 @@
     <span class="n">annotator</span><span class="o">.</span><span class="n">sync_tab</span><span class="p">()</span>  <span class="c1"># set the tab's initial enabled/disabled state</span>
     <span class="n">logs_page</span><span class="o">.</span><span class="n">start_toasts</span><span class="p">()</span>  <span class="c1"># per-client poller: surface new errors as toasts</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_launcher_update_banner</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Ask the user to reinstall when the Windows launcher is older than this Annie needs."""</span>
+    <span class="k">with</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 q-pa-sm rounded"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">22"</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"system_update"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"A new Annie installer is available. Download it and run it once to update."</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="s2">"Download installer"</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">INSTALLER_URL</span><span class="p">,</span> <span class="n">new_tab</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="index">
@@ -518,6 +537,28 @@
     <span class="n">os</span><span class="o">.</span><span class="n">execve</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="o">*</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">],</span> <span class="n">env</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_report_busy_port</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Explain a busy port: reuse a running Annie, or name the conflict clearly.</span>
+
+<span class="sd">    Runs before the log file is attached and the process exits right after, so the</span>
+<span class="sd">    message goes to the console, where the user launching Annie is looking.</span>
+<span class="sd">    """</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"annie.startup"</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">app_url</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">annie_running</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">port</span><span class="p">):</span>
+        <span class="n">console</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Annie is already running at </span><span class="si">%s</span><span class="s2">. Opening it."</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>  <span class="c1"># ASCII: cp1252 consoles</span>
+        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">open_browser</span><span class="p">:</span>
+            <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+        <span class="s2">"Port </span><span class="si">%s</span><span class="s2"> is used by another program. Close it, or start Annie on another port "</span>
+        <span class="s2">"with ANNIE_PORT (e.g. `make run PORT=8090`)."</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../autoapi/annie/app/index.html#annie.app.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -525,6 +566,11 @@
     <span class="c1"># macOS: make the Homebrew FFmpeg dylibs discoverable before anything imports torchcodec,</span>
     <span class="c1"># re-launching once with DYLD_LIBRARY_PATH set if needed (see the helper). Must run first.</span>
     <span class="n">_ensure_macos_ffmpeg_libs</span><span class="p">()</span>
+    <span class="c1"># A second launch (e.g. double-clicking the shortcut twice) opens the running Annie</span>
+    <span class="c1"># instead of crashing on the busy port.</span>
+    <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">port_in_use</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">port</span><span class="p">):</span>
+        <span class="n">_report_busy_port</span><span class="p">()</span>
+        <span class="k">return</span>
     <span class="c1"># Land the user back in the dataset they used last, with its review DB, so closing</span>
     <span class="c1"># Annie never costs them their place. Sources seeded from ANNIE_* env vars win.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>

@@ -20,6 +20,8 @@ Functions
 
    annie.pages.fsbrowse.resolve_start_dir
    annie.pages.fsbrowse.parent_of
+   annie.pages.fsbrowse.drive_roots
+   annie.pages.fsbrowse.other_drives
    annie.pages.fsbrowse.scan_entries
    annie.pages.fsbrowse.list_subdirectories
    annie.pages.fsbrowse.list_files
@@ -49,6 +51,24 @@ Module Contents
    :returns: The parent :class:`~pathlib.Path`, or ``None`` at the root.
 
 
+.. py:function:: drive_roots() -> list[pathlib.Path]
+
+   Return the drive roots (``C:/``, ``E:/``, …) on Windows; empty elsewhere.
+
+   Lets the picker leave ``C:/`` for another drive, such as an external USB disk;
+   on macOS/Linux every disk is already reachable below ``/``.
+
+
+.. py:function:: other_drives[P: pathlib.PurePath](current: pathlib.PurePath, drives: list[P]) -> list[P]
+
+   Return the drives in ``drives`` other than the one ``current`` lives on.
+
+   :param current: The directory being shown (usually a drive root).
+   :param drives: All drive roots, e.g. from :func:`drive_roots`.
+
+   :returns: The other drive roots, in the given order.
+
+
 .. py:function:: scan_entries(path: str | pathlib.Path, *, want_files: bool, suffixes: tuple[str, ...] | None = None, show_hidden: bool = False) -> tuple[list[pathlib.Path], list[pathlib.Path]]
 
    List a directory's subfolders (and optionally files) in a single pass.
@@ -63,7 +83,7 @@ Module Contents
    :param path: The directory to list.
    :param want_files: Also collect files (skipped entirely when ``False``).
    :param suffixes: Lower-case dotted suffixes to keep among files, or ``None`` for all.
-   :param show_hidden: Include dot-prefixed entries when ``True``.
+   :param show_hidden: Include hidden entries (see :func:`_is_hidden`) when ``True``.
 
    :returns: A ``(subdirs, files)`` pair, each sorted by lower-cased name; ``files`` is
              empty when ``want_files`` is ``False``.
@@ -73,12 +93,12 @@ Module Contents
 
    List immediate subdirectories of ``path``, sorted case-insensitively.
 
-   Hidden entries (dotfiles, including macOS AppleDouble ``._*``) are excluded by
-   default. Unreadable directories yield an empty list rather than raising, so a
-   permission error never breaks the picker.
+   Hidden entries (dotfiles, including macOS AppleDouble ``._*``, and entries Windows
+   marks hidden) are excluded by default. Unreadable directories yield an empty list
+   rather than raising, so a permission error never breaks the picker.
 
    :param path: The directory to list.
-   :param show_hidden: Include dot-prefixed entries when ``True``.
+   :param show_hidden: Include hidden entries (see :func:`_is_hidden`) when ``True``.
 
    :returns: The child directories, sorted by lower-cased name.
 
@@ -92,7 +112,7 @@ Module Contents
 
    :param path: The directory to list.
    :param suffixes: Lower-case dotted suffixes to keep, or ``None`` for all files.
-   :param show_hidden: Include dot-prefixed entries when ``True``.
+   :param show_hidden: Include hidden entries (see :func:`_is_hidden`) when ``True``.
 
    :returns: The child files, sorted by lower-cased name.
 
