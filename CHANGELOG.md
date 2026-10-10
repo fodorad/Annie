@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.12.0](https://github.com/fodorad/Annie/compare/v1.11.0...v1.12.0) (2026-10-10)
+
+
+### Features
+
+* native Windows installer with self-updating launcher ([#63](https://github.com/fodorad/Annie/issues/63)) ([936fc5b](https://github.com/fodorad/Annie/commit/936fc5b495a2a1f0b144ec0759b93f2f52da8dec))
+
+
+### Bug Fixes
+
+* **deps:** bump torch to 2.14.1 and torchcodec to 0.17.0 ([#61](https://github.com/fodorad/Annie/issues/61)) ([88f40f5](https://github.com/fodorad/Annie/commit/88f40f536d97345255f9f5470ae9df1c325268f5))
+* keep review progress across config saves and restarts ([#62](https://github.com/fodorad/Annie/issues/62)) ([c89e23c](https://github.com/fodorad/Annie/commit/c89e23c2a9b7cb9e0eeb3a26a5b035ad0fd66263))
+
 ## [1.11.0](https://github.com/fodorad/Annie/compare/v1.10.0...v1.11.0) (2026-10-04)
 
 
