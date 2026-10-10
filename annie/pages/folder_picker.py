@@ -14,7 +14,13 @@ from typing import TYPE_CHECKING
 from nicegui import background_tasks, run, ui
 
 from annie.core import theme
-from annie.pages.fsbrowse import parent_of, resolve_start_dir, scan_entries
+from annie.pages.fsbrowse import (
+    drive_roots,
+    other_drives,
+    parent_of,
+    resolve_start_dir,
+    scan_entries,
+)
 from annie.pages.utils import _alive
 
 if TYPE_CHECKING:
@@ -108,6 +114,9 @@ async def _pick(start: str | Path | None, *, files: bool) -> str | None:
                 if path is None or not _alive(listing):
                     return  # app shutting down, or the dialog was closed mid-resolve
             scanned = await run.io_bound(scan_entries, path, want_files=files)
+            # Drive letters only matter at a root; listing them can stall on an empty
+            # card reader, so it runs off the event loop like the scan.
+            drives = (await run.io_bound(drive_roots) or []) if parent_of(path) is None else []
             if scanned is None or not _alive(listing):
                 return  # app shutting down, or the dialog was closed mid-scan
             state["path"] = path
@@ -118,6 +127,12 @@ async def _pick(start: str | Path | None, *, files: bool) -> str | None:
                 parent = parent_of(path)
                 if parent is not None:
                     _entry_row("arrow_upward", "..", lambda: navigate(parent), muted=True)
+                else:
+                    # Windows: at C:\ the only way onward is another drive (e.g. a USB disk).
+                    for drive in other_drives(path, drives):
+                        _entry_row(
+                            "hard_drive", str(drive), lambda d=drive: navigate(d), muted=True
+                        )
                 for child in subdirs:
                     _entry_row(
                         "folder", child.name, lambda c=child: navigate(c), color=theme.PRIMARY

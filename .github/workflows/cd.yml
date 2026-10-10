@@ -41,3 +41,14 @@ jobs:
       with:
         generate_release_notes: true
         files: dist/*
+
+  windows-installer:
+    name: Windows installer
+    needs: publish
+    # Only a tag push has a release to attach to (workflow_dispatch may run on a branch).
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    uses: ./.github/workflows/windows-installer.yml
+    with:
+      tag: ${{ github.ref_name }}

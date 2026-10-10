@@ -8,7 +8,9 @@ picker dialog (``annie/pages/folder_picker.py``) is a thin view over these.
 from __future__ import annotations
 
 import os
-from pathlib import Path
+import stat
+import sys
+from pathlib import Path, PurePath
 
 
 def resolve_start_dir(start: str | Path | None) -> Path:
@@ -47,6 +49,57 @@ def parent_of(path: str | Path) -> Path | None:
     return None if parent == resolved else parent
 
 
+def drive_roots() -> list[Path]:
+    """Return the drive roots (``C:/``, ``E:/``, …) on Windows; empty elsewhere.
+
+    Lets the picker leave ``C:/`` for another drive, such as an external USB disk;
+    on macOS/Linux every disk is already reachable below ``/``.
+    """
+    lister = getattr(os, "listdrives", None)  # Windows-only, Python 3.12+
+    if lister is None:
+        return []
+    try:
+        return [Path(drive) for drive in lister()]
+    except OSError:
+        return []
+
+
+def other_drives[P: PurePath](current: PurePath, drives: list[P]) -> list[P]:
+    """Return the drives in ``drives`` other than the one ``current`` lives on.
+
+    Args:
+        current: The directory being shown (usually a drive root).
+        drives: All drive roots, e.g. from :func:`drive_roots`.
+
+    Returns:
+        The other drive roots, in the given order.
+    """
+    return [drive for drive in drives if drive.anchor != current.anchor]
+
+
+_HIDDEN_ATTRIBUTES = getattr(stat, "FILE_ATTRIBUTE_HIDDEN", 0) | getattr(
+    stat, "FILE_ATTRIBUTE_SYSTEM", 0
+)
+"""Windows attributes marking entries Explorer hides by default (``$Recycle.Bin`` & co.)."""
+
+
+def _is_hidden(entry: os.DirEntry[str]) -> bool:
+    """Return whether a directory entry is hidden: dot-prefixed, or flagged so on Windows.
+
+    On Windows the attributes come with the directory listing itself, so checking them
+    costs no extra syscall; elsewhere only the name is consulted.
+    """
+    if entry.name.startswith("."):
+        return True
+    if sys.platform != "win32":
+        return False
+    try:
+        attributes = getattr(entry.stat(follow_symlinks=False), "st_file_attributes", 0)
+    except OSError:
+        return False
+    return bool(attributes & _HIDDEN_ATTRIBUTES)
+
+
 def scan_entries(
     path: str | Path,
     *,
@@ -67,7 +120,7 @@ def scan_entries(
         path: The directory to list.
         want_files: Also collect files (skipped entirely when ``False``).
         suffixes: Lower-case dotted suffixes to keep among files, or ``None`` for all.
-        show_hidden: Include dot-prefixed entries when ``True``.
+        show_hidden: Include hidden entries (see :func:`_is_hidden`) when ``True``.
 
     Returns:
         A ``(subdirs, files)`` pair, each sorted by lower-cased name; ``files`` is
@@ -78,7 +131,7 @@ def scan_entries(
     try:
         with os.scandir(path) as it:
             for entry in it:
-                if not show_hidden and entry.name.startswith("."):
+                if not show_hidden and _is_hidden(entry):
                     continue
                 try:
                     if entry.is_dir():
@@ -99,13 +152,13 @@ def scan_entries(
 def list_subdirectories(path: str | Path, *, show_hidden: bool = False) -> list[Path]:
     """List immediate subdirectories of ``path``, sorted case-insensitively.
 
-    Hidden entries (dotfiles, including macOS AppleDouble ``._*``) are excluded by
-    default. Unreadable directories yield an empty list rather than raising, so a
-    permission error never breaks the picker.
+    Hidden entries (dotfiles, including macOS AppleDouble ``._*``, and entries Windows
+    marks hidden) are excluded by default. Unreadable directories yield an empty list
+    rather than raising, so a permission error never breaks the picker.
 
     Args:
         path: The directory to list.
-        show_hidden: Include dot-prefixed entries when ``True``.
+        show_hidden: Include hidden entries (see :func:`_is_hidden`) when ``True``.
 
     Returns:
         The child directories, sorted by lower-cased name.
@@ -124,7 +177,7 @@ def list_files(
     Args:
         path: The directory to list.
         suffixes: Lower-case dotted suffixes to keep, or ``None`` for all files.
-        show_hidden: Include dot-prefixed entries when ``True``.
+        show_hidden: Include hidden entries (see :func:`_is_hidden`) when ``True``.
 
     Returns:
         The child files, sorted by lower-cased name.

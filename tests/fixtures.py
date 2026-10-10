@@ -48,7 +48,7 @@ def write_csv(path: Path, rows: list[str]) -> Path:
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     body = "\r\n".join([CSV_HEADER, *rows]) + "\r\n"
-    path.write_text(body, encoding="utf-8")
+    path.write_text(body, encoding="utf-8", newline="")  # exact CRLF bytes on every OS
     return path
 
 
@@ -79,7 +79,7 @@ def write_participants(path: Path, mapping: dict[str, int]) -> Path:
     """Write a ``uuid,track_id`` participant CSV."""
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = ["uuid,track_id", *(f"{uuid},{tid}" for uuid, tid in mapping.items())]
-    path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
+    path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8", newline="")
     return path
 
 
@@ -88,7 +88,7 @@ def write_table(path: Path, header: list[str], rows: list[dict[str, str]]) -> Pa
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [",".join(header)]
     lines.extend(",".join(row.get(col, "") for col in header) for row in rows)
-    path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
+    path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8", newline="")
     return path
 
 
