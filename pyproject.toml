@@ -29,22 +29,22 @@ dependencies = [
 
 [project.optional-dependencies]
 # ── Media backend ────────────────────────────────────────────────────────────
-# torch and torchcodec must be pinned together. torchcodec ships pre-compiled
-# native extensions linked against a specific libc10 C++ ABI that is NOT stable
-# across PyTorch minor releases.
+# torch and torchcodec are pinned together and upgraded as a pair. Since 0.15,
+# torchcodec builds against PyTorch's stable ABI, so one release supports a range
+# of torch versions instead of exactly one.
 #
 # Compatibility (https://github.com/meta-pytorch/torchcodec#readme):
-#   torchcodec 0.11 -> torch 2.11
-#   torchcodec 0.15 -> torch 2.13
-#   torchcodec 0.16 -> torch 2.14
+#   torchcodec 0.15 - 0.17 -> torch >= 2.11
 #
-# torchcodec also requires a system FFmpeg (versions 4-8); the same install
-# backs the render pipeline. To upgrade: bump both pins together and verify
-# CI passes. Without this extra, the pure layers (scanning, parsing, matching,
-# storage, theme, colour) still install and run; only frame decode/render need it.
+# torchcodec also requires FFmpeg (major versions 4-9); the same install backs the
+# render pipeline. The Windows installer bundles its own build, pinned in
+# installer/windows/fetch-deps.ps1. To upgrade: bump both pins together and verify
+# CI passes, including the Windows jobs. Without this extra, the pure layers
+# (scanning, parsing, matching, storage, theme, colour) still install and run; only
+# frame decode/render need it.
 media = [
-  "torch==2.14.0",
-  "torchcodec==0.16.0",
+  "torch==2.14.1",
+  "torchcodec==0.17.0",
 ]
 dev = [
   "ruff",

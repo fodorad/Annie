@@ -12,7 +12,7 @@
 # GPL, because Annie's render/convert pipelines encode with libx264, which LGPL builds
 # lack. Redistributing it means shipping its licence and pointing at its source, which
 # SOURCE.txt does. To upgrade either binary, change the URL and its SHA-256 together
-# (torchcodec 0.16 supports FFmpeg 4-8) and bump ANNIE_LAUNCHER_VERSION if Annie needs it.
+# (torchcodec 0.17 supports FFmpeg 4-9) and bump ANNIE_LAUNCHER_VERSION if Annie needs it.
 
 param(
     [Parameter(Mandatory = $true)][string]$OutDir
