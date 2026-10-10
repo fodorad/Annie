@@ -1,0 +1,157 @@
+name: Windows installer
+
+# Builds Annie-Setup.exe and proves it works end to end on a real Windows machine:
+# silent install -> first start installs this commit's wheel -> the UI answers ->
+# the bundled FFmpeg decodes video through torchcodec -> a second start reuses the
+# running Annie -> uninstall removes everything except the user's work.
+#
+# CD calls this with a release tag to attach the installer to that GitHub Release, which
+# keeps the permanent link .../releases/latest/download/Annie-Setup.exe current.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "installer/**"
+      - ".github/workflows/windows-installer.yml"
+      - "annie/app.py"
+      - "annie/core/runtime.py"
+      - "annie/media/decode.py"
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to attach Annie-Setup.exe to.
+        type: string
+        required: true
+
+jobs:
+  installer:
+    name: build and test installer
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read  # third-party actions run here, so no write access
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      APP_ID_KEY: HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{E674FD3A-8545-44F6-875F-ED877FE764E3}_is1
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0  # hatch-vcs version + git describe
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+
+    - name: Build wheel (the package the smoke test installs)
+      run: uv build --wheel
+
+    - name: Fetch bundled binaries (uv, FFmpeg)
+      run: installer/windows/fetch-deps.ps1 -OutDir installer/windows/build
+
+    - name: Compile installer
+      run: |
+        $version = (git describe --tags --abbrev=0 2>$null) -replace '^v', ''
+        if (-not $version) { $version = '0.0.0' }
+        & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Qp "/DAppVersion=$version" installer\windows\annie.iss
+        if ($LASTEXITCODE) { throw "ISCC failed with $LASTEXITCODE" }
+        Get-Item installer\windows\Output\Annie-Setup.exe | Format-List Name, Length
+
+    - name: Install silently
+      run: |
+        Start-Process installer\windows\Output\Annie-Setup.exe -Wait `
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+        $app = "$env:LOCALAPPDATA\Programs\Annie"
+        foreach ($f in 'uv.exe', 'Annie.cmd', 'annie.ico', 'unins000.exe',
+                       'ffmpeg\bin\ffmpeg.exe', 'ffmpeg\bin\ffprobe.exe', 'ffmpeg\LICENSE.txt') {
+          if (-not (Test-Path "$app\$f")) { throw "missing $app\$f" }
+        }
+        $startMenu = [Environment]::GetFolderPath('Programs')
+        $desktop = [Environment]::GetFolderPath('Desktop')
+        foreach ($lnk in "$startMenu\Annie.lnk", "$desktop\Annie.lnk") {
+          if (-not (Test-Path $lnk)) { throw "missing shortcut $lnk" }
+        }
+        if (-not (Test-Path $env:APP_ID_KEY)) { throw 'Apps & features entry missing' }
+        "APP=$app" >> $env:GITHUB_ENV
+
+    - name: First start installs Annie and serves the UI
+      timeout-minutes: 20
+      run: |
+        $wheel = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
+        $env:ANNIE_PACKAGE = "annie[media] @ $(([System.Uri]$wheel).AbsoluteUri)"
+        $env:ANNIE_OPEN_BROWSER = '0'
+        $log = "$env:RUNNER_TEMP\launcher.log"
+        Start-Process cmd.exe -WindowStyle Hidden `
+          -ArgumentList "/s /c `"`"$env:APP\Annie.cmd`" > `"$log`" 2>&1 < nul`""
+        $deadline = (Get-Date).AddMinutes(15)
+        $page = ''
+        while ($page -notmatch '<title>Annie</title>' -and (Get-Date) -lt $deadline) {
+          Start-Sleep 10
+          try { $page = (Invoke-WebRequest http://127.0.0.1:8080/ -UseBasicParsing -TimeoutSec 5).Content }
+          catch { $page = '' }
+        }
+        Get-Content $log -ErrorAction SilentlyContinue
+        if ($page -notmatch '<title>Annie</title>') { throw 'Annie did not come up' }
+        if (-not (Test-Path "$env:USERPROFILE\Annie")) { throw 'user data folder not created' }
+
+    - name: Bundled FFmpeg decodes video through torchcodec
+      run: |
+        # Only ANNIE_FFMPEG_LIB_DIR points at FFmpeg (not PATH), proving the DLL registration.
+        $env:ANNIE_FFMPEG_LIB_DIR = "$env:APP\ffmpeg\bin"
+        & "$env:APP\tools\annie\Scripts\python.exe" -c `
+          "import sys; from annie.media import decode; m = decode.video_metadata(sys.argv[1]); print(m); assert m.num_frames > 0" `
+          data\example\fi_mini\video\_ztmNiy8D3c.000.mp4
+        if ($LASTEXITCODE) { throw 'decode failed' }
+
+    - name: A second start reuses the running Annie
+      timeout-minutes: 3
+      run: |
+        $env:ANNIE_OPEN_BROWSER = '0'
+        $p = Start-Process cmd.exe -Wait -PassThru -NoNewWindow `
+          -ArgumentList "/s /c `"`"$env:APP\Annie.cmd`" < nul`""
+        if ($p.ExitCode -ne 0) { throw "second start exited with $($p.ExitCode)" }
+
+    - name: Uninstall removes everything except the user's work
+      run: |
+        Start-Process "$env:APP\unins000.exe" -Wait `
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+        # The uninstaller re-launches itself from %TEMP%, so wait for it to finish.
+        $deadline = (Get-Date).AddMinutes(2)
+        while ((Test-Path $env:APP) -and (Get-Date) -lt $deadline) { Start-Sleep 2 }
+        if (Test-Path $env:APP) { Get-ChildItem -Recurse $env:APP | Select-Object -First 20; throw 'install folder left behind' }
+        if (Test-Path $env:APP_ID_KEY) { throw 'registry key left behind' }
+        $startMenu = [Environment]::GetFolderPath('Programs')
+        $desktop = [Environment]::GetFolderPath('Desktop')
+        if ((Test-Path "$startMenu\Annie.lnk") -or (Test-Path "$desktop\Annie.lnk")) { throw 'shortcut left behind' }
+        if (Get-Process annie -ErrorAction SilentlyContinue) { throw 'Annie still running' }
+        if (-not (Test-Path "$env:USERPROFILE\Annie")) { throw "silent uninstall must keep the user's work" }
+
+    - name: Upload installer
+      uses: actions/upload-artifact@v7
+      with:
+        name: Annie-Setup
+        path: installer/windows/Output/Annie-Setup.exe
+
+
+  attach:
+    # Separate from the build so the only job holding contents: write runs no third-party
+    # actions: it just downloads the tested installer and uploads it to the release.
+    name: attach installer to release
+    needs: installer
+    if: inputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v7
+      with:
+        name: Annie-Setup
+    - name: Upload to the release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        TAG: ${{ inputs.tag }}
+      run: gh release upload "$TAG" Annie-Setup.exe --clobber

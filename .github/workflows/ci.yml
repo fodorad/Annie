@@ -84,3 +84,41 @@ jobs:
 
     - name: Build docs
       run: sphinx-build -b html docs/ site/
+
+  test-windows:
+    # Windows-only failure modes: backslash paths, drive letters, open-file locks, and
+    # torchcodec loading FFmpeg DLLs. Uses the exact FFmpeg build the installer ships.
+    name: test (windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0  # required for hatch-vcs git describe
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
+
+    - name: Fetch the installer's FFmpeg build
+      run: installer/windows/fetch-deps.ps1 -OutDir "$env:RUNNER_TEMP\deps"
+
+    - name: Install dependencies
+      run: uv pip install --system -e ".[all,dev]"
+
+    - name: Unit tests
+      run: |
+        # Only ANNIE_FFMPEG_LIB_DIR locates the DLLs (as in the installed app); PATH gets
+        # ffmpeg/ffprobe for the subprocess-based convert/render tests.
+        $env:ANNIE_FFMPEG_LIB_DIR = "$env:RUNNER_TEMP\deps\ffmpeg\bin"
+        $env:PATH = "$env:ANNIE_FFMPEG_LIB_DIR;$env:PATH"
+        python -m unittest discover -s tests -v

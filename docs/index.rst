@@ -10,6 +10,7 @@ tracks), but Annie is dataset-agnostic.
    :maxdepth: 2
    :caption: Contents
 
+   install-windows
    playbooks/index
    autoapi/index
 

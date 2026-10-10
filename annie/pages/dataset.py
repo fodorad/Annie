@@ -20,7 +20,7 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from nicegui import context, run, ui
 
@@ -46,6 +46,7 @@ from annie.dataset.sources import (
     SourceRegistry,
     task_readiness,
 )
+from annie.dataset.storage import ReviewStore
 from annie.pages import annotator, browse
 from annie.pages.csv_dialog import configure_csv
 from annie.pages.folder_picker import pick_directory, pick_file
@@ -86,9 +87,7 @@ class _DatasetState:
     # the ＋ button mint throwaway session DBs.
     db_mode: str = "existing"
     db_path_custom: str = str(settings.db_path)
-    config_value: str = field(
-        default_factory=lambda: _ENV_CONFIG if _has_env_sources() else _NEW_CONFIG
-    )
+    config_value: str = field(default_factory=lambda: _default_config_value())
     session_db_path: str = field(
         default_factory=lambda: "" if settings.db_path_is_explicit else str(settings.db_path)
     )
@@ -154,6 +153,13 @@ _NEW_CONFIG = "__new__"
 _ENV_CONFIG = "__env__"  #: the "sources seeded from ANNIE_* env vars" option
 
 
+def _default_config_value() -> str:
+    """The config selector's initial value: the restored config, else env, else new."""
+    if state.active_config is not None:
+        return str(state.active_config)
+    return _ENV_CONFIG if _has_env_sources() else _NEW_CONFIG
+
+
 def _has_env_sources() -> bool:
     """True if any ANNIE_* environment variable seeds a data source."""
     return any(
@@ -202,6 +208,8 @@ async def _load_config_path(path: str | Path) -> None:
         ui.notify(f"Could not load config: {exc}", color=theme.DANGER)
         return
     await _apply_registry(name, registry, config_db=config_db)
+    state.active_config = config_path.resolve()
+    datasets.remember_last_config(config_path)
 
 
 async def _new_config() -> None:
@@ -209,9 +217,11 @@ async def _new_config() -> None:
 
     A brand-new config gets a *throwaway* database, not the stable ``annie_env.db``:
     only the env config and saved/example configs own a named, reloadable DB. Renaming
-    the path in the Persistence box is what promotes this throwaway into a kept one.
+    the path in the Persistence box is what promotes this throwaway into a kept one —
+    or saving the config, which carries the progress into the config's own database.
     """
     ds = _ds()
+    state.active_config = None
     state.registry = SourceRegistry()
     state.audio_cache.clear()
     state.frames_cache.clear()
@@ -222,12 +232,13 @@ async def _new_config() -> None:
     state.set_store(fresh)
     await _apply_changes()
     _persistence_section.refresh()
-    ui.notify("New config", color=theme.PRIMARY)
+    ui.notify("New config — save it to keep your progress for next time.", color=theme.PRIMARY)
 
 
 async def _env_config() -> None:
     """Reload sources from the ANNIE_* environment variables."""
     ds = _ds()
+    state.active_config = None
     state.registry = _seed_registry()
     state.audio_cache.clear()
     state.frames_cache.clear()
@@ -294,12 +305,86 @@ async def _save_current() -> None:
     # Always pin a config-owned DB under ANNIE_HOME so this dataset reopens against the
     # same review database every time, and switch the live store to it now.
     db_to_save = (settings.annie_home / f"annie_{stem}.db").resolve()
+    keep_current = await _confirm_carry(config_name, db_to_save)
+    if keep_current is None:
+        return
     datasets.save_config(out, state.registry, config_name, relative_to=folder, db_path=db_to_save)
     ds.db_mode = "existing"
     ds.db_path_custom = str(db_to_save)
+    if keep_current:
+        # Carry everything reviewed so far into the config's DB, so saving never looks
+        # like it wiped the user's progress. Older progress in that DB is set aside, not lost.
+        if db_to_save.is_file():
+            _set_aside(db_to_save)
+        state.store.copy_to(db_to_save)
     state.set_store(db_to_save)
+    state.active_config = out.resolve()
+    datasets.remember_last_config(out)
+    _config_section.refresh()
     _persistence_section.refresh()
     ui.notify(f"Saved '{config_name}' → {out.name} (DB: {db_to_save.name})", color=theme.PRIMARY)
+
+
+CarryAction = Literal["none", "copy", "ask"]
+"""What saving a config should do with the progress in the currently open database."""
+
+
+def _carry_action(current: ReviewStore, target: Path) -> CarryAction:
+    """Decide how the open database's progress reaches a config's own database.
+
+    * ``"none"`` — nothing to carry: the config already uses this database, or no
+      progress has been recorded yet.
+    * ``"copy"`` — progress exists and the target holds none, so copy it over.
+    * ``"ask"`` — both hold progress; only the user can say which one to keep.
+
+    Args:
+        current: The store open right now.
+        target: The config's database path.
+
+    Returns:
+        The action to take.
+    """
+    if current.db_path.resolve() == target.resolve() or not current.has_data():
+        return "none"
+    if target.is_file() and ReviewStore(target).has_data():
+        return "ask"
+    return "copy"
+
+
+def _set_aside(db_path: Path) -> Path:
+    """Move a database into the sessions folder under a timestamped name and return it.
+
+    Used before a save replaces a config's database, so the replaced progress stays
+    listed (and re-openable) under Persistence instead of being overwritten.
+    """
+    aside = settings.sessions_dir / f"{db_path.stem}_replaced_{datetime.now():%Y-%m-%d_%H-%M-%S}.db"
+    aside.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(db_path), str(aside))
+    return aside
+
+
+async def _confirm_carry(config_name: str, target: Path) -> bool | None:
+    """Resolve :func:`_carry_action` for a save, asking the user when both DBs hold work.
+
+    Returns:
+        ``True`` to copy the current progress into ``target``, ``False`` to keep what
+        ``target`` already holds, or ``None`` if the user cancelled the save.
+    """
+    action = _carry_action(state.store, target)
+    if action != "ask":
+        return action == "copy"
+    with ui.dialog() as dialog, ui.card().classes("w-96 gap-4"):
+        ui.label("Which progress should this config keep?").classes("text-lg font-medium")
+        ui.label(
+            f"'{config_name}' already has saved progress ({target.name}), and the dataset "
+            f"open now has progress too ({state.store.db_path.name}). The one you don't "
+            "keep stays on disk and can still be opened from Persistence."
+        ).classes("text-sm")
+        with ui.row().classes("justify-end gap-2 w-full"):
+            ui.button("Cancel", on_click=lambda: dialog.submit(None)).props("flat")
+            ui.button("Keep saved", on_click=lambda: dialog.submit(False)).props("outline")
+            ui.button("Use current", on_click=lambda: dialog.submit(True)).props("unelevated")
+    return await dialog
 
 
 @ui.refreshable
@@ -311,9 +396,14 @@ def _config_section() -> None:
     if _has_env_sources():
         options[_ENV_CONFIG] = "[ENV vars] Custom…"
     for p in configs:
-        options[str(p)] = datasets.config_name(p)
+        options[str(p.resolve())] = datasets.config_name(p)
+    # A config loaded from elsewhere on disk (or restored at startup) must still show as
+    # the selected option, even though discovery doesn't list its folder.
+    active = state.active_config
+    if active is not None and str(active) not in options:
+        options[str(active)] = datasets.config_name(active)
 
-    default = _ENV_CONFIG if _has_env_sources() else _NEW_CONFIG
+    default = _default_config_value()
 
     async def on_select(e: object) -> None:
         value = getattr(e, "value", None)

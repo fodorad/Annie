@@ -29,7 +29,11 @@ What to notice:
   whether it is *Ready* — a task is offered in the Annotator exactly when it is ready
   here.
 - **Persistence** pins the review database. A saved config owns an `annie_<name>.db`
-  under `ANNIE_HOME`, so reloading the config reopens the same decisions.
+  under `ANNIE_HOME`, so reloading the config reopens the same decisions. Saving a config
+  carries the progress made so far into that database (if both already hold progress,
+  Annie asks which to keep and sets the other aside under Persistence), and the next
+  start reopens the last loaded or saved config automatically — unless `ANNIE_*` env
+  vars define the dataset.
 
 ---
 

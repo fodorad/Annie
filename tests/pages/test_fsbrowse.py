@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from annie.pages.fsbrowse import (
+    drive_roots,
     list_files,
     list_subdirectories,
+    other_drives,
     parent_of,
     resolve_start_dir,
     scan_entries,
@@ -109,6 +114,38 @@ class TestScanEntries(unittest.TestCase):
         subdirs, files = scan_entries(self.tmp, want_files=True, suffixes=(".csv",))
         self.assertEqual([p.name for p in subdirs], ["Dir_a", "dir_b"])
         self.assertEqual([p.name for p in files], ["data.csv"])
+
+
+class TestDrives(unittest.TestCase):
+    """At a drive root on Windows the picker offers the other drives (e.g. a USB disk)."""
+
+    def test_other_drives_excludes_the_current_one(self) -> None:
+        c, e, f = (PureWindowsPath(d) for d in ("C:\\", "E:\\", "F:\\"))
+        self.assertEqual(other_drives(PureWindowsPath("E:/videos"), [c, e, f]), [c, f])
+
+    def test_other_drives_matches_by_anchor(self) -> None:
+        root = Path(Path.cwd().anchor)
+        self.assertEqual(other_drives(root, [root]), [])
+
+    @unittest.skipIf(hasattr(os, "listdrives"), "Windows lists real drives")
+    def test_no_drive_list_off_windows(self) -> None:
+        self.assertEqual(drive_roots(), [])
+
+    @unittest.skipUnless(hasattr(os, "listdrives"), "os.listdrives is Windows-only")
+    def test_lists_the_system_drive(self) -> None:
+        self.assertIn(Path(Path.home().anchor), drive_roots())
+
+
+@unittest.skipUnless(sys.platform == "win32", "file attributes are Windows-only")
+class TestWindowsHiddenEntries(unittest.TestCase):
+    def test_hidden_attribute_is_skipped(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / "visible").mkdir()
+        (tmp / "secret").mkdir()
+        subprocess.run(["attrib", "+h", str(tmp / "secret")], check=True)  # noqa: S603, S607
+        self.assertEqual([p.name for p in list_subdirectories(tmp)], ["visible"])
+        names = [p.name for p in list_subdirectories(tmp, show_hidden=True)]
+        self.assertEqual(names, ["secret", "visible"])
 
 
 if __name__ == "__main__":

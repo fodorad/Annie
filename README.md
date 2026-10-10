@@ -94,12 +94,19 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
 
 ### Windows (for non-technical users)
 
-If you just want to *use* Annie on Windows — no terminal, no Python, no FFmpeg — use the
-one-click launcher in [`launcher/windows/`](launcher/windows/): install Docker Desktop once,
-double-click `Annie`, and pick your video folder when asked. It opens in your browser and
-updates itself on each launch. See
-[`launcher/windows/README-Windows.txt`](launcher/windows/README-Windows.txt) for the three-step
-guide. The developer install paths below are **not** needed for this.
+If you just want to *use* Annie on Windows (no terminal, Python, FFmpeg, Docker or admin
+rights needed), download
+[**Annie-Setup.exe**](https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe),
+click **Install**, then double-click **Annie** on the desktop. Annie updates itself on
+every start, and your work is kept in `%USERPROFILE%\Annie`. The
+[Windows install guide](https://fodorad.github.io/Annie/install-windows.html) covers the
+SmartScreen prompt, updating, and uninstalling.
+
+How it is built: [`installer/windows/`](installer/windows/) holds the launcher, the Inno
+Setup script and the pinned uv/FFmpeg downloads; CI builds the installer and tests it end
+to end on Windows for every release. The older Docker-based launcher in
+[`launcher/windows/`](launcher/windows/) remains as an alternative for IT-managed machines.
+The developer install paths below are **not** needed for either.
 
 ### Prerequisites
 

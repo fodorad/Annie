@@ -18,6 +18,7 @@ from pathlib import Path
 
 from annie.core import logbook
 from annie.core.config import settings
+from annie.dataset import datasets
 from annie.dataset.filtering import ReviewState
 from annie.dataset.manipulate import detect_type
 from annie.dataset.scanning import ScanResult, build_manifest
@@ -120,6 +121,8 @@ class AppState:
         audio_cache: Probed audio-stream presence per video id (lazy; see Browse).
         frames_cache: Decoded frame count per video id (lazy; see Browse).
         ui: Session-only UI preferences.
+        active_config: The dataset config file currently loaded, or ``None`` for the
+            env-seeded / blank dataset. Lets the Dataset tab show it as selected.
     """
 
     registry: SourceRegistry = field(default_factory=_seed_registry)
@@ -130,6 +133,32 @@ class AppState:
     audio_cache: dict[str, bool] = field(default_factory=dict)
     frames_cache: dict[str, int] = field(default_factory=dict)
     ui: UiSettings = field(default_factory=UiSettings)
+    active_config: Path | None = None
+
+    def restore_last_config(self) -> Path | None:
+        """Reopen the config remembered from the previous run, with its review database.
+
+        This is what lets a user close Annie and, on the next start, land straight back
+        in their dataset with all their progress — no need to re-pick the config. A
+        config that has gone missing or fails to load is skipped (and logged), leaving
+        the current dataset in place.
+
+        Returns:
+            The config path that was restored, or ``None`` if nothing was.
+        """
+        path = datasets.last_config()
+        if path is None:
+            return None
+        try:
+            _name, registry, db_path = datasets.load_config(path)
+        except Exception as exc:  # noqa: BLE001 - a bad config must never block startup
+            logbook.report_exception(f"Could not reopen the last config: {path}", exc)
+            return None
+        self.registry = registry
+        if db_path is not None:
+            self.set_store(db_path)
+        self.active_config = path
+        return path
 
     def rescan(self) -> None:
         """Rebuild the manifest from the current registry (after a source change).
