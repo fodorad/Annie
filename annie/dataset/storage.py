@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Generator, Iterable
 
 Verdict = Literal["good", "bad"]
 """A review verdict. ``None`` (no row) is treated as ``"good"`` by the UI."""
@@ -230,7 +230,7 @@ class ReviewStore:
             conn.execute("ALTER TABLE event ADD COLUMN color TEXT")
 
     @contextmanager
-    def _connect(self) -> Iterator[sqlite3.Connection]:
+    def _connect(self) -> Generator[sqlite3.Connection]:
         """Yield a row-factory connection inside a transaction, closing it after."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
@@ -239,6 +239,44 @@ class ReviewStore:
                 yield conn
         finally:
             conn.close()
+
+    # ── whole-database operations ──────────────────────────────────────────────
+
+    def has_data(self) -> bool:
+        """Return whether any review, event, or participant category has been stored.
+
+        Used to decide whether switching to another database would leave progress
+        behind (see :meth:`copy_to`).
+        """
+        with self._connect() as conn:
+            return any(
+                conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone() is not None  # noqa: S608
+                for table in ("review", "event", "event_category")
+            )
+
+    def copy_to(self, db_path: str | Path) -> ReviewStore:
+        """Copy this whole database to ``db_path`` and return a store opened on the copy.
+
+        Uses SQLite's online backup API, so the copy is consistent even while this store
+        is in use. An existing file at ``db_path`` is overwritten; this database is left
+        untouched.
+
+        Args:
+            db_path: Destination SQLite file. Parent directories are created as needed.
+
+        Returns:
+            A :class:`ReviewStore` backed by the copy.
+        """
+        target = Path(db_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source = sqlite3.connect(self.db_path)
+        destination = sqlite3.connect(target)
+        try:
+            source.backup(destination)
+        finally:
+            destination.close()
+            source.close()
+        return ReviewStore(target)
 
     # ── reads ──────────────────────────────────────────────────────────────────
 

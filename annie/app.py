@@ -214,6 +214,10 @@ def main() -> None:
     # macOS: make the Homebrew FFmpeg dylibs discoverable before anything imports torchcodec,
     # re-launching once with DYLD_LIBRARY_PATH set if needed (see the helper). Must run first.
     _ensure_macos_ffmpeg_libs()
+    # Land the user back in the dataset they used last, with its review DB, so closing
+    # Annie never costs them their place. Sources seeded from ANNIE_* env vars win.
+    if not state.registry.sources:
+        state.restore_last_config()
     # Name the log after the active session DB so the two are paired (and renaming
     # the DB later renames the log too — see LogBook.retarget / AppState.set_store).
     log_path = logbook.LOG.attach_file(settings.logs_dir, state.store.db_path.stem)

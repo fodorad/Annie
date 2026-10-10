@@ -259,6 +259,44 @@ class TestConfigDbPersistence(unittest.TestCase):
             self.assertEqual(db, (self.home / expected).resolve())
 
 
+class TestLastConfig(unittest.TestCase):
+    """The last loaded/saved config is remembered under ANNIE_HOME for the next start."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self._saved_home = settings.annie_home
+        settings.annie_home = self.tmp / "home"
+        self.config = self.tmp / "mydata.json"
+        self.config.write_text("{}", encoding="utf-8")
+
+    def tearDown(self) -> None:
+        settings.annie_home = self._saved_home
+
+    def test_nothing_remembered_yet(self) -> None:
+        self.assertIsNone(datasets.last_config())
+
+    def test_round_trip(self) -> None:
+        datasets.remember_last_config(self.config)
+        self.assertEqual(datasets.last_config(), self.config.resolve())
+
+    def test_later_config_wins(self) -> None:
+        other = self.tmp / "other.json"
+        other.write_text("{}", encoding="utf-8")
+        datasets.remember_last_config(self.config)
+        datasets.remember_last_config(other)
+        self.assertEqual(datasets.last_config(), other.resolve())
+
+    def test_deleted_config_is_forgotten(self) -> None:
+        datasets.remember_last_config(self.config)
+        self.config.unlink()
+        self.assertIsNone(datasets.last_config())
+
+    def test_corrupt_pointer_is_ignored(self) -> None:
+        settings.annie_home.mkdir(parents=True)
+        (settings.annie_home / datasets.LAST_CONFIG_FILENAME).write_text("not json", "utf-8")
+        self.assertIsNone(datasets.last_config())
+
+
 class TestLayoutConfig(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = Path(tempfile.mkdtemp())
