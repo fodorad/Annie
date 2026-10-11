@@ -10,61 +10,92 @@ need admin rights, and nothing else has to be installed first.
 2. Double-click the downloaded file.
    - Windows may show **"Windows protected your PC"**. This appears because the installer
      isn't code-signed yet. Click **More info**, then **Run anyway**.
-3. Click **Install**, then **Finish**. Annie starts on its own the first time.
+3. **Choose locations.** One page shows where everything goes. Keep the defaults or
+   change them:
 
-The installer adds an **Annie** icon to your desktop and Start menu.
+   | Folder | Default | What is in it |
+   | --- | --- | --- |
+   | Program folder | `C:\Users\<you>\Annie\App` | Annie, its own Python, the `annie` Python environment with all dependencies, and FFmpeg |
+   | Data folder | `C:\Users\<you>\Annie\Data` | Your work: reviews, saved configs, logs |
 
-## First start
+   Tick or untick **Create a desktop shortcut**. Annie is always added to the Start menu,
+   so typing "Annie" in Windows search finds it too.
 
-The first start downloads Annie and its components. That's a few hundred MB, so it takes
-a few minutes and needs an internet connection. A black window shows the progress, and
-your browser opens Annie when it's ready.
+   Tick or untick **Install the example datasets**: small versions of First Impression V2
+   and CMU-MOSEI (about 50 MB) to try Annie on. They are copied to `Data\examples`. If
+   you leave them out, you can download them later from the Annie icon's menu.
+4. Click **Install**. Setup downloads Annie and its components (a few hundred MB, a few
+   minutes; a small window shows the progress), then **Finish** starts Annie.
 
-Later starts take a few seconds. Annie checks for a newer version, installs it if there
-is one, and opens. Without internet it simply starts the version you already have.
+You choose the folders once. Updates and reinstalls keep using them.
 
 ## Daily use
 
-- **Start:** double-click **Annie**. If Annie is already running, this just opens it
-  in your browser again.
-- **Stop:** close the black **Annie** window. Closing only the browser tab does not stop
-  Annie.
+- **Start:** click **Annie** in the Start menu (or on the desktop). Your browser opens
+  Annie, and the Annie icon appears in the notification area at the bottom right of the
+  taskbar. If it is hidden, click the **^** arrow next to the clock.
+- **The Annie icon's menu** (right-click it):
+  - **Open Annie** opens it in the browser again. Double-clicking the icon does the same.
+  - **Open Annie folder** opens `C:\Users\<you>\Annie` in File Explorer, which holds
+    both the program (`App`) and your work (`Data`). If you put those two in unrelated
+    places, it opens the data folder.
+  - **Download example datasets** appears only while the examples are missing. It
+    downloads them (about 50 MB) into `Data\examples`. Then reload Annie in the browser.
+  - **Check for updates** checks now. If there is a newer Annie, it updates and restarts.
+  - **Quit Annie** stops Annie. Closing only the browser tab does not stop it.
 - **Your data drives:** in Annie's folder picker, go up to `C:\` and the other drives
   (for example a USB disk) are listed there.
 
 ## Where your work is kept
 
-Everything you produce is in the **Annie** folder of your user folder
-(`C:\Users\<your name>\Annie`):
+Everything you produce is in the data folder (`C:\Users\<you>\Annie\Data` by default):
 
 | Item | Location |
 | --- | --- |
-| Review progress (the `.db` files) | `Annie\` and `Annie\sessions\` |
-| Saved dataset configs | `Annie\configs\` |
-| Logs (useful when reporting a problem) | `Annie\logs\` |
+| Review progress (the `.db` files) | `Data\` and `Data\sessions\` |
+| Saved dataset configs | `Data\configs\` |
+| Logs (useful when reporting a problem) | `Data\logs\` |
+| Example datasets (if installed) | `Data\examples\` |
+
+To try Annie on the examples, open the **Dataset** tab and choose
+**[Example] CMU-MOSEI Mini** or **[Example] First Impression V2 Mini**.
 
 Annie reopens the dataset you used last, with all your progress. To back up your work,
 or to move it to another computer, copy this folder while Annie is stopped.
 
+If you used the first Annie installer, which kept work directly in
+`C:\Users\<you>\Annie`, it is moved into the new data folder automatically when that
+folder is inside `C:\Users\<you>\Annie` (the default `Annie\Data`). If you choose a data
+folder elsewhere, your earlier work stays where it is; move it over yourself if you like.
+
 ## Updating
 
-Annie updates itself every time it starts, so there's nothing to do. Occasionally Annie
-shows a banner asking you to download the new installer. When that happens, download it
-from the same link and run it once. Your work is not touched.
+Annie checks for a newer version every time it starts and installs it before opening.
+That takes a few seconds, and without internet Annie simply starts the version you
+already have. You can also check any time from the icon's menu with
+**Check for updates**.
+
+Occasionally Annie shows a banner asking you to download the new installer, when the
+program folder itself (Python, FFmpeg, the launcher) needs updating. When that happens,
+download it from the same link and run it once. Your work and your chosen folders are
+kept.
 
 ## Something is wrong
 
-Run the installer again. This repairs the installation: the next start downloads Annie
-fresh. Your work in `C:\Users\<your name>\Annie` stays where it is. If the problem
-remains, send the newest file from `Annie\logs\` to the person who gave you Annie.
+Run the installer again. This repairs the installation: it rebuilds the program folder
+and downloads Annie's components fresh. Your work in the data folder stays where it is.
+If the problem remains, send the newest file from `Data\logs\` (and `App\install.log`, if
+the download failed) to the person who gave you Annie.
 
 ## Uninstall
 
 Open **Settings → Apps → Installed apps**, find **Annie**, and choose **Uninstall**.
-This removes the program completely: everything it downloaded, its shortcuts, and its
-entry in the Apps list. At the end it asks whether to **also delete your work**. The
-default answer is **No**, which keeps the `Annie` folder in your user folder.
+This removes the program completely: the program folder with Annie's Python, the `annie`
+environment and everything downloaded into it, the shortcuts, and the entry in the Apps
+list. At the end it asks whether to **also delete your work**. The default answer is
+**No**, which keeps the data folder. If both folders are gone, the empty `Annie` folder
+around them is removed too.
 
-Annie needs no admin rights and installs nothing outside its own folder. The single
-registry entry it creates is the one that makes it appear in the Apps list, and
-uninstalling removes it.
+Annie needs no admin rights and installs nothing outside its folders: nothing in hidden
+AppData folders, no PATH changes, no services. The single registry entry it creates is
+the one that makes it appear in the Apps list, and uninstalling removes it.

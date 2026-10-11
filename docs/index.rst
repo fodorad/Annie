@@ -11,6 +11,7 @@ tracks), but Annie is dataset-agnostic.
    :caption: Contents
 
    install-windows
+   code-signing-policy
    playbooks/index
    autoapi/index
 

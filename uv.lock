@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 
 [[package]]
@@ -165,8 +165,12 @@ dependencies = [
 
 [package.optional-dependencies]
 all = [
+    { name = "pystray", marker = "sys_platform == 'win32'" },
     { name = "torch" },
     { name = "torchcodec" },
+]
+desktop = [
+    { name = "pystray", marker = "sys_platform == 'win32'" },
 ]
 dev = [
     { name = "coverage" },
@@ -205,6 +209,8 @@ requires-dist = [
     { name = "pillow", marker = "extra == 'docs'" },
     { name = "playwright", marker = "extra == 'docs'" },
     { name = "pre-commit", marker = "extra == 'dev'" },
+    { name = "pystray", marker = "sys_platform == 'win32' and extra == 'all'", specifier = ">=0.19" },
+    { name = "pystray", marker = "sys_platform == 'win32' and extra == 'desktop'", specifier = ">=0.19" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.0" },
     { name = "sphinx-autoapi", marker = "extra == 'docs'" },
@@ -215,7 +221,7 @@ requires-dist = [
     { name = "torchcodec", marker = "extra == 'media'", specifier = "==0.17.0" },
     { name = "ty", marker = "extra == 'dev'" },
 ]
-provides-extras = ["all", "dev", "docs", "media"]
+provides-extras = ["all", "desktop", "dev", "docs", "media"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1933,6 +1939,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pystray"
+version = "0.19.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pillow" },
+    { name = "six" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/64/927a4b9024196a4799eba0180e0ca31568426f258a4a5c90f87a97f51d28/pystray-0.19.5-py2.py3-none-any.whl", hash = "sha256:a0c2229d02cf87207297c22d86ffc57c86c227517b038c0d3c59df79295ac617", size = 49068, upload-time = "2023-09-17T13:44:26.872Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2122,6 +2140,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b0/d4/bfa032f961103eba93de583b161f0e6a5b63cebb8f2c7d0c6e6efe1e3d2e/simple_websocket-1.1.0.tar.gz", hash = "sha256:7939234e7aa067c534abdab3a9ed933ec9ce4691b0713c78acb195560aa52ae4", size = 17300, upload-time = "2024-10-10T22:39:31.412Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/52/59/0782e51887ac6b07ffd1570e0364cf901ebc36345fea669969d2084baebb/simple_websocket-1.1.0-py3-none-any.whl", hash = "sha256:4af6069630a38ed6c561010f0e11a5bc0d4ca569b36306eb257cd9a192497c8c", size = 13842, upload-time = "2024-10-10T22:39:29.645Z" },
+]
+
+[[package]]
+name = "six"
+version = "1.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
 ]
 
 [[package]]

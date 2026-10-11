@@ -1,9 +1,10 @@
 # Download and verify the third-party binaries bundled into Annie-Setup.exe.
 #
 # Used by the installer build and by the Windows CI job, so both run the exact same,
-# checksum-pinned uv and FFmpeg. Output layout (consumed by annie.iss):
+# checksum-pinned uv, Python and FFmpeg. Output layout (consumed by annie.iss):
 #
 #   <OutDir>\uv.exe
+#   <OutDir>\python\{python.exe, pythonw.exe, Lib\, DLLs\, tcl\, ...}
 #   <OutDir>\ffmpeg\bin\{ffmpeg.exe, ffprobe.exe, *.dll}
 #   <OutDir>\ffmpeg\LICENSE.txt
 #   <OutDir>\ffmpeg\SOURCE.txt
@@ -11,8 +12,17 @@
 # FFmpeg is the GPL *shared* build: shared, because torchcodec links FFmpeg's DLLs;
 # GPL, because Annie's render/convert pipelines encode with libx264, which LGPL builds
 # lack. Redistributing it means shipping its licence and pointing at its source, which
-# SOURCE.txt does. To upgrade either binary, change the URL and its SHA-256 together
-# (torchcodec 0.17 supports FFmpeg 4-9) and bump ANNIE_LAUNCHER_VERSION if Annie needs it.
+# SOURCE.txt does.
+#
+# Python is bundled rather than downloaded by uv on first start: uv's managed Python
+# links its minor-version folder to the patch folder with a directory junction, and
+# recent Windows 11 builds refuse to traverse junctions a standard user created
+# ("untrusted mount point", os error 448). A plain folder has no junction to refuse.
+# python-build-standalone is the same CPython uv would have downloaded; the stripped
+# install_only build keeps tkinter, which the launcher's progress window uses.
+#
+# To upgrade any binary, change the URL and its SHA-256 together (torchcodec 0.17
+# supports FFmpeg 4-9) and bump LAUNCHER_VERSION in launcher.pyw if Annie needs it.
 
 param(
     [Parameter(Mandatory = $true)][string]$OutDir
@@ -24,6 +34,11 @@ $ProgressPreference = "SilentlyContinue"  # Invoke-WebRequest is ~10x slower wit
 $UvVersion = "0.13.0"
 $UvUrl = "https://github.com/astral-sh/uv/releases/download/$UvVersion/uv-x86_64-pc-windows-msvc.zip"
 $UvSha256 = "088962f9e7b7bd9ea740c04c650b2a21c8928c345bd99ac24350dc924dba656c"
+
+$PythonRelease = "20261009"
+$PythonName = "cpython-3.12.15+$PythonRelease-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+$PythonUrl = "https://github.com/astral-sh/python-build-standalone/releases/download/$PythonRelease/$([uri]::EscapeDataString($PythonName))"
+$PythonSha256 = "11ed9f8a6ac64fb1b5a55e40e305a6744a3f77a70863c8f8197a6e4349abc64a"
 
 # A month-end BtbN auto-build: those are kept long-term, unlike the rolling "latest".
 $FfmpegRelease = "autobuild-2026-09-30-13-08"
@@ -47,6 +62,14 @@ try {
     Get-Verified $UvUrl $UvSha256 "$work\uv.zip"
     Expand-Archive "$work\uv.zip" "$work\uv"
     Copy-Item (Get-ChildItem "$work\uv" -Recurse -Filter uv.exe | Select-Object -First 1).FullName $OutDir
+
+    # Python: the archive holds a single python\ folder, which is the layout annie.iss wants.
+    Get-Verified $PythonUrl $PythonSha256 "$work\python.tar.gz"
+    $py = Join-Path $OutDir "python"
+    if (Test-Path $py) { Remove-Item -Recurse -Force $py }
+    tar -xzf "$work\python.tar.gz" -C $OutDir
+    if ($LASTEXITCODE) { throw "tar failed with $LASTEXITCODE" }
+    if (-not (Test-Path "$py\pythonw.exe")) { throw "unexpected Python archive layout" }
 
     # FFmpeg: keep bin\ (executables + DLLs) and the licence; drop headers, import libs, ffplay.
     Get-Verified $FfmpegUrl $FfmpegSha256 "$work\ffmpeg.zip"

@@ -1,4 +1,4 @@
-.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer-icon run check clean docker-build docker-run help
+.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer installer-try installer-icon run check clean docker-build docker-run help
 
 # macOS: torchcodec requires FFmpeg dylibs which Homebrew installs to a non-standard
 # prefix. make does not inherit DYLD_LIBRARY_PATH, so we set it explicitly here.
@@ -11,7 +11,7 @@ help:
 	@echo "Run:                 run  (override with 'make run PORT=8090 HOST=0.0.0.0')"
 	@echo "Docker:              docker-build | docker-run"
 	@echo "Docs:                docs-serve | docs-deploy | screenshots"
-	@echo "Windows installer:   installer-icon  (installer itself is built in CI)"
+	@echo "Windows installer:   installer | installer-try  (Windows + Inno Setup) | installer-icon"
 	@echo "Cleanup:             clean"
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
@@ -91,9 +91,19 @@ screenshots:
 
 # ── Windows installer ──────────────────────────────────────────────────────────
 
+# Build Annie-Setup.exe on Windows exactly as CI does (needs Inno Setup 6:
+# `winget install JRSoftware.InnoSetup`). installer-try also installs it with a wheel of
+# this checkout, to try your changes before pushing. Without make, run the script:
+#   powershell -ExecutionPolicy Bypass -File installer\windows\build.ps1 [-Try]
+# CI builds and end-to-end tests it too (.github/workflows/windows-installer.yml).
+installer:
+	powershell -NoProfile -ExecutionPolicy Bypass -File installer/windows/build.ps1
+
+installer-try:
+	powershell -NoProfile -ExecutionPolicy Bypass -File installer/windows/build.ps1 -Try
+
 # Rebuild the installer/shortcut icon from the logo mark, then commit the .ico. Needs
-# rsvg-convert (brew install librsvg) and Pillow. The installer itself is built and
-# end-to-end tested on a Windows runner (.github/workflows/windows-installer.yml).
+# rsvg-convert (brew install librsvg) and Pillow.
 installer-icon:
 	rsvg-convert -w 256 -h 256 docs/assets/mark.svg -o installer/windows/mark.png
 	python -c "from PIL import Image; Image.open('installer/windows/mark.png').save('installer/windows/annie.ico', sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])"

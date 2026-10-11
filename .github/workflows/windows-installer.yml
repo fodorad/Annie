@@ -1,9 +1,11 @@
 name: Windows installer
 
 # Builds Annie-Setup.exe and proves it works end to end on a real Windows machine:
-# silent install -> first start installs this commit's wheel -> the UI answers ->
-# the bundled FFmpeg decodes video through torchcodec -> a second start reuses the
-# running Annie -> uninstall removes everything except the user's work.
+# silent install to custom folders (setup downloads this commit's wheel into an env on
+# the bundled Python, with no directory junction) -> the shortcut's launcher starts
+# Annie with its tray -> the UI answers -> the bundled FFmpeg decodes video through
+# torchcodec -> a second start reuses the running Annie -> uninstall removes everything
+# except the user's work.
 #
 # CD calls this with a release tag to attach the installer to that GitHub Release, which
 # keeps the permanent link .../releases/latest/download/Annie-Setup.exe current.
@@ -16,7 +18,10 @@ on:
       - ".github/workflows/windows-installer.yml"
       - "annie/app.py"
       - "annie/core/runtime.py"
+      - "annie/desktop.py"
       - "annie/media/decode.py"
+      - "data/**"
+      - "pyproject.toml"
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -32,6 +37,7 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read  # third-party actions run here, so no write access
+      actions: read   # lets SignPath fetch the unsigned installer artifact
     defaults:
       run:
         shell: pwsh
@@ -49,7 +55,7 @@ jobs:
     - name: Build wheel (the package the smoke test installs)
       run: uv build --wheel
 
-    - name: Fetch bundled binaries (uv, FFmpeg)
+    - name: Fetch bundled binaries (uv, Python, FFmpeg)
       run: installer/windows/fetch-deps.ps1 -OutDir installer/windows/build
 
     - name: Compile installer
@@ -60,48 +66,101 @@ jobs:
         if ($LASTEXITCODE) { throw "ISCC failed with $LASTEXITCODE" }
         Get-Item installer\windows\Output\Annie-Setup.exe | Format-List Name, Length
 
-    - name: Install silently
+    # Code signing through SignPath Foundation (free for open source), so Windows trusts
+    # the installer's publisher. Off until the repository variable SIGNPATH_ORGANIZATION_ID
+    # and the secret SIGNPATH_API_TOKEN exist (see docs/code-signing-policy.md), and never
+    # for pull requests. The signed installer replaces the unsigned one, so the tests
+    # below and the release both use what users download.
+    - name: Upload unsigned installer for signing
+      id: unsigned
+      if: vars.SIGNPATH_ORGANIZATION_ID != '' && github.event_name != 'pull_request'
+      uses: actions/upload-artifact@v7
+      with:
+        name: Annie-Setup-unsigned
+        path: installer/windows/Output/Annie-Setup.exe
+
+    - name: Sign installer (SignPath)
+      if: steps.unsigned.outcome == 'success'
+      uses: signpath/github-action-submit-signing-request@v3
+      with:
+        api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+        organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+        project-slug: Annie
+        signing-policy-slug: release-signing
+        github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+        wait-for-completion: true
+        output-artifact-directory: installer/windows/Output
+
+    - name: Install silently (downloads this commit's wheel into the env)
+      timeout-minutes: 20
       run: |
+        $wheel = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
+        # Inherited by the installer's launcher.pyw --install, so CI tests this commit.
+        $env:ANNIE_PACKAGE = "annie[media,desktop] @ $(([System.Uri]$wheel).AbsoluteUri)"
+        $root = "$env:RUNNER_TEMP\Annie test"   # a space and a parent named Annie, on purpose
+        $app = "$root\App"
+        $data = "$root\Data"
         Start-Process installer\windows\Output\Annie-Setup.exe -Wait `
-          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
-        $app = "$env:LOCALAPPDATA\Programs\Annie"
-        foreach ($f in 'uv.exe', 'Annie.cmd', 'annie.ico', 'unins000.exe',
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$app`"", "/DATADIR=`"$data`""
+        Get-Content "$app\install.log" -Tail 20 -ErrorAction SilentlyContinue
+        foreach ($f in 'uv.exe', 'launcher.pyw', 'annie.ico', 'annie.ini', 'unins000.exe',
+                       'python\pythonw.exe', 'env\Scripts\pythonw.exe',
                        'ffmpeg\bin\ffmpeg.exe', 'ffmpeg\bin\ffprobe.exe', 'ffmpeg\LICENSE.txt') {
           if (-not (Test-Path "$app\$f")) { throw "missing $app\$f" }
         }
+        foreach ($old in 'Annie.cmd', 'tools', 'bin') {
+          if (Test-Path "$app\$old") { throw "first-installer leftover $old" }
+        }
+        $ini = Get-Content "$app\annie.ini" -Raw
+        if ($ini -notmatch [regex]::Escape("data=$data")) { throw "annie.ini lacks the data folder:`n$ini" }
+        # The env is built on the bundled Python's real folder: no directory junction for
+        # Windows to refuse ("untrusted mount point", os error 448).
+        $links = Get-ChildItem -Recurse -Force -Attributes ReparsePoint $app -ErrorAction SilentlyContinue
+        if ($links) { $links | Select-Object FullName, LinkType, Target; throw 'junction/symlink in the install folder' }
+        $cfg = Get-Content "$app\env\pyvenv.cfg" -Raw
+        if ($cfg -notmatch [regex]::Escape("home = $app\python")) { throw "env is not on the bundled Python:`n$cfg" }
         $startMenu = [Environment]::GetFolderPath('Programs')
         $desktop = [Environment]::GetFolderPath('Desktop')
         foreach ($lnk in "$startMenu\Annie.lnk", "$desktop\Annie.lnk") {
           if (-not (Test-Path $lnk)) { throw "missing shortcut $lnk" }
         }
         if (-not (Test-Path $env:APP_ID_KEY)) { throw 'Apps & features entry missing' }
+        # The example datasets are ticked by default and go to the data folder.
+        foreach ($f in 'config\mosei_mini.json', 'config\fi_mini.json', 'example\mosei_mini\label.csv') {
+          if (-not (Test-Path "$data\examples\$f")) { throw "missing example $data\examples\$f" }
+        }
         "APP=$app" >> $env:GITHUB_ENV
+        "DATA=$data" >> $env:GITHUB_ENV
+        "ROOT=$root" >> $env:GITHUB_ENV
 
-    - name: First start installs Annie and serves the UI
-      timeout-minutes: 20
+    - name: Start menu shortcut starts Annie with its tray
+      timeout-minutes: 5
       run: |
-        $wheel = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
-        $env:ANNIE_PACKAGE = "annie[media] @ $(([System.Uri]$wheel).AbsoluteUri)"
         $env:ANNIE_OPEN_BROWSER = '0'
-        $log = "$env:RUNNER_TEMP\launcher.log"
-        Start-Process cmd.exe -WindowStyle Hidden `
-          -ArgumentList "/s /c `"`"$env:APP\Annie.cmd`" > `"$log`" 2>&1 < nul`""
-        $deadline = (Get-Date).AddMinutes(15)
+        # What the shortcut runs, with python.exe instead of pythonw.exe so errors show here.
+        & "$env:APP\python\python.exe" "$env:APP\launcher.pyw"
+        if ($LASTEXITCODE) { Get-Content "$env:APP\install.log" -Tail 30; throw "launcher exited with $LASTEXITCODE" }
+        $deadline = (Get-Date).AddMinutes(3)
         $page = ''
         while ($page -notmatch '<title>Annie</title>' -and (Get-Date) -lt $deadline) {
-          Start-Sleep 10
+          Start-Sleep 5
           try { $page = (Invoke-WebRequest http://127.0.0.1:8080/ -UseBasicParsing -TimeoutSec 5).Content }
           catch { $page = '' }
         }
-        Get-Content $log -ErrorAction SilentlyContinue
-        if ($page -notmatch '<title>Annie</title>') { throw 'Annie did not come up' }
-        if (-not (Test-Path "$env:USERPROFILE\Annie")) { throw 'user data folder not created' }
+        if ($page -notmatch '<title>Annie</title>') {
+          Get-ChildItem "$env:DATA\logs" -ErrorAction SilentlyContinue | Get-Content -Tail 40
+          throw 'Annie did not come up'
+        }
+        $tray = Get-CimInstance Win32_Process -Filter "Name = 'pythonw.exe'" |
+          Where-Object { $_.CommandLine -match 'annie\.desktop' }
+        if (-not $tray) { throw 'annie.desktop is not running' }
+        if (-not (Test-Path "$env:DATA\logs")) { throw 'Annie did not use the chosen data folder' }
 
     - name: Bundled FFmpeg decodes video through torchcodec
       run: |
         # Only ANNIE_FFMPEG_LIB_DIR points at FFmpeg (not PATH), proving the DLL registration.
         $env:ANNIE_FFMPEG_LIB_DIR = "$env:APP\ffmpeg\bin"
-        & "$env:APP\tools\annie\Scripts\python.exe" -c `
+        & "$env:APP\env\Scripts\python.exe" -c `
           "import sys; from annie.media import decode; m = decode.video_metadata(sys.argv[1]); print(m); assert m.num_frames > 0" `
           data\example\fi_mini\video\_ztmNiy8D3c.000.mp4
         if ($LASTEXITCODE) { throw 'decode failed' }
@@ -110,9 +169,13 @@ jobs:
       timeout-minutes: 3
       run: |
         $env:ANNIE_OPEN_BROWSER = '0'
-        $p = Start-Process cmd.exe -Wait -PassThru -NoNewWindow `
-          -ArgumentList "/s /c `"`"$env:APP\Annie.cmd`" < nul`""
-        if ($p.ExitCode -ne 0) { throw "second start exited with $($p.ExitCode)" }
+        & "$env:APP\python\python.exe" "$env:APP\launcher.pyw"
+        if ($LASTEXITCODE) { throw "second start exited with $LASTEXITCODE" }
+        # The env's pythonw.exe is a small stub that runs the bundled Python as its child,
+        # so count the stubs: one per running Annie.
+        $trays = @(Get-CimInstance Win32_Process -Filter "Name = 'pythonw.exe'" |
+          Where-Object { $_.ExecutablePath -eq "$env:APP\env\Scripts\pythonw.exe" })
+        if ($trays.Count -ne 1) { throw "expected one Annie, found $($trays.Count)" }
 
     - name: Uninstall removes everything except the user's work
       run: |
@@ -126,20 +189,31 @@ jobs:
         $startMenu = [Environment]::GetFolderPath('Programs')
         $desktop = [Environment]::GetFolderPath('Desktop')
         if ((Test-Path "$startMenu\Annie.lnk") -or (Test-Path "$desktop\Annie.lnk")) { throw 'shortcut left behind' }
-        if (Get-Process annie -ErrorAction SilentlyContinue) { throw 'Annie still running' }
-        if (-not (Test-Path "$env:USERPROFILE\Annie")) { throw "silent uninstall must keep the user's work" }
+        if (Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'annie\.desktop' }) { throw 'Annie still running' }
+        if (-not (Test-Path $env:DATA)) { throw "silent uninstall must keep the user's work" }
+
+    # The tray's "Download example datasets" fetches this from the latest release.
+    - name: Package the example datasets
+      run: |
+        & installer\windows\build\python\python.exe -I -c `
+          "import shutil, sys; shutil.make_archive(sys.argv[1], 'zip', 'data')" `
+          installer/windows/Output/annie-examples
+        if ($LASTEXITCODE) { throw 'zipping the examples failed' }
+        Get-Item installer\windows\Output\annie-examples.zip | Format-List Name, Length
 
     - name: Upload installer
       uses: actions/upload-artifact@v7
       with:
         name: Annie-Setup
-        path: installer/windows/Output/Annie-Setup.exe
+        path: |
+          installer/windows/Output/Annie-Setup.exe
+          installer/windows/Output/annie-examples.zip
 
 
   attach:
     # Separate from the build so the only job holding contents: write runs no third-party
     # actions: it just downloads the tested installer and uploads it to the release.
-    name: attach installer to release
+    name: attach installer and examples to release
     needs: installer
     if: inputs.tag != ''
     runs-on: ubuntu-latest
@@ -154,4 +228,4 @@ jobs:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
         TAG: ${{ inputs.tag }}
-      run: gh release upload "$TAG" Annie-Setup.exe --clobber
+      run: gh release upload "$TAG" Annie-Setup.exe annie-examples.zip --clobber

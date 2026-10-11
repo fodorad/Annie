@@ -8,6 +8,7 @@ import sys
 import tempfile
 import threading
 import unittest
+import zipfile
 from pathlib import Path
 
 from annie.core import runtime
@@ -115,3 +116,100 @@ class TestLauncherOutdated(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestVersions(unittest.TestCase):
+    def test_parse(self) -> None:
+        self.assertEqual(runtime.parse_version("1.12.0"), (1, 12, 0))
+        self.assertEqual(runtime.parse_version("v1.13.0.dev2+gabc"), (1, 13, 0))
+        self.assertEqual(runtime.parse_version("2.0rc1"), (2, 0))
+        self.assertIsNone(runtime.parse_version("unknown"))
+
+    def test_newer_release(self) -> None:
+        self.assertTrue(runtime.is_newer("1.12.1", "1.12.0"))
+        self.assertTrue(runtime.is_newer("1.13.0", "1.12.9"))
+        self.assertTrue(runtime.is_newer("1.10.0", "1.9.0"))  # numeric, not text
+
+    def test_same_or_older_is_not_newer(self) -> None:
+        self.assertFalse(runtime.is_newer("1.12.0", "1.12.0"))
+        self.assertFalse(runtime.is_newer("1.12", "1.12.0"))
+        self.assertFalse(runtime.is_newer("1.11.0", "1.12.0"))
+        # A dev build of an unreleased version is not behind that version's release.
+        self.assertFalse(runtime.is_newer("1.13.0", "1.13.0.dev4+g1a2b3c"))
+
+    def test_garbage_never_triggers_an_update(self) -> None:
+        self.assertFalse(runtime.is_newer("", "1.0.0"))
+        self.assertFalse(runtime.is_newer("2.0.0", "unknown"))
+
+
+class TestAnnieFolder(unittest.TestCase):
+    def setUp(self) -> None:
+        from annie.core.config import Settings
+
+        self.root = Path(tempfile.mkdtemp()) / "Annie"
+        self.settings = Settings(annie_home=self.root / "Data")
+
+    def test_installer_layout_opens_the_common_annie_folder(self) -> None:
+        self.assertEqual(runtime.annie_folder(self.settings, self.root / "App"), self.root)
+
+    def test_unrelated_locations_open_the_data_folder(self) -> None:
+        elsewhere = self.root.parent / "Programs" / "Annie"
+        self.assertEqual(runtime.annie_folder(self.settings, elsewhere), self.root / "Data")
+
+    def test_without_the_installer_opens_the_data_folder(self) -> None:
+        self.assertEqual(runtime.annie_folder(self.settings, None), self.root / "Data")
+
+
+class TestExamples(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.archive = self.tmp / "annie-examples.zip"
+        self.dest = self.tmp / "Data" / "examples"
+
+    def _zip(self, entries: dict[str, str]) -> None:
+        with zipfile.ZipFile(self.archive, "w") as zf:
+            for name, text in entries.items():
+                zf.writestr(name, text)
+
+    def test_extracts_configs_and_media(self) -> None:
+        self._zip({"config/mosei_mini.json": "{}", "example/mosei_mini/label.csv": "a\n"})
+        self.assertFalse(runtime.examples_installed(self.dest))
+        self.assertEqual(runtime.extract_examples(self.archive, self.dest), 2)
+        self.assertTrue(runtime.examples_installed(self.dest))
+        self.assertEqual((self.dest / "example" / "mosei_mini" / "label.csv").read_text(), "a\n")
+
+    def test_backslash_names_from_windows_zippers(self) -> None:
+        self._zip({"config\\fi_mini.json": "{}"})
+        runtime.extract_examples(self.archive, self.dest)
+        self.assertTrue((self.dest / "config" / "fi_mini.json").is_file())
+
+    def test_ignores_other_folders_and_escapes(self) -> None:
+        self._zip(
+            {
+                "config/x.json": "{}",
+                "config/../../evil.txt": "no",
+                "README.md": "no",
+                "scripts/run.py": "no",
+            }
+        )
+        self.assertEqual(runtime.extract_examples(self.archive, self.dest), 1)
+        self.assertFalse((self.tmp / "evil.txt").exists())
+        self.assertFalse((self.tmp / "Data" / "evil.txt").exists())
+        self.assertFalse((self.dest / "README.md").exists())
+        self.assertFalse((self.dest / "scripts").exists())
+
+    def test_archive_without_configs_is_rejected(self) -> None:
+        self._zip({"example/only/video.mp4": "x"})
+        with self.assertRaises(ValueError):
+            runtime.extract_examples(self.archive, self.dest)
+
+    def test_not_a_zip(self) -> None:
+        self.archive.write_text("<html>404</html>")
+        with self.assertRaises(zipfile.BadZipFile):
+            runtime.extract_examples(self.archive, self.dest)
+
+    def test_the_repo_examples_have_the_archive_layout(self) -> None:
+        data = Path(__file__).resolve().parents[2] / "data"
+        self.assertTrue(runtime.examples_installed(data))
+        for folder in data.iterdir():
+            self.assertIn(folder.name, runtime.EXAMPLE_FOLDERS)

@@ -1,7 +1,7 @@
 """Launch-time helpers for running Annie as an installed desktop app (infrastructure).
 
-Three concerns that only matter at process start, kept out of :mod:`annie.app` so they
-can be unit-tested:
+Concerns of the installed app rather than of the UI, kept out of :mod:`annie.app` and
+:mod:`annie.desktop` so they can be unit-tested:
 
 * **FFmpeg DLLs on Windows.** Since Python 3.8, Windows no longer searches ``PATH`` for
   the DLLs an extension module depends on, so torchcodec cannot find FFmpeg's
@@ -9,31 +9,56 @@ can be unit-tested:
   :func:`os.add_dll_directory` before torchcodec is imported.
 * **A second launch.** Double-clicking the shortcut while Annie is already running must
   open the running instance instead of crashing on a busy port.
-* **Launcher age.** The Windows installer's launcher (``installer/windows/Annie.cmd``)
+* **Launcher age.** The Windows installer's launcher (``installer/windows/launcher.pyw``)
   stamps its version into ``ANNIE_LAUNCHER_VERSION``. Annie itself updates on every
-  start, but the launcher and bundled FFmpeg only change when the user reinstalls, so
-  Annie tells them when that is needed.
+  start, but the launcher, the bundled Python and FFmpeg only change when the user
+  reinstalls, so Annie tells them when that is needed.
+* **Updates.** The tray's "Check for updates" compares the running version with the
+  newest release on PyPI.
+* **The Annie folder.** The tray opens the folder that holds Annie's program and data.
+* **Example datasets.** The installer can include two small example datasets; the tray
+  downloads them later when they were left out.
 """
 
 from __future__ import annotations
 
+import contextlib
+import json
 import os
+import re
 import shutil
 import socket
+import ssl
 import sys
 import urllib.error
 import urllib.request
+import zipfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-REQUIRED_LAUNCHER_VERSION = 1
-"""Oldest ``installer/windows/Annie.cmd`` version this Annie works with.
+if TYPE_CHECKING:
+    from annie.core.config import Settings
 
-Bump this together with ``ANNIE_LAUNCHER_VERSION`` in the launcher whenever the launcher
-or its bundled FFmpeg changes in a way this Annie relies on.
+REQUIRED_LAUNCHER_VERSION = 2
+"""Oldest ``installer/windows/launcher.pyw`` version this Annie works with.
+
+Bump this together with ``LAUNCHER_VERSION`` in the launcher whenever the launcher, its
+bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray
+launcher with the bundled Python; installs still running ``Annie.cmd`` (version 1) are
+asked to run the new installer.
 """
 
 INSTALLER_URL = "https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe"
 """Permanent download link to the newest Windows installer."""
+
+PYPI_URL = "https://pypi.org/pypi/annie/json"
+"""PyPI's JSON description of the ``annie`` project; ``info.version`` is the newest release."""
+
+EXAMPLES_URL = "https://github.com/fodorad/Annie/releases/latest/download/annie-examples.zip"
+"""The example datasets (the repo's ``data/config`` and ``data/example``), per release."""
+
+EXAMPLE_FOLDERS = ("config", "example")
+"""The top-level folders of the examples archive; nothing else is extracted from it."""
 
 _DLL_DIRECTORIES: list[object] = []
 """Handles returned by :func:`os.add_dll_directory`; kept alive so the paths stay registered."""
@@ -122,3 +147,137 @@ def launcher_outdated(raw_version: str | None) -> bool:
         return int(raw_version or "") < REQUIRED_LAUNCHER_VERSION
     except ValueError:
         return False
+
+
+def parse_version(raw: str) -> tuple[int, ...] | None:
+    """Return the numeric release part of a version string, or ``None`` if there is none.
+
+    ``"1.12.0"`` gives ``(1, 12, 0)``. Anything after the release numbers (``.dev3``,
+    ``rc1``, ``+g1a2b3c``) is ignored, so a development build of 1.13.0 compares equal to
+    the 1.13.0 release rather than newer.
+
+    Args:
+        raw: A version string such as ``"1.12.0"`` or ``"v1.12.1.dev2+gabc"``.
+    """
+    match = re.match(r"v?(\d+(?:\.\d+)*)", raw.strip())
+    if match is None:
+        return None
+    return tuple(int(part) for part in match.group(1).split("."))
+
+
+def is_newer(latest: str, current: str) -> bool:
+    """Return whether release ``latest`` is newer than the running ``current`` version.
+
+    Unreadable versions never count as newer, so a garbled answer from PyPI cannot
+    trigger an update. Missing trailing parts count as zero (``1.12`` equals ``1.12.0``).
+    """
+    new, old = parse_version(latest), parse_version(current)
+    if new is None or old is None:
+        return False
+    width = max(len(new), len(old))
+    return new + (0,) * (width - len(new)) > old + (0,) * (width - len(old))
+
+
+def _tls_context() -> ssl.SSLContext:
+    """TLS that trusts certifi's root certificates on top of the system ones.
+
+    On Windows, Python only sees the roots the OS has already cached, so a fresh PC can
+    fail to verify PyPI or GitHub without them.
+    """
+    context = ssl.create_default_context()
+    with contextlib.suppress(ImportError, OSError, ssl.SSLError):
+        import certifi
+
+        context.load_verify_locations(cafile=certifi.where())
+    return context
+
+
+def latest_pypi_version(timeout: float = 5.0) -> str | None:  # pragma: no cover - network
+    """Return the newest Annie release on PyPI, or ``None`` when PyPI cannot be reached."""
+    try:
+        with urllib.request.urlopen(PYPI_URL, timeout=timeout, context=_tls_context()) as response:  # noqa: S310
+            version = json.load(response)["info"]["version"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return version if isinstance(version, str) else None
+
+
+def annie_folder(settings: Settings, install_dir: Path | None) -> Path:
+    r"""Return the folder the tray's "Open Annie folder" opens.
+
+    With the installer's defaults that is ``%USERPROFILE%\Annie``, which holds both the
+    program (``App``) and your work (``Data``). When the two were put in unrelated
+    places, or Annie was not started by the Windows launcher, it is the data folder.
+
+    Args:
+        settings: The running app's settings, which know where the data lives.
+        install_dir: The ``ANNIE_INSTALL_DIR`` folder, or ``None`` when not installed.
+    """
+    home = settings.annie_home
+    if install_dir is not None and install_dir.parent == home.parent:
+        return install_dir.parent
+    return home
+
+
+def examples_installed(directory: Path) -> bool:
+    """Whether the example datasets' configs are in ``directory`` (an ``ANNIE_DATA_DIR``)."""
+    return any((directory / "config").glob("*.json"))
+
+
+def extract_examples(archive: Path, directory: Path) -> int:
+    """Unpack the examples archive into ``directory`` and return the number of files.
+
+    Only entries under ``config/`` and ``example/`` are extracted, and none may escape
+    ``directory``, so a damaged or hostile archive cannot write anywhere else.
+
+    Args:
+        archive: The downloaded ``annie-examples.zip``.
+        directory: The ``ANNIE_DATA_DIR`` folder; created when missing.
+
+    Raises:
+        ValueError: If the archive holds no example configs.
+        zipfile.BadZipFile: If it is not a zip archive.
+    """
+    root = directory.resolve()
+    count = 0
+    with zipfile.ZipFile(archive) as zf:
+        for info in zf.infolist():
+            parts = [p for p in info.filename.replace("\\", "/").split("/") if p]
+            if info.is_dir() or not parts or parts[0] not in EXAMPLE_FOLDERS:
+                continue
+            target = root.joinpath(*parts).resolve()
+            if not target.is_relative_to(root):
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(info) as src, target.open("wb") as dst:
+                shutil.copyfileobj(src, dst)
+            count += 1
+    if not examples_installed(root):
+        raise ValueError("the archive holds no example datasets")
+    return count
+
+
+def download_examples(directory: Path, timeout: float = 60.0) -> int:  # pragma: no cover - network
+    """Download the example datasets into ``directory``; see :func:`extract_examples`.
+
+    The archive is kept inside ``directory`` only while it is unpacked.
+
+    Raises:
+        OSError: If the download fails.
+        ValueError: If the download is not a valid examples archive.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    archive = directory / "annie-examples.zip.part"
+    try:
+        with (
+            urllib.request.urlopen(
+                EXAMPLES_URL, timeout=timeout, context=_tls_context()
+            ) as response,  # noqa: S310
+            archive.open("wb") as out,
+        ):
+            shutil.copyfileobj(response, out)
+        return extract_examples(archive, directory)
+    except zipfile.BadZipFile as exc:
+        raise ValueError("the download is not a zip archive") from exc
+    finally:
+        archive.unlink(missing_ok=True)

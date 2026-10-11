@@ -308,9 +308,13 @@ def remember_last_config(path: str | Path) -> None:
 def last_config() -> Path | None:
     """Return the config remembered by :func:`remember_last_config`, if it still exists.
 
+    A config that is gone from its remembered path is still found when it moved together
+    with the whole Annie home (e.g. the Windows installer moving your work to a new data
+    folder): the same file name is looked up in the config folder.
+
     Returns:
         The config path, or ``None`` when nothing is remembered, the pointer file is
-        unreadable, or the config has since been moved or deleted.
+        unreadable, or the config has since been deleted or moved elsewhere.
     """
     pointer = settings.annie_home / LAST_CONFIG_FILENAME
     try:
@@ -320,4 +324,8 @@ def last_config() -> Path | None:
     if not isinstance(raw, str):
         return None
     path = Path(raw)
-    return path if path.is_file() else None
+    if path.is_file():
+        return path
+    config_dir = settings.config_dir or settings.annie_home / "configs"
+    moved = config_dir / path.name
+    return moved.resolve() if moved.is_file() else None

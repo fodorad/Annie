@@ -291,6 +291,21 @@ class TestLastConfig(unittest.TestCase):
         self.config.unlink()
         self.assertIsNone(datasets.last_config())
 
+    def test_config_moved_with_the_home_is_found(self) -> None:
+        old = self.tmp / "old" / "configs" / "mine.json"
+        old.parent.mkdir(parents=True)
+        old.write_text("{}", encoding="utf-8")
+        datasets.remember_last_config(old)
+        moved = settings.annie_home / "configs" / "mine.json"
+        moved.parent.mkdir(parents=True)
+        old.replace(moved)
+        saved_config_dir = settings.config_dir
+        settings.config_dir = None
+        try:
+            self.assertEqual(datasets.last_config(), moved.resolve())
+        finally:
+            settings.config_dir = saved_config_dir
+
     def test_corrupt_pointer_is_ignored(self) -> None:
         settings.annie_home.mkdir(parents=True)
         (settings.annie_home / datasets.LAST_CONFIG_FILENAME).write_text("not json", "utf-8")
