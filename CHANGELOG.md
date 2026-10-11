@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.14.0](https://github.com/fodorad/Annie/compare/v1.13.1...v1.14.0) (2026-10-11)
+
+
+### Features
+
+* Windows start window with update progress; decode frames without the VC++ runtime ([#70](https://github.com/fodorad/Annie/issues/70)) ([fb4b83e](https://github.com/fodorad/Annie/commit/fb4b83ef1f8f8631470d587dd0c2cbb027348590))
+
 ## [1.13.1](https://github.com/fodorad/Annie/compare/v1.13.0...v1.13.1) (2026-10-11)
 
 
