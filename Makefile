@@ -4,6 +4,10 @@
 # prefix. make does not inherit DYLD_LIBRARY_PATH, so we set it explicitly here.
 export DYLD_LIBRARY_PATH := /opt/homebrew/opt/ffmpeg/lib:$(DYLD_LIBRARY_PATH)
 
+# The active environment's interpreter, as a path native tools understand. `which python`
+# would give Git Bash's /c/... form on Windows, which uv and ty cannot read.
+PYTHON := $(shell python -c "import sys; print(sys.executable)")
+
 help:
 	@echo "Dev (modify files):  fix"
 	@echo "Checks (read-only):  lint | type-check | test | docs | check"
@@ -17,16 +21,16 @@ help:
 # ── Setup ──────────────────────────────────────────────────────────────────────
 
 install:
-	uv pip install --python $(shell which python) "annie[all]"
+	uv pip install --python "$(PYTHON)" "annie[all]"
 
 dev:
-	uv pip install --python $(shell which python) -e ".[all,dev]"
+	uv pip install --python "$(PYTHON)" -e ".[all,dev]"
 
 upgrade:
-	uv pip install --python $(shell which python) --upgrade -e ".[all,dev,docs]"
+	uv pip install --python "$(PYTHON)" --upgrade -e ".[all,dev,docs]"
 
 install-docs:
-	uv pip install --python $(shell which python) -e ".[docs]"
+	uv pip install --python "$(PYTHON)" -e ".[docs]"
 
 # ── Dev helpers (modify files) ─────────────────────────────────────────────────
 
@@ -41,7 +45,7 @@ lint:
 	ruff format --check .
 
 type-check:
-	uv tool run ty check annie --python $(shell which python)
+	uv tool run ty check annie --python "$(PYTHON)"
 
 test:
 	uv run coverage run -m unittest discover -s tests
