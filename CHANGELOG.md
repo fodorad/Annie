@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.13.0](https://github.com/fodorad/Annie/compare/v1.12.0...v1.13.0) (2026-10-11)
+
+
+### Features
+
+* Windows tray app, editable install locations and example datasets ([#66](https://github.com/fodorad/Annie/issues/66)) ([d59dca6](https://github.com/fodorad/Annie/commit/d59dca6b20d18af5696e1516c8082ef9f4d8bfd3))
+
 ## [1.12.0](https://github.com/fodorad/Annie/compare/v1.11.0...v1.12.0) (2026-10-10)
 
 
