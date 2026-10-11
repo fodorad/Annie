@@ -239,7 +239,10 @@ class TestConfigDbPersistence(unittest.TestCase):
         real = self.tmp / "real_home"
         real.mkdir()
         link = self.tmp / "linked_home"
-        link.symlink_to(real, target_is_directory=True)
+        try:
+            link.symlink_to(real, target_is_directory=True)
+        except OSError:  # Windows without Developer Mode: no symlink privilege
+            self.skipTest("this account may not create symlinks")
         settings.annie_home = link
 
         reg = SourceRegistry()

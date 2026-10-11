@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import contextlib
 import http.server
 import socket
+import ssl
 import sys
 import tempfile
 import threading
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 from annie.core import runtime
 
@@ -89,6 +92,22 @@ class TestAnnieRunning(unittest.TestCase):
         self.assertTrue(runtime.port_in_use("127.0.0.1", port))
         self.assertFalse(runtime.annie_running("127.0.0.1", port))
 
+    def test_something_not_speaking_http_holds_the_port(self) -> None:
+        listener = socket.socket()
+        listener.bind(("127.0.0.1", 0))
+        listener.listen()
+        self.addCleanup(listener.close)
+
+        def hang_up() -> None:
+            with contextlib.suppress(OSError):
+                conn, _ = listener.accept()  # the port_in_use probe
+                conn.close()
+                conn, _ = listener.accept()  # the HTTP request
+                conn.close()
+
+        threading.Thread(target=hang_up, daemon=True).start()
+        self.assertFalse(runtime.annie_running("127.0.0.1", listener.getsockname()[1]))
+
     def test_wildcard_host_is_probed_on_loopback(self) -> None:
         port = self._serve(b"<title>Annie</title>")
         self.assertTrue(runtime.annie_running("0.0.0.0", port))
@@ -140,6 +159,21 @@ class TestVersions(unittest.TestCase):
     def test_garbage_never_triggers_an_update(self) -> None:
         self.assertFalse(runtime.is_newer("", "1.0.0"))
         self.assertFalse(runtime.is_newer("2.0.0", "unknown"))
+
+
+class TestTlsContext(unittest.TestCase):
+    """Downloads verify certificates, with certifi's roots when certifi is installed."""
+
+    def test_verifies_and_trusts_certifi(self) -> None:
+        context = runtime._tls_context()
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(context.check_hostname)
+        self.assertGreater(context.cert_store_stats()["x509_ca"], 0)
+
+    def test_without_certifi_still_verifies(self) -> None:
+        with mock.patch.dict(sys.modules, {"certifi": None}):
+            context = runtime._tls_context()
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
 
 
 class TestAnnieFolder(unittest.TestCase):
