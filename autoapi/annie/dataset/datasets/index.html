@@ -195,6 +195,7 @@
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../../../install-windows.html">Installing Annie on Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../code-signing-policy.html">Code signing policy</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
@@ -225,6 +226,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../storage/index.html">annie.dataset.storage</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../desktop/index.html">annie.desktop</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../media/clipping/index.html">annie.media.clipping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/color/index.html">annie.media.color</a></li>
@@ -507,10 +509,13 @@ loading it re-opens the same DB automatically.</p></li>
 <dt class="sig sig-object py" id="annie.dataset.datasets.last_config">
 <span class="sig-prename descclassname"><span class="pre">annie.dataset.datasets.</span></span><span class="sig-name descname"><span class="pre">last_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/datasets.html#last_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.datasets.last_config" title="Link to this definition">¶</a></dt>
 <dd><p>Return the config remembered by <a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-func docutils literal notranslate"><span class="pre">remember_last_config()</span></code></a>, if it still exists.</p>
+<p>A config that is gone from its remembered path is still found when it moved together
+with the whole Annie home (e.g. the Windows installer moving your work to a new data
+folder): the same file name is looked up in the config folder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The config path, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when nothing is remembered, the pointer file is
-unreadable, or the config has since been moved or deleted.</p>
+unreadable, or the config has since been deleted or moved elsewhere.</p>
 </dd>
 </dl>
 </dd></dl>

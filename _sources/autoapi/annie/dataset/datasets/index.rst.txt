@@ -152,7 +152,11 @@ Module Contents
 
    Return the config remembered by :func:`remember_last_config`, if it still exists.
 
+   A config that is gone from its remembered path is still found when it moved together
+   with the whole Annie home (e.g. the Windows installer moving your work to a new data
+   folder): the same file name is looked up in the config folder.
+
    :returns: The config path, or ``None`` when nothing is remembered, the pointer file is
-             unreadable, or the config has since been moved or deleted.
+             unreadable, or the config has since been deleted or moved elsewhere.
 
 

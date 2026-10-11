@@ -22,6 +22,7 @@ Submodules
    /autoapi/annie/app/index
    /autoapi/annie/core/index
    /autoapi/annie/dataset/index
+   /autoapi/annie/desktop/index
    /autoapi/annie/media/index
    /autoapi/annie/pages/index
    /autoapi/annie/parsers/index

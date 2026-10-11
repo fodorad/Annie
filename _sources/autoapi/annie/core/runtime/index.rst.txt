@@ -7,8 +7,8 @@ annie.core.runtime
 
    Launch-time helpers for running Annie as an installed desktop app (infrastructure).
 
-   Three concerns that only matter at process start, kept out of :mod:`annie.app` so they
-   can be unit-tested:
+   Concerns of the installed app rather than of the UI, kept out of :mod:`annie.app` and
+   :mod:`annie.desktop` so they can be unit-tested:
 
    * **FFmpeg DLLs on Windows.** Since Python 3.8, Windows no longer searches ``PATH`` for
      the DLLs an extension module depends on, so torchcodec cannot find FFmpeg's
@@ -16,10 +16,15 @@ annie.core.runtime
      :func:`os.add_dll_directory` before torchcodec is imported.
    * **A second launch.** Double-clicking the shortcut while Annie is already running must
      open the running instance instead of crashing on a busy port.
-   * **Launcher age.** The Windows installer's launcher (``installer/windows/Annie.cmd``)
+   * **Launcher age.** The Windows installer's launcher (``installer/windows/launcher.pyw``)
      stamps its version into ``ANNIE_LAUNCHER_VERSION``. Annie itself updates on every
-     start, but the launcher and bundled FFmpeg only change when the user reinstalls, so
-     Annie tells them when that is needed.
+     start, but the launcher, the bundled Python and FFmpeg only change when the user
+     reinstalls, so Annie tells them when that is needed.
+   * **Updates.** The tray's "Check for updates" compares the running version with the
+     newest release on PyPI.
+   * **The Annie folder.** The tray opens the folder that holds Annie's program and data.
+   * **Example datasets.** The installer can include two small example datasets; the tray
+     downloads them later when they were left out.
 
 
 
@@ -30,6 +35,9 @@ Attributes
 
    annie.core.runtime.REQUIRED_LAUNCHER_VERSION
    annie.core.runtime.INSTALLER_URL
+   annie.core.runtime.PYPI_URL
+   annie.core.runtime.EXAMPLES_URL
+   annie.core.runtime.EXAMPLE_FOLDERS
 
 
 Functions
@@ -43,25 +51,52 @@ Functions
    annie.core.runtime.port_in_use
    annie.core.runtime.annie_running
    annie.core.runtime.launcher_outdated
+   annie.core.runtime.parse_version
+   annie.core.runtime.is_newer
+   annie.core.runtime.latest_pypi_version
+   annie.core.runtime.annie_folder
+   annie.core.runtime.examples_installed
+   annie.core.runtime.extract_examples
+   annie.core.runtime.download_examples
 
 
 Module Contents
 ---------------
 
 .. py:data:: REQUIRED_LAUNCHER_VERSION
-   :value: 1
+   :value: 2
 
 
-   Oldest ``installer/windows/Annie.cmd`` version this Annie works with.
+   Oldest ``installer/windows/launcher.pyw`` version this Annie works with.
 
-   Bump this together with ``ANNIE_LAUNCHER_VERSION`` in the launcher whenever the launcher
-   or its bundled FFmpeg changes in a way this Annie relies on.
+   Bump this together with ``LAUNCHER_VERSION`` in the launcher whenever the launcher, its
+   bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray
+   launcher with the bundled Python; installs still running ``Annie.cmd`` (version 1) are
+   asked to run the new installer.
 
 .. py:data:: INSTALLER_URL
    :value: 'https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe'
 
 
    Permanent download link to the newest Windows installer.
+
+.. py:data:: PYPI_URL
+   :value: 'https://pypi.org/pypi/annie/json'
+
+
+   PyPI's JSON description of the ``annie`` project; ``info.version`` is the newest release.
+
+.. py:data:: EXAMPLES_URL
+   :value: 'https://github.com/fodorad/Annie/releases/latest/download/annie-examples.zip'
+
+
+   The example datasets (the repo's ``data/config`` and ``data/example``), per release.
+
+.. py:data:: EXAMPLE_FOLDERS
+   :value: ('config', 'example')
+
+
+   The top-level folders of the examples archive; nothing else is extracted from it.
 
 .. py:function:: ffmpeg_dll_dir(override: str | None, ffmpeg_exe: str | None) -> pathlib.Path | None
 
@@ -109,5 +144,70 @@ Module Contents
                        was not started by the installer's launcher.
 
    :returns: ``True`` only for a readable version below :data:`REQUIRED_LAUNCHER_VERSION`.
+
+
+.. py:function:: parse_version(raw: str) -> tuple[int, ...] | None
+
+   Return the numeric release part of a version string, or ``None`` if there is none.
+
+   ``"1.12.0"`` gives ``(1, 12, 0)``. Anything after the release numbers (``.dev3``,
+   ``rc1``, ``+g1a2b3c``) is ignored, so a development build of 1.13.0 compares equal to
+   the 1.13.0 release rather than newer.
+
+   :param raw: A version string such as ``"1.12.0"`` or ``"v1.12.1.dev2+gabc"``.
+
+
+.. py:function:: is_newer(latest: str, current: str) -> bool
+
+   Return whether release ``latest`` is newer than the running ``current`` version.
+
+   Unreadable versions never count as newer, so a garbled answer from PyPI cannot
+   trigger an update. Missing trailing parts count as zero (``1.12`` equals ``1.12.0``).
+
+
+.. py:function:: latest_pypi_version(timeout: float = 5.0) -> str | None
+
+   Return the newest Annie release on PyPI, or ``None`` when PyPI cannot be reached.
+
+
+.. py:function:: annie_folder(settings: annie.core.config.Settings, install_dir: pathlib.Path | None) -> pathlib.Path
+
+   Return the folder the tray's "Open Annie folder" opens.
+
+   With the installer's defaults that is ``%USERPROFILE%\Annie``, which holds both the
+   program (``App``) and your work (``Data``). When the two were put in unrelated
+   places, or Annie was not started by the Windows launcher, it is the data folder.
+
+   :param settings: The running app's settings, which know where the data lives.
+   :param install_dir: The ``ANNIE_INSTALL_DIR`` folder, or ``None`` when not installed.
+
+
+.. py:function:: examples_installed(directory: pathlib.Path) -> bool
+
+   Whether the example datasets' configs are in ``directory`` (an ``ANNIE_DATA_DIR``).
+
+
+.. py:function:: extract_examples(archive: pathlib.Path, directory: pathlib.Path) -> int
+
+   Unpack the examples archive into ``directory`` and return the number of files.
+
+   Only entries under ``config/`` and ``example/`` are extracted, and none may escape
+   ``directory``, so a damaged or hostile archive cannot write anywhere else.
+
+   :param archive: The downloaded ``annie-examples.zip``.
+   :param directory: The ``ANNIE_DATA_DIR`` folder; created when missing.
+
+   :raises ValueError: If the archive holds no example configs.
+   :raises zipfile.BadZipFile: If it is not a zip archive.
+
+
+.. py:function:: download_examples(directory: pathlib.Path, timeout: float = 60.0) -> int
+
+   Download the example datasets into ``directory``; see :func:`extract_examples`.
+
+   The archive is kept inside ``directory`` only while it is unpacked.
+
+   :raises OSError: If the download fails.
+   :raises ValueError: If the download is not a valid examples archive.
 
 

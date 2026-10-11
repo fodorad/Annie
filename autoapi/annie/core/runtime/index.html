@@ -195,6 +195,7 @@
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../../../install-windows.html">Installing Annie on Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../code-signing-policy.html">Code signing policy</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
@@ -225,6 +226,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../dataset/storage/index.html">annie.dataset.storage</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../desktop/index.html">annie.desktop</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../media/clipping/index.html">annie.media.clipping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/color/index.html">annie.media.color</a></li>
@@ -312,8 +314,8 @@
           <section id="module-annie.core.runtime">
 <span id="annie-core-runtime"></span><h1>annie.core.runtime<a class="headerlink" href="#module-annie.core.runtime" title="Link to this heading">¶</a></h1>
 <p>Launch-time helpers for running Annie as an installed desktop app (infrastructure).</p>
-<p>Three concerns that only matter at process start, kept out of <a class="reference internal" href="../../app/index.html#module-annie.app" title="annie.app"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.app</span></code></a> so they
-can be unit-tested:</p>
+<p>Concerns of the installed app rather than of the UI, kept out of <a class="reference internal" href="../../app/index.html#module-annie.app" title="annie.app"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.app</span></code></a> and
+<a class="reference internal" href="../../desktop/index.html#module-annie.desktop" title="annie.desktop"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.desktop</span></code></a> so they can be unit-tested:</p>
 <ul class="simple">
 <li><p><strong>FFmpeg DLLs on Windows.</strong> Since Python 3.8, Windows no longer searches <code class="docutils literal notranslate"><span class="pre">PATH</span></code> for
 the DLLs an extension module depends on, so torchcodec cannot find FFmpeg’s
@@ -321,10 +323,15 @@ the DLLs an extension module depends on, so torchcodec cannot find FFmpeg’s
 <code class="xref py py-func docutils literal notranslate"><span class="pre">os.add_dll_directory()</span></code> before torchcodec is imported.</p></li>
 <li><p><strong>A second launch.</strong> Double-clicking the shortcut while Annie is already running must
 open the running instance instead of crashing on a busy port.</p></li>
-<li><p><strong>Launcher age.</strong> The Windows installer’s launcher (<code class="docutils literal notranslate"><span class="pre">installer/windows/Annie.cmd</span></code>)
+<li><p><strong>Launcher age.</strong> The Windows installer’s launcher (<code class="docutils literal notranslate"><span class="pre">installer/windows/launcher.pyw</span></code>)
 stamps its version into <code class="docutils literal notranslate"><span class="pre">ANNIE_LAUNCHER_VERSION</span></code>. Annie itself updates on every
-start, but the launcher and bundled FFmpeg only change when the user reinstalls, so
-Annie tells them when that is needed.</p></li>
+start, but the launcher, the bundled Python and FFmpeg only change when the user
+reinstalls, so Annie tells them when that is needed.</p></li>
+<li><p><strong>Updates.</strong> The tray’s “Check for updates” compares the running version with the
+newest release on PyPI.</p></li>
+<li><p><strong>The Annie folder.</strong> The tray opens the folder that holds Annie’s program and data.</p></li>
+<li><p><strong>Example datasets.</strong> The installer can include two small example datasets; the tray
+downloads them later when they were left out.</p></li>
 </ul>
 <section id="attributes">
 <h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
@@ -332,10 +339,19 @@ Annie tells them when that is needed.</p></li>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION" title="annie.core.runtime.REQUIRED_LAUNCHER_VERSION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></code></a></p></td>
-<td><p>Oldest <code class="docutils literal notranslate"><span class="pre">installer/windows/Annie.cmd</span></code> version this Annie works with.</p></td>
+<td><p>Oldest <code class="docutils literal notranslate"><span class="pre">installer/windows/launcher.pyw</span></code> version this Annie works with.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.INSTALLER_URL" title="annie.core.runtime.INSTALLER_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">INSTALLER_URL</span></code></a></p></td>
 <td><p>Permanent download link to the newest Windows installer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.PYPI_URL" title="annie.core.runtime.PYPI_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PYPI_URL</span></code></a></p></td>
+<td><p>PyPI's JSON description of the <code class="docutils literal notranslate"><span class="pre">annie</span></code> project; <code class="docutils literal notranslate"><span class="pre">info.version</span></code> is the newest release.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.EXAMPLES_URL" title="annie.core.runtime.EXAMPLES_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXAMPLES_URL</span></code></a></p></td>
+<td><p>The example datasets (the repo's <code class="docutils literal notranslate"><span class="pre">data/config</span></code> and <code class="docutils literal notranslate"><span class="pre">data/example</span></code>), per release.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.EXAMPLE_FOLDERS" title="annie.core.runtime.EXAMPLE_FOLDERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXAMPLE_FOLDERS</span></code></a></p></td>
+<td><p>The top-level folders of the examples archive; nothing else is extracted from it.</p></td>
 </tr>
 </tbody>
 </table>
@@ -364,6 +380,27 @@ Annie tells them when that is needed.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.launcher_outdated" title="annie.core.runtime.launcher_outdated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">launcher_outdated</span></code></a>(→ bool)</p></td>
 <td><p>Return whether the Windows launcher that started Annie is too old.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.parse_version" title="annie.core.runtime.parse_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_version</span></code></a>(→ tuple[int, ...] | None)</p></td>
+<td><p>Return the numeric release part of a version string, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if there is none.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.is_newer" title="annie.core.runtime.is_newer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_newer</span></code></a>(→ bool)</p></td>
+<td><p>Return whether release <code class="docutils literal notranslate"><span class="pre">latest</span></code> is newer than the running <code class="docutils literal notranslate"><span class="pre">current</span></code> version.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.latest_pypi_version" title="annie.core.runtime.latest_pypi_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latest_pypi_version</span></code></a>(→ str | None)</p></td>
+<td><p>Return the newest Annie release on PyPI, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when PyPI cannot be reached.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.annie_folder" title="annie.core.runtime.annie_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annie_folder</span></code></a>(→ pathlib.Path)</p></td>
+<td><p>Return the folder the tray's &quot;Open Annie folder&quot; opens.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.examples_installed" title="annie.core.runtime.examples_installed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">examples_installed</span></code></a>(→ bool)</p></td>
+<td><p>Whether the example datasets' configs are in <code class="docutils literal notranslate"><span class="pre">directory</span></code> (an <code class="docutils literal notranslate"><span class="pre">ANNIE_DATA_DIR</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_examples</span></code></a>(→ int)</p></td>
+<td><p>Unpack the examples archive into <code class="docutils literal notranslate"><span class="pre">directory</span></code> and return the number of files.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.download_examples" title="annie.core.runtime.download_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_examples</span></code></a>(→ int)</p></td>
+<td><p>Download the example datasets into <code class="docutils literal notranslate"><span class="pre">directory</span></code>; see <a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_examples()</span></code></a>.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -372,16 +409,36 @@ Annie tells them when that is needed.</p></li>
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="annie.core.runtime.REQUIRED_LAUNCHER_VERSION">
-<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION" title="Link to this definition">¶</a></dt>
-<dd><p>Oldest <code class="docutils literal notranslate"><span class="pre">installer/windows/Annie.cmd</span></code> version this Annie works with.</p>
-<p>Bump this together with <code class="docutils literal notranslate"><span class="pre">ANNIE_LAUNCHER_VERSION</span></code> in the launcher whenever the launcher
-or its bundled FFmpeg changes in a way this Annie relies on.</p>
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION" title="Link to this definition">¶</a></dt>
+<dd><p>Oldest <code class="docutils literal notranslate"><span class="pre">installer/windows/launcher.pyw</span></code> version this Annie works with.</p>
+<p>Bump this together with <code class="docutils literal notranslate"><span class="pre">LAUNCHER_VERSION</span></code> in the launcher whenever the launcher, its
+bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray
+launcher with the bundled Python; installs still running <code class="docutils literal notranslate"><span class="pre">Annie.cmd</span></code> (version 1) are
+asked to run the new installer.</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="annie.core.runtime.INSTALLER_URL">
 <span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">INSTALLER_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe'</span></span><a class="headerlink" href="#annie.core.runtime.INSTALLER_URL" title="Link to this definition">¶</a></dt>
 <dd><p>Permanent download link to the newest Windows installer.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.core.runtime.PYPI_URL">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">PYPI_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://pypi.org/pypi/annie/json'</span></span><a class="headerlink" href="#annie.core.runtime.PYPI_URL" title="Link to this definition">¶</a></dt>
+<dd><p>PyPI’s JSON description of the <code class="docutils literal notranslate"><span class="pre">annie</span></code> project; <code class="docutils literal notranslate"><span class="pre">info.version</span></code> is the newest release.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.core.runtime.EXAMPLES_URL">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">EXAMPLES_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://github.com/fodorad/Annie/releases/latest/download/annie-examples.zip'</span></span><a class="headerlink" href="#annie.core.runtime.EXAMPLES_URL" title="Link to this definition">¶</a></dt>
+<dd><p>The example datasets (the repo’s <code class="docutils literal notranslate"><span class="pre">data/config</span></code> and <code class="docutils literal notranslate"><span class="pre">data/example</span></code>), per release.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.core.runtime.EXAMPLE_FOLDERS">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">EXAMPLE_FOLDERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('config',</span> <span class="pre">'example')</span></span><a class="headerlink" href="#annie.core.runtime.EXAMPLE_FOLDERS" title="Link to this definition">¶</a></dt>
+<dd><p>The top-level folders of the examples archive; nothing else is extracted from it.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -444,6 +501,94 @@ was not started by the installer’s launcher.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> only for a readable version below <a class="reference internal" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION" title="annie.core.runtime.REQUIRED_LAUNCHER_VERSION"><code class="xref py py-data docutils literal notranslate"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.parse_version">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">parse_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#parse_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.parse_version" title="Link to this definition">¶</a></dt>
+<dd><p>Return the numeric release part of a version string, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if there is none.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;1.12.0&quot;</span></code> gives <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">12,</span> <span class="pre">0)</span></code>. Anything after the release numbers (<code class="docutils literal notranslate"><span class="pre">.dev3</span></code>,
+<code class="docutils literal notranslate"><span class="pre">rc1</span></code>, <code class="docutils literal notranslate"><span class="pre">+g1a2b3c</span></code>) is ignored, so a development build of 1.13.0 compares equal to
+the 1.13.0 release rather than newer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw</strong> – A version string such as <code class="docutils literal notranslate"><span class="pre">&quot;1.12.0&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;v1.12.1.dev2+gabc&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.is_newer">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">is_newer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#is_newer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.is_newer" title="Link to this definition">¶</a></dt>
+<dd><p>Return whether release <code class="docutils literal notranslate"><span class="pre">latest</span></code> is newer than the running <code class="docutils literal notranslate"><span class="pre">current</span></code> version.</p>
+<p>Unreadable versions never count as newer, so a garbled answer from PyPI cannot
+trigger an update. Missing trailing parts count as zero (<code class="docutils literal notranslate"><span class="pre">1.12</span></code> equals <code class="docutils literal notranslate"><span class="pre">1.12.0</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.latest_pypi_version">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">latest_pypi_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#latest_pypi_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.latest_pypi_version" title="Link to this definition">¶</a></dt>
+<dd><p>Return the newest Annie release on PyPI, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when PyPI cannot be reached.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.annie_folder">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">annie_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#annie.core.config.Settings" title="annie.core.config.Settings"><span class="pre">annie.core.config.Settings</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">install_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#annie_folder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.annie_folder" title="Link to this definition">¶</a></dt>
+<dd><p>Return the folder the tray’s “Open Annie folder” opens.</p>
+<p>With the installer’s defaults that is <code class="docutils literal notranslate"><span class="pre">%USERPROFILE%\Annie</span></code>, which holds both the
+program (<code class="docutils literal notranslate"><span class="pre">App</span></code>) and your work (<code class="docutils literal notranslate"><span class="pre">Data</span></code>). When the two were put in unrelated
+places, or Annie was not started by the Windows launcher, it is the data folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>settings</strong> – The running app’s settings, which know where the data lives.</p></li>
+<li><p><strong>install_dir</strong> – The <code class="docutils literal notranslate"><span class="pre">ANNIE_INSTALL_DIR</span></code> folder, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when not installed.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.examples_installed">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">examples_installed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#examples_installed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.examples_installed" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the example datasets’ configs are in <code class="docutils literal notranslate"><span class="pre">directory</span></code> (an <code class="docutils literal notranslate"><span class="pre">ANNIE_DATA_DIR</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.extract_examples">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">extract_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#extract_examples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.extract_examples" title="Link to this definition">¶</a></dt>
+<dd><p>Unpack the examples archive into <code class="docutils literal notranslate"><span class="pre">directory</span></code> and return the number of files.</p>
+<p>Only entries under <code class="docutils literal notranslate"><span class="pre">config/</span></code> and <code class="docutils literal notranslate"><span class="pre">example/</span></code> are extracted, and none may escape
+<code class="docutils literal notranslate"><span class="pre">directory</span></code>, so a damaged or hostile archive cannot write anywhere else.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>archive</strong> – The downloaded <code class="docutils literal notranslate"><span class="pre">annie-examples.zip</span></code>.</p></li>
+<li><p><strong>directory</strong> – The <code class="docutils literal notranslate"><span class="pre">ANNIE_DATA_DIR</span></code> folder; created when missing.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the archive holds no example configs.</p></li>
+<li><p><strong>zipfile.BadZipFile</strong> – If it is not a zip archive.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.download_examples">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">download_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">60.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#download_examples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.download_examples" title="Link to this definition">¶</a></dt>
+<dd><p>Download the example datasets into <code class="docutils literal notranslate"><span class="pre">directory</span></code>; see <a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_examples()</span></code></a>.</p>
+<p>The archive is kept inside <code class="docutils literal notranslate"><span class="pre">directory</span></code> only while it is unpacked.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>OSError</strong> – If the download fails.</p></li>
+<li><p><strong>ValueError</strong> – If the download is not a valid examples archive.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -512,12 +657,22 @@ was not started by the installer’s launcher.</p>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION"><code class="docutils literal notranslate"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.INSTALLER_URL"><code class="docutils literal notranslate"><span class="pre">INSTALLER_URL</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.PYPI_URL"><code class="docutils literal notranslate"><span class="pre">PYPI_URL</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.EXAMPLES_URL"><code class="docutils literal notranslate"><span class="pre">EXAMPLES_URL</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.EXAMPLE_FOLDERS"><code class="docutils literal notranslate"><span class="pre">EXAMPLE_FOLDERS</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.ffmpeg_dll_dir"><code class="docutils literal notranslate"><span class="pre">ffmpeg_dll_dir()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.ensure_windows_ffmpeg_dlls"><code class="docutils literal notranslate"><span class="pre">ensure_windows_ffmpeg_dlls()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.app_url"><code class="docutils literal notranslate"><span class="pre">app_url()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.port_in_use"><code class="docutils literal notranslate"><span class="pre">port_in_use()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.annie_running"><code class="docutils literal notranslate"><span class="pre">annie_running()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.launcher_outdated"><code class="docutils literal notranslate"><span class="pre">launcher_outdated()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.parse_version"><code class="docutils literal notranslate"><span class="pre">parse_version()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.is_newer"><code class="docutils literal notranslate"><span class="pre">is_newer()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.latest_pypi_version"><code class="docutils literal notranslate"><span class="pre">latest_pypi_version()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.annie_folder"><code class="docutils literal notranslate"><span class="pre">annie_folder()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.examples_installed"><code class="docutils literal notranslate"><span class="pre">examples_installed()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.extract_examples"><code class="docutils literal notranslate"><span class="pre">extract_examples()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.download_examples"><code class="docutils literal notranslate"><span class="pre">download_examples()</span></code></a></li>
 </ul>
 </li>
 </ul>

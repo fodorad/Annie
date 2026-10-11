@@ -1,0 +1,65 @@
+annie.desktop
+=============
+
+.. py:module:: annie.desktop
+
+.. autoapi-nested-parse::
+
+   Annie as a Windows desktop app: the server plus a notification-area (tray) icon.
+
+   The Windows launcher (``installer/windows/launcher.pyw``) starts ``pythonw -m
+   annie.desktop``, so there is no console window. Instead, the Annie icon sits in the
+   notification area at the bottom right of the taskbar, and its menu opens Annie in the
+   browser, opens the Annie folder, downloads the example datasets when they were not
+   installed, checks for updates, and quits Annie.
+
+   The tray runs on its own thread (``pystray``'s ``run_detached``) and the NiceGUI server
+   keeps the main thread, exactly as with ``annie`` on the command line. Everything else is
+   the regular app: :func:`annie.app.main` is called unchanged.
+
+   Run ``python -m annie.desktop`` on another platform, or without the ``desktop`` extra,
+   and it starts Annie without the tray.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.desktop.Tray
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.desktop.main
+
+
+Module Contents
+---------------
+
+.. py:class:: Tray(url: str, version: str, install_dir: pathlib.Path | None)
+
+   The notification-area icon and its menu, for the lifetime of the server.
+
+
+   .. py:method:: start() -> None
+
+      Show the icon; the menu works as soon as it appears.
+
+
+
+   .. py:method:: stop() -> None
+
+      Remove the icon (Windows otherwise leaves a ghost until hovered).
+
+
+
+.. py:function:: main() -> None
+
+   Start Annie with its tray icon (Windows), or plainly where there is no tray.
+
+

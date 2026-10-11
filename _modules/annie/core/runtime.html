@@ -194,6 +194,7 @@
   <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install-windows.html">Installing Annie on Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../code-signing-policy.html">Code signing policy</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
@@ -224,6 +225,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/dataset/storage/index.html">annie.dataset.storage</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/desktop/index.html">annie.desktop</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/clipping/index.html">annie.media.clipping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/color/index.html">annie.media.color</a></li>
@@ -305,8 +307,8 @@
           <h1>Source code for annie.core.runtime</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Launch-time helpers for running Annie as an installed desktop app (infrastructure).</span>
 
-<span class="sd">Three concerns that only matter at process start, kept out of :mod:`annie.app` so they</span>
-<span class="sd">can be unit-tested:</span>
+<span class="sd">Concerns of the installed app rather than of the UI, kept out of :mod:`annie.app` and</span>
+<span class="sd">:mod:`annie.desktop` so they can be unit-tested:</span>
 
 <span class="sd">* **FFmpeg DLLs on Windows.** Since Python 3.8, Windows no longer searches ``PATH`` for</span>
 <span class="sd">  the DLLs an extension module depends on, so torchcodec cannot find FFmpeg's</span>
@@ -314,31 +316,56 @@
 <span class="sd">  :func:`os.add_dll_directory` before torchcodec is imported.</span>
 <span class="sd">* **A second launch.** Double-clicking the shortcut while Annie is already running must</span>
 <span class="sd">  open the running instance instead of crashing on a busy port.</span>
-<span class="sd">* **Launcher age.** The Windows installer's launcher (``installer/windows/Annie.cmd``)</span>
+<span class="sd">* **Launcher age.** The Windows installer's launcher (``installer/windows/launcher.pyw``)</span>
 <span class="sd">  stamps its version into ``ANNIE_LAUNCHER_VERSION``. Annie itself updates on every</span>
-<span class="sd">  start, but the launcher and bundled FFmpeg only change when the user reinstalls, so</span>
-<span class="sd">  Annie tells them when that is needed.</span>
+<span class="sd">  start, but the launcher, the bundled Python and FFmpeg only change when the user</span>
+<span class="sd">  reinstalls, so Annie tells them when that is needed.</span>
+<span class="sd">* **Updates.** The tray's "Check for updates" compares the running version with the</span>
+<span class="sd">  newest release on PyPI.</span>
+<span class="sd">* **The Annie folder.** The tray opens the folder that holds Annie's program and data.</span>
+<span class="sd">* **Example datasets.** The installer can include two small example datasets; the tray</span>
+<span class="sd">  downloads them later when they were left out.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ssl</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.error</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="n">REQUIRED_LAUNCHER_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="sd">"""Oldest ``installer/windows/Annie.cmd`` version this Annie works with.</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span>
 
-<span class="sd">Bump this together with ``ANNIE_LAUNCHER_VERSION`` in the launcher whenever the launcher</span>
-<span class="sd">or its bundled FFmpeg changes in a way this Annie relies on.</span>
+<span class="n">REQUIRED_LAUNCHER_VERSION</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="sd">"""Oldest ``installer/windows/launcher.pyw`` version this Annie works with.</span>
+
+<span class="sd">Bump this together with ``LAUNCHER_VERSION`` in the launcher whenever the launcher, its</span>
+<span class="sd">bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray</span>
+<span class="sd">launcher with the bundled Python; installs still running ``Annie.cmd`` (version 1) are</span>
+<span class="sd">asked to run the new installer.</span>
 <span class="sd">"""</span>
 
 <span class="n">INSTALLER_URL</span> <span class="o">=</span> <span class="s2">"https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe"</span>
 <span class="sd">"""Permanent download link to the newest Windows installer."""</span>
+
+<span class="n">PYPI_URL</span> <span class="o">=</span> <span class="s2">"https://pypi.org/pypi/annie/json"</span>
+<span class="sd">"""PyPI's JSON description of the ``annie`` project; ``info.version`` is the newest release."""</span>
+
+<span class="n">EXAMPLES_URL</span> <span class="o">=</span> <span class="s2">"https://github.com/fodorad/Annie/releases/latest/download/annie-examples.zip"</span>
+<span class="sd">"""The example datasets (the repo's ``data/config`` and ``data/example``), per release."""</span>
+
+<span class="n">EXAMPLE_FOLDERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"config"</span><span class="p">,</span> <span class="s2">"example"</span><span class="p">)</span>
+<span class="sd">"""The top-level folders of the examples archive; nothing else is extracted from it."""</span>
 
 <span class="n">_DLL_DIRECTORIES</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="sd">"""Handles returned by :func:`os.add_dll_directory`; kept alive so the paths stay registered."""</span>
@@ -444,6 +471,161 @@
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_version</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">REQUIRED_LAUNCHER_VERSION</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="parse_version">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.parse_version">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_version</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the numeric release part of a version string, or ``None`` if there is none.</span>
+
+<span class="sd">    ``"1.12.0"`` gives ``(1, 12, 0)``. Anything after the release numbers (``.dev3``,</span>
+<span class="sd">    ``rc1``, ``+g1a2b3c``) is ignored, so a development build of 1.13.0 compares equal to</span>
+<span class="sd">    the 1.13.0 release rather than newer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        raw: A version string such as ``"1.12.0"`` or ``"v1.12.1.dev2+gabc"``.</span>
+<span class="sd">    """</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"v?(\d+(?:\.\d+)*)"</span><span class="p">,</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="is_newer">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.is_newer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_newer</span><span class="p">(</span><span class="n">latest</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return whether release ``latest`` is newer than the running ``current`` version.</span>
+
+<span class="sd">    Unreadable versions never count as newer, so a garbled answer from PyPI cannot</span>
+<span class="sd">    trigger an update. Missing trailing parts count as zero (``1.12`` equals ``1.12.0``).</span>
+<span class="sd">    """</span>
+    <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="o">=</span> <span class="n">parse_version</span><span class="p">(</span><span class="n">latest</span><span class="p">),</span> <span class="n">parse_version</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">old</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">old</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new</span> <span class="o">+</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">new</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">old</span> <span class="o">+</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">old</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tls_context</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""TLS that trusts certifi's root certificates on top of the system ones.</span>
+
+<span class="sd">    On Windows, Python only sees the roots the OS has already cached, so a fresh PC can</span>
+<span class="sd">    fail to verify PyPI or GitHub without them.</span>
+<span class="sd">    """</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">create_default_context</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">certifi</span>
+
+        <span class="n">context</span><span class="o">.</span><span class="n">load_verify_locations</span><span class="p">(</span><span class="n">cafile</span><span class="o">=</span><span class="n">certifi</span><span class="o">.</span><span class="n">where</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">context</span>
+
+
+<div class="viewcode-block" id="latest_pypi_version">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.latest_pypi_version">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">latest_pypi_version</span><span class="p">(</span><span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - network</span>
+<span class="w">    </span><span class="sd">"""Return the newest Annie release on PyPI, or ``None`` when PyPI cannot be reached."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">PYPI_URL</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">_tls_context</span><span class="p">())</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>  <span class="c1"># noqa: S310</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">response</span><span class="p">)[</span><span class="s2">"info"</span><span class="p">][</span><span class="s2">"version"</span><span class="p">]</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">version</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="annie_folder">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.annie_folder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">annie_folder</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="n">Settings</span><span class="p">,</span> <span class="n">install_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Return the folder the tray's "Open Annie folder" opens.</span>
+
+<span class="sd">    With the installer's defaults that is ``%USERPROFILE%\Annie``, which holds both the</span>
+<span class="sd">    program (``App``) and your work (``Data``). When the two were put in unrelated</span>
+<span class="sd">    places, or Annie was not started by the Windows launcher, it is the data folder.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        settings: The running app's settings, which know where the data lives.</span>
+<span class="sd">        install_dir: The ``ANNIE_INSTALL_DIR`` folder, or ``None`` when not installed.</span>
+<span class="sd">    """</span>
+    <span class="n">home</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">annie_home</span>
+    <span class="k">if</span> <span class="n">install_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">install_dir</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">home</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">install_dir</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">return</span> <span class="n">home</span></div>
+
+
+
+<div class="viewcode-block" id="examples_installed">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.examples_installed">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">examples_installed</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether the example datasets' configs are in ``directory`` (an ``ANNIE_DATA_DIR``)."""</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">((</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">"config"</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"*.json"</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="extract_examples">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.extract_examples">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_examples</span><span class="p">(</span><span class="n">archive</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Unpack the examples archive into ``directory`` and return the number of files.</span>
+
+<span class="sd">    Only entries under ``config/`` and ``example/`` are extracted, and none may escape</span>
+<span class="sd">    ``directory``, so a damaged or hostile archive cannot write anywhere else.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        archive: The downloaded ``annie-examples.zip``.</span>
+<span class="sd">        directory: The ``ANNIE_DATA_DIR`` folder; created when missing.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the archive holds no example configs.</span>
+<span class="sd">        zipfile.BadZipFile: If it is not a zip archive.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">directory</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">infolist</span><span class="p">():</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">parts</span> <span class="ow">or</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">EXAMPLE_FOLDERS</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">parts</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">examples_installed</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the archive holds no example datasets"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">count</span></div>
+
+
+
+<div class="viewcode-block" id="download_examples">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.download_examples">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_examples</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># pragma: no cover - network</span>
+<span class="w">    </span><span class="sd">"""Download the example datasets into ``directory``; see :func:`extract_examples`.</span>
+
+<span class="sd">    The archive is kept inside ``directory`` only while it is unpacked.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        OSError: If the download fails.</span>
+<span class="sd">        ValueError: If the download is not a valid examples archive.</span>
+<span class="sd">    """</span>
+    <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">archive</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"annie-examples.zip.part"</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="p">(</span>
+            <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span>
+                <span class="n">EXAMPLES_URL</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">_tls_context</span><span class="p">()</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">,</span>  <span class="c1"># noqa: S310</span>
+            <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">extract_examples</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the download is not a zip archive"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">archive</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 </pre></div>
         </article>
