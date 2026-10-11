@@ -346,17 +346,21 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span>
 
-<span class="n">REQUIRED_LAUNCHER_VERSION</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">REQUIRED_LAUNCHER_VERSION</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="sd">"""Oldest ``installer/windows/launcher.pyw`` version this Annie works with.</span>
 
 <span class="sd">Bump this together with ``LAUNCHER_VERSION`` in the launcher whenever the launcher, its</span>
 <span class="sd">bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray</span>
 <span class="sd">launcher with the bundled Python; installs still running ``Annie.cmd`` (version 1) are</span>
-<span class="sd">asked to run the new installer.</span>
+<span class="sd">asked to run the new installer. Version 3 bundles the Visual C++ runtime next to that</span>
+<span class="sd">Python, which PyTorch needs on PCs without the system-wide Redistributable.</span>
 <span class="sd">"""</span>
 
 <span class="n">INSTALLER_URL</span> <span class="o">=</span> <span class="s2">"https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe"</span>
 <span class="sd">"""Permanent download link to the newest Windows installer."""</span>
+
+<span class="n">VC_REDIST_URL</span> <span class="o">=</span> <span class="s2">"https://aka.ms/vs/17/release/vc_redist.x64.exe"</span>
+<span class="sd">"""Microsoft's permanent link to the Visual C++ Redistributable (x64)."""</span>
 
 <span class="n">PYPI_URL</span> <span class="o">=</span> <span class="s2">"https://pypi.org/pypi/annie/json"</span>
 <span class="sd">"""PyPI's JSON description of the ``annie`` project; ``info.version`` is the newest release."""</span>
@@ -626,6 +630,34 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the download is not a zip archive"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">archive</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="decoder_problem">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.decoder_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">decoder_problem</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">,</span> <span class="n">platform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.</span>
+
+<span class="sd">    On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch's DLLs</span>
+<span class="sd">    need ``msvcp140.dll`` &amp; co., which neither Windows nor Python always provide. The</span>
+<span class="sd">    Windows installer bundles them; installs made before that, and other setups, need</span>
+<span class="sd">    the system-wide Redistributable.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        exc: The ``ImportError``/``OSError`` raised while importing the decoder.</span>
+<span class="sd">        platform: ``sys.platform``, injectable for tests.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A one-line message for the Log tab, the toast and the banner.</span>
+<span class="sd">    """</span>
+    <span class="n">reason</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">if</span> <span class="n">platform</span> <span class="o">==</span> <span class="s2">"win32"</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">".dll"</span> <span class="ow">in</span> <span class="n">reason</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">"Video frames cannot be decoded: a Windows system library is missing "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">). Run the newest Annie installer (</span><span class="si">{</span><span class="n">INSTALLER_URL</span><span class="si">}</span><span class="s2">), which includes "</span>
+            <span class="sa">f</span><span class="s2">"it, or install the Microsoft Visual C++ Redistributable (</span><span class="si">{</span><span class="n">VC_REDIST_URL</span><span class="si">}</span><span class="s2">)."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Video frames cannot be decoded: the decoder failed to load (</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">)."</span></div>
 
 </pre></div>
         </article>

@@ -353,7 +353,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.filtering</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterSpec</span><span class="p">,</span> <span class="n">apply_filters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_grid_preview</span><span class="p">,</span> <span class="n">build_preview</span><span class="p">,</span> <span class="n">to_data_uri</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_grid_preview</span><span class="p">,</span>
+    <span class="n">build_preview</span><span class="p">,</span>
+    <span class="n">report_decode_failure</span><span class="p">,</span>
+    <span class="n">to_data_uri</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.rendering</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_id_column</span>
@@ -762,7 +767,8 @@
     <span class="n">sw</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="n">_media_dims</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">build_preview</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the row</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the row</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">anchor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">anchor</span><span class="p">):</span>
             <span class="k">return</span>
         <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
@@ -771,7 +777,7 @@
             <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">strip</span><span class="p">:</span>
                 <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
                 <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"broken_image"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"broken_image"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>  <span class="c1"># NiceGUI's io_bound yields None while the app is shutting down</span>
@@ -960,8 +966,15 @@
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_grid_dims</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">build_grid_preview</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the box</span>
-        <span class="k">return</span>  <span class="c1"># leave the grey placeholder in place</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the box</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the box was refreshed away mid-decode</span>
+            <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">slot</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full h-full items-center justify-center"</span><span class="p">):</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"broken_image"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"md"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
+        <span class="k">return</span>
     <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>  <span class="c1"># NiceGUI's io_bound yields None while the app is shutting down</span>
     <span class="n">image</span><span class="p">,</span> <span class="n">num_frames</span> <span class="o">=</span> <span class="n">result</span>

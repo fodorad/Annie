@@ -362,9 +362,13 @@ minutes; a small window shows the progress), then <strong>Finish</strong> starts
 <section id="daily-use">
 <h2>Daily use<a class="headerlink" href="#daily-use" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><strong>Start:</strong> click <strong>Annie</strong> in the Start menu (or on the desktop). Your browser opens
-Annie, and the Annie icon appears in the notification area at the bottom right of the
-taskbar. If it is hidden, click the <strong>^</strong> arrow next to the clock.</p></li>
+<li><p><strong>Start:</strong> click <strong>Annie</strong> in the Start menu (or on the desktop). A small Annie window
+appears at once, with a progress bar and a list of what is happening: checking for
+updates, the packages an update changes, the download, and Annie starting. It closes
+by itself when Annie is ready. Your browser then opens Annie, and the Annie icon
+appears in the notification area at the bottom right of the taskbar. If it is
+hidden, click the <strong>^</strong> arrow next to the clock. If Annie cannot start, the window
+stays open and says why.</p></li>
 <li><p><strong>The Annie icon’s menu</strong> (right-click it):</p>
 <ul>
 <li><p><strong>Open Annie</strong> opens it in the browser again. Double-clicking the icon does the same.</p></li>
@@ -418,9 +422,9 @@ folder elsewhere, your earlier work stays where it is; move it over yourself if 
 </section>
 <section id="updating">
 <h2>Updating<a class="headerlink" href="#updating" title="Link to this heading">¶</a></h2>
-<p>Annie checks for a newer version every time it starts and installs it before opening.
-That takes a few seconds, and without internet Annie simply starts the version you
-already have. You can also check any time from the icon’s menu with
+<p>Annie checks for a newer version every time it starts and installs it before opening;
+the start window shows the update’s progress and which packages it changes. That takes
+a few seconds, and without internet Annie simply starts the version you already have. You can also check any time from the icon’s menu with
 <strong>Check for updates</strong>.</p>
 <p>Occasionally Annie shows a banner asking you to download the new installer, when the
 program folder itself (Python, FFmpeg, the launcher) needs updating. When that happens,
@@ -429,7 +433,12 @@ kept.</p>
 </section>
 <section id="something-is-wrong">
 <h2>Something is wrong<a class="headerlink" href="#something-is-wrong" title="Link to this heading">¶</a></h2>
-<p>Run the installer again. This repairs the installation: it rebuilds the program folder
+<p>If video frames show a red broken-image icon, and a red bar at the top of Annie says
+that a Windows system library is missing, your copy of Annie predates the installer
+that includes the Microsoft Visual C++ runtime, which video decoding needs. Run the
+newest installer once (it keeps your folders and work). Hovering over a broken-image
+icon shows why that video could not be decoded, and the <strong>Log</strong> tab has the details.</p>
+<p>For anything else, run the installer again. This repairs the installation: it rebuilds the program folder
 and downloads Annie’s components fresh. Your work in the data folder stays where it is.
 If the problem remains, send the newest file from <code class="docutils literal notranslate"><span class="pre">Data\logs\</span></code> (and <code class="docutils literal notranslate"><span class="pre">App\install.log</span></code>, if
 the download failed) to the person who gave you Annie.</p>

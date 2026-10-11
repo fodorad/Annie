@@ -76,12 +76,17 @@ Module Contents
 
 .. py:function:: set_tab(tab: nicegui.ui.tab) -> None
 
-   Register the tab element so availability can be toggled from elsewhere.
+   Register this page's tab element so availability can be toggled from elsewhere.
+
+   It is forgotten when the page is gone for good (not on a brief disconnect, after
+   which the same page reconnects).
 
 
 .. py:function:: sync_tab() -> None
 
-   Enable the tab when a video is queued or a queue-free task is ready.
+   Enable the tab in every open page when a video is queued or a queue-free task is ready.
+
+   The queue lives in the shared review database, so every page shows the same state.
 
 
 .. py:function:: update_availability() -> None

@@ -337,7 +337,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">report_decode_failure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">home</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">logs</span> <span class="k">as</span> <span class="n">logs_page</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">settings_page</span>
@@ -414,6 +416,8 @@
 
     <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">launcher_outdated</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ANNIE_LAUNCHER_VERSION"</span><span class="p">)):</span>
         <span class="n">_launcher_update_banner</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">problem</span> <span class="o">:=</span> <span class="n">decode</span><span class="o">.</span><span class="n">decoder_problem_found</span><span class="p">())</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_decoder_banner</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">navigate</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tabs</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -460,6 +464,28 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"system_update"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"A new Annie installer is available. Download it and run it once to update."</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="s2">"Download installer"</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">INSTALLER_URL</span><span class="p">,</span> <span class="n">new_tab</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_decoder_banner</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Say up front that frames cannot be decoded, instead of empty frame boxes."""</span>
+    <span class="k">with</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 q-pa-sm rounded no-wrap"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="si">}</span><span class="s2">22"</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"broken_image"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_check_decoder</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load the frame decoder once in the background; report it if it cannot load.</span>
+
+<span class="sd">    Without this, a decoder that is installed but cannot load (on Windows, a missing</span>
+<span class="sd">    Visual C++ runtime) only shows as broken frames. Pages built afterwards show a banner.</span>
+<span class="sd">    """</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">decode</span><span class="o">.</span><span class="n">check_decoder</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">report_decode_failure</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="index">
@@ -600,6 +626,8 @@
             <span class="s1">'Run: uv pip install -e ".[all]"'</span><span class="p">,</span>
             <span class="n">level</span><span class="o">=</span><span class="s2">"warning"</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_check_decoder</span><span class="p">()))</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)))</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_sweep_render_clips</span><span class="p">()))</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_shutdown</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>

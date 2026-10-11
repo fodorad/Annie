@@ -330,7 +330,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_windows_ffmpeg_dlls</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">decoder_problem</span><span class="p">,</span> <span class="n">ensure_windows_ffmpeg_dlls</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -367,13 +367,57 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span><span class="p">):</span>  <span class="c1"># noqa: ANN202 - external type</span>
-<span class="w">    </span><span class="sd">"""Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""</span>
+<span class="c1">#: Why the installed decoder cannot load, once :func:`check_decoder` has found out.</span>
+<span class="n">_decoder_error</span><span class="p">:</span> <span class="n">MediaUnavailableError</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_video_decoder_class</span><span class="p">():</span>  <span class="c1"># noqa: ANN202 - external type</span>
+<span class="w">    </span><span class="sd">"""Import torchcodec's ``VideoDecoder``, turning a load failure into a clear error.</span>
+
+<span class="sd">    torchcodec can be installed and still fail to import, e.g. when PyTorch's DLLs miss</span>
+<span class="sd">    the Visual C++ runtime on Windows. That surfaces as an ``OSError`` deep inside</span>
+<span class="sd">    ``import torch``; callers get a :class:`MediaUnavailableError` saying what to do.</span>
+<span class="sd">    """</span>
     <span class="n">_require_media</span><span class="p">()</span>
     <span class="n">ensure_windows_ffmpeg_dlls</span><span class="p">()</span>  <span class="c1"># Windows: FFmpeg's DLLs must be registered before import</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcodec.decoders</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoDecoder</span>  <span class="c1"># local import: optional dependency</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcodec.decoders</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoDecoder</span>  <span class="c1"># local import: optional dependency</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MediaUnavailableError</span><span class="p">(</span><span class="n">decoder_problem</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">return</span> <span class="n">VideoDecoder</span>
 
-    <span class="k">return</span> <span class="n">VideoDecoder</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)),</span> <span class="n">seek_mode</span><span class="o">=</span><span class="n">seek_mode</span><span class="p">)</span>
+
+<div class="viewcode-block" id="check_decoder">
+<a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.check_decoder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_decoder</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MediaUnavailableError</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load the decoder once and remember why it failed (run off the event loop).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The error, whose message says what to do, or ``None`` when frames can be decoded</span>
+<span class="sd">        or the ``media`` extra is not installed (which is reported separately).</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_decoder_error</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_video_decoder_class</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">MediaUnavailableError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">_decoder_error</span> <span class="o">=</span> <span class="n">exc</span>
+    <span class="k">return</span> <span class="n">_decoder_error</span></div>
+
+
+
+<div class="viewcode-block" id="decoder_problem_found">
+<a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.decoder_problem_found">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">decoder_problem_found</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The problem :func:`check_decoder` found, without loading anything."""</span>
+    <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">_decoder_error</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">_decoder_error</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_decoder</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">seek_mode</span><span class="p">:</span> <span class="n">SeekMode</span><span class="p">):</span>  <span class="c1"># noqa: ANN202 - external type</span>
+<span class="w">    </span><span class="sd">"""Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""</span>
+    <span class="k">return</span> <span class="n">_video_decoder_class</span><span class="p">()(</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)),</span> <span class="n">seek_mode</span><span class="o">=</span><span class="n">seek_mode</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_to_hwc_uint8</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># noqa: ANN001 - external tensor type</span>

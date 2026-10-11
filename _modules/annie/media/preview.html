@@ -527,6 +527,41 @@
     <span class="n">frames</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">read_frames</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">seek_mode</span><span class="o">=</span><span class="s2">"approximate"</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGB"</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">]</span></div>
 
+
+
+<span class="c1">#: The problems :func:`report_decode_failure` has already logged in this process.</span>
+<span class="n">_reported</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="report_decode_failure">
+<a class="viewcode-back" href="../../../autoapi/annie/media/preview/index.html#annie.media.preview.report_decode_failure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">report_decode_failure</span><span class="p">(</span><span class="n">video</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Log a failed frame decode once, and return the reason to show on the frame box.</span>
+
+<span class="sd">    Every Browse row and Annotator strip decodes on its own, so one broken decoder</span>
+<span class="sd">    would otherwise fail silently dozens of times, or flood the Log tab. A decoder that</span>
+<span class="sd">    cannot load at all is one problem for every video and is logged once per process;</span>
+<span class="sd">    any other failure is logged once per video.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        video: The video that failed to decode.</span>
+<span class="sd">        exc: The exception the decode raised.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The short reason, for a tooltip on the broken-frame icon.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">MediaUnavailableError</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">MediaUnavailableError</span><span class="p">):</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s2">"decoder"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"video:</span><span class="si">{</span><span class="n">video</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Could not decode frames of </span><span class="si">{</span><span class="n">video</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_reported</span><span class="p">:</span>
+        <span class="n">_reported</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">report_exception</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span></div>
+
 </pre></div>
         </article>
       </div>

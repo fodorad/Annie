@@ -35,6 +35,7 @@ Attributes
 
    annie.core.runtime.REQUIRED_LAUNCHER_VERSION
    annie.core.runtime.INSTALLER_URL
+   annie.core.runtime.VC_REDIST_URL
    annie.core.runtime.PYPI_URL
    annie.core.runtime.EXAMPLES_URL
    annie.core.runtime.EXAMPLE_FOLDERS
@@ -58,13 +59,14 @@ Functions
    annie.core.runtime.examples_installed
    annie.core.runtime.extract_examples
    annie.core.runtime.download_examples
+   annie.core.runtime.decoder_problem
 
 
 Module Contents
 ---------------
 
 .. py:data:: REQUIRED_LAUNCHER_VERSION
-   :value: 2
+   :value: 3
 
 
    Oldest ``installer/windows/launcher.pyw`` version this Annie works with.
@@ -72,13 +74,20 @@ Module Contents
    Bump this together with ``LAUNCHER_VERSION`` in the launcher whenever the launcher, its
    bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray
    launcher with the bundled Python; installs still running ``Annie.cmd`` (version 1) are
-   asked to run the new installer.
+   asked to run the new installer. Version 3 bundles the Visual C++ runtime next to that
+   Python, which PyTorch needs on PCs without the system-wide Redistributable.
 
 .. py:data:: INSTALLER_URL
    :value: 'https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe'
 
 
    Permanent download link to the newest Windows installer.
+
+.. py:data:: VC_REDIST_URL
+   :value: 'https://aka.ms/vs/17/release/vc_redist.x64.exe'
+
+
+   Microsoft's permanent link to the Visual C++ Redistributable (x64).
 
 .. py:data:: PYPI_URL
    :value: 'https://pypi.org/pypi/annie/json'
@@ -209,5 +218,20 @@ Module Contents
 
    :raises OSError: If the download fails.
    :raises ValueError: If the download is not a valid examples archive.
+
+
+.. py:function:: decoder_problem(exc: BaseException, platform: str = sys.platform) -> str
+
+   Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.
+
+   On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch's DLLs
+   need ``msvcp140.dll`` & co., which neither Windows nor Python always provide. The
+   Windows installer bundles them; installs made before that, and other setups, need
+   the system-wide Redistributable.
+
+   :param exc: The ``ImportError``/``OSError`` raised while importing the decoder.
+   :param platform: ``sys.platform``, injectable for tests.
+
+   :returns: A one-line message for the Log tab, the toast and the banner.
 
 

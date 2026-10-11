@@ -350,6 +350,9 @@ requires torch; call <code class="xref py py-func docutils literal notranslate">
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.build_band_strip" title="annie.media.preview.build_band_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_band_strip</span></code></a>(→ list[PIL.Image.Image])</p></td>
 <td><p>Decode a plain strip spanning one band's <code class="docutils literal notranslate"><span class="pre">[start_sec,</span> <span class="pre">end_sec)</span></code> window.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.report_decode_failure" title="annie.media.preview.report_decode_failure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">report_decode_failure</span></code></a>(→ str)</p></td>
+<td><p>Log a failed frame decode once, and return the reason to show on the frame box.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -496,6 +499,27 @@ the sampled frames of that span rather than the whole video.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.media.preview.report_decode_failure">
+<span class="sig-prename descclassname"><span class="pre">annie.media.preview.</span></span><span class="sig-name descname"><span class="pre">report_decode_failure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseException</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/preview.html#report_decode_failure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.preview.report_decode_failure" title="Link to this definition">¶</a></dt>
+<dd><p>Log a failed frame decode once, and return the reason to show on the frame box.</p>
+<p>Every Browse row and Annotator strip decodes on its own, so one broken decoder
+would otherwise fail silently dozens of times, or flood the Log tab. A decoder that
+cannot load at all is one problem for every video and is logged once per process;
+any other failure is logged once per video.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video</strong> – The video that failed to decode.</p></li>
+<li><p><strong>exc</strong> – The exception the decode raised.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The short reason, for a tooltip on the broken-frame icon.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -564,6 +588,7 @@ the sampled frames of that span rather than the whole video.</p>
 <li><a class="reference internal" href="#annie.media.preview.build_preview"><code class="docutils literal notranslate"><span class="pre">build_preview()</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.preview.build_grid_preview"><code class="docutils literal notranslate"><span class="pre">build_grid_preview()</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.preview.build_band_strip"><code class="docutils literal notranslate"><span class="pre">build_band_strip()</span></code></a></li>
+<li><a class="reference internal" href="#annie.media.preview.report_decode_failure"><code class="docutils literal notranslate"><span class="pre">report_decode_failure()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -32,6 +32,7 @@ Functions
    annie.media.preview.build_preview
    annie.media.preview.build_grid_preview
    annie.media.preview.build_band_strip
+   annie.media.preview.report_decode_failure
 
 
 Module Contents
@@ -134,5 +135,20 @@ Module Contents
    :returns: The sampled span frames as RGB images (empty if nothing could be decoded).
 
    :raises annie.media.decode.MediaUnavailableError: If the ``media`` extra is absent.
+
+
+.. py:function:: report_decode_failure(video: pathlib.Path | str | None, exc: BaseException) -> str
+
+   Log a failed frame decode once, and return the reason to show on the frame box.
+
+   Every Browse row and Annotator strip decodes on its own, so one broken decoder
+   would otherwise fail silently dozens of times, or flood the Log tab. A decoder that
+   cannot load at all is one problem for every video and is logged once per process;
+   any other failure is logged once per video.
+
+   :param video: The video that failed to decode.
+   :param exc: The exception the decode raised.
+
+   :returns: The short reason, for a tooltip on the broken-frame icon.
 
 

@@ -322,6 +322,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
@@ -331,14 +332,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span>
 
-<span class="c1">#: Widgets of the shared progress panel, rebuilt per page render.</span>
-<span class="n">_bar</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">linear_progress</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="n">_title</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: current-file / status line</span>
-<span class="n">_counts</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: ``X/Y`` processed count</span>
-<span class="n">_times</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: elapsed / ETA readout</span>
-<span class="n">_failed</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: failure count, shown when non-zero</span>
-<span class="n">_cancel</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: cancels the running batch</span>
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Panel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One page's progress widgets (each open page has its own)."""</span>
+
+    <span class="n">title</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span>  <span class="c1">#: current-file / status line</span>
+    <span class="n">bar</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">linear_progress</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span>  <span class="c1">#: ``X/Y`` processed count</span>
+    <span class="n">times</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span>  <span class="c1">#: elapsed / ETA readout</span>
+    <span class="n">failed</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span>  <span class="c1">#: failure count, shown when non-zero</span>
+    <span class="n">cancel</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span>  <span class="c1">#: cancels the running batch</span>
+
+
+<span class="c1">#: Every open page's progress panel, by client id: the conversion is shared, so all of</span>
+<span class="c1">#: them show it, not just the page opened last.</span>
+<span class="n">_panels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_Panel</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="c1">#: Whether a watcher task is already refreshing the panels.</span>
+<span class="n">_watching</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_duration</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -398,45 +411,54 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_progress</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build the shared progress panel and render the current state into it."""</span>
-    <span class="k">global</span> <span class="n">_bar</span><span class="p">,</span> <span class="n">_title</span><span class="p">,</span> <span class="n">_counts</span><span class="p">,</span> <span class="n">_times</span><span class="p">,</span> <span class="n">_failed</span><span class="p">,</span> <span class="n">_cancel</span>
+<span class="w">    </span><span class="sd">"""Build this page's progress panel and render the current state into it."""</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">):</span>
-        <span class="n">_title</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"font-medium"</span><span class="p">)</span>
-        <span class="n">_bar</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">linear_progress</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">show_value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"rounded"</span><span class="p">)</span>
-        <span class="n">_counts</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
-        <span class="n">_times</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">_failed</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"font-medium"</span><span class="p">)</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">linear_progress</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">show_value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"rounded"</span><span class="p">)</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-2"</span><span class="p">):</span>
-            <span class="n">_cancel</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"stop"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">cancel</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-                <span class="s2">"flat"</span>
-            <span class="p">)</span>
+            <span class="n">cancel</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"stop"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">cancel</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Export reencoded ids"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_export_succeeded</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
                 <span class="s2">"flat"</span>
             <span class="p">)</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Export failed ids"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_export_failed</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
-    <span class="n">_render_progress</span><span class="p">()</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">client</span>
+    <span class="n">panel</span> <span class="o">=</span> <span class="n">_Panel</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">bar</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">cancel</span><span class="p">)</span>
+    <span class="n">_panels</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">panel</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">on_delete</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_panels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_progress</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Update the progress widgets from the converter's current snapshot."""</span>
-    <span class="k">if</span> <span class="n">_bar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">_title</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">_counts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">_times</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="k">if</span> <span class="n">_failed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">_cancel</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span>
+<span class="w">    </span><span class="sd">"""Update every open page's progress panel from the converter's current snapshot."""</span>
+    <span class="k">for</span> <span class="n">client_id</span><span class="p">,</span> <span class="n">panel</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">_panels</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">panel</span><span class="o">.</span><span class="n">title</span><span class="p">):</span>
+            <span class="n">_panels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>  <span class="c1"># the panel was rebuilt/refreshed away mid-update</span>
+            <span class="n">_panels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">:</span> <span class="n">_Panel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render the converter's current snapshot into one page's progress panel."""</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">progress</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"idle"</span><span class="p">:</span>
-        <span class="n">_title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">"No conversion running."</span><span class="p">)</span>
-        <span class="n">_bar</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-        <span class="n">_counts</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-        <span class="n">_times</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-        <span class="n">_failed</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-        <span class="n">_cancel</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">"No conversion running."</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">times</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">failed</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">cancel</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="n">_title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="n">_bar</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fraction</span><span class="p">)</span>
-    <span class="n">_counts</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span>
+    <span class="n">panel</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">panel</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fraction</span><span class="p">)</span>
+    <span class="n">panel</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">done</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">fraction</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">%)"</span>
         <span class="sa">f</span><span class="s2">"   ·   converted </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">succeeded_count</span><span class="si">}</span><span class="s2">   ·   failed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"   ·   </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">current</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">current</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
@@ -450,27 +472,34 @@
     <span class="k">if</span> <span class="n">eta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">finish</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">eta</span><span class="p">)</span>
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"~</span><span class="si">{</span><span class="n">_fmt_duration</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span><span class="si">}</span><span class="s2"> left (≈</span><span class="si">{</span><span class="n">finish</span><span class="si">:</span><span class="s2">%H:%M:%S</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
-    <span class="n">_times</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">"  ·  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
+    <span class="n">panel</span><span class="o">.</span><span class="n">times</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">"  ·  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
         <span class="n">names</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">failed</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
         <span class="n">more</span> <span class="o">=</span> <span class="s2">"…"</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">failed</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="k">else</span> <span class="s2">""</span>
-        <span class="n">_failed</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">names</span><span class="si">}{</span><span class="n">more</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">failed</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">names</span><span class="si">}{</span><span class="n">more</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">_failed</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-    <span class="n">_cancel</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"running"</span><span class="p">)</span>
+        <span class="n">panel</span><span class="o">.</span><span class="n">failed</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">panel</span><span class="o">.</span><span class="n">cancel</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"running"</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_watch</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Poll the converter and refresh the progress panel until the batch ends."""</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Poll the converter and refresh every progress panel until the batch ends.</span>
+
+<span class="sd">    One watcher serves all open pages; a page opened mid-batch does not start another.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_watching</span>
+    <span class="k">if</span> <span class="n">_watching</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_watching</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">_render_progress</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-            <span class="k">return</span>  <span class="c1"># the panel was rebuilt/refreshed away</span>
-        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">progress</span><span class="p">()</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"running"</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.4</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">progress</span><span class="p">()</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"running"</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_watching</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_start</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ANN001 - work is a closure</span>

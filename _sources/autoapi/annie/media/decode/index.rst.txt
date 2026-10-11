@@ -54,6 +54,8 @@ Functions
 .. autoapisummary::
 
    annie.media.decode.media_available
+   annie.media.decode.check_decoder
+   annie.media.decode.decoder_problem_found
    annie.media.decode.read_frame
    annie.media.decode.read_frames
    annie.media.decode.frame_count
@@ -86,6 +88,19 @@ Module Contents
    Return whether the optional torchcodec backend can be imported.
 
    :returns: ``True`` if ``torchcodec`` is importable, ``False`` otherwise.
+
+
+.. py:function:: check_decoder() -> MediaUnavailableError | None
+
+   Load the decoder once and remember why it failed (run off the event loop).
+
+   :returns: The error, whose message says what to do, or ``None`` when frames can be decoded
+             or the ``media`` extra is not installed (which is reported separately).
+
+
+.. py:function:: decoder_problem_found() -> str | None
+
+   The problem :func:`check_decoder` found, without loading anything.
 
 
 .. py:function:: read_frame(path: str | pathlib.Path, frame_idx: int, *, seek_mode: SeekMode = 'exact') -> numpy.ndarray

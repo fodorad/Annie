@@ -344,13 +344,16 @@ downloads them later when they were left out.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.INSTALLER_URL" title="annie.core.runtime.INSTALLER_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">INSTALLER_URL</span></code></a></p></td>
 <td><p>Permanent download link to the newest Windows installer.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.PYPI_URL" title="annie.core.runtime.PYPI_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PYPI_URL</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.VC_REDIST_URL" title="annie.core.runtime.VC_REDIST_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VC_REDIST_URL</span></code></a></p></td>
+<td><p>Microsoft's permanent link to the Visual C++ Redistributable (x64).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.PYPI_URL" title="annie.core.runtime.PYPI_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PYPI_URL</span></code></a></p></td>
 <td><p>PyPI's JSON description of the <code class="docutils literal notranslate"><span class="pre">annie</span></code> project; <code class="docutils literal notranslate"><span class="pre">info.version</span></code> is the newest release.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.EXAMPLES_URL" title="annie.core.runtime.EXAMPLES_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXAMPLES_URL</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.EXAMPLES_URL" title="annie.core.runtime.EXAMPLES_URL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXAMPLES_URL</span></code></a></p></td>
 <td><p>The example datasets (the repo's <code class="docutils literal notranslate"><span class="pre">data/config</span></code> and <code class="docutils literal notranslate"><span class="pre">data/example</span></code>), per release.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.EXAMPLE_FOLDERS" title="annie.core.runtime.EXAMPLE_FOLDERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXAMPLE_FOLDERS</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.EXAMPLE_FOLDERS" title="annie.core.runtime.EXAMPLE_FOLDERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXAMPLE_FOLDERS</span></code></a></p></td>
 <td><p>The top-level folders of the examples archive; nothing else is extracted from it.</p></td>
 </tr>
 </tbody>
@@ -401,6 +404,9 @@ downloads them later when they were left out.</p></li>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.download_examples" title="annie.core.runtime.download_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_examples</span></code></a>(→ int)</p></td>
 <td><p>Download the example datasets into <code class="docutils literal notranslate"><span class="pre">directory</span></code>; see <a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_examples()</span></code></a>.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.decoder_problem" title="annie.core.runtime.decoder_problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decoder_problem</span></code></a>(→ str)</p></td>
+<td><p>Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -409,18 +415,25 @@ downloads them later when they were left out.</p></li>
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="annie.core.runtime.REQUIRED_LAUNCHER_VERSION">
-<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION" title="Link to this definition">¶</a></dt>
 <dd><p>Oldest <code class="docutils literal notranslate"><span class="pre">installer/windows/launcher.pyw</span></code> version this Annie works with.</p>
 <p>Bump this together with <code class="docutils literal notranslate"><span class="pre">LAUNCHER_VERSION</span></code> in the launcher whenever the launcher, its
 bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray
 launcher with the bundled Python; installs still running <code class="docutils literal notranslate"><span class="pre">Annie.cmd</span></code> (version 1) are
-asked to run the new installer.</p>
+asked to run the new installer. Version 3 bundles the Visual C++ runtime next to that
+Python, which PyTorch needs on PCs without the system-wide Redistributable.</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="annie.core.runtime.INSTALLER_URL">
 <span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">INSTALLER_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe'</span></span><a class="headerlink" href="#annie.core.runtime.INSTALLER_URL" title="Link to this definition">¶</a></dt>
 <dd><p>Permanent download link to the newest Windows installer.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.core.runtime.VC_REDIST_URL">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">VC_REDIST_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://aka.ms/vs/17/release/vc_redist.x64.exe'</span></span><a class="headerlink" href="#annie.core.runtime.VC_REDIST_URL" title="Link to this definition">¶</a></dt>
+<dd><p>Microsoft’s permanent link to the Visual C++ Redistributable (x64).</p>
 </dd></dl>
 
 <dl class="py data">
@@ -593,6 +606,27 @@ places, or Annie was not started by the Windows launcher, it is the data folder.
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.core.runtime.decoder_problem">
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">decoder_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseException</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">sys.platform</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#decoder_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.decoder_problem" title="Link to this definition">¶</a></dt>
+<dd><p>Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.</p>
+<p>On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch’s DLLs
+need <code class="docutils literal notranslate"><span class="pre">msvcp140.dll</span></code> &amp; co., which neither Windows nor Python always provide. The
+Windows installer bundles them; installs made before that, and other setups, need
+the system-wide Redistributable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>exc</strong> – The <code class="docutils literal notranslate"><span class="pre">ImportError</span></code>/<code class="docutils literal notranslate"><span class="pre">OSError</span></code> raised while importing the decoder.</p></li>
+<li><p><strong>platform</strong> – <code class="docutils literal notranslate"><span class="pre">sys.platform</span></code>, injectable for tests.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A one-line message for the Log tab, the toast and the banner.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -657,6 +691,7 @@ places, or Annie was not started by the Windows launcher, it is the data folder.
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.core.runtime.REQUIRED_LAUNCHER_VERSION"><code class="docutils literal notranslate"><span class="pre">REQUIRED_LAUNCHER_VERSION</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.INSTALLER_URL"><code class="docutils literal notranslate"><span class="pre">INSTALLER_URL</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.VC_REDIST_URL"><code class="docutils literal notranslate"><span class="pre">VC_REDIST_URL</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.PYPI_URL"><code class="docutils literal notranslate"><span class="pre">PYPI_URL</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.EXAMPLES_URL"><code class="docutils literal notranslate"><span class="pre">EXAMPLES_URL</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.EXAMPLE_FOLDERS"><code class="docutils literal notranslate"><span class="pre">EXAMPLE_FOLDERS</span></code></a></li>
@@ -673,6 +708,7 @@ places, or Annie was not started by the Windows launcher, it is the data folder.
 <li><a class="reference internal" href="#annie.core.runtime.examples_installed"><code class="docutils literal notranslate"><span class="pre">examples_installed()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.extract_examples"><code class="docutils literal notranslate"><span class="pre">extract_examples()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.runtime.download_examples"><code class="docutils literal notranslate"><span class="pre">download_examples()</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.runtime.decoder_problem"><code class="docutils literal notranslate"><span class="pre">decoder_problem()</span></code></a></li>
 </ul>
 </li>
 </ul>
