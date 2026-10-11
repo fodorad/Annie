@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import os
+import sys
 import unittest
 from pathlib import Path
 from unittest import mock
 
 from annie.core import theme
 from annie.core.config import Settings, _env_bool, _env_int, _env_path
+from annie.media import decode
 from annie.media.decode import media_available, strip_indices
 
 
@@ -121,6 +123,40 @@ class TestStripIndices(unittest.TestCase):
 class TestMediaGuards(unittest.TestCase):
     def test_media_available_returns_bool(self) -> None:
         self.assertIsInstance(media_available(), bool)
+
+
+class TestDecoderThatCannotLoad(unittest.TestCase):
+    """torchcodec installed but failing to import (e.g. a missing Windows DLL)."""
+
+    def setUp(self) -> None:
+        decode._decoder_error = None
+        self.addCleanup(setattr, decode, "_decoder_error", None)
+        # Pretend the extra is installed, and make importing its decoder fail.
+        patches = (
+            mock.patch.object(decode, "media_available", return_value=True),
+            mock.patch.object(decode, "ensure_windows_ffmpeg_dlls"),
+            mock.patch.dict(sys.modules, {"torchcodec": None, "torchcodec.decoders": None}),
+        )
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_decoding_raises_a_clear_error(self) -> None:
+        with self.assertRaises(decode.MediaUnavailableError) as ctx:
+            decode.read_frame("video.mp4", 0)
+        self.assertIn("cannot be decoded", str(ctx.exception))
+        self.assertIsInstance(ctx.exception.__cause__, ImportError)
+
+    def test_check_remembers_the_problem(self) -> None:
+        self.assertIsNone(decode.decoder_problem_found())
+        error = decode.check_decoder()
+        self.assertIsInstance(error, decode.MediaUnavailableError)
+        self.assertEqual(decode.decoder_problem_found(), str(error))
+
+    def test_check_skips_a_missing_extra(self) -> None:
+        with mock.patch.object(decode, "media_available", return_value=False):
+            self.assertIsNone(decode.check_decoder())
+        self.assertIsNone(decode.decoder_problem_found())
 
 
 if __name__ == "__main__":

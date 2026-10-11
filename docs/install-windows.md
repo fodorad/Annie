@@ -31,9 +31,13 @@ You choose the folders once. Updates and reinstalls keep using them.
 
 ## Daily use
 
-- **Start:** click **Annie** in the Start menu (or on the desktop). Your browser opens
-  Annie, and the Annie icon appears in the notification area at the bottom right of the
-  taskbar. If it is hidden, click the **^** arrow next to the clock.
+- **Start:** click **Annie** in the Start menu (or on the desktop). A small Annie window
+  appears at once, with a progress bar and a list of what is happening: checking for
+  updates, the packages an update changes, the download, and Annie starting. It closes
+  by itself when Annie is ready. Your browser then opens Annie, and the Annie icon
+  appears in the notification area at the bottom right of the taskbar. If it is
+  hidden, click the **^** arrow next to the clock. If Annie cannot start, the window
+  stays open and says why.
 - **The Annie icon's menu** (right-click it):
   - **Open Annie** opens it in the browser again. Double-clicking the icon does the same.
   - **Open Annie folder** opens `C:\Users\<you>\Annie` in File Explorer, which holds
@@ -70,9 +74,9 @@ folder elsewhere, your earlier work stays where it is; move it over yourself if 
 
 ## Updating
 
-Annie checks for a newer version every time it starts and installs it before opening.
-That takes a few seconds, and without internet Annie simply starts the version you
-already have. You can also check any time from the icon's menu with
+Annie checks for a newer version every time it starts and installs it before opening;
+the start window shows the update's progress and which packages it changes. That takes
+a few seconds, and without internet Annie simply starts the version you already have. You can also check any time from the icon's menu with
 **Check for updates**.
 
 Occasionally Annie shows a banner asking you to download the new installer, when the
@@ -82,7 +86,13 @@ kept.
 
 ## Something is wrong
 
-Run the installer again. This repairs the installation: it rebuilds the program folder
+If video frames show a red broken-image icon, and a red bar at the top of Annie says
+that a Windows system library is missing, your copy of Annie predates the installer
+that includes the Microsoft Visual C++ runtime, which video decoding needs. Run the
+newest installer once (it keeps your folders and work). Hovering over a broken-image
+icon shows why that video could not be decoded, and the **Log** tab has the details.
+
+For anything else, run the installer again. This repairs the installation: it rebuilds the program folder
 and downloads Annie's components fresh. Your work in the data folder stays where it is.
 If the problem remains, send the newest file from `Data\logs\` (and `App\install.log`, if
 the download failed) to the person who gave you Annie.

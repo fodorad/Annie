@@ -5,6 +5,7 @@
 #
 #   <OutDir>\uv.exe
 #   <OutDir>\python\{python.exe, pythonw.exe, Lib\, DLLs\, tcl\, ...}
+#   <OutDir>\python\{msvcp140*.dll, vcruntime140_threads.dll, concrt140.dll, vcomp140.dll}
 #   <OutDir>\ffmpeg\bin\{ffmpeg.exe, ffprobe.exe, *.dll}
 #   <OutDir>\ffmpeg\LICENSE.txt
 #   <OutDir>\ffmpeg\SOURCE.txt
@@ -20,6 +21,14 @@
 # ("untrusted mount point", os error 448). A plain folder has no junction to refuse.
 # python-build-standalone is the same CPython uv would have downloaded; the stripped
 # install_only build keeps tkinter, which the launcher's progress window uses.
+#
+# The Microsoft Visual C++ runtime is bundled because PyTorch and torchcodec need it
+# (msvcp140.dll & co.) and many PCs do not have the system-wide "Visual C++
+# Redistributable", whose installer needs admin rights. Python ships only vcruntime140*.dll.
+# The DLLs go next to python.exe: Windows always searches the folder of the running
+# program, so the PyTorch in env\ finds them, and nothing outside the install folder
+# changes. They come from the msvc-runtime wheel (a zip of Microsoft's redistributable
+# files), pinned by hash, and each must carry Microsoft's valid Authenticode signature.
 #
 # To upgrade any binary, change the URL and its SHA-256 together (torchcodec 0.17
 # supports FFmpeg 4-9) and bump LAUNCHER_VERSION in launcher.pyw if Annie needs it.
@@ -46,6 +55,18 @@ $FfmpegName = "ffmpeg-n8.1.3-9-g29e619e767-win64-gpl-shared-8.1"
 $FfmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/$FfmpegRelease/$FfmpegName.zip"
 $FfmpegSha256 = "dfe81c3aa0a546ee81980b1b824486dd0fe0a1d452f00cb55135379a74be7bcf"
 
+# Same 14.44 runtime version as the vcruntime140*.dll python-build-standalone ships.
+$VcRuntimeVersion = "14.44.35112"
+$VcRuntimeName = "msvc_runtime-$VcRuntimeVersion-cp312-cp312-win_amd64.whl"
+$VcRuntimeUrl = "https://files.pythonhosted.org/packages/cp312/m/msvc-runtime/$VcRuntimeName"
+$VcRuntimeSha256 = "32f9c706009e16ccc319d6947ce3bffe20e5192bee52b18cf48313f9e7bedfbe"
+# What the env's packages import beyond Python's own vcruntime140*.dll (msvcp140,
+# msvcp140_atomic_wait, vcruntime140_threads), plus the rest of the C++ runtime set.
+$VcRuntimeDlls = @(
+    "msvcp140.dll", "msvcp140_1.dll", "msvcp140_2.dll", "msvcp140_atomic_wait.dll",
+    "msvcp140_codecvt_ids.dll", "vcruntime140_threads.dll", "concrt140.dll", "vcomp140.dll"
+)
+
 function Get-Verified([string]$Url, [string]$Sha256, [string]$Dest) {
     Write-Host "Downloading $Url"
     Invoke-WebRequest -Uri $Url -OutFile $Dest
@@ -70,6 +91,19 @@ try {
     tar -xzf "$work\python.tar.gz" -C $OutDir
     if ($LASTEXITCODE) { throw "tar failed with $LASTEXITCODE" }
     if (-not (Test-Path "$py\pythonw.exe")) { throw "unexpected Python archive layout" }
+
+    # Visual C++ runtime, next to python.exe (see the note at the top).
+    Get-Verified $VcRuntimeUrl $VcRuntimeSha256 "$work\msvc-runtime.zip"
+    Expand-Archive "$work\msvc-runtime.zip" "$work\msvc-runtime"
+    $vcData = "$work\msvc-runtime\msvc_runtime-$VcRuntimeVersion.data\data"
+    foreach ($dll in $VcRuntimeDlls) {
+        $signature = Get-AuthenticodeSignature "$vcData\$dll"
+        if ($signature.Status -ne "Valid" -or
+            $signature.SignerCertificate.Subject -notmatch "O=Microsoft Corporation") {
+            throw "$dll is not validly signed by Microsoft ($($signature.Status))"
+        }
+        Copy-Item "$vcData\$dll" $py
+    }
 
     # FFmpeg: keep bin\ (executables + DLLs) and the licence; drop headers, import libs, ffplay.
     Get-Verified $FfmpegUrl $FfmpegSha256 "$work\ffmpeg.zip"

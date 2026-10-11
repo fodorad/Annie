@@ -205,3 +205,35 @@ def build_band_strip(
         return []
     frames = decode.read_frames(video_path, indices, seek_mode="approximate")
     return [Image.fromarray(frame).convert("RGB") for frame in frames]
+
+
+#: The problems :func:`report_decode_failure` has already logged in this process.
+_reported: set[str] = set()
+
+
+def report_decode_failure(video: Path | str | None, exc: BaseException) -> str:
+    """Log a failed frame decode once, and return the reason to show on the frame box.
+
+    Every Browse row and Annotator strip decodes on its own, so one broken decoder
+    would otherwise fail silently dozens of times, or flood the Log tab. A decoder that
+    cannot load at all is one problem for every video and is logged once per process;
+    any other failure is logged once per video.
+
+    Args:
+        video: The video that failed to decode.
+        exc: The exception the decode raised.
+
+    Returns:
+        The short reason, for a tooltip on the broken-frame icon.
+    """
+    from annie.core import logbook
+    from annie.media.decode import MediaUnavailableError
+
+    if isinstance(exc, MediaUnavailableError):
+        key, message = "decoder", str(exc)
+    else:
+        key, message = f"video:{video}", f"Could not decode frames of {video}: {exc}"
+    if key not in _reported:
+        _reported.add(key)
+        logbook.report_exception(message, exc)
+    return str(exc) or type(exc).__name__

@@ -80,6 +80,7 @@ Source: "{#DepsDir}\python\*"; DestDir: "{app}\python"; Flags: ignoreversion rec
 Source: "{#DepsDir}\ffmpeg\*"; DestDir: "{app}\ffmpeg"; Flags: ignoreversion recursesubdirs
 Source: "launcher.pyw"; DestDir: "{app}"; Flags: ignoreversion
 Source: "annie.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "annie.png"; DestDir: "{app}"; Flags: ignoreversion
 ; The example datasets go to the data folder, so they stay with the reviews made on them
 ; (uninstall asks about both). The tray downloads them later when this was unticked.
 Source: "{#ExamplesDir}\config\*.json"; DestDir: "{code:GetDataDir}\examples\config"; Flags: ignoreversion uninsneveruninstall; Check: WantExamples
@@ -88,7 +89,7 @@ Source: "{#ExamplesDir}\example\*"; DestDir: "{code:GetDataDir}\examples\example
 [INI]
 ; Written once here; the launcher, the tray and the uninstaller read the paths from it.
 Filename: "{app}\annie.ini"; Section: "paths"; Key: "data"; String: "{code:GetDataDir}"
-Filename: "{app}\annie.ini"; Section: "launcher"; Key: "version"; String: "2"
+Filename: "{app}\annie.ini"; Section: "launcher"; Key: "version"; String: "3"
 
 [InstallDelete]
 ; Running the installer again doubles as "repair": the bundled binaries and the Annie
