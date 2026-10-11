@@ -14,6 +14,9 @@ annie.core.runtime
      the DLLs an extension module depends on, so torchcodec cannot find FFmpeg's
      ``avcodec-*.dll`` & co. unless their folder is registered with
      :func:`os.add_dll_directory` before torchcodec is imported.
+   * **No console windows.** The installed Annie runs without a console (``pythonw``), so
+     every ffmpeg/ffprobe it starts would get a console window of its own, flashing on
+     screen; :func:`hidden_console` keeps them hidden.
    * **A second launch.** Double-clicking the shortcut while Annie is already running must
      open the running instance instead of crashing on a busy port.
    * **Launcher age.** The Windows installer's launcher (``installer/windows/launcher.pyw``)
@@ -47,6 +50,7 @@ Functions
 .. autoapisummary::
 
    annie.core.runtime.ffmpeg_dll_dir
+   annie.core.runtime.hidden_console
    annie.core.runtime.ensure_windows_ffmpeg_dlls
    annie.core.runtime.app_url
    annie.core.runtime.port_in_use
@@ -117,6 +121,21 @@ Module Contents
    :param ffmpeg_exe: The ``ffmpeg`` executable found on ``PATH``, if any.
 
    :returns: The folder to register, or ``None`` when neither source points at one.
+
+
+.. py:function:: hidden_console(platform: str = sys.platform) -> int
+
+   The :mod:`subprocess` ``creationflags`` that keep a console program out of sight.
+
+   When a program without a console (the installed Annie runs under ``pythonw``) starts
+   a console program such as ffmpeg or ffprobe, Windows opens a new console window for
+   it, which flashes on screen for every video. ``CREATE_NO_WINDOW`` gives the child a
+   console it can write to, without a window. Other platforms need no flags.
+
+   :param platform: ``sys.platform``, injectable for tests.
+
+   :returns: ``CREATE_NO_WINDOW`` on Windows, else ``0`` (no flags, valid everywhere); pass it
+             on as ``subprocess.run(cmd, creationflags=hidden_console())``.
 
 
 .. py:function:: ensure_windows_ffmpeg_dlls() -> pathlib.Path | None

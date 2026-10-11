@@ -314,6 +314,9 @@
 <span class="sd">  the DLLs an extension module depends on, so torchcodec cannot find FFmpeg's</span>
 <span class="sd">  ``avcodec-*.dll`` &amp; co. unless their folder is registered with</span>
 <span class="sd">  :func:`os.add_dll_directory` before torchcodec is imported.</span>
+<span class="sd">* **No console windows.** The installed Annie runs without a console (``pythonw``), so</span>
+<span class="sd">  every ffmpeg/ffprobe it starts would get a console window of its own, flashing on</span>
+<span class="sd">  screen; :func:`hidden_console` keeps them hidden.</span>
 <span class="sd">* **A second launch.** Double-clicking the shortcut while Annie is already running must</span>
 <span class="sd">  open the running instance instead of crashing on a busy port.</span>
 <span class="sd">* **Launcher age.** The Windows installer's launcher (``installer/windows/launcher.pyw``)</span>
@@ -371,6 +374,9 @@
 <span class="n">EXAMPLE_FOLDERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"config"</span><span class="p">,</span> <span class="s2">"example"</span><span class="p">)</span>
 <span class="sd">"""The top-level folders of the examples archive; nothing else is extracted from it."""</span>
 
+<span class="n">_CREATE_NO_WINDOW</span> <span class="o">=</span> <span class="mh">0x08000000</span>
+<span class="sd">"""Windows process-creation flag: a console program runs without showing a window."""</span>
+
 <span class="n">_DLL_DIRECTORIES</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="sd">"""Handles returned by :func:`os.add_dll_directory`; kept alive so the paths stay registered."""</span>
 
@@ -394,6 +400,27 @@
     <span class="k">if</span> <span class="n">ffmpeg_exe</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">ffmpeg_exe</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
     <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="hidden_console">
+<a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.hidden_console">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hidden_console</span><span class="p">(</span><span class="n">platform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The :mod:`subprocess` ``creationflags`` that keep a console program out of sight.</span>
+
+<span class="sd">    When a program without a console (the installed Annie runs under ``pythonw``) starts</span>
+<span class="sd">    a console program such as ffmpeg or ffprobe, Windows opens a new console window for</span>
+<span class="sd">    it, which flashes on screen for every video. ``CREATE_NO_WINDOW`` gives the child a</span>
+<span class="sd">    console it can write to, without a window. Other platforms need no flags.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        platform: ``sys.platform``, injectable for tests.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``CREATE_NO_WINDOW`` on Windows, else ``0`` (no flags, valid everywhere); pass it</span>
+<span class="sd">        on as ``subprocess.run(cmd, creationflags=hidden_console())``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">_CREATE_NO_WINDOW</span> <span class="k">if</span> <span class="n">platform</span> <span class="o">==</span> <span class="s2">"win32"</span> <span class="k">else</span> <span class="mi">0</span></div>
 
 
 

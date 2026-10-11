@@ -336,6 +336,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">hidden_console</span>
 
 <span class="n">RenderFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">VideoEntry</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
 <span class="sd">"""Signature of a render function.</span>
@@ -656,7 +657,9 @@
     <span class="c1"># Drain ffmpeg's progress/error output to a temp file so a full stderr pipe</span>
     <span class="c1"># can never deadlock the frame-writing loop on a long clip.</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryFile</span><span class="p">()</span> <span class="k">as</span> <span class="n">errlog</span><span class="p">:</span>
-        <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">errlog</span><span class="p">)</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="n">cmd</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">errlog</span><span class="p">,</span> <span class="n">creationflags</span><span class="o">=</span><span class="n">hidden_console</span><span class="p">()</span>
+        <span class="p">)</span>
         <span class="k">assert</span> <span class="n">process</span><span class="o">.</span><span class="n">stdin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">frame_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_frames</span><span class="p">):</span>
