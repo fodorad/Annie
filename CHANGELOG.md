@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.14.1](https://github.com/fodorad/Annie/compare/v1.14.0...v1.14.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* no console windows flashing for ffmpeg/ffprobe on Windows ([#72](https://github.com/fodorad/Annie/issues/72)) ([5ea739a](https://github.com/fodorad/Annie/commit/5ea739aa9e645db4d6ea298cca7eb9e24cd6dbdf))
+
 ## [1.14.0](https://github.com/fodorad/Annie/compare/v1.13.1...v1.14.0) (2026-10-11)
 
 
