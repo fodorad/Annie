@@ -44,6 +44,8 @@ def _quiet_streams() -> None:
 
 def _message_box(text: str, flags: int) -> int:  # pragma: no cover - Windows UI
     """Show a native message box titled "Annie" and return the button pressed."""
+    if sys.platform != "win32":
+        return 0
     import ctypes
 
     return ctypes.windll.user32.MessageBoxW(None, text, "Annie", flags | _MB_SETFOREGROUND)
@@ -77,6 +79,8 @@ class Tray:  # pragma: no cover - drives the Windows notification area
 
     def start(self) -> None:
         """Show the icon; the menu works as soon as it appears."""
+        if sys.platform != "win32":
+            return  # pystray (the desktop extra) is installed on Windows only
         import pystray
         from nicegui import app
 
@@ -128,6 +132,8 @@ class Tray:  # pragma: no cover - drives the Windows notification area
         webbrowser.open(self.url)
 
     def _open_folder(self) -> None:
+        if sys.platform != "win32":
+            return
         self._folder.mkdir(parents=True, exist_ok=True)
         os.startfile(self._folder)  # noqa: S606 - opens a folder in Explorer
 
@@ -214,7 +220,8 @@ class Tray:  # pragma: no cover - drives the Windows notification area
 
     def _start_update(self) -> None:
         """Hand over to the launcher, which waits for this process to exit, then updates."""
-        assert self.install_dir is not None
+        if sys.platform != "win32" or self.install_dir is None:
+            return
         subprocess.Popen(  # noqa: S603 - fixed argv inside the install folder
             [
                 str(self.install_dir / "python" / "pythonw.exe"),
