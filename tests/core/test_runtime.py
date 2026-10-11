@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import http.server
 import socket
@@ -159,6 +160,46 @@ class TestVersions(unittest.TestCase):
     def test_garbage_never_triggers_an_update(self) -> None:
         self.assertFalse(runtime.is_newer("", "1.0.0"))
         self.assertFalse(runtime.is_newer("2.0.0", "unknown"))
+
+
+class TestHiddenConsole(unittest.TestCase):
+    """ffmpeg/ffprobe started by the windowless (pythonw) Annie must not flash a console."""
+
+    def test_windows_hides_the_console_window(self) -> None:
+        self.assertEqual(runtime.hidden_console("win32"), 0x08000000)
+
+    def test_other_platforms_need_nothing(self) -> None:
+        self.assertEqual(runtime.hidden_console("linux"), 0)
+        self.assertEqual(runtime.hidden_console("darwin"), 0)
+
+    def test_every_console_program_annie_starts_is_hidden(self) -> None:
+        """Each subprocess call passes ``creationflags=hidden_console()``, except windowed ones."""
+        windowed = {"desktop.py", "reveal.py"}  # the launcher (pythonw) and Explorer
+        package = Path(runtime.__file__).resolve().parents[1]
+        unhidden = []
+        for source in sorted(package.rglob("*.py")):
+            if source.name in windowed:
+                continue
+            for node in ast.walk(ast.parse(source.read_text(encoding="utf-8"))):
+                if not (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "subprocess"
+                    and node.func.attr in {"run", "Popen", "call", "check_call", "check_output"}
+                ):
+                    continue
+                hidden = any(
+                    kw.arg == "creationflags"
+                    and isinstance(kw.value, ast.Call)
+                    and getattr(kw.value.func, "id", "") == "hidden_console"
+                    for kw in node.keywords
+                )
+                if not hidden:
+                    unhidden.append(f"{source.relative_to(package)}:{node.lineno}")
+        self.assertEqual(
+            unhidden, [], "pass creationflags=hidden_console() to these subprocess calls"
+        )
 
 
 class TestDecoderProblem(unittest.TestCase):

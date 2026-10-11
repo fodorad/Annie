@@ -29,6 +29,7 @@ from threading import Lock
 
 from annie.core.config import settings
 from annie.core.models import VideoEntry
+from annie.core.runtime import hidden_console
 
 RenderFn = Callable[[VideoEntry, Path], None]
 """Signature of a render function.
@@ -320,7 +321,9 @@ def burn_clip(
     # Drain ffmpeg's progress/error output to a temp file so a full stderr pipe
     # can never deadlock the frame-writing loop on a long clip.
     with tempfile.TemporaryFile() as errlog:
-        process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=errlog)
+        process = subprocess.Popen(
+            cmd, stdin=subprocess.PIPE, stderr=errlog, creationflags=hidden_console()
+        )
         assert process.stdin is not None
         try:
             for frame_idx in range(num_frames):
