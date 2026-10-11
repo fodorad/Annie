@@ -1,8 +1,12 @@
-.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer-icon run check clean docker-build docker-run help
+.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer installer-try installer-icon run check clean docker-build docker-run help
 
 # macOS: torchcodec requires FFmpeg dylibs which Homebrew installs to a non-standard
 # prefix. make does not inherit DYLD_LIBRARY_PATH, so we set it explicitly here.
 export DYLD_LIBRARY_PATH := /opt/homebrew/opt/ffmpeg/lib:$(DYLD_LIBRARY_PATH)
+
+# The active environment's interpreter, as a path native tools understand. `which python`
+# would give Git Bash's /c/... form on Windows, which uv and ty cannot read.
+PYTHON := $(shell python -c "import sys; print(sys.executable)")
 
 help:
 	@echo "Dev (modify files):  fix"
@@ -11,22 +15,22 @@ help:
 	@echo "Run:                 run  (override with 'make run PORT=8090 HOST=0.0.0.0')"
 	@echo "Docker:              docker-build | docker-run"
 	@echo "Docs:                docs-serve | docs-deploy | screenshots"
-	@echo "Windows installer:   installer-icon  (installer itself is built in CI)"
+	@echo "Windows installer:   installer | installer-try  (Windows + Inno Setup) | installer-icon"
 	@echo "Cleanup:             clean"
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 
 install:
-	uv pip install --python $(shell which python) "annie[all]"
+	uv pip install --python "$(PYTHON)" "annie[all]"
 
 dev:
-	uv pip install --python $(shell which python) -e ".[all,dev]"
+	uv pip install --python "$(PYTHON)" -e ".[all,dev]"
 
 upgrade:
-	uv pip install --python $(shell which python) --upgrade -e ".[all,dev,docs]"
+	uv pip install --python "$(PYTHON)" --upgrade -e ".[all,dev,docs]"
 
 install-docs:
-	uv pip install --python $(shell which python) -e ".[docs]"
+	uv pip install --python "$(PYTHON)" -e ".[docs]"
 
 # ── Dev helpers (modify files) ─────────────────────────────────────────────────
 
@@ -41,7 +45,7 @@ lint:
 	ruff format --check .
 
 type-check:
-	uv tool run ty check annie --python $(shell which python)
+	uv tool run ty check annie --python "$(PYTHON)"
 
 test:
 	uv run coverage run -m unittest discover -s tests
@@ -91,9 +95,19 @@ screenshots:
 
 # ── Windows installer ──────────────────────────────────────────────────────────
 
+# Build Annie-Setup.exe on Windows exactly as CI does (needs Inno Setup 6:
+# `winget install JRSoftware.InnoSetup`). installer-try also installs it with a wheel of
+# this checkout, to try your changes before pushing. Without make, run the script:
+#   powershell -ExecutionPolicy Bypass -File installer\windows\build.ps1 [-Try]
+# CI builds and end-to-end tests it too (.github/workflows/windows-installer.yml).
+installer:
+	powershell -NoProfile -ExecutionPolicy Bypass -File installer/windows/build.ps1
+
+installer-try:
+	powershell -NoProfile -ExecutionPolicy Bypass -File installer/windows/build.ps1 -Try
+
 # Rebuild the installer/shortcut icon from the logo mark, then commit the .ico. Needs
-# rsvg-convert (brew install librsvg) and Pillow. The installer itself is built and
-# end-to-end tested on a Windows runner (.github/workflows/windows-installer.yml).
+# rsvg-convert (brew install librsvg) and Pillow.
 installer-icon:
 	rsvg-convert -w 256 -h 256 docs/assets/mark.svg -o installer/windows/mark.png
 	python -c "from PIL import Image; Image.open('installer/windows/mark.png').save('installer/windows/annie.ico', sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])"

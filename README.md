@@ -97,13 +97,16 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
 If you just want to *use* Annie on Windows (no terminal, Python, FFmpeg, Docker or admin
 rights needed), download
 [**Annie-Setup.exe**](https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe),
-click **Install**, then double-click **Annie** on the desktop. Annie updates itself on
-every start, and your work is kept in `%USERPROFILE%\Annie`. The
+choose where Annie and your work go (default `%USERPROFILE%\Annie\App` and
+`%USERPROFILE%\Annie\Data`) and whether to include the two example datasets, then start
+**Annie** from the Start menu. Annie runs as an icon
+in the notification area, updates itself on every start, and uninstalls without leaving
+anything behind. The
 [Windows install guide](https://fodorad.github.io/Annie/install-windows.html) covers the
-SmartScreen prompt, updating, and uninstalling.
+SmartScreen prompt, the tray menu, updating, and uninstalling.
 
 How it is built: [`installer/windows/`](installer/windows/) holds the launcher, the Inno
-Setup script and the pinned uv/FFmpeg downloads; CI builds the installer and tests it end
+Setup script and the pinned uv/Python/FFmpeg downloads; CI builds the installer and tests it end
 to end on Windows for every release. The older Docker-based launcher in
 [`launcher/windows/`](launcher/windows/) remains as an alternative for IT-managed machines.
 The developer install paths below are **not** needed for either.

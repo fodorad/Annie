@@ -239,7 +239,10 @@ class TestConfigDbPersistence(unittest.TestCase):
         real = self.tmp / "real_home"
         real.mkdir()
         link = self.tmp / "linked_home"
-        link.symlink_to(real, target_is_directory=True)
+        try:
+            link.symlink_to(real, target_is_directory=True)
+        except OSError:  # Windows without Developer Mode: no symlink privilege
+            self.skipTest("this account may not create symlinks")
         settings.annie_home = link
 
         reg = SourceRegistry()
@@ -290,6 +293,21 @@ class TestLastConfig(unittest.TestCase):
         datasets.remember_last_config(self.config)
         self.config.unlink()
         self.assertIsNone(datasets.last_config())
+
+    def test_config_moved_with_the_home_is_found(self) -> None:
+        old = self.tmp / "old" / "configs" / "mine.json"
+        old.parent.mkdir(parents=True)
+        old.write_text("{}", encoding="utf-8")
+        datasets.remember_last_config(old)
+        moved = settings.annie_home / "configs" / "mine.json"
+        moved.parent.mkdir(parents=True)
+        old.replace(moved)
+        saved_config_dir = settings.config_dir
+        settings.config_dir = None
+        try:
+            self.assertEqual(datasets.last_config(), moved.resolve())
+        finally:
+            settings.config_dir = saved_config_dir
 
     def test_corrupt_pointer_is_ignored(self) -> None:
         settings.annie_home.mkdir(parents=True)

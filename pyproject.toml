@@ -46,6 +46,12 @@ media = [
   "torch==2.14.1",
   "torchcodec==0.17.0",
 ]
+# ── Windows desktop app ──────────────────────────────────────────────────────
+# The notification-area (tray) icon of `python -m annie.desktop`, which the Windows
+# installer starts. Elsewhere it installs nothing and Annie runs without the icon.
+desktop = [
+  "pystray>=0.19; sys_platform == 'win32'",
+]
 dev = [
   "ruff",
   "ty",
@@ -65,7 +71,7 @@ docs = [
   "pillow",
 ]
 all = [
-  "annie[media]",
+  "annie[media,desktop]",
 ]
 
 [project.scripts]
@@ -115,6 +121,7 @@ omit = [
   # UI assembly + frame decode need a browser / torchcodec + FFmpeg + real
   # video files; exercised manually and in integration, not unit-covered here.
   "annie/app.py",
+  "annie/desktop.py",
   "annie/pages/*",
   "annie/core/state.py",
   "annie/media/decode.py",
