@@ -28,6 +28,7 @@ import tempfile
 from pathlib import Path
 
 from annie.core.config import settings
+from annie.core.runtime import hidden_console
 from annie.media.rendering import CRF, FASTSTART, PRESET
 
 #: In-process cache of ``(video, start, end) → output path`` so a band opened twice in
@@ -114,7 +115,13 @@ def cut_clip(video_path: str | Path, start: float, end: float) -> Path:
         str(output),
     ]  # fmt: skip
     with tempfile.TemporaryFile() as errlog:
-        process = subprocess.run(cmd, stdin=subprocess.DEVNULL, stderr=errlog, check=False)
+        process = subprocess.run(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            stderr=errlog,
+            check=False,
+            creationflags=hidden_console(),
+        )
         if process.returncode != 0:
             errlog.seek(0)
             raise RuntimeError(f"ffmpeg failed: {errlog.read().decode('utf-8', 'replace')[-500:]}")

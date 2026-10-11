@@ -29,6 +29,8 @@ from pathlib import Path
 from threading import Lock
 from typing import TYPE_CHECKING, Literal
 
+from annie.core.runtime import hidden_console
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -373,7 +375,9 @@ def audio_video_consistent(
 
 def run_ffmpeg(cmd: list[str]) -> None:  # pragma: no cover - needs system ffmpeg
     """Run an ffmpeg command, raising :class:`RuntimeError` with its tail on failure."""
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
+    proc = subprocess.run(  # noqa: S603 - argv list, no shell
+        cmd, capture_output=True, text=True, check=False, creationflags=hidden_console()
+    )
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg failed: {proc.stderr[-500:]}")
 

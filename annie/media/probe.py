@@ -11,6 +11,8 @@ from __future__ import annotations
 import subprocess
 from typing import TYPE_CHECKING
 
+from annie.core.runtime import hidden_console
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -54,7 +56,9 @@ def video_probe_command(path: str | Path) -> list[str]:
 def _has_stream(cmd: list[str]) -> bool:  # pragma: no cover - needs system ffprobe
     """Run an ffprobe stream-listing command; ``True`` if it reports any stream."""
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
+        proc = subprocess.run(  # noqa: S603 - argv list, no shell
+            cmd, capture_output=True, text=True, check=False, creationflags=hidden_console()
+        )
     except OSError:
         return False
     return proc.returncode == 0 and bool(proc.stdout.strip())

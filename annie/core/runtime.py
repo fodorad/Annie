@@ -7,6 +7,9 @@ Concerns of the installed app rather than of the UI, kept out of :mod:`annie.app
   the DLLs an extension module depends on, so torchcodec cannot find FFmpeg's
   ``avcodec-*.dll`` & co. unless their folder is registered with
   :func:`os.add_dll_directory` before torchcodec is imported.
+* **No console windows.** The installed Annie runs without a console (``pythonw``), so
+  every ffmpeg/ffprobe it starts would get a console window of its own, flashing on
+  screen; :func:`hidden_console` keeps them hidden.
 * **A second launch.** Double-clicking the shortcut while Annie is already running must
   open the running instance instead of crashing on a busy port.
 * **Launcher age.** The Windows installer's launcher (``installer/windows/launcher.pyw``)
@@ -64,6 +67,9 @@ EXAMPLES_URL = "https://github.com/fodorad/Annie/releases/latest/download/annie-
 EXAMPLE_FOLDERS = ("config", "example")
 """The top-level folders of the examples archive; nothing else is extracted from it."""
 
+_CREATE_NO_WINDOW = 0x08000000
+"""Windows process-creation flag: a console program runs without showing a window."""
+
 _DLL_DIRECTORIES: list[object] = []
 """Handles returned by :func:`os.add_dll_directory`; kept alive so the paths stay registered."""
 
@@ -85,6 +91,24 @@ def ffmpeg_dll_dir(override: str | None, ffmpeg_exe: str | None) -> Path | None:
     if ffmpeg_exe:
         return Path(ffmpeg_exe).parent
     return None
+
+
+def hidden_console(platform: str = sys.platform) -> int:
+    """The :mod:`subprocess` ``creationflags`` that keep a console program out of sight.
+
+    When a program without a console (the installed Annie runs under ``pythonw``) starts
+    a console program such as ffmpeg or ffprobe, Windows opens a new console window for
+    it, which flashes on screen for every video. ``CREATE_NO_WINDOW`` gives the child a
+    console it can write to, without a window. Other platforms need no flags.
+
+    Args:
+        platform: ``sys.platform``, injectable for tests.
+
+    Returns:
+        ``CREATE_NO_WINDOW`` on Windows, else ``0`` (no flags, valid everywhere); pass it
+        on as ``subprocess.run(cmd, creationflags=hidden_console())``.
+    """
+    return _CREATE_NO_WINDOW if platform == "win32" else 0
 
 
 def ensure_windows_ffmpeg_dlls() -> Path | None:
