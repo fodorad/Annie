@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.13.1](https://github.com/fodorad/Annie/compare/v1.13.0...v1.13.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **cd:** grant the Windows installer workflow actions: read so CD starts ([#68](https://github.com/fodorad/Annie/issues/68)) ([d5056f0](https://github.com/fodorad/Annie/commit/d5056f000d49dcefbedb4ff4aca9f13238584257))
+
 ## [1.13.0](https://github.com/fodorad/Annie/compare/v1.12.0...v1.13.0) (2026-10-11)
 
 
