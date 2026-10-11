@@ -47,8 +47,12 @@ jobs:
     needs: publish
     # Only a tag push has a release to attach to (workflow_dispatch may run on a branch).
     if: startsWith(github.ref, 'refs/tags/')
+    # A called workflow may not ask for more than this grants, or the whole run fails to
+    # start: windows-installer.yml's build job reads actions (SignPath fetches the unsigned
+    # installer artifact) and its attach job writes the release.
     permissions:
       contents: write
+      actions: read
     uses: ./.github/workflows/windows-installer.yml
     with:
       tag: ${{ github.ref_name }}
