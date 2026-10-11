@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-from annie.core.runtime import ensure_windows_ffmpeg_dlls
+from annie.core.runtime import decoder_problem, ensure_windows_ffmpeg_dlls
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     import numpy as np
@@ -54,13 +54,51 @@ def _require_media() -> None:
         )
 
 
-def _decoder(path: str | Path, seek_mode: SeekMode):  # noqa: ANN202 - external type
-    """Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""
+#: Why the installed decoder cannot load, once :func:`check_decoder` has found out.
+_decoder_error: MediaUnavailableError | None = None
+
+
+def _video_decoder_class():  # noqa: ANN202 - external type
+    """Import torchcodec's ``VideoDecoder``, turning a load failure into a clear error.
+
+    torchcodec can be installed and still fail to import, e.g. when PyTorch's DLLs miss
+    the Visual C++ runtime on Windows. That surfaces as an ``OSError`` deep inside
+    ``import torch``; callers get a :class:`MediaUnavailableError` saying what to do.
+    """
     _require_media()
     ensure_windows_ffmpeg_dlls()  # Windows: FFmpeg's DLLs must be registered before import
-    from torchcodec.decoders import VideoDecoder  # local import: optional dependency
+    try:
+        from torchcodec.decoders import VideoDecoder  # local import: optional dependency
+    except (ImportError, OSError) as exc:
+        raise MediaUnavailableError(decoder_problem(exc)) from exc
+    return VideoDecoder
 
-    return VideoDecoder(str(Path(path)), seek_mode=seek_mode)
+
+def check_decoder() -> MediaUnavailableError | None:
+    """Load the decoder once and remember why it failed (run off the event loop).
+
+    Returns:
+        The error, whose message says what to do, or ``None`` when frames can be decoded
+        or the ``media`` extra is not installed (which is reported separately).
+    """
+    global _decoder_error
+    if not media_available():
+        return None
+    try:
+        _video_decoder_class()
+    except MediaUnavailableError as exc:
+        _decoder_error = exc
+    return _decoder_error
+
+
+def decoder_problem_found() -> str | None:
+    """The problem :func:`check_decoder` found, without loading anything."""
+    return None if _decoder_error is None else str(_decoder_error)
+
+
+def _decoder(path: str | Path, seek_mode: SeekMode):  # noqa: ANN202 - external type
+    """Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""
+    return _video_decoder_class()(str(Path(path)), seek_mode=seek_mode)
 
 
 def _to_hwc_uint8(frame) -> np.ndarray:  # noqa: ANN001 - external tensor type

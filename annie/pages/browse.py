@@ -46,7 +46,12 @@ from annie.dataset import manipulate
 from annie.dataset.filtering import FilterSpec, apply_filters
 from annie.media import probe
 from annie.media.decode import media_available
-from annie.media.preview import build_grid_preview, build_preview, to_data_uri
+from annie.media.preview import (
+    build_grid_preview,
+    build_preview,
+    report_decode_failure,
+    to_data_uri,
+)
 from annie.media.rendering import JobStatus
 from annie.pages import annotator
 from annie.pages.csv_dialog import select_id_column
@@ -455,7 +460,8 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
     sw, sh = _media_dims()
     try:
         result = await run.io_bound(build_preview, entry)
-    except Exception:  # noqa: BLE001 - a bad/missing file must not break the row
+    except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
+        reason = report_decode_failure(entry.video_path, exc)
         if anchor is not None and not _alive(anchor):
             return
         with contextlib.suppress(RuntimeError):
@@ -464,7 +470,7 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
             for slot in strip:
                 slot.clear()
                 with slot:
-                    ui.icon("broken_image", color=theme.DANGER)
+                    ui.icon("broken_image", color=theme.DANGER).tooltip(reason)
         return
     if result is None:
         return  # NiceGUI's io_bound yields None while the app is shutting down
@@ -653,8 +659,15 @@ async def _populate_grid(entry: VideoEntry, slot: ui.element) -> None:
     width, height = _grid_dims()
     try:
         result = await run.io_bound(build_grid_preview, entry)
-    except Exception:  # noqa: BLE001 - a bad/missing file must not break the box
-        return  # leave the grey placeholder in place
+    except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the box
+        reason = report_decode_failure(entry.video_path, exc)
+        if not _alive(slot):
+            return
+        with contextlib.suppress(RuntimeError):  # the box was refreshed away mid-decode
+            slot.clear()
+            with slot, ui.row().classes("w-full h-full items-center justify-center"):
+                ui.icon("broken_image", color=theme.DANGER, size="md").tooltip(reason)
+        return
     if result is None:
         return  # NiceGUI's io_bound yields None while the app is shutting down
     image, num_frames = result

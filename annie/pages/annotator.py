@@ -54,6 +54,7 @@ corrections to the ``_manual`` CSV beside the heuristic source (see
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING
 
@@ -71,7 +72,12 @@ from annie.dataset.segments import (
 from annie.dataset.sources import TASK_LABELS, TaskKind, task_readiness
 from annie.media.clipping import cut_clip
 from annie.media.decode import media_available
-from annie.media.preview import build_band_strip, build_preview, to_data_uri
+from annie.media.preview import (
+    build_band_strip,
+    build_preview,
+    report_decode_failure,
+    to_data_uri,
+)
 from annie.media.rendering import JobStatus
 from annie.pages import event_task
 from annie.pages.lazy import schedule
@@ -89,8 +95,9 @@ if TYPE_CHECKING:
     from annie.core.models import VideoEntry
     from annie.dataset.storage import Decision, Verdict
 
-#: The Annotator tab element, so its enabled/disabled state can be toggled.
-_tab: ui.tab | None = None
+#: Every open page's Annotator tab element, by client id, so a change made in one page
+#: (queueing a video in Browse) enables or disables the tab in all of them.
+_tabs: dict[str, ui.tab] = {}
 #: Shared CSS for the grey, centred media placeholder box on each Annotator row.
 _BOX = "border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center"
 
@@ -150,9 +157,14 @@ _IMG = "width:100%;height:100%;object-fit:contain"
 
 
 def set_tab(tab: ui.tab) -> None:
-    """Register the tab element so availability can be toggled from elsewhere."""
-    global _tab
-    _tab = tab
+    """Register this page's tab element so availability can be toggled from elsewhere.
+
+    It is forgotten when the page is gone for good (not on a brief disconnect, after
+    which the same page reconnects).
+    """
+    client = tab.client
+    _tabs[client.id] = tab
+    client.on_delete(lambda: _tabs.pop(client.id, None))
 
 
 def _host() -> ui.element:
@@ -191,12 +203,19 @@ def _tab_available() -> bool:
 
 
 def sync_tab() -> None:
-    """Enable the tab when a video is queued or a queue-free task is ready."""
-    if _tab is not None:
-        if _tab_available():
-            _tab.props(remove="disable")
+    """Enable the tab in every open page when a video is queued or a queue-free task is ready.
+
+    The queue lives in the shared review database, so every page shows the same state.
+    """
+    available = _tab_available()
+    for client_id, tab in list(_tabs.items()):
+        if not _alive(tab):
+            _tabs.pop(client_id, None)
+            continue
+        if available:
+            tab.props(remove="disable")
         else:
-            _tab.props(add="disable")
+            tab.props(add="disable")
 
 
 def update_availability() -> None:
@@ -317,7 +336,15 @@ async def _populate_strip(entry: VideoEntry, strip: list[ui.element], scale: flo
         return
     try:
         result = await run.io_bound(build_preview, entry)
-    except Exception:  # noqa: BLE001 - a bad/missing file must not break the row
+    except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
+        reason = report_decode_failure(entry.video_path, exc)
+        for slot in strip:
+            if not _alive(slot):
+                continue
+            with contextlib.suppress(RuntimeError):  # the row was refreshed away
+                slot.clear()
+                with slot:
+                    ui.icon("broken_image", color=theme.DANGER).tooltip(reason)
         return
     if result is None:
         return  # NiceGUI's io_bound yields None while the app is shutting down
@@ -1096,7 +1123,7 @@ def _band_strip(video_path: Path, band) -> None:  # noqa: ANN001 - ClipBand, see
                 build_band_strip, video_path, band.start, band.end, _BAND_STRIP_COUNT
             )
         except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
-            logbook.report(f"Could not decode band strip for {video_path}: {exc}")
+            report_decode_failure(video_path, exc)
             return
         if not frames or not _alive(row):
             return

@@ -103,7 +103,7 @@ jobs:
         Start-Process installer\windows\Output\Annie-Setup.exe -Wait `
           -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$app`"", "/DATADIR=`"$data`""
         Get-Content "$app\install.log" -Tail 20 -ErrorAction SilentlyContinue
-        foreach ($f in 'uv.exe', 'launcher.pyw', 'annie.ico', 'annie.ini', 'unins000.exe',
+        foreach ($f in 'uv.exe', 'launcher.pyw', 'annie.ico', 'annie.png', 'annie.ini', 'unins000.exe',
                        'python\pythonw.exe', 'env\Scripts\pythonw.exe',
                        'ffmpeg\bin\ffmpeg.exe', 'ffmpeg\bin\ffprobe.exe', 'ffmpeg\LICENSE.txt') {
           if (-not (Test-Path "$app\$f")) { throw "missing $app\$f" }
@@ -156,13 +156,15 @@ jobs:
         if (-not $tray) { throw 'annie.desktop is not running' }
         if (-not (Test-Path "$env:DATA\logs")) { throw 'Annie did not use the chosen data folder' }
 
-    - name: Bundled FFmpeg decodes video through torchcodec
+    - name: Bundled FFmpeg and Visual C++ runtime decode video through torchcodec
       run: |
         # Only ANNIE_FFMPEG_LIB_DIR points at FFmpeg (not PATH), proving the DLL registration.
         $env:ANNIE_FFMPEG_LIB_DIR = "$env:APP\ffmpeg\bin"
-        & "$env:APP\env\Scripts\python.exe" -c `
-          "import sys; from annie.media import decode; m = decode.video_metadata(sys.argv[1]); print(m); assert m.num_frames > 0" `
-          data\example\fi_mini\video\_ztmNiy8D3c.000.mp4
+        # PyTorch needs the Visual C++ runtime, which many PCs lack. This runner has it
+        # system-wide, which hid that once, so check that the copy next to the bundled
+        # python.exe is the one loaded: Windows searches the program's folder first.
+        & "$env:APP\env\Scripts\python.exe" "installer\windows\check-decode.py" `
+          "$env:APP\python" data\example\fi_mini\video\_ztmNiy8D3c.000.mp4
         if ($LASTEXITCODE) { throw 'decode failed' }
 
     - name: A second start reuses the running Annie

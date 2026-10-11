@@ -161,6 +161,35 @@ class TestVersions(unittest.TestCase):
         self.assertFalse(runtime.is_newer("2.0.0", "unknown"))
 
 
+class TestDecoderProblem(unittest.TestCase):
+    """The message shown when the frame decoder cannot load."""
+
+    _DLL_ERROR = OSError(
+        126,
+        'Error loading "C:\\App\\env\\Lib\\site-packages\\torch\\lib\\c10.dll" or one of '
+        "its dependencies.",
+    )
+
+    def test_missing_windows_dll_points_to_the_fix(self) -> None:
+        message = runtime.decoder_problem(self._DLL_ERROR, "win32")
+        self.assertIn("c10.dll", message)
+        self.assertIn(runtime.INSTALLER_URL, message)
+        self.assertIn(runtime.VC_REDIST_URL, message)
+
+    def test_same_error_elsewhere_is_reported_plainly(self) -> None:
+        message = runtime.decoder_problem(self._DLL_ERROR, "linux")
+        self.assertIn("c10.dll", message)
+        self.assertNotIn(runtime.VC_REDIST_URL, message)
+
+    def test_import_error(self) -> None:
+        message = runtime.decoder_problem(ImportError("No module named 'torch'"), "win32")
+        self.assertIn("No module named 'torch'", message)
+        self.assertNotIn(runtime.VC_REDIST_URL, message)
+
+    def test_empty_message_names_the_exception(self) -> None:
+        self.assertIn("ImportError", runtime.decoder_problem(ImportError(), "darwin"))
+
+
 class TestTlsContext(unittest.TestCase):
     """Downloads verify certificates, with certifi's roots when certifi is installed."""
 

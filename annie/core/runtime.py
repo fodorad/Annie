@@ -39,17 +39,21 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from annie.core.config import Settings
 
-REQUIRED_LAUNCHER_VERSION = 2
+REQUIRED_LAUNCHER_VERSION = 3
 """Oldest ``installer/windows/launcher.pyw`` version this Annie works with.
 
 Bump this together with ``LAUNCHER_VERSION`` in the launcher whenever the launcher, its
 bundled Python or FFmpeg changes in a way this Annie relies on. Version 2 is the tray
 launcher with the bundled Python; installs still running ``Annie.cmd`` (version 1) are
-asked to run the new installer.
+asked to run the new installer. Version 3 bundles the Visual C++ runtime next to that
+Python, which PyTorch needs on PCs without the system-wide Redistributable.
 """
 
 INSTALLER_URL = "https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe"
 """Permanent download link to the newest Windows installer."""
+
+VC_REDIST_URL = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+"""Microsoft's permanent link to the Visual C++ Redistributable (x64)."""
 
 PYPI_URL = "https://pypi.org/pypi/annie/json"
 """PyPI's JSON description of the ``annie`` project; ``info.version`` is the newest release."""
@@ -281,3 +285,28 @@ def download_examples(directory: Path, timeout: float = 60.0) -> int:  # pragma:
         raise ValueError("the download is not a zip archive") from exc
     finally:
         archive.unlink(missing_ok=True)
+
+
+def decoder_problem(exc: BaseException, platform: str = sys.platform) -> str:
+    """Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.
+
+    On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch's DLLs
+    need ``msvcp140.dll`` & co., which neither Windows nor Python always provide. The
+    Windows installer bundles them; installs made before that, and other setups, need
+    the system-wide Redistributable.
+
+    Args:
+        exc: The ``ImportError``/``OSError`` raised while importing the decoder.
+        platform: ``sys.platform``, injectable for tests.
+
+    Returns:
+        A one-line message for the Log tab, the toast and the banner.
+    """
+    reason = str(exc).strip() or type(exc).__name__
+    if platform == "win32" and isinstance(exc, OSError) and ".dll" in reason.lower():
+        return (
+            "Video frames cannot be decoded: a Windows system library is missing "
+            f"({reason}). Run the newest Annie installer ({INSTALLER_URL}), which includes "
+            f"it, or install the Microsoft Visual C++ Redistributable ({VC_REDIST_URL})."
+        )
+    return f"Video frames cannot be decoded: the decoder failed to load ({reason})."

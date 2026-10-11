@@ -11,7 +11,7 @@
 # (which may not have your changes yet). Later starts keep it: the launcher only updates
 # when PyPI has a newer version than the one installed.
 #
-# -Fresh re-downloads the bundled uv, Python and FFmpeg (otherwise they are reused from
+# -Fresh re-downloads the bundled uv, Python (with the Visual C++ runtime) and FFmpeg (otherwise they are reused from
 # installer\windows\build after the first run).
 #
 # Needs Inno Setup 6 (free): winget install JRSoftware.InnoSetup
@@ -43,7 +43,7 @@ if (-not $iscc) {
 
 # 1. Bundled binaries (checksum-verified), downloaded once and reused.
 $complete = (Test-Path "$deps\uv.exe") -and (Test-Path "$deps\python\pythonw.exe") -and
-            (Test-Path "$deps\ffmpeg\bin\ffmpeg.exe")
+            (Test-Path "$deps\python\msvcp140.dll") -and (Test-Path "$deps\ffmpeg\bin\ffmpeg.exe")
 if ($Fresh -or -not $complete) {
     & "$here\fetch-deps.ps1" -OutDir $deps
 }

@@ -30,7 +30,9 @@ from annie import __version__
 from annie.core import logbook, runtime, theme
 from annie.core.config import settings
 from annie.core.state import state
+from annie.media import decode
 from annie.media.decode import media_available
+from annie.media.preview import report_decode_failure
 from annie.pages import annotator, browse, convert, dataset, home
 from annie.pages import logs as logs_page
 from annie.pages import settings as settings_page
@@ -105,6 +107,8 @@ def build() -> None:
 
     if runtime.launcher_outdated(os.environ.get("ANNIE_LAUNCHER_VERSION")):
         _launcher_update_banner()
+    if (problem := decode.decoder_problem_found()) is not None:
+        _decoder_banner(problem)
 
     def navigate(name: str) -> None:
         tabs.set_value(name)
@@ -150,6 +154,28 @@ def _launcher_update_banner() -> None:
         ui.icon("system_update", color=theme.WARNING)
         ui.label("A new Annie installer is available. Download it and run it once to update.")
         ui.link("Download installer", runtime.INSTALLER_URL, new_tab=True)
+
+
+def _decoder_banner(problem: str) -> None:
+    """Say up front that frames cannot be decoded, instead of empty frame boxes."""
+    with (
+        ui.row()
+        .classes("w-full items-center gap-2 q-pa-sm rounded no-wrap")
+        .style(f"background:{theme.DANGER}22")
+    ):
+        ui.icon("broken_image", color=theme.DANGER)
+        ui.label(problem).classes("text-sm")
+
+
+async def _check_decoder() -> None:
+    """Load the frame decoder once in the background; report it if it cannot load.
+
+    Without this, a decoder that is installed but cannot load (on Windows, a missing
+    Visual C++ runtime) only shows as broken frames. Pages built afterwards show a banner.
+    """
+    error = await run.io_bound(decode.check_decoder)
+    if error is not None:
+        report_decode_failure("", error)
 
 
 @ui.page("/")
@@ -285,6 +311,8 @@ def main() -> None:
             'Run: uv pip install -e ".[all]"',
             level="warning",
         )
+    else:
+        app.on_startup(lambda: asyncio.create_task(_check_decoder()))
     app.on_startup(lambda: asyncio.create_task(run.io_bound(state.rescan)))
     app.on_startup(lambda: asyncio.create_task(_sweep_render_clips()))
     app.on_shutdown(state.renderer.shutdown)

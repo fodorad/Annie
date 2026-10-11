@@ -15,6 +15,7 @@ runs.
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -24,14 +25,26 @@ from annie.core import theme
 from annie.core.state import state
 from annie.media import convert
 from annie.pages.folder_picker import pick_directory
+from annie.pages.utils import _alive
 
-#: Widgets of the shared progress panel, rebuilt per page render.
-_bar: ui.linear_progress | None = None
-_title: ui.label | None = None  #: current-file / status line
-_counts: ui.label | None = None  #: ``X/Y`` processed count
-_times: ui.label | None = None  #: elapsed / ETA readout
-_failed: ui.label | None = None  #: failure count, shown when non-zero
-_cancel: ui.button | None = None  #: cancels the running batch
+
+@dataclass(frozen=True, slots=True)
+class _Panel:
+    """One page's progress widgets (each open page has its own)."""
+
+    title: ui.label  #: current-file / status line
+    bar: ui.linear_progress
+    counts: ui.label  #: ``X/Y`` processed count
+    times: ui.label  #: elapsed / ETA readout
+    failed: ui.label  #: failure count, shown when non-zero
+    cancel: ui.button  #: cancels the running batch
+
+
+#: Every open page's progress panel, by client id: the conversion is shared, so all of
+#: them show it, not just the page opened last.
+_panels: dict[str, _Panel] = {}
+#: Whether a watcher task is already refreshing the panels.
+_watching = False
 
 
 def _fmt_duration(seconds: float) -> str:
@@ -91,45 +104,54 @@ async def _export_failed() -> None:
 
 
 def _build_progress() -> None:
-    """Build the shared progress panel and render the current state into it."""
-    global _bar, _title, _counts, _times, _failed, _cancel
+    """Build this page's progress panel and render the current state into it."""
     with ui.card().classes("w-full gap-1"):
-        _title = ui.label().classes("font-medium")
-        _bar = ui.linear_progress(value=0.0, show_value=False).props("rounded")
-        _counts = ui.label().classes("text-sm")
-        _times = ui.label().classes("text-xs").style(f"color:{theme.NEUTRAL}")
-        _failed = ui.label().classes("text-xs").style(f"color:{theme.DANGER}")
+        title = ui.label().classes("font-medium")
+        bar = ui.linear_progress(value=0.0, show_value=False).props("rounded")
+        counts = ui.label().classes("text-sm")
+        times = ui.label().classes("text-xs").style(f"color:{theme.NEUTRAL}")
+        failed = ui.label().classes("text-xs").style(f"color:{theme.DANGER}")
         with ui.row().classes("items-center gap-2"):
-            _cancel = ui.button("Cancel", icon="stop", on_click=state.converter.cancel).props(
-                "flat"
-            )
+            cancel = ui.button("Cancel", icon="stop", on_click=state.converter.cancel).props("flat")
             ui.button("Export reencoded ids", icon="download", on_click=_export_succeeded).props(
                 "flat"
             )
             ui.button("Export failed ids", icon="download", on_click=_export_failed).props("flat")
-    _render_progress()
+    client = title.client
+    panel = _Panel(title, bar, counts, times, failed, cancel)
+    _panels[client.id] = panel
+    client.on_delete(lambda: _panels.pop(client.id, None))
+    _render_panel(panel)
 
 
 def _render_progress() -> None:
-    """Update the progress widgets from the converter's current snapshot."""
-    if _bar is None or _title is None or _counts is None or _times is None:
-        return
-    if _failed is None or _cancel is None:
-        return
+    """Update every open page's progress panel from the converter's current snapshot."""
+    for client_id, panel in list(_panels.items()):
+        if not _alive(panel.title):
+            _panels.pop(client_id, None)
+            continue
+        try:
+            _render_panel(panel)
+        except RuntimeError:  # the panel was rebuilt/refreshed away mid-update
+            _panels.pop(client_id, None)
+
+
+def _render_panel(panel: _Panel) -> None:
+    """Render the converter's current snapshot into one page's progress panel."""
     p = state.converter.progress()
 
     if p.status == "idle":
-        _title.set_text("No conversion running.")
-        _bar.set_value(0.0)
-        _counts.set_text("")
-        _times.set_text("")
-        _failed.set_text("")
-        _cancel.set_visibility(False)
+        panel.title.set_text("No conversion running.")
+        panel.bar.set_value(0.0)
+        panel.counts.set_text("")
+        panel.times.set_text("")
+        panel.failed.set_text("")
+        panel.cancel.set_visibility(False)
         return
 
-    _title.set_text(f"{p.title} — {p.status}")
-    _bar.set_value(p.fraction)
-    _counts.set_text(
+    panel.title.set_text(f"{p.title} — {p.status}")
+    panel.bar.set_value(p.fraction)
+    panel.counts.set_text(
         f"{p.done}/{p.total}  ({p.fraction * 100:.0f}%)"
         f"   ·   converted {p.succeeded_count}   ·   failed {len(p.failed)}"
         + (f"   ·   {p.current}" if p.current else "")
@@ -143,27 +165,34 @@ def _render_progress() -> None:
     if eta is not None:
         finish = datetime.now() + timedelta(seconds=eta)
         parts.append(f"~{_fmt_duration(eta)} left (≈{finish:%H:%M:%S})")
-    _times.set_text("  ·  ".join(parts))
+    panel.times.set_text("  ·  ".join(parts))
 
     if p.failed:
         names = ", ".join(name for name, _ in p.failed[:5])
         more = "…" if len(p.failed) > 5 else ""
-        _failed.set_text(f"{len(p.failed)} failed: {names}{more}")
+        panel.failed.set_text(f"{len(p.failed)} failed: {names}{more}")
     else:
-        _failed.set_text("")
-    _cancel.set_visibility(p.status == "running")
+        panel.failed.set_text("")
+    panel.cancel.set_visibility(p.status == "running")
 
 
 async def _watch() -> None:
-    """Poll the converter and refresh the progress panel until the batch ends."""
-    while True:
-        try:
+    """Poll the converter and refresh every progress panel until the batch ends.
+
+    One watcher serves all open pages; a page opened mid-batch does not start another.
+    """
+    global _watching
+    if _watching:
+        return
+    _watching = True
+    try:
+        while True:
             _render_progress()
-        except RuntimeError:
-            return  # the panel was rebuilt/refreshed away
-        if state.converter.progress().status != "running":
-            return
-        await asyncio.sleep(0.4)
+            if state.converter.progress().status != "running":
+                return
+            await asyncio.sleep(0.4)
+    finally:
+        _watching = False
 
 
 def _start(title: str, items: list, work) -> None:  # noqa: ANN001 - work is a closure

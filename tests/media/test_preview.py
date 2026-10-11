@@ -13,13 +13,16 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from annie.core import logbook
 from annie.core.models import VideoEntry
-from annie.media.decode import media_available
+from annie.media import preview
+from annie.media.decode import MediaUnavailableError, media_available
 from annie.media.preview import (
     HIDPI_SCALE,
     band_frame_indices,
     build_band_strip,
     build_grid_preview,
+    report_decode_failure,
     to_data_uri,
 )
 
@@ -177,6 +180,44 @@ class TestBuildBandStrip(unittest.TestCase):
         last = float(np.asarray(frames[-1].convert("L")).mean())
         self.assertAlmostEqual(first, _LEVELS[0], delta=8)
         self.assertAlmostEqual(last, _LEVELS[-1], delta=8)
+
+
+class TestReportDecodeFailure(unittest.TestCase):
+    """Failed decodes are logged (they used to be swallowed), once per problem."""
+
+    def setUp(self) -> None:
+        preview._reported.clear()
+        self.addCleanup(preview._reported.clear)
+        self.seq = logbook.LOG.latest_seq()
+
+    def _errors(self) -> list[logbook.LogEvent]:
+        new, _ = logbook.LOG.since(self.seq)
+        return [e for e in new if e.level == "error"]
+
+    def test_a_decoder_that_cannot_load_is_logged_once(self) -> None:
+        exc = MediaUnavailableError("Video frames cannot be decoded: c10.dll missing")
+        for video in ("a.mp4", "b.mp4", "c.mp4"):
+            self.assertEqual(report_decode_failure(video, exc), str(exc))
+        errors = self._errors()
+        self.assertEqual([e.message for e in errors], [str(exc)])
+
+    def test_other_failures_are_logged_once_per_video(self) -> None:
+        try:
+            raise ValueError("moov atom not found")
+        except ValueError as exc:
+            reason = report_decode_failure("a.mp4", exc)
+            report_decode_failure("a.mp4", exc)
+            report_decode_failure("b.mp4", exc)
+        self.assertEqual(reason, "moov atom not found")
+        errors = self._errors()
+        self.assertEqual(len(errors), 2)
+        self.assertIn("a.mp4", errors[0].message)
+        self.assertIn("moov atom not found", errors[0].message)
+        self.assertIn("ValueError", errors[0].details)  # the traceback, for the Log tab
+        self.assertIn("b.mp4", errors[1].message)
+
+    def test_an_empty_message_names_the_exception(self) -> None:
+        self.assertEqual(report_decode_failure("a.mp4", RuntimeError()), "RuntimeError")
 
 
 if __name__ == "__main__":
