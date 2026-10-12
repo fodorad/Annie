@@ -102,7 +102,6 @@ jobs:
         $data = "$root\Data"
         # Setup must add nothing to the registry (locked-down PCs): remember what is there.
         $regBefore = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
-        $regBefore | Set-Content "$env:RUNNER_TEMP\reg-before.txt"
         Start-Process installer\windows\Output\Annie-Setup.exe -Wait `
           -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$app`"", "/DATADIR=`"$data`""
         Get-Content "$app\install.log" -Tail 20 -ErrorAction SilentlyContinue
@@ -198,6 +197,9 @@ jobs:
 
     - name: Uninstall removes everything except the user's work
       run: |
+        # Judge only the uninstall: taken now, not at the start of the job, because the
+        # browser a second start opens (Firefox on the runner) writes keys of its own.
+        $regBefore = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
         Start-Process "$env:APP\unins000.exe" -Wait `
           -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
         # The uninstaller re-launches itself from %TEMP%, so wait for it to finish.
@@ -208,7 +210,6 @@ jobs:
           if (Test-Path $lnk) { throw "shortcut left behind: $lnk" }
         }
         if (Test-Path $env:APP_ID_KEY) { throw 'registry key left behind' }
-        $regBefore = Get-Content "$env:RUNNER_TEMP\reg-before.txt"
         $regAfter = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
         $added = @($regAfter | Where-Object { $regBefore -notcontains $_ })
         if ($added) { throw "registry keys left behind: $($added -join ', ')" }
