@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import Response
 from nicegui import app, context, ui
 
-from annie.core import logbook, theme
+from annie.core import theme
 from annie.core.state import state
 from annie.dataset.events import (
     clamp_event,
@@ -35,6 +35,7 @@ from annie.dataset.events import (
     seconds_to_frame,
 )
 from annie.media.decode import media_available, video_metadata
+from annie.media.preview import report_decode_failure
 from annie.pages import download, timeline, videoclock
 from annie.pages.timeline_view import TimelineView
 
@@ -243,7 +244,7 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
             state_.num_frames = meta.num_frames
             state_.duration = frames_to_seconds(meta.num_frames, meta.fps)
         except Exception as exc:  # noqa: BLE001 - a bad file must not break the tab
-            logbook.report(f"Could not read metadata for {entry.video_path}: {exc}")
+            report_decode_failure(entry.video_path, exc)  # once per problem, not per video
     state_.reset_view()
     # Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed
     # them from any pre-existing event track names (back-compat for the old single-lane model);

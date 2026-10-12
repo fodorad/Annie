@@ -85,9 +85,14 @@ def check_decoder() -> MediaUnavailableError | None:
     if not media_available():
         return None
     try:
-        _video_decoder_class()
+        # torchcodec loads FFmpeg (its core library) only when a decoder is created, and
+        # does so before opening the file: a path that does not exist shows whether that
+        # load works, without needing a video.
+        _decoder(Path(__file__).with_name("no-such-video.mp4"), "approximate")
     except MediaUnavailableError as exc:
         _decoder_error = exc
+    except Exception:  # noqa: BLE001, S110 - "file not found" etc.: the decoder itself works
+        pass
     return _decoder_error
 
 
@@ -97,8 +102,20 @@ def decoder_problem_found() -> str | None:
 
 
 def _decoder(path: str | Path, seek_mode: SeekMode):  # noqa: ANN202 - external type
-    """Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode."""
-    return _video_decoder_class()(str(Path(path)), seek_mode=seek_mode)
+    """Construct a torchcodec ``VideoDecoder`` for ``path`` in the given seek mode.
+
+    Raises:
+        MediaUnavailableError: If torchcodec cannot load FFmpeg (``Could not load
+            libtorchcodec``): a problem of the decoder, not of this video, so callers
+            report it once instead of per video.
+    """
+    decoder_class = _video_decoder_class()
+    try:
+        return decoder_class(str(Path(path)), seek_mode=seek_mode)
+    except RuntimeError as exc:
+        if "libtorchcodec" in str(exc):
+            raise MediaUnavailableError(decoder_problem(exc)) from exc
+        raise
 
 
 def _to_hwc_uint8(frame) -> np.ndarray:  # noqa: ANN001 - external tensor type

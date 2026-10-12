@@ -159,5 +159,50 @@ class TestDecoderThatCannotLoad(unittest.TestCase):
         self.assertIsNone(decode.decoder_problem_found())
 
 
+class _FakeDecoder:
+    """Stands in for torchcodec's VideoDecoder: raises what it was given."""
+
+    error: Exception = RuntimeError("Could not load libtorchcodec. Likely causes: ...")
+
+    def __init__(self, path: str, seek_mode: str) -> None:
+        raise self.error
+
+
+class TestDecoderWithoutFfmpeg(unittest.TestCase):
+    """torchcodec imports, but cannot load FFmpeg when a video is opened."""
+
+    def setUp(self) -> None:
+        decode._decoder_error = None
+        self.addCleanup(setattr, decode, "_decoder_error", None)
+        self.addCleanup(setattr, _FakeDecoder, "error", _FakeDecoder.error)
+        for patch in (
+            mock.patch.object(decode, "media_available", return_value=True),
+            mock.patch.object(decode, "_video_decoder_class", return_value=_FakeDecoder),
+        ):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_opening_a_video_raises_one_decoder_wide_error(self) -> None:
+        with self.assertRaises(decode.MediaUnavailableError) as ctx:
+            decode.video_metadata("clip.mp4")
+        self.assertIn("FFmpeg's shared libraries were not found", str(ctx.exception))
+
+    def test_other_errors_stay_about_the_video(self) -> None:
+        _FakeDecoder.error = RuntimeError("moov atom not found")
+        with self.assertRaises(RuntimeError) as ctx:
+            decode.video_metadata("broken.mp4")
+        self.assertNotIsInstance(ctx.exception, decode.MediaUnavailableError)
+
+    def test_the_startup_check_finds_it(self) -> None:
+        self.assertIsInstance(decode.check_decoder(), decode.MediaUnavailableError)
+        self.assertIn("FFmpeg", decode.decoder_problem_found() or "")
+
+    def test_the_startup_check_accepts_a_working_decoder(self) -> None:
+        # A working decoder fails only because the probe path does not exist.
+        _FakeDecoder.error = RuntimeError("Could not open input file: no-such-video.mp4")
+        self.assertIsNone(decode.check_decoder())
+        self.assertIsNone(decode.decoder_problem_found())
+
+
 if __name__ == "__main__":
     unittest.main()

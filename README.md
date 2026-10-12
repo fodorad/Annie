@@ -98,10 +98,11 @@ If you just want to *use* Annie on Windows (no terminal, Python, FFmpeg, Docker 
 rights needed), download
 [**Annie-Setup.exe**](https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe),
 choose where Annie and your work go (default `%USERPROFILE%\Annie\App` and
-`%USERPROFILE%\Annie\Data`) and whether to include the two example datasets, then start
-**Annie** from the Start menu. Annie runs as an icon
-in the notification area, updates itself on every start, and uninstalls without leaving
-anything behind. The
+`%USERPROFILE%\Annie\Data`) and whether to include the two example datasets, then
+double-click **Annie** in the `%USERPROFILE%\Annie` folder. Annie runs as an icon
+in the notification area, updates itself on every start, and works on locked-down PCs:
+it writes only inside your user folder (no registry entries, no Start menu), and
+**Uninstall Annie** in the same folder removes it without leaving anything behind. The
 [Windows install guide](https://fodorad.github.io/Annie/install-windows.html) covers the
 SmartScreen prompt, the tray menu, updating, and uninstalling.
 

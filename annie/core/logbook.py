@@ -62,6 +62,29 @@ class LogEvent:
         return f"{head}\n{self.details}" if self.details else head
 
 
+MAX_MESSAGE_CHARS = 200
+"""Longest message shown in a toast or a Log tab row; the rest goes to the details."""
+
+
+def _shorten(message: str, details: str) -> tuple[str, str]:
+    """Cut ``message`` to one short line, moving its full text to the top of ``details``.
+
+    Args:
+        message: The summary as given by the caller.
+        details: The caller's long text, if any.
+
+    Returns:
+        The ``(message, details)`` to store; unchanged when ``message`` is already short.
+    """
+    text = message.strip()
+    first = text.splitlines()[0].strip() if text else ""
+    if first == text and len(text) <= MAX_MESSAGE_CHARS:
+        return message, details
+    short = first if len(first) <= MAX_MESSAGE_CHARS else first[: MAX_MESSAGE_CHARS - 1]
+    full = f"{text}\n\n{details}" if details else text
+    return f"{short.rstrip()}…", full
+
+
 class LogBook:
     """A thread-safe, bounded event store mirrored to a dated log file."""
 
@@ -138,6 +161,10 @@ class LogBook:
     def add(self, level: str, message: str, details: str = "") -> LogEvent:
         """Record an event (and mirror it to the file, if attached).
 
+        A long or multi-line ``message`` (e.g. one that embeds an exception's text, which
+        for torchcodec runs to 150 lines) is cut to its first line for the toast and the
+        Log tab row; the full text moves to the top of ``details``, so nothing is lost.
+
         Args:
             level: One of :data:`LEVELS`.
             message: One-line summary.
@@ -146,6 +173,7 @@ class LogBook:
         Returns:
             The stored :class:`LogEvent`.
         """
+        message, details = _shorten(message, details)
         with self._lock:
             self._seq += 1
             event = LogEvent(self._seq, datetime.now(), level, message, details)

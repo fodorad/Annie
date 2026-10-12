@@ -1,8 +1,9 @@
 r"""Annie launcher for Windows, installed by Annie-Setup.exe (see annie.iss).
 
-Started by the Start-menu and desktop shortcuts with the bundled ``python\pythonw.exe``,
-so no console window appears. It lives outside the ``annie`` environment (``env\``) on
-purpose: it can then create, repair and update that environment while Annie is closed.
+Started by the "Annie" shortcut in the Annie folder (and the optional desktop shortcut)
+with the bundled ``python\pythonw.exe``, so no console window appears. It lives outside
+the ``annie`` environment (``env\``) on purpose: it can then create, repair and update
+that environment while Annie is closed.
 
 What a start does:
 

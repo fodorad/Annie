@@ -16,7 +16,7 @@ from annie.dataset.storage import ReviewStore
 class TestUiSettings(unittest.TestCase):
     def test_defaults(self) -> None:
         ui = UiSettings()
-        self.assertEqual(ui.browse_row_height, 135)
+        self.assertEqual(ui.browse_row_height, 110)
         self.assertEqual(ui.annotator_row_height, 200)
         self.assertTrue(ui.auto_scroll, "auto-scroll is on unless the user opts out")
         self.assertEqual(ui.page_size, 10)
@@ -74,6 +74,51 @@ class TestRestoreLastConfig(unittest.TestCase):
 
         self.assertIsNone(self.state.restore_last_config())
         self.assertEqual(self.state.store.db_path, self.tmp / "env.db")
+
+
+class TestProtagonistCorrectionsFollowTheDb(unittest.TestCase):
+    """Switching review DB shows that DB's protagonist corrections at once.
+
+    They used to be layered on only by a rescan or a restart, so after a switch the
+    videos kept the previous DB's corrections (or lacked the new DB's).
+    """
+
+    def setUp(self) -> None:
+        from annie.core.models import VideoEntry
+        from annie.dataset.scanning import ScanResult
+
+        self.tmp = Path(tempfile.mkdtemp())
+        self.state = AppState(registry=SourceRegistry(), store=ReviewStore(self.tmp / "a.db"))
+        self.corrected = VideoEntry("corrected", active_track_id=2)
+        self.untouched = VideoEntry("untouched", active_track_id=1)
+        self.state.scan = ScanResult(entries=[self.corrected, self.untouched])
+        # What rescan() records: the protagonist from the heuristic CSV.
+        self.state.scanned_tracks = {"corrected": 2, "untouched": 1}
+        self.db_a = self.tmp / "a.db"
+        self.db_b = self.tmp / "b.db"
+        ReviewStore(self.db_a).set_active_track("corrected", "corrected", None, 5)
+        ReviewStore(self.db_b).set_active_track("untouched", "untouched", None, 7)
+
+    def _tracks(self) -> tuple[int, int]:
+        return self.corrected.active_track_id, self.untouched.active_track_id
+
+    def test_switching_db_swaps_the_corrections(self) -> None:
+        self.state.set_store(self.db_a)
+        self.assertEqual(self._tracks(), (5, 1))
+        self.state.set_store(self.db_b)
+        self.assertEqual(self._tracks(), (2, 7), "a.db's correction must not linger")
+        self.state.set_store(self.db_a)
+        self.assertEqual(self._tracks(), (5, 1))
+
+    def test_a_db_without_corrections_restores_the_heuristic(self) -> None:
+        self.state.set_store(self.db_a)
+        self.state.set_store(self.tmp / "fresh.db")
+        self.assertEqual(self._tracks(), (2, 1))
+
+    def test_no_scan_yet_is_fine(self) -> None:
+        self.state.scan = None
+        self.state.set_store(self.db_a)  # must not raise
+        self.assertIsNone(self.state.scan)
 
 
 if __name__ == "__main__":

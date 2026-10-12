@@ -53,7 +53,7 @@ class UiSettings:
             ``unload_after_seconds`` since the grid packs many videos on screen.
     """
 
-    browse_row_height: int = 135
+    browse_row_height: int = 110
     annotator_row_height: int = 200
     auto_scroll: bool = True
     page_size: int = 10
@@ -123,6 +123,8 @@ class AppState:
         ui: Session-only UI preferences.
         active_config: The dataset config file currently loaded, or ``None`` for the
             env-seeded / blank dataset. Lets the Dataset tab show it as selected.
+        scanned_tracks: Each video's protagonist as scanned (the heuristic CSV), before
+            the review DB's corrections are layered over it; lets a DB switch start over.
     """
 
     registry: SourceRegistry = field(default_factory=_seed_registry)
@@ -134,6 +136,7 @@ class AppState:
     frames_cache: dict[str, int] = field(default_factory=dict)
     ui: UiSettings = field(default_factory=UiSettings)
     active_config: Path | None = None
+    scanned_tracks: dict[str, int] = field(default_factory=dict)
 
     def restore_last_config(self) -> Path | None:
         """Reopen the config remembered from the previous run, with its review database.
@@ -169,6 +172,7 @@ class AppState:
         self.audio_cache.clear()
         self.frames_cache.clear()
         self.scan = build_manifest(self.registry)
+        self.scanned_tracks = {e.key: e.active_track_id for e in self.scan.entries}
         self._apply_active_track_overrides()
 
     def _apply_active_track_overrides(self) -> None:
@@ -177,16 +181,16 @@ class AppState:
         Manual track choices are stored in the review DB (not the source CSV), so a
         corrected video shows its chosen protagonist after any re-scan or restart on
         the same database, while uncorrected videos keep their heuristic value.
+
+        Every video starts from its scanned value first, so after a switch to another
+        DB the previous DB's corrections do not linger on videos the new one leaves alone.
         """
         if self.scan is None:
             return
         overrides = self.store.active_tracks()
-        if not overrides:
-            return
         for entry in self.scan.entries:
-            override = overrides.get(entry.key)
-            if override is not None:
-                entry.active_track_id = override
+            scanned = self.scanned_tracks.get(entry.key, entry.active_track_id)
+            entry.active_track_id = overrides.get(entry.key, scanned)
 
     def set_store(self, db_path: Path) -> None:
         """Replace the active review store with one backed by ``db_path``.
@@ -196,12 +200,16 @@ class AppState:
         loading a config that embeds a ``"db"`` path, or by choosing a DB file
         in the Persistence block on the Dataset tab.
 
+        The new DB's protagonist corrections replace the previous DB's on the scanned
+        videos straight away, instead of only after the next rescan or restart.
+
         Args:
             db_path: Absolute path to the SQLite file to open.
         """
         self.store = ReviewStore(db_path)
         # The session log is paired with its DB — keep their names in lockstep.
         logbook.LOG.retarget(db_path)
+        self._apply_active_track_overrides()
 
     def review_state(self, key: str) -> ReviewState:
         """Return the filtering-facing review state for a video (default liked).
