@@ -40,7 +40,11 @@ jobs:
       uses: softprops/action-gh-release@v3
       with:
         generate_release_notes: true
-        files: dist/*
+        # Only the wheel and sdist: `uv build` also writes a .gitignore into dist/, which
+        # used to be attached as "default.gitignore".
+        files: |
+          dist/*.whl
+          dist/*.tar.gz
 
   windows-installer:
     name: Windows installer
