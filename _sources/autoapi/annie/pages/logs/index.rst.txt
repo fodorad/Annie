@@ -5,13 +5,15 @@ annie.pages.logs
 
 .. autoapi-nested-parse::
 
-   Log tab — browse, filter, and copy recorded events (UI).
+   Log tab — browse, filter, copy and report recorded events (UI).
 
    A consumer of :data:`annie.logbook.LOG`. Shows the most recent events (newest
    first) with a level/text filter and, per row, a **Copy** button (to the clipboard)
-   and a **Details** dialog with the full text / traceback. A per-client poller
-   surfaces *new* errors as auto-dismissing toasts so a background failure is visible
-   without watching the terminal.
+   and a **Details** dialog with the full text / traceback. Errors also get a **Report**
+   button: it previews exactly what will be emailed to Annie's developer, lets the user add
+   a note, and after sending turns into a disabled green **Sent** (see
+   :mod:`annie.core.bugreport`). A per-client poller surfaces *new* errors as
+   auto-dismissing toasts so a background failure is visible without watching the terminal.
 
 
 

@@ -10,6 +10,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/annie/core/bugreport/index
    /autoapi/annie/core/config/index
    /autoapi/annie/core/logbook/index
    /autoapi/annie/core/models/index

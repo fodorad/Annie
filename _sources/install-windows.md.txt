@@ -1,7 +1,9 @@
 # Installing Annie on Windows
 
 This page is for people who want to *use* Annie on a Windows 10 or 11 laptop. You don't
-need admin rights, and nothing else has to be installed first.
+need admin rights, and nothing else has to be installed first. Annie works on locked-down
+PCs where only your own user folder is writable: it changes nothing else (no registry
+entries, no Start menu, nothing in hidden AppData folders).
 
 ## Install (once)
 
@@ -18,8 +20,13 @@ need admin rights, and nothing else has to be installed first.
    | Program folder | `C:\Users\<you>\Annie\App` | Annie, its own Python, the `annie` Python environment with all dependencies, and FFmpeg |
    | Data folder | `C:\Users\<you>\Annie\Data` | Your work: reviews, saved configs, logs |
 
-   Tick or untick **Create a desktop shortcut**. Annie is always added to the Start menu,
-   so typing "Annie" in Windows search finds it too.
+   The program folder's path may be at most 120 characters long: Annie's components
+   contain deeply nested files, and Windows cannot open files with very long paths.
+
+   Setup always puts an **Annie** shortcut (to start Annie) and an **Uninstall Annie**
+   shortcut in the Annie folder, `C:\Users\<you>\Annie`, which holds both folders. Tick
+   **Create a desktop shortcut** if you also want one on the desktop (it is unticked by
+   default). Annie is not added to the Start menu.
 
    Tick or untick **Install the example datasets**: small versions of First Impression V2
    and CMU-MOSEI (about 50 MB) to try Annie on. They are copied to `Data\examples`. If
@@ -31,7 +38,9 @@ You choose the folders once. Updates and reinstalls keep using them.
 
 ## Daily use
 
-- **Start:** click **Annie** in the Start menu (or on the desktop). A small Annie window
+- **Start:** double-click **Annie** in the Annie folder, `C:\Users\<you>\Annie` (or on
+  the desktop, if you created that shortcut). Tip: pin the folder to Quick access in File
+  Explorer (right-click it, **Pin to Quick access**). A small Annie window
   appears at once, with a progress bar and a list of what is happening: checking for
   updates, the packages an update changes, the download, and Annie starting. It closes
   by itself when Annie is ready. Your browser then opens Annie, and the Annie icon
@@ -92,20 +101,30 @@ that includes the Microsoft Visual C++ runtime, which video decoding needs. Run 
 newest installer once (it keeps your folders and work). Hovering over a broken-image
 icon shows why that video could not be decoded, and the **Log** tab has the details.
 
-For anything else, run the installer again. This repairs the installation: it rebuilds the program folder
-and downloads Annie's components fresh. Your work in the data folder stays where it is.
-If the problem remains, send the newest file from `Data\logs\` (and `App\install.log`, if
-the download failed) to the person who gave you Annie.
+To tell the developer about an error, open the **Log** tab and click **Report** next to
+it. You see exactly what will be sent (the error with its details, and the Annie and
+Windows versions; file paths in it can include your Windows user name), can add what you
+were doing, and click **Send**. The button then shows a green **Sent**, so each error is
+reported once.
+
+For anything else, run the installer again. This repairs the installation: it rebuilds the
+program folder and downloads Annie's components fresh. Your work in the data folder stays
+where it is. If the problem remains, report it from the Log tab, or send the newest file
+from `Data\logs\` (and `App\install.log`, if the download failed) to the person who gave
+you Annie.
 
 ## Uninstall
 
-Open **Settings → Apps → Installed apps**, find **Annie**, and choose **Uninstall**.
-This removes the program completely: the program folder with Annie's Python, the `annie`
-environment and everything downloaded into it, the shortcuts, and the entry in the Apps
-list. At the end it asks whether to **also delete your work**. The default answer is
-**No**, which keeps the data folder. If both folders are gone, the empty `Annie` folder
-around them is removed too.
+Double-click **Uninstall Annie** in the Annie folder, `C:\Users\<you>\Annie`. (Annie is
+not listed in Settings → Apps, because that list needs a registry entry.) This removes
+the program completely: the program folder with Annie's Python, the `annie` environment
+and everything downloaded into it, and the shortcuts. At the end it asks whether to
+**also delete your work**. The default answer is **No**, which keeps the data folder. If
+both folders are gone, the empty `Annie` folder around them is removed too.
 
-Annie needs no admin rights and installs nothing outside its folders: nothing in hidden
-AppData folders, no PATH changes, no services. The single registry entry it creates is
-the one that makes it appear in the Apps list, and uninstalling removes it.
+Annie needs no admin rights and installs nothing outside its folders: no registry
+entries, no Start menu entry, nothing in hidden AppData folders, no PATH changes, no
+services. (Windows itself may still note, as it does for any program you run, that the
+program was started.) If you installed Annie with an older installer, which added an
+entry to Settings → Apps and the Start menu, the new installer removes those when it
+updates that install.

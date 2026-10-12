@@ -204,6 +204,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
@@ -362,7 +363,7 @@
 <span class="sd">            ``unload_after_seconds`` since the grid packs many videos on screen.</span>
 <span class="sd">    """</span>
 
-    <span class="n">browse_row_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">135</span>
+    <span class="n">browse_row_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">110</span>
     <span class="n">annotator_row_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
     <span class="n">auto_scroll</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
@@ -435,6 +436,8 @@
 <span class="sd">        ui: Session-only UI preferences.</span>
 <span class="sd">        active_config: The dataset config file currently loaded, or ``None`` for the</span>
 <span class="sd">            env-seeded / blank dataset. Lets the Dataset tab show it as selected.</span>
+<span class="sd">        scanned_tracks: Each video's protagonist as scanned (the heuristic CSV), before</span>
+<span class="sd">            the review DB's corrections are layered over it; lets a DB switch start over.</span>
 <span class="sd">    """</span>
 
     <span class="n">registry</span><span class="p">:</span> <span class="n">SourceRegistry</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">_seed_registry</span><span class="p">)</span>
@@ -446,6 +449,7 @@
     <span class="n">frames_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">ui</span><span class="p">:</span> <span class="n">UiSettings</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">UiSettings</span><span class="p">)</span>
     <span class="n">active_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">scanned_tracks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AppState.restore_last_config">
 <a class="viewcode-back" href="../../../autoapi/annie/core/state/index.html#annie.core.state.AppState.restore_last_config">[docs]</a>
@@ -486,6 +490,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scan</span> <span class="o">=</span> <span class="n">build_manifest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">registry</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scanned_tracks</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">active_track_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_apply_active_track_overrides</span><span class="p">()</span></div>
 
 
@@ -495,16 +500,16 @@
 <span class="sd">        Manual track choices are stored in the review DB (not the source CSV), so a</span>
 <span class="sd">        corrected video shows its chosen protagonist after any re-scan or restart on</span>
 <span class="sd">        the same database, while uncorrected videos keep their heuristic value.</span>
+
+<span class="sd">        Every video starts from its scanned value first, so after a switch to another</span>
+<span class="sd">        DB the previous DB's corrections do not linger on videos the new one leaves alone.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">overrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">active_tracks</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">overrides</span><span class="p">:</span>
-            <span class="k">return</span>
         <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">:</span>
-            <span class="n">override</span> <span class="o">=</span> <span class="n">overrides</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span> <span class="o">=</span> <span class="n">override</span>
+            <span class="n">scanned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scanned_tracks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span><span class="p">)</span>
+            <span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span> <span class="o">=</span> <span class="n">overrides</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">scanned</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AppState.set_store">
 <a class="viewcode-back" href="../../../autoapi/annie/core/state/index.html#annie.core.state.AppState.set_store">[docs]</a>
@@ -516,12 +521,16 @@
 <span class="sd">        loading a config that embeds a ``"db"`` path, or by choosing a DB file</span>
 <span class="sd">        in the Persistence block on the Dataset tab.</span>
 
+<span class="sd">        The new DB's protagonist corrections replace the previous DB's on the scanned</span>
+<span class="sd">        videos straight away, instead of only after the next rescan or restart.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            db_path: Absolute path to the SQLite file to open.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">ReviewStore</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
         <span class="c1"># The session log is paired with its DB — keep their names in lockstep.</span>
-        <span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">retarget</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span></div>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">retarget</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_active_track_overrides</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="AppState.review_state">

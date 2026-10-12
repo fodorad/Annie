@@ -204,6 +204,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
@@ -662,22 +663,45 @@
 
 <div class="viewcode-block" id="decoder_problem">
 <a class="viewcode-back" href="../../../autoapi/annie/core/runtime/index.html#annie.core.runtime.decoder_problem">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">decoder_problem</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">,</span> <span class="n">platform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">decoder_problem</span><span class="p">(</span>
+    <span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">,</span> <span class="n">platform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">installed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.</span>
 
-<span class="sd">    On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch's DLLs</span>
-<span class="sd">    need ``msvcp140.dll`` &amp; co., which neither Windows nor Python always provide. The</span>
-<span class="sd">    Windows installer bundles them; installs made before that, and other setups, need</span>
-<span class="sd">    the system-wide Redistributable.</span>
+<span class="sd">    Two usual causes:</span>
+
+<span class="sd">    * **FFmpeg's shared libraries are missing**: torchcodec then cannot load its core</span>
+<span class="sd">      library (``Could not load libtorchcodec``, a 150-line message). The installed</span>
+<span class="sd">      Windows app bundles FFmpeg; a source checkout needs a *shared* FFmpeg on ``PATH``,</span>
+<span class="sd">      and a terminal opened before installing it still has the old ``PATH``.</span>
+<span class="sd">    * **Windows lacks the Visual C++ runtime**: PyTorch's DLLs need ``msvcp140.dll`` &amp;</span>
+<span class="sd">      co. The Windows installer bundles them; older installs and other setups need the</span>
+<span class="sd">      system-wide Redistributable.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        exc: The ``ImportError``/``OSError`` raised while importing the decoder.</span>
+<span class="sd">        exc: The error raised while importing the decoder or opening a video with it.</span>
 <span class="sd">        platform: ``sys.platform``, injectable for tests.</span>
+<span class="sd">        installed: Whether this is the Windows installer's Annie (``ANNIE_INSTALL_DIR``</span>
+<span class="sd">            set); detected when ``None``.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A one-line message for the Log tab, the toast and the banner.</span>
+<span class="sd">        A one-line message for the Log tab, the toast and the banner (the full error</span>
+<span class="sd">        stays in the Log tab's details).</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">installed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">installed</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ANNIE_INSTALL_DIR"</span><span class="p">))</span>
     <span class="n">reason</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">if</span> <span class="s2">"libtorchcodec"</span> <span class="ow">in</span> <span class="n">reason</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">installed</span><span class="p">:</span>
+            <span class="n">fix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Run the newest Annie installer (</span><span class="si">{</span><span class="n">INSTALLER_URL</span><span class="si">}</span><span class="s2">), which includes FFmpeg."</span>
+        <span class="k">elif</span> <span class="n">platform</span> <span class="o">==</span> <span class="s2">"win32"</span><span class="p">:</span>
+            <span class="n">fix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"Install a shared FFmpeg build (winget install BtbN.FFmpeg.GPL.Shared.8.1), "</span>
+                <span class="s2">"then start Annie from a new terminal."</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fix</span> <span class="o">=</span> <span class="s2">"Install FFmpeg 4 to 9 with its shared libraries (e.g. brew/apt ffmpeg)."</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Video frames cannot be decoded: FFmpeg's shared libraries were not found. </span><span class="si">{</span><span class="n">fix</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">if</span> <span class="n">platform</span> <span class="o">==</span> <span class="s2">"win32"</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">".dll"</span> <span class="ow">in</span> <span class="n">reason</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="s2">"Video frames cannot be decoded: a Windows system library is missing "</span>

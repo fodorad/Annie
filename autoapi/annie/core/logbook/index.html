@@ -205,6 +205,7 @@
 <li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html">annie</a><input aria-label="Toggle navigation of annie" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../../app/index.html">annie.app</a></li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../config/index.html">annie.core.config</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../models/index.html">annie.core.models</a></li>
@@ -335,7 +336,10 @@ is pure stdlib and thread-safe, so render/convert worker threads can report too.
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.logbook.LEVELS" title="annie.core.logbook.LEVELS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LEVELS</span></code></a></p></td>
 <td><p>The levels an event can carry, most severe first.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.logbook.LOG" title="annie.core.logbook.LOG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOG</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.logbook.MAX_MESSAGE_CHARS" title="annie.core.logbook.MAX_MESSAGE_CHARS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MAX_MESSAGE_CHARS</span></code></a></p></td>
+<td><p>Longest message shown in a toast or a Log tab row; the rest goes to the details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.logbook.LOG" title="annie.core.logbook.LOG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOG</span></code></a></p></td>
 <td><p>The process-wide event log.</p></td>
 </tr>
 </tbody>
@@ -428,6 +432,12 @@ is pure stdlib and thread-safe, so render/convert worker threads can report too.
 
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.core.logbook.MAX_MESSAGE_CHARS">
+<span class="sig-prename descclassname"><span class="pre">annie.core.logbook.</span></span><span class="sig-name descname"><span class="pre">MAX_MESSAGE_CHARS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">200</span></span><a class="headerlink" href="#annie.core.logbook.MAX_MESSAGE_CHARS" title="Link to this definition">¶</a></dt>
+<dd><p>Longest message shown in a toast or a Log tab row; the rest goes to the details.</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="annie.core.logbook.LogBook">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.core.logbook.</span></span><span class="sig-name descname"><span class="pre">LogBook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/annie/core/logbook.html#LogBook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.logbook.LogBook" title="Link to this definition">¶</a></dt>
@@ -479,6 +489,9 @@ appended to it rather than clobbering it.</p>
 <dt class="sig sig-object py" id="annie.core.logbook.LogBook.add">
 <span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.core.logbook.LogEvent" title="annie.core.logbook.LogEvent"><span class="pre">LogEvent</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/core/logbook.html#LogBook.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.logbook.LogBook.add" title="Link to this definition">¶</a></dt>
 <dd><p>Record an event (and mirror it to the file, if attached).</p>
+<p>A long or multi-line <code class="docutils literal notranslate"><span class="pre">message</span></code> (e.g. one that embeds an exception’s text, which
+for torchcodec runs to 150 lines) is cut to its first line for the toast and the
+Log tab row; the full text moves to the top of <code class="docutils literal notranslate"><span class="pre">details</span></code>, so nothing is lost.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -642,6 +655,7 @@ appended to it rather than clobbering it.</p>
 <li><a class="reference internal" href="#annie.core.logbook.LogEvent.as_clipboard"><code class="docutils literal notranslate"><span class="pre">LogEvent.as_clipboard()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#annie.core.logbook.MAX_MESSAGE_CHARS"><code class="docutils literal notranslate"><span class="pre">MAX_MESSAGE_CHARS</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook"><code class="docutils literal notranslate"><span class="pre">LogBook</span></code></a><ul>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook.attach_file"><code class="docutils literal notranslate"><span class="pre">LogBook.attach_file()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.logbook.LogBook.retarget"><code class="docutils literal notranslate"><span class="pre">LogBook.retarget()</span></code></a></li>

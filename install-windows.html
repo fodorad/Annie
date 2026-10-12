@@ -205,6 +205,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/annie/app/index.html">annie.app</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/annie/core/bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/annie/core/models/index.html">annie.core.models</a></li>
@@ -314,7 +315,9 @@
           <section id="installing-annie-on-windows">
 <h1>Installing Annie on Windows<a class="headerlink" href="#installing-annie-on-windows" title="Link to this heading">¶</a></h1>
 <p>This page is for people who want to <em>use</em> Annie on a Windows 10 or 11 laptop. You don’t
-need admin rights, and nothing else has to be installed first.</p>
+need admin rights, and nothing else has to be installed first. Annie works on locked-down
+PCs where only your own user folder is writable: it changes nothing else (no registry
+entries, no Start menu, nothing in hidden AppData folders).</p>
 <section id="install-once">
 <h2>Install (once)<a class="headerlink" href="#install-once" title="Link to this heading">¶</a></h2>
 <ol class="arabic">
@@ -348,8 +351,12 @@ change them:</p>
 </tbody>
 </table>
 </div>
-<p>Tick or untick <strong>Create a desktop shortcut</strong>. Annie is always added to the Start menu,
-so typing “Annie” in Windows search finds it too.</p>
+<p>The program folder’s path may be at most 120 characters long: Annie’s components
+contain deeply nested files, and Windows cannot open files with very long paths.</p>
+<p>Setup always puts an <strong>Annie</strong> shortcut (to start Annie) and an <strong>Uninstall Annie</strong>
+shortcut in the Annie folder, <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;you&gt;\Annie</span></code>, which holds both folders. Tick
+<strong>Create a desktop shortcut</strong> if you also want one on the desktop (it is unticked by
+default). Annie is not added to the Start menu.</p>
 <p>Tick or untick <strong>Install the example datasets</strong>: small versions of First Impression V2
 and CMU-MOSEI (about 50 MB) to try Annie on. They are copied to <code class="docutils literal notranslate"><span class="pre">Data\examples</span></code>. If
 you leave them out, you can download them later from the Annie icon’s menu.</p>
@@ -362,7 +369,9 @@ minutes; a small window shows the progress), then <strong>Finish</strong> starts
 <section id="daily-use">
 <h2>Daily use<a class="headerlink" href="#daily-use" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><strong>Start:</strong> click <strong>Annie</strong> in the Start menu (or on the desktop). A small Annie window
+<li><p><strong>Start:</strong> double-click <strong>Annie</strong> in the Annie folder, <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;you&gt;\Annie</span></code> (or on
+the desktop, if you created that shortcut). Tip: pin the folder to Quick access in File
+Explorer (right-click it, <strong>Pin to Quick access</strong>). A small Annie window
 appears at once, with a progress bar and a list of what is happening: checking for
 updates, the packages an update changes, the download, and Annie starting. It closes
 by itself when Annie is ready. Your browser then opens Annie, and the Annie icon
@@ -438,22 +447,31 @@ that a Windows system library is missing, your copy of Annie predates the instal
 that includes the Microsoft Visual C++ runtime, which video decoding needs. Run the
 newest installer once (it keeps your folders and work). Hovering over a broken-image
 icon shows why that video could not be decoded, and the <strong>Log</strong> tab has the details.</p>
-<p>For anything else, run the installer again. This repairs the installation: it rebuilds the program folder
-and downloads Annie’s components fresh. Your work in the data folder stays where it is.
-If the problem remains, send the newest file from <code class="docutils literal notranslate"><span class="pre">Data\logs\</span></code> (and <code class="docutils literal notranslate"><span class="pre">App\install.log</span></code>, if
-the download failed) to the person who gave you Annie.</p>
+<p>To tell the developer about an error, open the <strong>Log</strong> tab and click <strong>Report</strong> next to
+it. You see exactly what will be sent (the error with its details, and the Annie and
+Windows versions; file paths in it can include your Windows user name), can add what you
+were doing, and click <strong>Send</strong>. The button then shows a green <strong>Sent</strong>, so each error is
+reported once.</p>
+<p>For anything else, run the installer again. This repairs the installation: it rebuilds the
+program folder and downloads Annie’s components fresh. Your work in the data folder stays
+where it is. If the problem remains, report it from the Log tab, or send the newest file
+from <code class="docutils literal notranslate"><span class="pre">Data\logs\</span></code> (and <code class="docutils literal notranslate"><span class="pre">App\install.log</span></code>, if the download failed) to the person who gave
+you Annie.</p>
 </section>
 <section id="uninstall">
 <h2>Uninstall<a class="headerlink" href="#uninstall" title="Link to this heading">¶</a></h2>
-<p>Open <strong>Settings → Apps → Installed apps</strong>, find <strong>Annie</strong>, and choose <strong>Uninstall</strong>.
-This removes the program completely: the program folder with Annie’s Python, the <code class="docutils literal notranslate"><span class="pre">annie</span></code>
-environment and everything downloaded into it, the shortcuts, and the entry in the Apps
-list. At the end it asks whether to <strong>also delete your work</strong>. The default answer is
-<strong>No</strong>, which keeps the data folder. If both folders are gone, the empty <code class="docutils literal notranslate"><span class="pre">Annie</span></code> folder
-around them is removed too.</p>
-<p>Annie needs no admin rights and installs nothing outside its folders: nothing in hidden
-AppData folders, no PATH changes, no services. The single registry entry it creates is
-the one that makes it appear in the Apps list, and uninstalling removes it.</p>
+<p>Double-click <strong>Uninstall Annie</strong> in the Annie folder, <code class="docutils literal notranslate"><span class="pre">C:\Users\&lt;you&gt;\Annie</span></code>. (Annie is
+not listed in Settings → Apps, because that list needs a registry entry.) This removes
+the program completely: the program folder with Annie’s Python, the <code class="docutils literal notranslate"><span class="pre">annie</span></code> environment
+and everything downloaded into it, and the shortcuts. At the end it asks whether to
+<strong>also delete your work</strong>. The default answer is <strong>No</strong>, which keeps the data folder. If
+both folders are gone, the empty <code class="docutils literal notranslate"><span class="pre">Annie</span></code> folder around them is removed too.</p>
+<p>Annie needs no admin rights and installs nothing outside its folders: no registry
+entries, no Start menu entry, nothing in hidden AppData folders, no PATH changes, no
+services. (Windows itself may still note, as it does for any program you run, that the
+program was started.) If you installed Annie with an older installer, which added an
+entry to Settings → Apps and the Start menu, the new installer removes those when it
+updates that install.</p>
 </section>
 </section>
 

@@ -204,6 +204,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
@@ -375,6 +376,29 @@
 
 
 
+<span class="n">MAX_MESSAGE_CHARS</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="sd">"""Longest message shown in a toast or a Log tab row; the rest goes to the details."""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_shorten</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Cut ``message`` to one short line, moving its full text to the top of ``details``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        message: The summary as given by the caller.</span>
+<span class="sd">        details: The caller's long text, if any.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The ``(message, details)`` to store; unchanged when ``message`` is already short.</span>
+<span class="sd">    """</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">if</span> <span class="n">first</span> <span class="o">==</span> <span class="n">text</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">MAX_MESSAGE_CHARS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">message</span><span class="p">,</span> <span class="n">details</span>
+    <span class="n">short</span> <span class="o">=</span> <span class="n">first</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">first</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">MAX_MESSAGE_CHARS</span> <span class="k">else</span> <span class="n">first</span><span class="p">[:</span> <span class="n">MAX_MESSAGE_CHARS</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">full</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="se">\n\n</span><span class="si">{</span><span class="n">details</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">details</span> <span class="k">else</span> <span class="n">text</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">short</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="si">}</span><span class="s2">…"</span><span class="p">,</span> <span class="n">full</span>
+
+
 <div class="viewcode-block" id="LogBook">
 <a class="viewcode-back" href="../../../autoapi/annie/core/logbook/index.html#annie.core.logbook.LogBook">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogBook</span><span class="p">:</span>
@@ -461,6 +485,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LogEvent</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Record an event (and mirror it to the file, if attached).</span>
 
+<span class="sd">        A long or multi-line ``message`` (e.g. one that embeds an exception's text, which</span>
+<span class="sd">        for torchcodec runs to 150 lines) is cut to its first line for the toast and the</span>
+<span class="sd">        Log tab row; the full text moves to the top of ``details``, so nothing is lost.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            level: One of :data:`LEVELS`.</span>
 <span class="sd">            message: One-line summary.</span>
@@ -469,6 +497,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The stored :class:`LogEvent`.</span>
 <span class="sd">        """</span>
+        <span class="n">message</span><span class="p">,</span> <span class="n">details</span> <span class="o">=</span> <span class="n">_shorten</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_seq</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">event</span> <span class="o">=</span> <span class="n">LogEvent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seq</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">details</span><span class="p">)</span>

@@ -239,18 +239,26 @@ Module Contents
    :raises ValueError: If the download is not a valid examples archive.
 
 
-.. py:function:: decoder_problem(exc: BaseException, platform: str = sys.platform) -> str
+.. py:function:: decoder_problem(exc: BaseException, platform: str = sys.platform, *, installed: bool | None = None) -> str
 
    Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.
 
-   On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch's DLLs
-   need ``msvcp140.dll`` & co., which neither Windows nor Python always provide. The
-   Windows installer bundles them; installs made before that, and other setups, need
-   the system-wide Redistributable.
+   Two usual causes:
 
-   :param exc: The ``ImportError``/``OSError`` raised while importing the decoder.
+   * **FFmpeg's shared libraries are missing**: torchcodec then cannot load its core
+     library (``Could not load libtorchcodec``, a 150-line message). The installed
+     Windows app bundles FFmpeg; a source checkout needs a *shared* FFmpeg on ``PATH``,
+     and a terminal opened before installing it still has the old ``PATH``.
+   * **Windows lacks the Visual C++ runtime**: PyTorch's DLLs need ``msvcp140.dll`` &
+     co. The Windows installer bundles them; older installs and other setups need the
+     system-wide Redistributable.
+
+   :param exc: The error raised while importing the decoder or opening a video with it.
    :param platform: ``sys.platform``, injectable for tests.
+   :param installed: Whether this is the Windows installer's Annie (``ANNIE_INSTALL_DIR``
+                     set); detected when ``None``.
 
-   :returns: A one-line message for the Log tab, the toast and the banner.
+   :returns: A one-line message for the Log tab, the toast and the banner (the full error
+             stays in the Log tab's details).
 
 

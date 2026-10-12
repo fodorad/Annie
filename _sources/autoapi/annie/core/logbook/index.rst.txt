@@ -29,6 +29,7 @@ Attributes
 .. autoapisummary::
 
    annie.core.logbook.LEVELS
+   annie.core.logbook.MAX_MESSAGE_CHARS
    annie.core.logbook.LOG
 
 
@@ -98,6 +99,12 @@ Module Contents
 
 
 
+.. py:data:: MAX_MESSAGE_CHARS
+   :value: 200
+
+
+   Longest message shown in a toast or a Log tab row; the rest goes to the details.
+
 .. py:class:: LogBook(capacity: int = 2000)
 
    A thread-safe, bounded event store mirrored to a dated log file.
@@ -138,6 +145,10 @@ Module Contents
    .. py:method:: add(level: str, message: str, details: str = '') -> LogEvent
 
       Record an event (and mirror it to the file, if attached).
+
+      A long or multi-line ``message`` (e.g. one that embeds an exception's text, which
+      for torchcodec runs to 150 lines) is cut to its first line for the toast and the
+      Log tab row; the full text moves to the top of ``details``, so nothing is lost.
 
       :param level: One of :data:`LEVELS`.
       :param message: One-line summary.

@@ -128,6 +128,11 @@ Module Contents
       The dataset config file currently loaded, or ``None`` for the
       env-seeded / blank dataset. Lets the Dataset tab show it as selected.
 
+   .. attribute:: scanned_tracks
+
+      Each video's protagonist as scanned (the heuristic CSV), before
+      the review DB's corrections are layered over it; lets a DB switch start over.
+
 
    .. py:method:: restore_last_config() -> pathlib.Path | None
 
@@ -159,6 +164,9 @@ Module Contents
       Call this whenever the user changes the persistence target — either by
       loading a config that embeds a ``"db"`` path, or by choosing a DB file
       in the Persistence block on the Dataset tab.
+
+      The new DB's protagonist corrections replace the previous DB's on the scanned
+      videos straight away, instead of only after the next rescan or restart.
 
       :param db_path: Absolute path to the SQLite file to open.
 

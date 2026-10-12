@@ -205,6 +205,7 @@
 <li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html">annie</a><input aria-label="Toggle navigation of annie" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../../app/index.html">annie.app</a></li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../models/index.html">annie.core.models</a></li>
@@ -633,21 +634,30 @@ places, or Annie was not started by the Windows launcher, it is the data folder.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.core.runtime.decoder_problem">
-<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">decoder_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseException</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">sys.platform</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#decoder_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.decoder_problem" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.core.runtime.</span></span><span class="sig-name descname"><span class="pre">decoder_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseException</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">sys.platform</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">installed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/runtime.html#decoder_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.runtime.decoder_problem" title="Link to this definition">¶</a></dt>
 <dd><p>Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.</p>
-<p>On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch’s DLLs
-need <code class="docutils literal notranslate"><span class="pre">msvcp140.dll</span></code> &amp; co., which neither Windows nor Python always provide. The
-Windows installer bundles them; installs made before that, and other setups, need
-the system-wide Redistributable.</p>
+<p>Two usual causes:</p>
+<ul class="simple">
+<li><p><strong>FFmpeg’s shared libraries are missing</strong>: torchcodec then cannot load its core
+library (<code class="docutils literal notranslate"><span class="pre">Could</span> <span class="pre">not</span> <span class="pre">load</span> <span class="pre">libtorchcodec</span></code>, a 150-line message). The installed
+Windows app bundles FFmpeg; a source checkout needs a <em>shared</em> FFmpeg on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>,
+and a terminal opened before installing it still has the old <code class="docutils literal notranslate"><span class="pre">PATH</span></code>.</p></li>
+<li><p><strong>Windows lacks the Visual C++ runtime</strong>: PyTorch’s DLLs need <code class="docutils literal notranslate"><span class="pre">msvcp140.dll</span></code> &amp;
+co. The Windows installer bundles them; older installs and other setups need the
+system-wide Redistributable.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>exc</strong> – The <code class="docutils literal notranslate"><span class="pre">ImportError</span></code>/<code class="docutils literal notranslate"><span class="pre">OSError</span></code> raised while importing the decoder.</p></li>
+<li><p><strong>exc</strong> – The error raised while importing the decoder or opening a video with it.</p></li>
 <li><p><strong>platform</strong> – <code class="docutils literal notranslate"><span class="pre">sys.platform</span></code>, injectable for tests.</p></li>
+<li><p><strong>installed</strong> – Whether this is the Windows installer’s Annie (<code class="docutils literal notranslate"><span class="pre">ANNIE_INSTALL_DIR</span></code>
+set); detected when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A one-line message for the Log tab, the toast and the banner.</p>
+<dd class="field-even"><p>A one-line message for the Log tab, the toast and the banner (the full error
+stays in the Log tab’s details).</p>
 </dd>
 </dl>
 </dd></dl>

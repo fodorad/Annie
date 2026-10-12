@@ -1,0 +1,126 @@
+annie.core.bugreport
+====================
+
+.. py:module:: annie.core.bugreport
+
+.. autoapi-nested-parse::
+
+   Bug reports from the Log tab: what is sent, where to, and how often (service).
+
+   The Log tab's **Report** button emails an error to Annie's maintainer. Annie cannot send
+   mail itself, so the report goes to a form-to-email service (`Web3Forms
+   <https://web3forms.com>`_) over HTTPS, from the user's browser, where Annie's UI runs.
+   The service's access key decides the recipient, so no email address is stored here;
+   the key is public by design (it can only deliver to that one inbox).
+
+   Before anything is sent, the user sees the exact text (:func:`build_report`) and may add a
+   note. Each error can be reported once, and at most :data:`MAX_REPORTS_PER_HOUR` reports
+   leave one Annie per hour, so a crash loop cannot flood the inbox.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.core.bugreport.REPORT_SUBJECT
+   annie.core.bugreport.REPORT_URL
+   annie.core.bugreport.ACCESS_KEY
+   annie.core.bugreport.MAX_REPORTS_PER_HOUR
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.core.bugreport.access_key
+   annie.core.bugreport.reporting_available
+   annie.core.bugreport.build_report
+   annie.core.bugreport.payload
+   annie.core.bugreport.already_sent
+   annie.core.bugreport.can_send
+   annie.core.bugreport.mark_sent
+   annie.core.bugreport.reset
+
+
+Module Contents
+---------------
+
+.. py:data:: REPORT_SUBJECT
+   :value: 'Annie bug report'
+
+
+   The email subject of every report.
+
+.. py:data:: REPORT_URL
+   :value: 'https://api.web3forms.com/submit'
+
+
+   Where reports are posted (JSON); the service emails them to the maintainer.
+
+.. py:data:: ACCESS_KEY
+   :value: '2ac1f9d9-3a01-4c94-a74c-87c623e9717f'
+
+
+   The Web3Forms access key bound to the maintainer's inbox (public by design).
+
+   It can only deliver to that inbox; if it is ever abused, reset it on web3forms.com and
+   ship the new one in a release. ``ANNIE_REPORT_KEY`` in the environment overrides it
+   (e.g. to test with another inbox); an empty key turns reporting off.
+
+.. py:data:: MAX_REPORTS_PER_HOUR
+   :value: 5
+
+
+   How many reports one Annie process sends per hour at most.
+
+.. py:function:: access_key() -> str
+
+   The access key in use: ``ANNIE_REPORT_KEY`` if set, else :data:`ACCESS_KEY`.
+
+
+.. py:function:: reporting_available() -> bool
+
+   Whether reports can be sent (an access key is configured).
+
+
+.. py:function:: build_report(event: annie.core.logbook.LogEvent, note: str, *, version: str) -> str
+
+   The plain text that is sent, exactly as the user previews it.
+
+   :param event: The logged error being reported.
+   :param note: What the user was doing (optional; may be empty).
+   :param version: The running Annie version.
+
+   :returns: the note, the error with its full details, and where it happened
+             (Annie, Python and OS versions). Nothing else from the PC is included.
+   :rtype: The report
+
+
+.. py:function:: payload(text: str) -> dict[str, str]
+
+   The JSON body the form-to-email service expects.
+
+
+.. py:function:: already_sent(seq: int) -> bool
+
+   Whether the error with log sequence number ``seq`` was reported already.
+
+
+.. py:function:: can_send(now: float | None = None) -> bool
+
+   Whether another report fits within :data:`MAX_REPORTS_PER_HOUR`.
+
+
+.. py:function:: mark_sent(seq: int, now: float | None = None) -> None
+
+   Remember that the error ``seq`` was reported, for the Sent state and the limit.
+
+
+.. py:function:: reset() -> None
+
+   Forget sent reports (for tests).
+
+

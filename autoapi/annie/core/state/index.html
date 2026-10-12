@@ -205,6 +205,7 @@
 <li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html">annie</a><input aria-label="Toggle navigation of annie" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../../app/index.html">annie.app</a></li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../models/index.html">annie.core.models</a></li>
@@ -477,6 +478,13 @@ selection view); its width is derived 16:9.</p>
 env-seeded / blank dataset. Lets the Dataset tab show it as selected.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.AppState.scanned_tracks">
+<span class="sig-name descname"><span class="pre">scanned_tracks</span></span><a class="headerlink" href="#annie.core.state.AppState.scanned_tracks" title="Link to this definition">¶</a></dt>
+<dd><p>Each video’s protagonist as scanned (the heuristic CSV), before
+the review DB’s corrections are layered over it; lets a DB switch start over.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.core.state.AppState.restore_last_config">
 <span class="sig-name descname"><span class="pre">restore_last_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/core/state.html#AppState.restore_last_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.core.state.AppState.restore_last_config" title="Link to this definition">¶</a></dt>
@@ -508,6 +516,8 @@ renamed video files are re-probed on the next Browse render.</p>
 Call this whenever the user changes the persistence target — either by
 loading a config that embeds a <code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code> path, or by choosing a DB file
 in the Persistence block on the Dataset tab.</p>
+<p>The new DB’s protagonist corrections replace the previous DB’s on the scanned
+videos straight away, instead of only after the next rescan or restart.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>db_path</strong> – Absolute path to the SQLite file to open.</p>
@@ -624,6 +634,7 @@ stay fast.</p>
 <li><a class="reference internal" href="#annie.core.state.AppState.frames_cache"><code class="docutils literal notranslate"><span class="pre">AppState.frames_cache</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.ui"><code class="docutils literal notranslate"><span class="pre">AppState.ui</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.active_config"><code class="docutils literal notranslate"><span class="pre">AppState.active_config</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.AppState.scanned_tracks"><code class="docutils literal notranslate"><span class="pre">AppState.scanned_tracks</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.restore_last_config"><code class="docutils literal notranslate"><span class="pre">AppState.restore_last_config()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.rescan"><code class="docutils literal notranslate"><span class="pre">AppState.rescan()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.set_store"><code class="docutils literal notranslate"><span class="pre">AppState.set_store()</span></code></a></li>
