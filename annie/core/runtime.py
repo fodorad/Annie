@@ -311,22 +311,45 @@ def download_examples(directory: Path, timeout: float = 60.0) -> int:  # pragma:
         archive.unlink(missing_ok=True)
 
 
-def decoder_problem(exc: BaseException, platform: str = sys.platform) -> str:
+def decoder_problem(
+    exc: BaseException, platform: str = sys.platform, *, installed: bool | None = None
+) -> str:
     """Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.
 
-    On Windows the usual cause is a missing Microsoft Visual C++ runtime: PyTorch's DLLs
-    need ``msvcp140.dll`` & co., which neither Windows nor Python always provide. The
-    Windows installer bundles them; installs made before that, and other setups, need
-    the system-wide Redistributable.
+    Two usual causes:
+
+    * **FFmpeg's shared libraries are missing**: torchcodec then cannot load its core
+      library (``Could not load libtorchcodec``, a 150-line message). The installed
+      Windows app bundles FFmpeg; a source checkout needs a *shared* FFmpeg on ``PATH``,
+      and a terminal opened before installing it still has the old ``PATH``.
+    * **Windows lacks the Visual C++ runtime**: PyTorch's DLLs need ``msvcp140.dll`` &
+      co. The Windows installer bundles them; older installs and other setups need the
+      system-wide Redistributable.
 
     Args:
-        exc: The ``ImportError``/``OSError`` raised while importing the decoder.
+        exc: The error raised while importing the decoder or opening a video with it.
         platform: ``sys.platform``, injectable for tests.
+        installed: Whether this is the Windows installer's Annie (``ANNIE_INSTALL_DIR``
+            set); detected when ``None``.
 
     Returns:
-        A one-line message for the Log tab, the toast and the banner.
+        A one-line message for the Log tab, the toast and the banner (the full error
+        stays in the Log tab's details).
     """
+    if installed is None:
+        installed = bool(os.environ.get("ANNIE_INSTALL_DIR"))
     reason = str(exc).strip() or type(exc).__name__
+    if "libtorchcodec" in reason:
+        if installed:
+            fix = f"Run the newest Annie installer ({INSTALLER_URL}), which includes FFmpeg."
+        elif platform == "win32":
+            fix = (
+                "Install a shared FFmpeg build (winget install BtbN.FFmpeg.GPL.Shared.8.1), "
+                "then start Annie from a new terminal."
+            )
+        else:
+            fix = "Install FFmpeg 4 to 9 with its shared libraries (e.g. brew/apt ffmpeg)."
+        return f"Video frames cannot be decoded: FFmpeg's shared libraries were not found. {fix}"
     if platform == "win32" and isinstance(exc, OSError) and ".dll" in reason.lower():
         return (
             "Video frames cannot be decoded: a Windows system library is missing "

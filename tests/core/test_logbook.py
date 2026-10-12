@@ -96,5 +96,35 @@ class TestReportException(unittest.TestCase):
         self.assertIn("ValueError: kaboom", book_event.details)
 
 
+class TestShortMessages(unittest.TestCase):
+    """Toasts and Log tab rows get one short line; the full text stays in the details."""
+
+    def setUp(self) -> None:
+        self.book = LogBook()
+
+    def test_a_short_message_is_kept(self) -> None:
+        event = self.book.add("error", "Video file not found: a.mp4", "trace")
+        self.assertEqual((event.message, event.details), ("Video file not found: a.mp4", "trace"))
+
+    def test_a_multi_line_message_keeps_its_first_line(self) -> None:
+        long = (
+            "Could not decode frames of a.mp4: Could not load libtorchcodec. Likely causes:\n"
+            + ("  1. FFmpeg is not properly installed\n" * 50)
+        )
+        event = self.book.add("error", long, "Traceback (most recent call last): ...")
+        self.assertEqual(
+            event.message,
+            "Could not decode frames of a.mp4: Could not load libtorchcodec. Likely causes:…",
+        )
+        self.assertTrue(event.details.startswith(long.strip()))
+        self.assertTrue(event.details.endswith("Traceback (most recent call last): ..."))
+
+    def test_a_very_long_line_is_cut(self) -> None:
+        event = self.book.add("warning", "x" * 500)
+        self.assertEqual(len(event.message), 200)
+        self.assertTrue(event.message.endswith("…"))
+        self.assertEqual(event.details, "x" * 500)
+
+
 if __name__ == "__main__":
     unittest.main()

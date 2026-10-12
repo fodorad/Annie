@@ -205,6 +205,30 @@ class TestHiddenConsole(unittest.TestCase):
 class TestDecoderProblem(unittest.TestCase):
     """The message shown when the frame decoder cannot load."""
 
+    _NO_FFMPEG = RuntimeError(
+        "Could not load libtorchcodec. Likely causes:\n  1. FFmpeg is not properly installed"
+    )
+
+    def test_missing_ffmpeg_in_the_installed_app(self) -> None:
+        message = runtime.decoder_problem(self._NO_FFMPEG, "win32", installed=True)
+        self.assertIn("FFmpeg's shared libraries were not found", message)
+        self.assertIn(runtime.INSTALLER_URL, message)
+        self.assertNotIn("\n", message)  # one line: the 150-line text stays in the details
+
+    def test_missing_ffmpeg_from_source_on_windows(self) -> None:
+        message = runtime.decoder_problem(self._NO_FFMPEG, "win32", installed=False)
+        self.assertIn("winget install BtbN.FFmpeg.GPL.Shared", message)
+        self.assertIn("new terminal", message)
+
+    def test_missing_ffmpeg_elsewhere(self) -> None:
+        message = runtime.decoder_problem(self._NO_FFMPEG, "linux", installed=False)
+        self.assertIn("shared libraries", message)
+        self.assertNotIn("winget", message)
+
+    def test_installed_is_detected_from_the_launcher(self) -> None:
+        with mock.patch.dict("os.environ", {"ANNIE_INSTALL_DIR": r"C:\Annie\App"}):
+            self.assertIn(runtime.INSTALLER_URL, runtime.decoder_problem(self._NO_FFMPEG, "win32"))
+
     _DLL_ERROR = OSError(
         126,
         'Error loading "C:\\App\\env\\Lib\\site-packages\\torch\\lib\\c10.dll" or one of '

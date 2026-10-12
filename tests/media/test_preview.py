@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 from PIL import Image
@@ -193,6 +194,33 @@ class TestReportDecodeFailure(unittest.TestCase):
     def _errors(self) -> list[logbook.LogEvent]:
         new, _ = logbook.LOG.since(self.seq)
         return [e for e in new if e.level == "error"]
+
+    def test_ffmpeg_missing_for_ten_videos_is_one_short_entry(self) -> None:
+        """The reported case: every Browse row failed with torchcodec's 150-line error."""
+        from annie.media import decode
+
+        long_error = "Could not load libtorchcodec. Likely causes:\n" + "  detail\n" * 150
+
+        class NoFfmpeg:
+            def __init__(self, path: str, seek_mode: str) -> None:
+                raise RuntimeError(long_error)
+
+        with (
+            mock.patch.object(decode, "media_available", return_value=True),
+            mock.patch.object(decode, "_video_decoder_class", return_value=NoFfmpeg),
+        ):
+            for i in range(10):
+                entry = VideoEntry(f"v{i}", video_path=Path(f"v{i}.mp4"))
+                try:
+                    build_grid_preview(entry)
+                except Exception as exc:  # noqa: BLE001 - what Browse's rows catch
+                    report_decode_failure(entry.video_path, exc)
+        errors = self._errors()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("FFmpeg's shared libraries were not found", errors[0].message)
+        self.assertNotIn("\n", errors[0].message)
+        self.assertLessEqual(len(errors[0].message), 400)
+        self.assertIn("Could not load libtorchcodec", errors[0].details)  # full text kept
 
     def test_a_decoder_that_cannot_load_is_logged_once(self) -> None:
         exc = MediaUnavailableError("Video frames cannot be decoded: c10.dll missing")

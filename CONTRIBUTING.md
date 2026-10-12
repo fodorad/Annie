@@ -16,7 +16,10 @@ pre-commit install   # optional: runs ruff automatically before every commit
 > Annie's core (scanning, parsing, matching, storage, theme, colour) installs with
 > just `nicegui` + `pillow` + `numpy`. The `media` extra (`torch`,
 > `torchcodec`) is only needed for frame decoding and the render pipeline, and
-> requires a system FFmpeg (versions 4–8).
+> requires a system FFmpeg (versions 4–9) **with its shared libraries**. On Windows
+> install a shared build, e.g. `winget install BtbN.FFmpeg.GPL.Shared.8.1`, then open a
+> **new** terminal (an open one keeps its old `PATH`). Run with `make run`, which works
+> from PowerShell too; without FFmpeg Annie shows a banner saying what is missing.
 
 ---
 
