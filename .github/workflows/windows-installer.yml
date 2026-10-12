@@ -97,13 +97,14 @@ jobs:
         $wheel = (Get-ChildItem dist\*.whl | Select-Object -First 1).FullName
         # Inherited by the installer's launcher.pyw --install, so CI tests this commit.
         $env:ANNIE_PACKAGE = "annie[media,desktop] @ $(([System.Uri]$wheel).AbsoluteUri)"
-        $root = "$env:RUNNER_TEMP\Annie test"   # a space and a parent named Annie, on purpose
+        # The one install folder holds App (the program) and Data (the work).
+        $root = "$env:RUNNER_TEMP\Annie test"   # a space in the path, on purpose
         $app = "$root\App"
         $data = "$root\Data"
         # Setup must add nothing to the registry (locked-down PCs): remember what is there.
         $regBefore = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
         Start-Process installer\windows\Output\Annie-Setup.exe -Wait `
-          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$app`"", "/DATADIR=`"$data`""
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$root`""
         Get-Content "$app\install.log" -Tail 20 -ErrorAction SilentlyContinue
         foreach ($f in 'uv.exe', 'launcher.pyw', 'annie.ico', 'annie.png', 'annie.ini', 'unins000.exe',
                        'python\pythonw.exe', 'env\Scripts\pythonw.exe',
@@ -121,9 +122,9 @@ jobs:
         if ($links) { $links | Select-Object FullName, LinkType, Target; throw 'junction/symlink in the install folder' }
         $cfg = Get-Content "$app\env\pyvenv.cfg" -Raw
         if ($cfg -notmatch [regex]::Escape("home = $app\python")) { throw "env is not on the bundled Python:`n$cfg" }
-        # Annie starts from the "Annie" shortcut in the Annie folder (App and Data's
-        # parent); "Uninstall Annie" sits next to it. No Start menu, and the desktop
-        # shortcut is unticked by default.
+        # Annie starts from the "Annie" shortcut in the install folder; "Uninstall Annie"
+        # (App\unins000.exe) sits next to it. No Start menu, and the desktop shortcut is
+        # unticked by default.
         $shell = New-Object -ComObject WScript.Shell
         $starter = $shell.CreateShortcut("$root\Annie.lnk")
         if (-not (Test-Path "$root\Annie.lnk")) { throw "missing starter $root\Annie.lnk" }

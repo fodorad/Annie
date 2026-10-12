@@ -97,9 +97,8 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
 If you just want to *use* Annie on Windows (no terminal, Python, FFmpeg, Docker or admin
 rights needed), download
 [**Annie-Setup.exe**](https://github.com/fodorad/Annie/releases/latest/download/Annie-Setup.exe),
-choose where Annie and your work go (default `%USERPROFILE%\Annie\App` and
-`%USERPROFILE%\Annie\Data`) and whether to include the two example datasets, then
-double-click **Annie** in the `%USERPROFILE%\Annie` folder. Annie runs as an icon
+choose one install folder (default `%USERPROFILE%\Annie`, holding `App` and `Data`) and
+whether to include the two example datasets, then double-click **Annie** in that folder. Annie runs as an icon
 in the notification area, updates itself on every start, and works on locked-down PCs:
 it writes only inside your user folder (no registry entries, no Start menu), and
 **Uninstall Annie** in the same folder removes it without leaving anything behind. The

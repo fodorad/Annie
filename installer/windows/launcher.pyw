@@ -14,14 +14,18 @@ What a start does:
 4. Start Annie with its notification-area icon (``pythonw -m annie.desktop``) and wait
    until it answers.
 
-From the first click until Annie answers, a small window shows the Annie icon, a progress
-bar and a text box with what happens: the update check, the packages an update changes,
-uv's download/install steps, and Annie starting. It closes by itself; if Annie cannot
-start, it stays open and says why. uv's full output is kept in ``install.log``.
+From the first click until Annie answers, a small window shows the Annie logo and name, one
+status line ("Checking for updates...", "Downloading: 230 of 820 MB", "Starting..."), a
+progress bar and a small info box (installed and latest version, whether an update is
+needed, the packages). It closes by itself; if Annie cannot start, it says why and offers
+the log. Everything in full detail (uv's output) is kept in ``install.log``.
 
 Other modes:
-  ``--install [--quiet]``     create/refresh the environment and exit (the installer runs
-                              this, so the first start needs no download).
+  ``--install --progress``    setup's download step: create the environment and report into
+                              the installer window through stdout (``@status <text>``,
+                              ``@progress <0..1000>``, other lines for its log box).
+  ``--install [--quiet]``     create/refresh the environment and exit, with the small
+                              window (or, with --quiet, with none).
   ``--update --after-pid N``  the tray's "Check for updates": wait for Annie (process N)
                               to exit, update, then start it again.
 
@@ -365,16 +369,17 @@ FIRST_START: Plan = (
 SETUP: Plan = (("environment", 0.05), ("resolve", 0.12), ("download", 0.88), ("install", 1.0))
 
 #: Roughly how many seconds each step takes. Inside a step the bar eases toward the
-#: step's end at this pace, and only reaches it when the step is done: uv does not say
-#: how far a download is when it is not writing to a terminal.
+#: step's end at this pace, and only reaches it when the step is done.
 STEP_SECONDS = {"download": 45.0, "start": 6.0}
 
 
 class Progress:
     """The progress bar's position: each step owns a slice of the bar.
 
-    The bar never moves backwards, also not when the plan changes mid-way (a start that
-    turns out to need an update gets more steps).
+    Inside a step the bar eases toward the step's end, and :meth:`advance` moves it to a
+    known fraction of the step (e.g. how many megabytes are downloaded). It never moves
+    backwards, also not when the plan changes mid-way (a start that turns out to need an
+    update gets more steps).
     """
 
     def __init__(self, plan: Plan, *, slow: bool = False) -> None:
@@ -404,6 +409,19 @@ class Progress:
         self._step = step
         self._since = now
 
+    def advance(self, fraction: float, now: float) -> None:
+        """The current step is known to be ``fraction`` (0..1) done."""
+        bounds = self._bounds(self._step) if self._step is not None else None
+        if bounds is None:
+            return
+        start, end = bounds
+        known = start + (end - start) * min(max(fraction, 0.0), 1.0)
+        self.value = self.at(now)
+        if known > self._floor:
+            self._floor = max(known, self.value)
+            self.value = self._floor
+            self._since = now
+
     def finish(self) -> None:
         """Everything is done: a full bar."""
         self._step = None
@@ -416,57 +434,205 @@ class Progress:
             end = bounds[1]
             pace = STEP_SECONDS.get(self._step or "", 2.0) * (4 if self.slow else 1)
             eased = 1.0 - math.exp(-max(0.0, now - self._since) / pace)
-            # Up to 90% of the slice: the rest waits until the step is really done.
+            # Up to 90% of what is left: the rest waits until the step is really done.
             target = self._floor + max(0.0, end - self._floor) * 0.9 * eased
             self.value = max(self.value, min(target, end))
         return self.value
 
 
-class Reporter:
-    """What the work reports to the window: steps, lines for the text box, the outcome.
+_SIZE_UNITS = {"B": 1, "KiB": 1024, "MiB": 1024**2, "GiB": 1024**3}
 
-    Thread-safe (the work runs in its own thread). Without a window (``--quiet``) the
-    lines only go to install.log.
+
+def uv_download(line: str) -> tuple[str, str, int] | None:
+    """Parse uv's large-download notices: ``Downloading torch (241.5MiB)``, ``Downloaded torch``.
+
+    Returns:
+        ``("start", package, bytes)``, ``("done", package, 0)``, or ``None`` for other lines.
+    """
+    match = re.match(r"\s*Downloading (\S+) \(([\d.]+)\s*([KMG]?i?B)\)\s*$", line)
+    if match:
+        name, amount, unit = match.groups()
+        return "start", name, int(float(amount) * _SIZE_UNITS.get(unit, 1))
+    match = re.match(r"\s*Downloaded (\S+)\s*$", line)
+    if match:
+        return "done", match.group(1), 0
+    return None
+
+
+class Downloads:
+    """How far uv's large downloads are, from its ``Downloading``/``Downloaded`` lines.
+
+    uv announces every large download with its size and reports when it is done; small
+    packages are not announced and are negligible next to PyTorch.
+    """
+
+    def __init__(self) -> None:
+        self.sizes: dict[str, int] = {}
+        self.finished: set[str] = set()
+
+    def feed(self, line: str) -> bool:
+        """Take one uv output line; return whether it was a download notice."""
+        event = uv_download(line)
+        if event is None:
+            return False
+        kind, name, size = event
+        if kind == "start":
+            self.sizes[name] = size
+        else:
+            self.finished.add(name)
+        return True
+
+    @property
+    def total(self) -> int:
+        """Bytes of all announced downloads."""
+        return sum(self.sizes.values())
+
+    @property
+    def done(self) -> int:
+        """Bytes of the finished downloads."""
+        return sum(size for name, size in self.sizes.items() if name in self.finished)
+
+    def fraction(self) -> float:
+        """The share of announced bytes that are downloaded (0 when nothing is announced)."""
+        return self.done / self.total if self.total else 0.0
+
+    def describe(self) -> str:
+        """``Downloading: 230 of 820 MB``."""
+        mb = 1024**2
+        return f"Downloading: {self.done / mb:.0f} of {self.total / mb:.0f} MB"
+
+
+class Reporter:
+    """What the work reports: a status line, details, progress, and the outcome.
+
+    The start window shows only the **status** and the progress bar; **details** (the
+    package list, uv's lines) go to install.log, and to setup's log box via
+    :class:`StreamReporter`. Thread-safe: the work runs in its own thread, and the window
+    reads :attr:`events`. Without a window (``--quiet``) everything only goes to the log.
     """
 
     def __init__(self) -> None:
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
 
-    def heading(self, text: str) -> None:
-        """Replace the window's heading."""
-        self.events.put(("heading", text))
+    def _emit(self, kind: str, value: object) -> None:
+        self.events.put((kind, value))
 
-    def plan(self, plan: Plan, *, slow: bool = False) -> None:
-        """Switch to ``plan``'s steps (e.g. once an update turns out to be needed)."""
-        self.events.put(("plan", (plan, slow)))
+    def status(self, text: str) -> None:
+        """What is happening now, in a few words (also logged)."""
+        log(text)
+        self._emit("status", text)
 
-    def step(self, name: str) -> None:
-        """Step ``name`` begins."""
-        self.events.put(("step", name))
-
-    def note(self, text: str) -> None:
-        """Add a line to the text box (and to install.log)."""
+    def detail(self, text: str) -> None:
+        """A line for the log (and setup's log box), not for the start window."""
         log(text)
         self.show(text)
 
     def show(self, text: str) -> None:
-        """Add a line to the text box only (for lines install.log already has)."""
-        self.events.put(("note", text))
+        """Like :meth:`detail`, for lines install.log already has."""
+        self._emit("detail", text)
+
+    def plan(self, plan: Plan, *, slow: bool = False) -> None:
+        """Switch to ``plan``'s steps (e.g. once an update turns out to be needed)."""
+        self._emit("plan", (plan, slow))
+
+    def step(self, name: str) -> None:
+        """Step ``name`` begins."""
+        self._emit("step", name)
+
+    def advance(self, fraction: float) -> None:
+        """The current step is ``fraction`` (0..1) done."""
+        self._emit("advance", fraction)
 
     def done(self) -> None:
         """Everything worked: the window closes."""
-        self.events.put(("done", None))
+        self._emit("done", None)
 
     def fail(self, text: str) -> None:
         """Something failed: the window says why and stays open."""
         log(f"ERROR: {text}")
-        self.events.put(("fail", text))
+        self._emit("fail", text)
+
+
+#: Characters setup's log box may not show (its output is read as plain ASCII).
+_ASCII = str.maketrans({"→": "->", "…": "...", "–": "-", "—": "-", "’": "'"})
+
+
+def ascii_line(text: str) -> str:
+    """``text`` in plain ASCII for setup's log box, which reads the output as ASCII."""
+    return text.translate(_ASCII).encode("ascii", "replace").decode("ascii")
+
+
+class StreamReporter(Reporter):
+    """Reports to the installer window through stdout (``launcher.pyw --install --progress``).
+
+    Setup reads every line (Inno's ``ExecAndLogOutput``): ``@status <text>`` sets its
+    status line, ``@progress <0..1000>`` its progress bar, and every other line goes to
+    its log box. A heartbeat keeps the bar moving during long downloads.
+    """
+
+    def __init__(self, plan: Plan, *, out: Callable[[str], None] | None = None) -> None:
+        super().__init__()
+        self.progress = Progress(plan, slow=True)
+        self._out = out or (lambda line: print(line, flush=True))
+        self._lock = threading.Lock()
+        self._last = -1
+        self._stop = threading.Event()
+
+    def _write(self, line: str) -> None:
+        with self._lock:
+            self._out(ascii_line(line))
+
+    def _emit(self, kind: str, value: object) -> None:
+        now = time.monotonic()
+        if kind == "status":
+            self._write(f"@status {value}")
+        elif kind == "detail":
+            self._write(str(value))
+        elif kind == "fail":
+            self._write(f"@status {value}")
+            self._write(f"ERROR: {value}")
+        elif kind == "plan":
+            self.progress.plan, self.progress.slow = value  # type: ignore[misc]
+        elif kind == "step":
+            self.progress.begin(str(value), now)
+        elif kind == "advance":
+            self.progress.advance(float(value), now)  # type: ignore[arg-type]
+        elif kind == "done":
+            self.progress.finish()
+        self.beat(now)
+
+    def beat(self, now: float | None = None) -> None:
+        """Send the bar's position if it moved."""
+        value = int(self.progress.at(time.monotonic() if now is None else now) * 1000)
+        if value != self._last:
+            self._last = value
+            self._write(f"@progress {value}")
+
+    def run_heartbeat(self, every: float = 0.5) -> threading.Thread:
+        """Keep sending the eased position until :meth:`stop_heartbeat`."""
+
+        def loop() -> None:
+            while not self._stop.wait(every):
+                self.beat()
+
+        thread = threading.Thread(target=loop, daemon=True)
+        thread.start()
+        return thread
+
+    def stop_heartbeat(self) -> None:
+        """Stop :meth:`run_heartbeat`."""
+        self._stop.set()
+
+
+def packages(count: int) -> str:
+    """``1 package``, ``3 packages``."""
+    return f"{count} package" + ("" if count == 1 else "s")
 
 
 def install_with_progress(ui: Reporter, args: list[str]) -> None:
-    """Run uv ``args`` (an install or update), showing the package changes and steps."""
+    """Run uv ``args`` (an install or update), reporting the packages, sizes and steps."""
     ui.step("resolve")
-    ui.note("Checking which packages change...")
+    ui.status("Checking which packages are needed...")
     preview: list[str] = []
     try:
         run([*args, "--dry-run"], preview.append)
@@ -474,19 +640,28 @@ def install_with_progress(ui: Reporter, args: list[str]) -> None:
         preview = []  # the real run below reports the problem
     changes = package_changes(preview)
     if changes:
-        ui.note(f"{len(changes)} package(s) to download and install:")
+        ui.detail(f"{packages(len(changes))} to download and install:")
         for change in changes:
-            ui.note(f"    {change}")
+            ui.detail(f"    {change}")
+
+    downloads = Downloads()
 
     def on_line(line: str) -> None:
+        if downloads.feed(line):
+            ui.show(line)
+            ui.advance(downloads.fraction())
+            ui.status(downloads.describe())
+            return
         summary, step = uv_step(line)
         if summary:
             ui.show(line)  # run() has logged it
+        if step == "install":
+            ui.status("Installing packages...")
         if step is not None:
             ui.step(step)
 
     ui.step("download")
-    ui.note("Downloading...")
+    ui.status(f"Downloading {packages(len(changes))}..." if changes else "Downloading...")
     run(args, on_line)
 
 
@@ -496,55 +671,52 @@ def create_environment(ui: Reporter) -> None:
         shutil.rmtree(ENV, ignore_errors=True)  # half-created: start over
     ui.step("environment")
     if not ENV_PYTHON.is_file():
-        ui.note("Creating the annie environment...")
+        ui.status("Creating the Python environment...")
         run([str(UV), "venv", "--python", str(PYTHON), "--prompt", "annie", str(ENV)], log)
     install_with_progress(ui, install_args())
+    ui.status("Components installed.")
 
 
 def update_if_newer(ui: Reporter) -> None:
     """Update to the newest Annie on PyPI if there is one; never stops Annie starting."""
     current = installed_version()
     ui.step("check")
-    ui.note("Checking for updates...")
+    ui.status("Checking for updates...")
+    ui.detail(f"Installed: {current}")
     latest = latest_version()
     if current is None or latest is None:
-        ui.note("Could not reach the update server; starting the installed Annie.")
+        ui.detail("Could not reach the update server. Starting the installed version.")
         return
     if not is_newer(latest, current):
-        ui.note(f"Annie {current} is up to date.")
+        ui.detail(f"Latest: {latest}. No update needed.")
         return
-    ui.heading(f"Updating Annie {current} → {latest}")
     ui.plan(UPDATE_START)
-    ui.note(f"Annie {latest} is available (you have {current}).")
+    ui.detail(f"Latest: {latest}. Updating {current} → {latest}.")
+    ui.status(f"Updating {current} → {latest}...")
     try:
         install_with_progress(ui, update_args())
     except Exception as exc:  # noqa: BLE001 - the installed version still starts
-        ui.note(f"The update did not finish ({exc}); starting the installed Annie {current}.")
-        ui.note(f"Details: {LOG}")
+        ui.detail(f"The update did not finish ({exc}). Starting {current}.")
         return
-    ui.note(f"Updated to Annie {installed_version() or latest}.")
+    ui.detail(f"Updated to {installed_version() or latest}.")
 
 
 def launch_and_wait(ui: Reporter, timeout_s: float = 180.0) -> bool:
     """Start Annie and wait until it answers; report why when it does not."""
     ui.step("start")
-    ui.heading("Starting Annie")
-    ui.note("Starting Annie...")
+    ui.status("Starting...")
     process = start_annie()
     deadline = time.monotonic() + timeout_s
     while not annie_running():
         code = process.poll()
         if code is not None:
-            ui.fail(
-                f"Annie stopped while starting (exit code {code}). Details are in "
-                f"{data_dir() / 'logs'} and {LOG}."
-            )
+            ui.fail(f"Stopped while starting (exit code {code}).")
             return False
         if time.monotonic() > deadline:
-            ui.fail(f"Annie did not start within {timeout_s:.0f} seconds. Details: {LOG}")
+            ui.fail(f"Did not start within {timeout_s:.0f} seconds.")
             return False
         time.sleep(0.5)
-    ui.note("Annie is running and opens in your browser.")
+    ui.detail(f"Running at http://127.0.0.1:{port()}/")
     ui.done()
     return True
 
@@ -567,20 +739,46 @@ def run_headless(work: Callable[[Reporter], object]) -> bool:
     return "fail" not in events
 
 
+def run_streaming(plan: Plan, work: Callable[[Reporter], object]) -> bool:
+    """Run ``work`` reporting to setup's window through stdout; return whether it worked."""
+    with contextlib.suppress(AttributeError, ValueError):
+        sys.stdout.reconfigure(line_buffering=True)  # type: ignore[union-attr]
+    ui = StreamReporter(plan)
+    ui.run_heartbeat()
+    try:
+        ok = work(ui) is not False
+    except Exception as exc:  # noqa: BLE001 - reported via the exit code + setup's log box
+        ui.fail(str(exc) or type(exc).__name__)
+        ok = False
+    else:
+        if ok:
+            ui.done()
+    finally:
+        ui.stop_heartbeat()
+    return ok
+
+
+def open_log() -> None:
+    """Open install.log in the default text editor."""
+    with contextlib.suppress(OSError):
+        os.startfile(LOG)  # noqa: S606 - a fixed file in the install folder
+
+
 def with_window(
-    heading: str,
+    status: str,
     plan: Plan,
     work: Callable[[Reporter], object],
     *,
     slow: bool = False,
     close_on_failure: bool = False,
 ) -> bool:
-    """Show the progress window while ``work`` runs; return whether it succeeded.
+    """Show the start window while ``work`` runs; return whether it succeeded.
 
-    The window has the Annie icon, a heading, the progress bar and a text box with what
-    happens. It closes by itself when the work is done. On a failure it stays open with
-    the reason and a Close button, unless ``close_on_failure`` (the installer, which
-    shows its own message).
+    The Annie logo and name, one status line, the progress bar, and a small info box with
+    the details: the installed and the latest version, whether an update is needed, the
+    packages being downloaded. It closes by itself when the work is done. On a failure
+    the status line turns red with the reason, and **Open log** / **Close** appear
+    (unless ``close_on_failure``).
     """
     import tkinter as tk
     from tkinter import ttk
@@ -607,25 +805,39 @@ def with_window(
         root.iconbitmap(str(ICON))
     root.resizable(False, False)
     root.protocol("WM_DELETE_WINDOW", lambda: None)  # finishing is safer than stopping halfway
-    frame = ttk.Frame(root, padding=16)
+    frame = ttk.Frame(root, padding=(20, 18, 20, 18))
     frame.pack(fill="both", expand=True)
     top = ttk.Frame(frame)
     top.pack(fill="x")
     with contextlib.suppress(tk.TclError):
-        logo = tk.PhotoImage(file=str(APP / "annie.png"))
-        ttk.Label(top, image=logo).pack(side="left", padx=(0, 12))
+        logo = tk.PhotoImage(file=str(APP / "annie.png")).subsample(2)  # 56 -> 28 px
+        ttk.Label(top, image=logo).pack(side="left", padx=(0, 10))
         root.logo = logo  # type: ignore[attr-defined] - keep a reference, or Tk drops it
-    title = ttk.Label(top, text=heading, font=("Segoe UI", 12))
-    title.pack(side="left", anchor="w")
-    bar = ttk.Progressbar(frame, mode="determinate", maximum=1000, length=480)
-    bar.pack(fill="x", pady=(12, 8))
-    text = tk.Text(
-        frame, height=9, width=68, wrap="word", relief="flat", borderwidth=0,
-        font=("Segoe UI", 9), background=root.cget("background"),
+    ttk.Label(top, text="Annie", font=("Segoe UI Semibold", 12)).pack(side="left")
+    line = ttk.Label(
+        frame, text=status, font=("Segoe UI", 9), foreground="#4b5563", width=58, anchor="w"
+    )
+    line.pack(fill="x", pady=(12, 6))
+    bar = ttk.Progressbar(frame, mode="determinate", maximum=1000, length=400)
+    bar.pack(fill="x")
+    # The info box: a few lines of detail, newest at the bottom.
+    info = tk.Text(
+        frame, height=5, width=58, wrap="none", relief="solid", borderwidth=1,
+        font=("Consolas", 8), foreground="#4b5563", background="#fafafa",
+        highlightthickness=0, padx=6, pady=4,
     )  # fmt: skip
-    text.pack(fill="both", expand=True)
-    text.configure(state="disabled")
-    close = ttk.Button(frame, text="Close", command=root.destroy)
+    info.pack(fill="x", pady=(10, 0))
+    info.configure(state="disabled")
+    buttons = ttk.Frame(frame)
+
+    def add_info(text: str) -> None:
+        info.configure(state="normal")
+        if info.get("1.0", "end-1c"):
+            info.insert("end", "\n")
+        info.insert("end", text)
+        info.see("end")
+        info.configure(state="disabled")
+
     root.update_idletasks()
     x = (root.winfo_screenwidth() - root.winfo_reqwidth()) // 2
     y = (root.winfo_screenheight() - root.winfo_reqheight()) // 3
@@ -637,38 +849,38 @@ def with_window(
     with contextlib.suppress(tk.TclError):
         root.focus_force()
 
-    def add_line(line: str) -> None:
-        text.configure(state="normal")
-        text.insert("end", line + "\n")
-        text.see("end")
-        text.configure(state="disabled")
-
     def poll() -> None:
         now = time.monotonic()
         while not ui.events.empty():
             kind, value = ui.events.get_nowait()
-            if kind == "heading":
-                title.configure(text=str(value))
+            if kind == "status":
+                line.configure(text=str(value))
+            elif kind == "detail":
+                add_info(str(value))
             elif kind == "plan":
                 progress.plan, progress.slow = value  # type: ignore[misc]
             elif kind == "step":
                 progress.begin(str(value), now)
-            elif kind == "note":
-                add_line(str(value))
+            elif kind == "advance":
+                progress.advance(float(value), now)  # type: ignore[arg-type]
             elif kind == "done":
                 outcome["ok"] = True
                 progress.finish()
                 bar.configure(value=1000)
-                root.after(500, root.destroy)
+                root.after(400, root.destroy)
                 return
             elif kind == "fail":
                 outcome["ok"] = False
-                add_line(f"\n{value}")
-                title.configure(text="Something went wrong", foreground="#b00020")
+                line.configure(text=str(value), foreground="#b00020", wraplength=400)
                 if close_on_failure:
                     root.after(500, root.destroy)
                     return
-                close.pack(anchor="e", pady=(8, 0))
+                root.attributes("-topmost", False)
+                buttons.pack(anchor="e", pady=(14, 0))
+                ttk.Button(buttons, text="Open log", command=open_log).pack(side="left")
+                ttk.Button(buttons, text="Close", command=root.destroy).pack(
+                    side="left", padx=(8, 0)
+                )
                 root.protocol("WM_DELETE_WINDOW", root.destroy)
                 return
         bar.configure(value=int(progress.at(now) * 1000))
@@ -686,9 +898,8 @@ def with_window(
 def start(ui: Reporter) -> bool:
     """A start from the shortcut: install if needed, update if newer, start, wait."""
     if installed_version() is None:
-        ui.heading("Preparing Annie for first use")
         ui.plan(FIRST_START, slow=True)
-        ui.note("Downloading Annie and its components: several hundred MB, once.")
+        ui.status("Preparing for first use...")
         create_environment(ui)
     else:
         update_if_newer(ui)
@@ -699,6 +910,8 @@ def main(argv: list[str]) -> int:
     """Launcher entry point; see the module docstring for the modes."""
     if "--install" in argv:
         migrate_legacy_data()
+        if "--progress" in argv:  # setup: report into the installer window
+            return 0 if run_streaming(SETUP, create_environment) else 1
         if "--quiet" in argv:
             try:
                 create_environment(Reporter())
@@ -707,21 +920,20 @@ def main(argv: list[str]) -> int:
                 return 1
             return 0
         ok = with_window(
-            "Downloading Annie and its components", SETUP, create_environment,
-            slow=True, close_on_failure=True,
-        )  # fmt: skip
+            "Downloading Annie and its components...", SETUP, create_environment, slow=True
+        )
         return 0 if ok else 1
 
     if "--update" in argv and "--after-pid" in argv:
         with contextlib.suppress(ValueError, IndexError):
             wait_for_exit(int(argv[argv.index("--after-pid") + 1]))
-        return 0 if with_window("Updating Annie", QUICK_START, start) else 1
+        return 0 if with_window("Updating...", QUICK_START, start) else 1
 
     if annie_running():
         webbrowser.open(f"http://127.0.0.1:{port()}/")
         return 0
     migrate_legacy_data()
-    return 0 if with_window("Starting Annie", QUICK_START, start) else 1
+    return 0 if with_window("Starting...", QUICK_START, start) else 1
 
 
 if __name__ == "__main__":

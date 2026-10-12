@@ -12,41 +12,40 @@ entries, no Start menu, nothing in hidden AppData folders).
 2. Double-click the downloaded file.
    - Windows may show **"Windows protected your PC"**. This appears because the installer
      isn't code-signed yet. Click **More info**, then **Run anyway**.
-3. **Choose locations.** One page shows where everything goes. Keep the defaults or
-   change them:
+3. **Welcome.** Click **Next**.
+4. **Install folder.** Keep `C:\Users\<you>\Annie` or choose another folder. Annie keeps
+   everything inside it:
 
-   | Folder | Default | What is in it |
-   | --- | --- | --- |
-   | Program folder | `C:\Users\<you>\Annie\App` | Annie, its own Python, the `annie` Python environment with all dependencies, and FFmpeg |
-   | Data folder | `C:\Users\<you>\Annie\Data` | Your work: reviews, saved configs, logs |
+   | Inside the install folder | What is in it |
+   | --- | --- |
+   | `App` | Annie, its own Python, the `annie` Python environment with all dependencies, and FFmpeg |
+   | `Data` | Your work: reviews, saved configs, logs, and the example datasets |
+   | **Annie** | The shortcut that starts Annie |
+   | **Uninstall Annie** | The shortcut that removes Annie |
 
-   The program folder's path may be at most 120 characters long: Annie's components
-   contain deeply nested files, and Windows cannot open files with very long paths.
+   Two options sit under the folder: **Create a desktop shortcut** (off by default) and
+   **Install example datasets (50 MB)**, small versions of First Impression V2 and
+   CMU-MOSEI to try Annie on. If you leave the examples out, you can download them later
+   from the Annie icon's menu. Annie is not added to the Start menu.
+5. Click **Install**. The same window shows the whole installation: first the files are
+   copied, then Annie and its components are downloaded (a few hundred MB, a few
+   minutes), with a progress bar, the megabytes downloaded so far, and a log of every
+   package. Then **Finish** starts Annie.
 
-   Setup always puts an **Annie** shortcut (to start Annie) and an **Uninstall Annie**
-   shortcut in the Annie folder, `C:\Users\<you>\Annie`, which holds both folders. Tick
-   **Create a desktop shortcut** if you also want one on the desktop (it is unticked by
-   default). Annie is not added to the Start menu.
-
-   Tick or untick **Install the example datasets**: small versions of First Impression V2
-   and CMU-MOSEI (about 50 MB) to try Annie on. They are copied to `Data\examples`. If
-   you leave them out, you can download them later from the Annie icon's menu.
-4. Click **Install**. Setup downloads Annie and its components (a few hundred MB, a few
-   minutes; a small window shows the progress), then **Finish** starts Annie.
-
-You choose the folders once. Updates and reinstalls keep using them.
+You choose the folder once. Updates and reinstalls keep using it.
 
 ## Daily use
 
-- **Start:** double-click **Annie** in the Annie folder, `C:\Users\<you>\Annie` (or on
+- **Start:** double-click **Annie** in the install folder, `C:\Users\<you>\Annie` (or on
   the desktop, if you created that shortcut). Tip: pin the folder to Quick access in File
-  Explorer (right-click it, **Pin to Quick access**). A small Annie window
-  appears at once, with a progress bar and a list of what is happening: checking for
-  updates, the packages an update changes, the download, and Annie starting. It closes
-  by itself when Annie is ready. Your browser then opens Annie, and the Annie icon
-  appears in the notification area at the bottom right of the taskbar. If it is
-  hidden, click the **^** arrow next to the clock. If Annie cannot start, the window
-  stays open and says why.
+  Explorer (right-click it, **Pin to Quick access**). A small Annie window appears at
+  once with a progress bar, one line saying what is happening ("Checking for
+  updates...", "Starting...") and a small box with the installed and the latest version
+  and, during an update, the packages being downloaded. It closes by itself when Annie
+  is ready. Your browser then opens Annie, and the Annie icon appears in the
+  notification area at the bottom right of the taskbar. If it is hidden, click the **^**
+  arrow next to the clock. If Annie cannot start, the window says why and offers
+  **Open log**.
 - **The Annie icon's menu** (right-click it):
   - **Open Annie** opens it in the browser again. Double-clicking the icon does the same.
   - **Open Annie folder** opens `C:\Users\<you>\Annie` in File Explorer, which holds
@@ -115,12 +114,12 @@ you Annie.
 
 ## Uninstall
 
-Double-click **Uninstall Annie** in the Annie folder, `C:\Users\<you>\Annie`. (Annie is
+Double-click **Uninstall Annie** in the install folder, `C:\Users\<you>\Annie`. (Annie is
 not listed in Settings → Apps, because that list needs a registry entry.) This removes
-the program completely: the program folder with Annie's Python, the `annie` environment
+the program completely: the `App` folder with Annie's Python, the `annie` environment
 and everything downloaded into it, and the shortcuts. At the end it asks whether to
-**also delete your work**. The default answer is **No**, which keeps the data folder. If
-both folders are gone, the empty `Annie` folder around them is removed too.
+**also delete your work**. The default answer is **No**, which keeps `Data`. If nothing
+else is left, the install folder itself is removed too.
 
 Annie needs no admin rights and installs nothing outside its folders: no registry
 entries, no Start menu entry, nothing in hidden AppData folders, no PATH changes, no
