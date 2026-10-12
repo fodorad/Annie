@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.15.0](https://github.com/fodorad/Annie/compare/v1.14.1...v1.15.0) (2026-10-12)
+
+
+### Features
+
+* **installer:** no registry or Start menu; Annie and Uninstall Annie shortcuts in the Annie folder ([ac49029](https://github.com/fodorad/Annie/commit/ac49029e65117c4c4b4ac32d0a14e11708080ae6))
+* Report button in the Log tab emails an error to the developer ([e7b529b](https://github.com/fodorad/Annie/commit/e7b529b4aa7ba287ee6d35d405fa37ee2781a886))
+* **settings:** Browse row height defaults to 110 px ([99cf994](https://github.com/fodorad/Annie/commit/99cf994fd0d24b9ce5734fb81b39bfe2af28c8ec))
+
+
+### Bug Fixes
+
+* Annotator tab follows the review DB's queue ([#74](https://github.com/fodorad/Annie/issues/74)) ([0fd951e](https://github.com/fodorad/Annie/commit/0fd951ec2e6ee6b6d2efa259ee09eac6adc9c227))
+* **installer:** remove over-long paths on uninstall and repair; limit the program folder to 120 characters ([8c97ad4](https://github.com/fodorad/Annie/commit/8c97ad49e1fbc27499a6ae877b64ff35a84875e2))
+* **make:** make run works from PowerShell ([53eea0f](https://github.com/fodorad/Annie/commit/53eea0f26d651df3f13bdeb521b05703edb6d6dc))
+* protagonist corrections follow the review DB when it is switched ([e9bdbf6](https://github.com/fodorad/Annie/commit/e9bdbf6d69d25a0f4b48f5c8c4439a531fa6ea83))
+* short error messages, and one report per decoder problem (missing FFmpeg) ([3fae623](https://github.com/fodorad/Annie/commit/3fae6233f144879118d4f4ffa636b1130b987f42))
+
 ## [1.14.1](https://github.com/fodorad/Annie/compare/v1.14.0...v1.14.1) (2026-10-11)
 
 
