@@ -20,7 +20,7 @@ from annie.core.models import VideoEntry
 from annie.core.state import state
 from annie.dataset.scanning import ScanResult
 from annie.dataset.storage import ReviewStore
-from annie.pages import annotator, convert
+from annie.pages import annotator, convert, dataset
 from tests.pages._nicegui import ui_client
 
 
@@ -28,7 +28,9 @@ def _disabled(tab: ui.tab) -> bool:
     return bool(tab.props.get("disable"))
 
 
-class TestAnnotatorTabInEveryPage(unittest.TestCase):
+class _AnnotatorTabCase(unittest.TestCase):
+    """Open pages with an Annotator tab over a one-video dataset and an empty DB."""
+
     def setUp(self) -> None:
         saved = (state.store, state.scan, dict(annotator._tabs))
         self.addCleanup(self._restore, saved)
@@ -64,6 +66,8 @@ class TestAnnotatorTabInEveryPage(unittest.TestCase):
         for client_cm, _client in reversed(stack):
             client_cm.__exit__(None, None, None)
 
+
+class TestAnnotatorTabInEveryPage(_AnnotatorTabCase):
     def test_queueing_in_one_page_enables_the_tab_in_all_pages(self) -> None:
         stack: list = []
         self.addCleanup(self._close_all, stack)
@@ -103,6 +107,58 @@ class TestAnnotatorTabInEveryPage(unittest.TestCase):
         tab.delete()  # e.g. the header was rebuilt, but the client lives on
         annotator.sync_tab()
         self.assertEqual(annotator._tabs, {})
+
+
+class TestAnnotatorTabFollowsTheReviewDb(_AnnotatorTabCase):
+    """The queue lives in the review DB: opening another DB must re-check the tab.
+
+    It used to be checked only on the next Browse selection, so a DB that already had
+    videos queued left the tab greyed out until a video was deselected and selected.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Rebuilding the Annotator and Persistence bodies needs NiceGUI's running loop
+        # and is not what is tested here; the tab check runs for real.
+        for refreshable in (annotator._content, dataset._persistence_section):
+            patch = mock.patch.object(refreshable, "refresh")
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def _db_with_the_video_queued(self) -> Path:
+        path = self.tmp / "queued.db"
+        ReviewStore(path).set_annotate(self.entry.key, self.entry.video_id, None, True)
+        return path
+
+    def test_opening_a_db_with_queued_videos_enables_the_tab(self) -> None:
+        stack: list = []
+        self.addCleanup(self._close_all, stack)
+        tab = self._page(stack)
+        self.assertTrue(_disabled(tab))
+
+        dataset._select_existing_db(self._db_with_the_video_queued())
+        self.assertFalse(_disabled(tab))
+
+        dataset._select_existing_db(self.tmp / "empty.db")
+        self.assertTrue(_disabled(tab))
+
+    def test_a_typed_db_path_is_re_checked_too(self) -> None:
+        stack: list = []
+        self.addCleanup(self._close_all, stack)
+        tab = self._page(stack)
+        dataset._ds().db_mode = "existing"
+        dataset._apply_db_path(str(self._db_with_the_video_queued()))
+        self.assertFalse(_disabled(tab))
+
+    def test_a_new_session_db_starts_without_a_queue(self) -> None:
+        stack: list = []
+        self.addCleanup(self._close_all, stack)
+        tab = self._page(stack)
+        dataset._select_existing_db(self._db_with_the_video_queued())
+        self.assertFalse(_disabled(tab))
+        with mock.patch.object(dataset, "_fresh_session_db_path", return_value=self.tmp / "new.db"):
+            dataset._new_session_db()
+        self.assertTrue(_disabled(tab))
 
 
 class TestConvertProgressInEveryPage(unittest.TestCase):
