@@ -136,6 +136,11 @@ const
   // The Settings > Apps entry that installers up to 1.14 created. This one creates none;
   // it only reads the old entry to find such an install, and removes it when upgrading it.
   OldUninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{E674FD3A-8545-44F6-875F-ED877FE764E3}_is1';
+  // Longest program folder path. Windows (long paths are off on most PCs) cannot open a
+  // file whose full path exceeds 260 characters, and Annie's deepest files are 144
+  // characters below the program folder (Python code 114, a PyTorch licence file 144).
+  // 120 leaves room for deeper files in later package versions.
+  MaxAppDirLength = 120;
 
 // Where the first installer put Annie; replaced by this one on upgrade.
 function LegacyAppDir(): String;
@@ -229,6 +234,25 @@ end;
 function WantExamples(): Boolean;
 begin
   Result := ExamplesCheck.Checked;
+end;
+
+// Delete Dir with everything in it, also files whose full path is longer than the classic
+// 260 characters, which Inno's DelTree cannot remove (Windows long paths are off on most
+// PCs). cmd's rd accepts the \\?\ form, which lifts that limit.
+procedure DeleteTreeLong(const Dir: String);
+var
+  Target: String;
+  ResultCode: Integer;
+begin
+  if not DirExists(Dir) then
+    Exit;
+  Target := RemoveBackslashUnlessRoot(Dir);
+  if Copy(Target, 1, 2) = '\\' then
+    Target := '\\?\UNC\' + Copy(Target, 3, Length(Target))
+  else
+    Target := '\\?\' + Target;
+  Exec(ExpandConstant('{cmd}'), '/C rd /S /Q "' + Target + '"', '', SW_HIDE,
+    ewWaitUntilTerminated, ResultCode);
 end;
 
 // --- stopping Annie ---
@@ -390,7 +414,16 @@ begin
   if CurPageID <> wpSelectDir then
     Exit;
   Data := GetDataDir('');
-  if (Data = '') or (Pos(':', Data) = 0) and (Copy(Data, 1, 2) <> '\\') then
+  if Length(RemoveBackslashUnlessRoot(WizardDirValue())) > MaxAppDirLength then
+  begin
+    MsgBox('Please choose a shorter path for the program folder: at most ' +
+      IntToStr(MaxAppDirLength) + ' characters (this one has ' +
+      IntToStr(Length(RemoveBackslashUnlessRoot(WizardDirValue()))) + ').' + #13#10#13#10 +
+      'Annie''s components contain deeply nested files, and Windows cannot open a file ' +
+      'whose full path is longer than 260 characters.', mbError, MB_OK);
+    Result := False;
+  end
+  else if (Data = '') or (Pos(':', Data) = 0) and (Copy(Data, 1, 2) <> '\\') then
   begin
     MsgBox('Please choose a full path for the data folder, for example ' +
       ExpandConstant('{%USERPROFILE}\Annie\Data') + '.', mbError, MB_OK);
@@ -455,13 +488,18 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   CleanUpOlderInstall();
   StopAnnieIn(WizardDirValue());
+  // Repair: what [InstallDelete] replaces, removed here already because its long-path
+  // files (deep inside env\) would otherwise survive and break the rebuild.
+  DeleteTreeLong(AddBackslash(WizardDirValue()) + 'env');
+  DeleteTreeLong(AddBackslash(WizardDirValue()) + 'python');
+  DeleteTreeLong(AddBackslash(WizardDirValue()) + 'ffmpeg');
   // Upgrading from the first installer: its folder only held the program (user data
   // was always elsewhere), so it can go; CleanUpOlderInstall removed its shortcut and
   // its Apps entry.
   if not IsInside(WizardDirValue(), LegacyAppDir()) and DirExists(LegacyAppDir()) then
   begin
     StopAnnieIn(LegacyAppDir());
-    DelTree(LegacyAppDir(), True, True, True);
+    DeleteTreeLong(LegacyAppDir());
   end;
   Result := '';
 end;
@@ -519,6 +557,8 @@ begin
         'Your reviews, saved configs, logs and the example datasets are in:' + #13#10 + UninstallDataDir + #13#10#13#10 +
         'Choose No to keep them, for example if you will reinstall Annie.',
         mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
-      DelTree(UninstallDataDir, True, True, True);
+      DeleteTreeLong(UninstallDataDir);
+  // [UninstallDelete] leaves files whose path is too long for it; nothing may remain.
+  DeleteTreeLong(ExpandConstant('{app}'));
   RemoveEmptyAnnieParent(ExpandConstant('{app}'));
 end;

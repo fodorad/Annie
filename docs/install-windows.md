@@ -20,6 +20,9 @@ entries, no Start menu, nothing in hidden AppData folders).
    | Program folder | `C:\Users\<you>\Annie\App` | Annie, its own Python, the `annie` Python environment with all dependencies, and FFmpeg |
    | Data folder | `C:\Users\<you>\Annie\Data` | Your work: reviews, saved configs, logs |
 
+   The program folder's path may be at most 120 characters long: Annie's components
+   contain deeply nested files, and Windows cannot open files with very long paths.
+
    Setup always puts an **Annie** shortcut (to start Annie) and an **Uninstall Annie**
    shortcut in the Annie folder, `C:\Users\<you>\Annie`, which holds both folders. Tick
    **Create a desktop shortcut** if you also want one on the desktop (it is unticked by
