@@ -53,7 +53,7 @@ class UiSettings:
             ``unload_after_seconds`` since the grid packs many videos on screen.
     """
 
-    browse_row_height: int = 135
+    browse_row_height: int = 110
     annotator_row_height: int = 200
     auto_scroll: bool = True
     page_size: int = 10

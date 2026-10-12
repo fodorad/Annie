@@ -16,7 +16,7 @@ from annie.dataset.storage import ReviewStore
 class TestUiSettings(unittest.TestCase):
     def test_defaults(self) -> None:
         ui = UiSettings()
-        self.assertEqual(ui.browse_row_height, 135)
+        self.assertEqual(ui.browse_row_height, 110)
         self.assertEqual(ui.annotator_row_height, 200)
         self.assertTrue(ui.auto_scroll, "auto-scroll is on unless the user opts out")
         self.assertEqual(ui.page_size, 10)
