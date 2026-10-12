@@ -12,7 +12,7 @@ help:
 	@echo "Dev (modify files):  fix"
 	@echo "Checks (read-only):  lint | type-check | test | docs | check"
 	@echo "Setup:               install | dev | upgrade | install-docs"
-	@echo "Run:                 run  (override with 'make run PORT=8090 HOST=0.0.0.0')"
+	@echo "Run:                 run  (override with 'make run PORT=8090 HOST=0.0.0.0'; any OS)"
 	@echo "Docker:              docker-build | docker-run"
 	@echo "Docs:                docs-serve | docs-deploy | screenshots"
 	@echo "Windows installer:   installer | installer-try  (Windows + Inno Setup) | installer-icon"
@@ -60,14 +60,18 @@ check: lint type-check test docs
 
 # ── Run ────────────────────────────────────────────────────────────────────────
 
-# Override the port when 8080 is taken by another project, e.g. `make run PORT=8090`.
-# HOST is overridable the same way. Both feed the ANNIE_* env vars the app already reads
-# (annie/core/config.py); an ANNIE_PORT already in the environment still wins.
+# Override the port when 8080 is taken by another project (or by the installed Annie),
+# e.g. `make run PORT=8090`. HOST is overridable the same way. Both set the ANNIE_* env
+# vars the app reads (annie/core/config.py). make exports them itself rather than the
+# recipe writing `ANNIE_PORT=... python ...`, which is POSIX-shell syntax that cmd.exe
+# (make's shell under PowerShell) rejects, so `make run` works the same on every OS.
 PORT ?= 8080
 HOST ?= 127.0.0.1
 
+run: export ANNIE_HOST := $(HOST)
+run: export ANNIE_PORT := $(PORT)
 run:
-	ANNIE_HOST=$(HOST) ANNIE_PORT=$(PORT) python -m annie.app
+	python -m annie.app
 
 # ── Docker ─────────────────────────────────────────────────────────────────────
 
