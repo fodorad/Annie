@@ -1,23 +1,28 @@
-; Annie for Windows: per-user installer (Inno Setup 6). No admin rights needed.
+; Annie for Windows: per-user installer (Inno Setup 6) for PCs where only the home folder
+; is writable: no admin rights, no registry, no Start menu.
 ;
 ; One page asks for the two locations (both editable, set once, kept on reinstall):
 ;   Install folder, default %USERPROFILE%\Annie\App: uv.exe, the bundled Python (python\),
 ;     the "annie" Python environment built on it (env\), FFmpeg (ffmpeg\), the launcher
 ;     (launcher.pyw), the icon and annie.ini, which records the chosen data folder.
 ;   Data folder, default %USERPROFILE%\Annie\Data: the user's reviews, configs and logs.
-; plus an optional desktop shortcut and the optional example datasets (First Impression
-; V2 Mini and CMU-MOSEI Mini, about 50 MB, copied to <data>\examples). Annie is always
-; in the Start menu, so Start search finds it.
+; plus an optional desktop shortcut (unticked by default) and the optional example
+; datasets (First Impression V2 Mini and CMU-MOSEI Mini, about 50 MB, copied to
+; <data>\examples).
+;
+; Annie is started with the "Annie" shortcut in the Annie folder: the folder holding both
+; App and Data (default %USERPROFILE%\Annie; see GetRootDir). "Uninstall Annie" next to it
+; removes Annie, since there is no entry in Settings > Apps.
 ;
 ; Setup downloads Annie and its dependencies into env\ (launcher.pyw --install), so the
 ; first start is instant; the launcher then keeps Annie up to date on every start.
 ;
 ; Footprint, on purpose minimal and fully removed by the uninstaller:
 ;   * the install folder, including everything downloaded into it later;
-;   * the Start-menu and (optional) desktop shortcuts (files, not registry);
-;   * ONE registry key, HKCU\...\Uninstall\{AppId}_is1, which Inno writes so Annie
-;     appears in Settings > Apps for a normal uninstall. No [Registry] section, no PATH
-;     change, no file associations, no services, nothing in AppData or %TEMP%.
+;   * the "Annie" and "Uninstall Annie" shortcuts in the Annie folder, and the optional
+;     desktop shortcut (files, which keep their AppUserModelID inside the .lnk).
+; Nothing else: no registry entry at all (CreateUninstallRegKey=no, no [Registry]), no
+; Start menu, no PATH change, no file associations, no services, nothing in AppData.
 ; The data folder is kept unless the user chooses to delete it when uninstalling.
 ;
 ; Build (see .github/workflows/windows-installer.yml):
@@ -26,7 +31,7 @@
 ;
 ; Command-line options (on top of Inno's /SILENT, /VERYSILENT, /DIR=...):
 ;   /DATADIR="D:\Annie work"   data folder
-;   /NODESKTOP                 no desktop shortcut
+;   /DESKTOP                   also create a desktop shortcut (/NODESKTOP: never)
 ;   /NOEXAMPLES                no example datasets
 
 #ifndef AppVersion
@@ -43,11 +48,11 @@
 #endif
 
 [Setup]
-; Never change AppId: it is how a newer installer finds and replaces this install.
+; Never change AppId: it names this install's uninstall log (unins000.dat), and installers
+; up to 1.14 used it for their (now removed) Settings > Apps entry.
 AppId={{E674FD3A-8545-44F6-875F-ED877FE764E3}
 AppName=Annie
 AppVersion={#AppVersion}
-; Annie updates itself, so a version in the Apps list would soon be stale.
 AppVerName=Annie
 AppPublisher=fodorad
 AppPublisherURL=https://github.com/fodorad/Annie
@@ -57,7 +62,6 @@ DefaultDirName={code:GetDefaultDir}
 UsePreviousAppDir=no
 AppendDefaultDirName=no
 DirExistsWarning=no
-DefaultGroupName=Annie
 PrivilegesRequired=lowest
 DisableDirPage=no
 DisableProgramGroupPage=yes
@@ -67,8 +71,9 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 WizardStyle=modern
 SetupIconFile=annie.ico
-UninstallDisplayIcon={app}\annie.ico
-UninstallDisplayName=Annie
+; No registry: without this Inno would write HKCU\...\Uninstall\{AppId}_is1 for the
+; Settings > Apps entry. Uninstalling is "Uninstall Annie" in the Annie folder instead.
+CreateUninstallRegKey=no
 OutputDir={#OutputDir}
 OutputBaseFilename=Annie-Setup
 Compression=lzma2/max
@@ -94,18 +99,20 @@ Filename: "{app}\annie.ini"; Section: "launcher"; Key: "version"; String: "3"
 [InstallDelete]
 ; Running the installer again doubles as "repair": the bundled binaries and the Annie
 ; environment are replaced so they rebuild cleanly. User data is never touched. The rest
-; removes what the first installer (Annie.cmd + uv-managed Python) left in this folder,
-; and a desktop shortcut the user now unticked.
+; removes what the first installer (Annie.cmd + uv-managed Python) left in this folder.
+; Shortcuts of older installs are cleaned up in PrepareToInstall (CleanUpOlderInstall).
 Type: filesandordirs; Name: "{app}\env"
 Type: filesandordirs; Name: "{app}\python"
 Type: filesandordirs; Name: "{app}\ffmpeg"
 Type: filesandordirs; Name: "{app}\tools"
 Type: filesandordirs; Name: "{app}\bin"
 Type: files; Name: "{app}\Annie.cmd"
-Type: files; Name: "{autodesktop}\Annie.lnk"
 
 [Icons]
-Name: "{autoprograms}\Annie"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\launcher.pyw"""; WorkingDir: "{app}"; IconFilename: "{app}\annie.ico"; Comment: "Start Annie"; AppUserModelID: "fodorad.Annie"
+; Annie starts with a double-click on "Annie" in the Annie folder (no Start menu); the
+; uninstall shortcut replaces the Settings > Apps entry, which needs the registry.
+Name: "{code:GetRootDir}\Annie"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\launcher.pyw"""; WorkingDir: "{app}"; IconFilename: "{app}\annie.ico"; Comment: "Start Annie"; AppUserModelID: "fodorad.Annie"
+Name: "{code:GetRootDir}\Uninstall Annie"; Filename: "{uninstallexe}"; WorkingDir: "{app}"; IconFilename: "{app}\annie.ico"; Comment: "Remove Annie from this PC"
 Name: "{autodesktop}\Annie"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\launcher.pyw"""; WorkingDir: "{app}"; IconFilename: "{app}\annie.ico"; Comment: "Start Annie"; AppUserModelID: "fodorad.Annie"; Check: WantDesktopIcon
 
 [Run]
@@ -122,8 +129,13 @@ var
   DataBrowseButton: TNewButton;
   DesktopCheck: TNewCheckBox;
   ExamplesCheck: TNewCheckBox;
-  StartMenuNote: TNewStaticText;
+  FolderNote: TNewStaticText;
   UninstallDataDir: String;
+
+const
+  // The Settings > Apps entry that installers up to 1.14 created. This one creates none;
+  // it only reads the old entry to find such an install, and removes it when upgrading it.
+  OldUninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{E674FD3A-8545-44F6-875F-ED877FE764E3}_is1';
 
 // Where the first installer put Annie; replaced by this one on upgrade.
 function LegacyAppDir(): String;
@@ -166,23 +178,47 @@ begin
       Result := True;
 end;
 
-// Reinstall: the folder Annie is installed in now. First install, or an upgrade from the
-// first installer (hidden AppData folder): %USERPROFILE%\Annie\App. /DIR= still wins.
+// The folder of an install made by an installer up to 1.14 (from its Apps entry, read
+// only), or '' when there is none.
+function OldInstallDir(): String;
+var
+  Path: String;
+begin
+  Result := '';
+  if RegQueryStringValue(HKCU, OldUninstallKey, 'Inno Setup: App Path', Path) then
+    Result := Path;
+end;
+
+// %USERPROFILE%\Annie\App, or where an installer up to 1.14 put Annie (except the first
+// installer's hidden AppData folder, which is replaced). /DIR= still wins.
 function GetDefaultDir(Param: String): String;
 var
   Previous: String;
 begin
   Result := ExpandConstant('{%USERPROFILE}\Annie\App');
-  if RegQueryStringValue(HKCU,
-      'Software\Microsoft\Windows\CurrentVersion\Uninstall\{E674FD3A-8545-44F6-875F-ED877FE764E3}_is1',
-      'Inno Setup: App Path', Previous) and (Previous <> '') and
-      not IsInside(Previous, LegacyAppDir()) then
+  Previous := OldInstallDir();
+  if (Previous <> '') and not IsInside(Previous, LegacyAppDir()) then
     Result := Previous;
 end;
 
 function GetDataDir(Param: String): String;
 begin
   Result := Trim(DataEdit.Text);
+end;
+
+// The Annie folder, where the "Annie" and "Uninstall Annie" shortcuts go: the folder
+// holding both the program and the data folder when they are side by side (default
+// %USERPROFILE%\Annie), else the program folder itself. The tray's "Open Annie folder"
+// uses the same rule (annie.core.runtime.annie_folder).
+function GetRootDir(Param: String): String;
+var
+  AppParent: String;
+begin
+  AppParent := ExtractFileDir(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
+  if CompareText(AppParent, ExtractFileDir(RemoveBackslashUnlessRoot(GetDataDir('')))) = 0 then
+    Result := AppParent
+  else
+    Result := ExpandConstant('{app}');
 end;
 
 function WantDesktopIcon(): Boolean;
@@ -247,15 +283,18 @@ begin
   Result := ParamValue('DATADIR', Result);
 end;
 
-// Ticked on a first install; on a reinstall, ticked only if the shortcut is there now.
+// Unticked on a first install (the "Annie" shortcut in the Annie folder is always there);
+// on a reinstall, ticked only if the desktop shortcut is there now.
 function DefaultDesktopIcon(): Boolean;
 begin
-  if HasSwitch('NODESKTOP') then
+  if HasSwitch('DESKTOP') then
+    Result := True
+  else if HasSwitch('NODESKTOP') then
     Result := False
   else if FileExists(AddBackslash(WizardDirValue()) + 'annie.ini') then
     Result := FileExists(ExpandConstant('{autodesktop}\Annie.lnk'))
   else
-    Result := True;
+    Result := False;
 end;
 
 // Ticked on a first install; on a reinstall, ticked only if the examples are there now
@@ -330,16 +369,17 @@ begin
     'Install the example datasets (First Impression V2 Mini, CMU-MOSEI Mini; 50 MB)';
   ExamplesCheck.Checked := DefaultExamples();
 
-  StartMenuNote := TNewStaticText.Create(WizardForm);
-  StartMenuNote.Parent := Page.Surface;
-  StartMenuNote.Top := ExamplesCheck.Top + ExamplesCheck.Height + ScaleY(10);
-  StartMenuNote.Width := WizardForm.SelectDirLabel.Width;
-  StartMenuNote.WordWrap := True;
-  StartMenuNote.AutoSize := True;
-  StartMenuNote.Caption :=
-    'Annie is always added to the Start menu, so you can also find it by typing "Annie" ' +
-    'in Windows search. The examples can also be downloaded later from the Annie icon''s ' +
-    'menu.';
+  FolderNote := TNewStaticText.Create(WizardForm);
+  FolderNote.Parent := Page.Surface;
+  FolderNote.Top := ExamplesCheck.Top + ExamplesCheck.Height + ScaleY(10);
+  FolderNote.Width := WizardForm.SelectDirLabel.Width;
+  FolderNote.WordWrap := True;
+  FolderNote.AutoSize := True;
+  FolderNote.Caption :=
+    'Start Annie by double-clicking "Annie" in the Annie folder (the folder holding both ' +
+    'of the above); "Uninstall Annie" next to it removes Annie. Nothing is added to the ' +
+    'registry or the Start menu. The examples can also be downloaded later from the ' +
+    'Annie icon''s menu.';
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -380,19 +420,44 @@ begin
   Result := MemoDirInfo + NewLine + NewLine +
     'Data folder (your work):' + NewLine + Space + GetDataDir('') + NewLine + NewLine +
     'Example datasets:' + NewLine + Space + Examples + NewLine + NewLine +
-    'Shortcuts:' + NewLine + Space + 'Start menu' + NewLine +
+    'Shortcuts:' + NewLine +
+    Space + 'Annie and Uninstall Annie in: ' + GetRootDir('') + NewLine +
     Space + 'Desktop: ' + Desktop + NewLine + NewLine +
     'Setup then downloads Annie and its components. This takes a few minutes.';
 end;
 
 // --- install ---
 
+// Reinstalling over this folder: remove what older installs of *this* folder left
+// outside it, so nothing outside the two folders remains. Only for this folder, so an
+// install elsewhere (e.g. a test) never touches another Annie's shortcuts or entry.
+procedure CleanUpOlderInstall();
+var
+  OldDir: String;
+begin
+  OldDir := OldInstallDir();
+  // The old install is this folder, or the first installer's AppData folder, which
+  // PrepareToInstall replaces by this install.
+  if (OldDir <> '') and ((CompareText(RemoveBackslashUnlessRoot(OldDir),
+      RemoveBackslashUnlessRoot(WizardDirValue())) = 0) or
+      IsInside(OldDir, LegacyAppDir())) then
+  begin
+    // Installers up to 1.14: the Settings > Apps entry and the Start menu shortcut.
+    RegDeleteKeyIncludingSubkeys(HKCU, OldUninstallKey);
+    DeleteFile(ExpandConstant('{autoprograms}\Annie.lnk'));
+  end;
+  // A desktop shortcut the user now unticked.
+  if FileExists(AddBackslash(WizardDirValue()) + 'annie.ini') and not WantDesktopIcon() then
+    DeleteFile(ExpandConstant('{autodesktop}\Annie.lnk'));
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
+  CleanUpOlderInstall();
   StopAnnieIn(WizardDirValue());
   // Upgrading from the first installer: its folder only held the program (user data
-  // was always elsewhere), so it can go; the new install replaces its shortcuts and
-  // its Apps entry, which share this AppId.
+  // was always elsewhere), so it can go; CleanUpOlderInstall removed its shortcut and
+  // its Apps entry.
   if not IsInside(WizardDirValue(), LegacyAppDir()) and DirExists(LegacyAppDir()) then
   begin
     StopAnnieIn(LegacyAppDir());

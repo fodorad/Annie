@@ -100,6 +100,9 @@ jobs:
         $root = "$env:RUNNER_TEMP\Annie test"   # a space and a parent named Annie, on purpose
         $app = "$root\App"
         $data = "$root\Data"
+        # Setup must add nothing to the registry (locked-down PCs): remember what is there.
+        $regBefore = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
+        $regBefore | Set-Content "$env:RUNNER_TEMP\reg-before.txt"
         Start-Process installer\windows\Output\Annie-Setup.exe -Wait `
           -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$app`"", "/DATADIR=`"$data`""
         Get-Content "$app\install.log" -Tail 20 -ErrorAction SilentlyContinue
@@ -119,12 +122,26 @@ jobs:
         if ($links) { $links | Select-Object FullName, LinkType, Target; throw 'junction/symlink in the install folder' }
         $cfg = Get-Content "$app\env\pyvenv.cfg" -Raw
         if ($cfg -notmatch [regex]::Escape("home = $app\python")) { throw "env is not on the bundled Python:`n$cfg" }
+        # Annie starts from the "Annie" shortcut in the Annie folder (App and Data's
+        # parent); "Uninstall Annie" sits next to it. No Start menu, and the desktop
+        # shortcut is unticked by default.
+        $shell = New-Object -ComObject WScript.Shell
+        $starter = $shell.CreateShortcut("$root\Annie.lnk")
+        if (-not (Test-Path "$root\Annie.lnk")) { throw "missing starter $root\Annie.lnk" }
+        if ($starter.TargetPath -ne "$app\python\pythonw.exe" -or $starter.Arguments -ne "`"$app\launcher.pyw`"") {
+          throw "starter runs '$($starter.TargetPath) $($starter.Arguments)'"
+        }
+        if ($shell.CreateShortcut("$root\Uninstall Annie.lnk").TargetPath -ne "$app\unins000.exe") {
+          throw "missing or wrong $root\Uninstall Annie.lnk"
+        }
         $startMenu = [Environment]::GetFolderPath('Programs')
         $desktop = [Environment]::GetFolderPath('Desktop')
-        foreach ($lnk in "$startMenu\Annie.lnk", "$desktop\Annie.lnk") {
-          if (-not (Test-Path $lnk)) { throw "missing shortcut $lnk" }
-        }
-        if (-not (Test-Path $env:APP_ID_KEY)) { throw 'Apps & features entry missing' }
+        if (Test-Path "$startMenu\Annie.lnk") { throw 'Start menu shortcut created' }
+        if (Test-Path "$desktop\Annie.lnk") { throw 'desktop shortcut created although unticked' }
+        if (Test-Path $env:APP_ID_KEY) { throw 'Settings > Apps registry entry created' }
+        $regAfter = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
+        $added = @($regAfter | Where-Object { $regBefore -notcontains $_ })
+        if ($added) { throw "setup added registry keys: $($added -join ', ')" }
         # The example datasets are ticked by default and go to the data folder.
         foreach ($f in 'config\mosei_mini.json', 'config\fi_mini.json', 'example\mosei_mini\label.csv') {
           if (-not (Test-Path "$data\examples\$f")) { throw "missing example $data\examples\$f" }
@@ -133,11 +150,11 @@ jobs:
         "DATA=$data" >> $env:GITHUB_ENV
         "ROOT=$root" >> $env:GITHUB_ENV
 
-    - name: Start menu shortcut starts Annie with its tray
+    - name: The Annie starter starts Annie with its tray
       timeout-minutes: 5
       run: |
         $env:ANNIE_OPEN_BROWSER = '0'
-        # What the shortcut runs, with python.exe instead of pythonw.exe so errors show here.
+        # What the starter runs, with python.exe instead of pythonw.exe so errors show here.
         & "$env:APP\python\python.exe" "$env:APP\launcher.pyw"
         if ($LASTEXITCODE) { Get-Content "$env:APP\install.log" -Tail 30; throw "launcher exited with $LASTEXITCODE" }
         $deadline = (Get-Date).AddMinutes(3)
@@ -187,10 +204,14 @@ jobs:
         $deadline = (Get-Date).AddMinutes(2)
         while ((Test-Path $env:APP) -and (Get-Date) -lt $deadline) { Start-Sleep 2 }
         if (Test-Path $env:APP) { Get-ChildItem -Recurse $env:APP | Select-Object -First 20; throw 'install folder left behind' }
+        foreach ($lnk in "$env:ROOT\Annie.lnk", "$env:ROOT\Uninstall Annie.lnk") {
+          if (Test-Path $lnk) { throw "shortcut left behind: $lnk" }
+        }
         if (Test-Path $env:APP_ID_KEY) { throw 'registry key left behind' }
-        $startMenu = [Environment]::GetFolderPath('Programs')
-        $desktop = [Environment]::GetFolderPath('Desktop')
-        if ((Test-Path "$startMenu\Annie.lnk") -or (Test-Path "$desktop\Annie.lnk")) { throw 'shortcut left behind' }
+        $regBefore = Get-Content "$env:RUNNER_TEMP\reg-before.txt"
+        $regAfter = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
+        $added = @($regAfter | Where-Object { $regBefore -notcontains $_ })
+        if ($added) { throw "registry keys left behind: $($added -join ', ')" }
         if (Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'annie\.desktop' }) { throw 'Annie still running' }
         if (-not (Test-Path $env:DATA)) { throw "silent uninstall must keep the user's work" }
 
