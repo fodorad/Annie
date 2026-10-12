@@ -477,6 +477,16 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
 
 
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_initial_scan</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Scan the dataset in the background, then re-check the Annotator tab.</span>
+
+<span class="sd">    A page opened before the scan finishes saw no videos, so its tab was disabled even</span>
+<span class="sd">    when the review DB has videos queued for the Annotator.</span>
+<span class="sd">    """</span>
+    <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">sync_tab</span><span class="p">()</span>
+
+
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_check_decoder</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load the frame decoder once in the background; report it if it cannot load.</span>
 
@@ -628,7 +638,7 @@
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_check_decoder</span><span class="p">()))</span>
-    <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)))</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_initial_scan</span><span class="p">()))</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_startup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_sweep_render_clips</span><span class="p">()))</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_shutdown</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">on_shutdown</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">shutdown</span><span class="p">)</span>

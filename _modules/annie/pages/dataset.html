@@ -412,6 +412,19 @@
     <span class="k">return</span> <span class="n">_dataset_state</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_switch_review_db</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open ``path`` as the review DB and refresh what depends on its contents.</span>
+
+<span class="sd">    The Annotator queue lives in the DB, so a different DB can enable or disable the</span>
+<span class="sd">    Annotator tab: it is re-checked here, instead of only on the next Browse selection.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: The SQLite file to open (created if it does not exist).</span>
+<span class="sd">    """</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
+
+
 <span class="c1">#: Overview metric key → its live :class:`nicegui.ui.label`, updated after each scan.</span>
 <span class="n">_METRICS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -624,7 +637,7 @@
         <span class="k">if</span> <span class="n">db_to_save</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
             <span class="n">_set_aside</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
         <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">copy_to</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
+    <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">datasets</span><span class="o">.</span><span class="n">remember_last_config</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
     <span class="n">_config_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
@@ -1244,7 +1257,7 @@
     <span class="n">fresh</span> <span class="o">=</span> <span class="n">_fresh_session_db_path</span><span class="p">()</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">"session"</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
+    <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"New session DB: </span><span class="si">{</span><span class="n">fresh</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
@@ -1274,7 +1287,7 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not rename DB: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>  <span class="c1"># (re)creates the file if the move was a no-op</span>
+    <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>  <span class="c1"># (re)creates the file if the move was a no-op</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Renamed session DB to </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
@@ -1284,7 +1297,7 @@
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_mode</span> <span class="o">=</span> <span class="s2">"existing"</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Review DB: </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
@@ -1314,7 +1327,7 @@
         <span class="n">_rename_session_db</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">))</span>
         <span class="k">return</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+    <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Review DB: </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
     <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
