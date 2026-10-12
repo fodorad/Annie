@@ -105,6 +105,19 @@ def _ds() -> _DatasetState:
     return _dataset_state[cid]
 
 
+def _switch_review_db(path: Path) -> None:
+    """Open ``path`` as the review DB and refresh what depends on its contents.
+
+    The Annotator queue lives in the DB, so a different DB can enable or disable the
+    Annotator tab: it is re-checked here, instead of only on the next Browse selection.
+
+    Args:
+        path: The SQLite file to open (created if it does not exist).
+    """
+    state.set_store(path)
+    annotator.update_availability()
+
+
 #: Overview metric key → its live :class:`nicegui.ui.label`, updated after each scan.
 _METRICS: dict[str, ui.label] = {}
 
@@ -317,7 +330,7 @@ async def _save_current() -> None:
         if db_to_save.is_file():
             _set_aside(db_to_save)
         state.store.copy_to(db_to_save)
-    state.set_store(db_to_save)
+    _switch_review_db(db_to_save)
     state.active_config = out.resolve()
     datasets.remember_last_config(out)
     _config_section.refresh()
@@ -925,7 +938,7 @@ def _new_session_db() -> None:
     fresh = _fresh_session_db_path()
     ds.db_mode = "session"
     ds.session_db_path = str(fresh)
-    state.set_store(fresh)
+    _switch_review_db(fresh)
     ui.notify(f"New session DB: {fresh.name}", color=theme.PRIMARY)
     _persistence_section.refresh()
 
@@ -955,7 +968,7 @@ def _rename_session_db(new_str: str) -> None:
         ui.notify(f"Could not rename DB: {exc}", color=theme.DANGER)
         return
     ds.session_db_path = str(new)
-    state.set_store(new)  # (re)creates the file if the move was a no-op
+    _switch_review_db(new)  # (re)creates the file if the move was a no-op
     ui.notify(f"Renamed session DB to {new.name}", color=theme.PRIMARY)
     _persistence_section.refresh()
 
@@ -965,7 +978,7 @@ def _select_existing_db(path: Path) -> None:
     ds = _ds()
     ds.db_mode = "existing"
     ds.db_path_custom = str(path)
-    state.set_store(path)
+    _switch_review_db(path)
     ui.notify(f"Review DB: {path.name}", color=theme.PRIMARY)
     _persistence_section.refresh()
 
@@ -995,7 +1008,7 @@ def _apply_db_path(path_str: str) -> None:
         _rename_session_db(str(new))
         return
     ds.db_path_custom = str(new)
-    state.set_store(new)
+    _switch_review_db(new)
     ui.notify(f"Review DB: {new.name}", color=theme.PRIMARY)
     _persistence_section.refresh()
 

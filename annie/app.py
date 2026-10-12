@@ -167,6 +167,16 @@ def _decoder_banner(problem: str) -> None:
         ui.label(problem).classes("text-sm")
 
 
+async def _initial_scan() -> None:
+    """Scan the dataset in the background, then re-check the Annotator tab.
+
+    A page opened before the scan finishes saw no videos, so its tab was disabled even
+    when the review DB has videos queued for the Annotator.
+    """
+    await run.io_bound(state.rescan)
+    annotator.sync_tab()
+
+
 async def _check_decoder() -> None:
     """Load the frame decoder once in the background; report it if it cannot load.
 
@@ -313,7 +323,7 @@ def main() -> None:
         )
     else:
         app.on_startup(lambda: asyncio.create_task(_check_decoder()))
-    app.on_startup(lambda: asyncio.create_task(run.io_bound(state.rescan)))
+    app.on_startup(lambda: asyncio.create_task(_initial_scan()))
     app.on_startup(lambda: asyncio.create_task(_sweep_render_clips()))
     app.on_shutdown(state.renderer.shutdown)
     app.on_shutdown(state.converter.shutdown)
