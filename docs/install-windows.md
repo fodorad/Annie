@@ -101,10 +101,17 @@ that includes the Microsoft Visual C++ runtime, which video decoding needs. Run 
 newest installer once (it keeps your folders and work). Hovering over a broken-image
 icon shows why that video could not be decoded, and the **Log** tab has the details.
 
-For anything else, run the installer again. This repairs the installation: it rebuilds the program folder
-and downloads Annie's components fresh. Your work in the data folder stays where it is.
-If the problem remains, send the newest file from `Data\logs\` (and `App\install.log`, if
-the download failed) to the person who gave you Annie.
+To tell the developer about an error, open the **Log** tab and click **Report** next to
+it. You see exactly what will be sent (the error with its details, and the Annie and
+Windows versions; file paths in it can include your Windows user name), can add what you
+were doing, and click **Send**. The button then shows a green **Sent**, so each error is
+reported once.
+
+For anything else, run the installer again. This repairs the installation: it rebuilds the
+program folder and downloads Annie's components fresh. Your work in the data folder stays
+where it is. If the problem remains, report it from the Log tab, or send the newest file
+from `Data\logs\` (and `App\install.log`, if the download failed) to the person who gave
+you Annie.
 
 ## Uninstall
 
