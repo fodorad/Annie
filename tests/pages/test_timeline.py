@@ -221,10 +221,12 @@ class TestBuildSvg(unittest.TestCase):
 
     def test_event_name_is_a_clipped_text_layer(self) -> None:
         # The name lives in a nested <svg> the size of the box, which clips it; it ignores the
-        # pointer so a click still reaches the box beneath.
+        # pointer so a click still reaches the box beneath. As a style, which survives
+        # ui.html's sanitiser (the pointer-events attribute does not).
         svg = self._svg(tracks=[TimelineTrack("s", [TimelineEvent("e1", 0, 80, "hello")])])
         layer = svg.split(">hello</text>", 1)[0].rsplit("<svg", 1)[1]
-        self.assertIn('pointer-events="none"', layer)
+        self.assertEqual(layer.count('style="pointer-events:none"'), 2)  # the layer and the text
+        self.assertNotIn('pointer-events="none"', svg)
         self.assertIn('text-anchor="middle"', svg)
 
     def test_name_that_cannot_fit_is_not_drawn(self) -> None:

@@ -99,6 +99,12 @@ class TimelineTrack:
     color: str | None = None
 
 
+#: Makes an SVG element ignore the pointer, so clicks pass through to what is underneath.
+#: A ``style``, not the ``pointer-events`` attribute: ``ui.html`` sanitises with DOMPurify,
+#: which drops that SVG attribute but keeps inline styles.
+_NO_POINTER = 'style="pointer-events:none"'
+
+
 def pack_lanes(events: Sequence[TimelineEvent]) -> list[int]:
     """Assign each event a sub-row so overlapping events never share one.
 
@@ -253,7 +259,7 @@ def build_svg(
     # by the caller after render for the current time; it starts at the window's left edge.
     parts.append(
         f'<line class="annie-playhead" x1="0%" y1="0" x2="0%" y2="{height:.0f}" '
-        f'stroke="{theme.EVENT_PLAYHEAD}" stroke-width="2" pointer-events="none"/>'
+        f'stroke="{theme.EVENT_PLAYHEAD}" stroke-width="2" {_NO_POINTER}/>'
     )
     parts.append("</svg>")
     return "".join(parts)
@@ -281,7 +287,7 @@ def _append_pending_band(  # noqa: PLR0913 - a drawing routine needs its geometr
         parts.append(
             f'<rect class="annie-pending" x="0%" y="{lanes_top:.0f}" width="0%" '
             f'height="{band_h:.0f}" fill="{theme.EVENT_PENDING}" fill-opacity="0.25" '
-            f'pointer-events="none"/>'
+            f"{_NO_POINTER}/>"
         )
         return
     end = pending_start if pending_end is None else pending_end
@@ -291,7 +297,7 @@ def _append_pending_band(  # noqa: PLR0913 - a drawing routine needs its geometr
     parts.append(
         f'<rect class="annie-pending" x="{x0:.3f}%" y="{lanes_top:.0f}" '
         f'width="{max(0.0, x1 - x0):.3f}%" height="{band_h:.0f}" '
-        f'fill="{theme.EVENT_PENDING}" fill-opacity="0.25" pointer-events="none"/>'
+        f'fill="{theme.EVENT_PENDING}" fill-opacity="0.25" {_NO_POINTER}/>'
     )
 
 
@@ -361,10 +367,12 @@ def _append_event(  # noqa: PLR0913 - a drawing routine needs its geometry input
         f"<title>{label}</title></rect>"
     )
     if event.label and _label_fits(event.label, box_w):
+        # The label must never take the click from its box (a click on the name selects the
+        # event), so it ignores the pointer, on the text too since it is what gets hit.
         parts.append(
             f'<svg x="{x0:.3f}%" y="{box_y:.0f}" width="{box_w:.3f}%" height="{box_h}" '
-            f'pointer-events="none"><text x="50%" y="{box_h / 2 + 4:.0f}" '
-            f'text-anchor="middle" fill="#1a1a1a">{label}</text></svg>'
+            f'{_NO_POINTER}><text x="50%" y="{box_h / 2 + 4:.0f}" '
+            f'text-anchor="middle" fill="#1a1a1a" {_NO_POINTER}>{label}</text></svg>'
         )
 
 
@@ -402,7 +410,7 @@ def _append_lane_label(parts: list[str], name: str, colour: str, band_y: float) 
     parts.append(
         f'<rect x="2" y="{band_y + 3:.0f}" width="9" height="9" rx="2" '
         f'fill="{colour}" stroke="{theme.EVENT_BORDER}" stroke-width="0.75" '
-        f'pointer-events="none"/>'
+        f"{_NO_POINTER}/>"
     )
     parts.append(
         f'<text x="15" y="{baseline:.0f}" fill="#1a1a1a" '
