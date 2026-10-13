@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.16.0](https://github.com/fodorad/Annie/compare/v1.15.0...v1.16.0) (2026-10-13)
+
+
+### Features
+
+* **events:** event categories, Excel export and a simpler event editor ([#78](https://github.com/fodorad/Annie/issues/78)) ([056f74d](https://github.com/fodorad/Annie/commit/056f74d35fb1f9fa226be236ebc836a65d30ee83))
+
 ## [1.15.0](https://github.com/fodorad/Annie/compare/v1.14.1...v1.15.0) (2026-10-12)
 
 
