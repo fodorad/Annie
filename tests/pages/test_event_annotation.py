@@ -12,17 +12,27 @@ import asyncio
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from nicegui import core, ui
+from nicegui.events import KeyboardKey
 
 from annie.core.models import VideoEntry
 from annie.core.state import state
 from annie.dataset.layout import VideoLayout
 from annie.dataset.scanning import ScanResult
 from annie.dataset.sources import DataSource, SourceKind, SourceRegistry
-from annie.dataset.storage import ReviewStore
-from annie.pages import event_task
+from annie.dataset.storage import EventRecord, ReviewStore
+from annie.pages import download, event_task
 from tests.pages._nicegui import quiet_slow_callback_warnings, ui_client
+
+
+def _fire(element: object, event: str, args: object = None) -> None:
+    """Dispatch a browser event to ``element`` the way NiceGUI does (its listeners run)."""
+    for listener_id, listener in list(element._event_listeners.items()):  # type: ignore[attr-defined]  # noqa: SLF001
+        if listener.type == event:
+            element._handle_event({"listener_id": listener_id, "args": args})  # type: ignore[attr-defined]  # noqa: SLF001
 
 
 class _Args:
@@ -66,18 +76,6 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state.store.events_for("v::"), [])
         # x=0.5 over 250 frames → the playhead lands mid-clip.
         self.assertAlmostEqual(self.state.playhead_frame, 124, delta=1)
-
-    async def test_default_event_name_is_event_name(self) -> None:
-        self.assertEqual(event_task._DEFAULT_EVENT_LABEL, "event_name")  # noqa: SLF001
-        rec = state.store.add_event(
-            "v",
-            "v::",
-            "speech",
-            10,
-            20,
-            label=event_task._DEFAULT_EVENT_LABEL,  # noqa: SLF001
-        )
-        self.assertEqual(state.store.get_event(rec.event_id).label, "event_name")  # type: ignore[union-attr]
 
     async def test_cancel_pending_clears_without_creating(self) -> None:
         self.state.pending_start = 40
@@ -243,6 +241,264 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(f(["Participant 1"]), "Participant 2")
         self.assertEqual(f(["Participant 1", "Participant 3"]), "Participant 2")  # fills the gap
         self.assertEqual(f(["Mother", "Baby"]), "Participant 1")  # unrelated names don't count
+        self.assertEqual(f(["Event 1"], prefix="Event"), "Event 2")
+
+    # ── event categories ─────────────────────────────────────────────────────────
+
+    async def _capture(self, seconds: float) -> EventRecord:
+        """Run _finalise with the browser's time stubbed; return the event it made."""
+        with (
+            ui_client(),
+            mock.patch.object(
+                event_task.videoclock, "current_time", mock.AsyncMock(return_value=seconds)
+            ),
+        ):
+            await event_task._finalise(self.state)  # noqa: SLF001
+        got = state.store.get_event(self.state.selected_event or "")
+        assert got is not None
+        return got
+
+    async def test_capture_with_an_event_category(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_event_type("Smile", color="#b5e48c", attributes={"intensity": "1"})
+        self.state.active_category = "Mother"
+        self.state.active_event_type = "Smile"
+        self.state.pending_start = 10
+        got = await self._capture(2.0)
+        self.assertEqual((got.label, got.event_type, got.track), ("Smile", "Smile", "Mother"))
+        self.assertEqual((got.start_frame, got.end_frame), (10, 50))
+        # Linked, not copied: the colour and attributes come from the category.
+        self.assertIsNone(got.color)
+        self.assertEqual(got.attributes, {})
+
+    async def test_capture_without_an_event_category(self) -> None:
+        state.store.add_category("Mother")
+        self.state.active_category = "Mother"
+        got = await self._capture(1.0)
+        self.assertEqual((got.label, got.event_type), ("", None))  # a plain box, no label
+
+    async def test_a_deleted_active_category_captures_plain(self) -> None:
+        state.store.add_category("Mother")
+        self.state.active_category = "Mother"
+        self.state.active_event_type = "Gone"
+        got = await self._capture(1.0)
+        self.assertIsNone(got.event_type)
+        event_task._ensure_active_event_type(self.state)  # noqa: SLF001
+        self.assertIsNone(self.state.active_event_type)
+
+    def _press(self, name: str, code: str, *, shift: bool) -> None:
+        """Send one keydown through the page's real keyboard handler."""
+        with mock.patch.object(event_task.ui, "keyboard") as keyboard, ui_client():
+            event_task._keyboard(self.state)  # noqa: SLF001
+            on_key = keyboard.call_args.kwargs["on_key"]
+            on_key(
+                SimpleNamespace(
+                    action=SimpleNamespace(keydown=True, repeat=False),
+                    key=KeyboardKey(name=name, code=code, location=0),
+                    modifiers=SimpleNamespace(shift=shift),
+                )
+            )
+
+    async def test_shift_digits_choose_the_event_category(self) -> None:
+        for name in ("Mother", "Baby"):
+            state.store.add_category(name)
+        for name in ("Smile", "Gaze away"):
+            state.store.add_event_type(name)
+        self.state.active_category = "Mother"
+        self._press('"', "Digit2", shift=True)  # Shift+2 on a US keyboard types "@"; any layout
+        self.assertEqual(self.state.active_event_type, "Gaze away")
+        self.assertEqual(self.state.active_category, "Mother")  # participants untouched
+        self._press("(", "Digit9", shift=True)  # beyond the list: ignored
+        self.assertEqual(self.state.active_event_type, "Gaze away")
+        self._press(")", "Digit0", shift=True)
+        self.assertIsNone(self.state.active_event_type)
+        self._press("2", "Digit2", shift=False)  # without Shift: the participant
+        self.assertEqual(self.state.active_category, "Baby")
+        self.assertIsNone(self.state.active_event_type)
+
+    async def test_editor_event_category_change(self) -> None:
+        # The event category is the event's name: the label always follows it.
+        state.store.add_event_type("Smile")
+        state.store.add_event_type("Laugh")
+        rec = state.store.add_event("v", "v::", "Mother", 0, 10, label="old name")
+        self.state.selected_event = rec.event_id
+        with ui_client():
+            event_task._set_event_type(self.state, "Smile")  # noqa: SLF001
+            got = state.store.get_event(rec.event_id)
+            assert got is not None
+            self.assertEqual((got.event_type, got.label), ("Smile", "Smile"))
+            event_task._set_event_type(self.state, "Laugh")  # noqa: SLF001
+            self.assertEqual(state.store.get_event(rec.event_id).label, "Laugh")  # type: ignore[union-attr]
+            event_task._set_event_type(self.state, "Laugh")  # noqa: SLF001  # no change
+            event_task._set_event_type(self.state, None)  # noqa: SLF001
+            got = state.store.get_event(rec.event_id)
+            assert got is not None
+            self.assertEqual((got.event_type, got.label), (None, ""))
+
+    async def test_editor_order_and_no_name(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_event_type("Smile", color="#b5e48c", attributes={"intensity": "1"})
+        rec = state.store.add_event(
+            "v", "v::", "Mother", 0, 10, label="Smile", event_type="Smile", note="n"
+        )
+        self.state.selected_event = rec.event_id
+        with ui_client() as client:
+            event_task._editor(self.state)  # noqa: SLF001
+            labels = [
+                el.props.get("label") for el in client.elements.values() if hasattr(el, "value")
+            ]
+            pickers = [el for el in client.elements.values() if isinstance(el, ui.color_picker)]
+        labels = [label for label in labels if label]
+        self.assertNotIn("name", labels)
+        self.assertEqual(
+            labels,
+            ["participant", "event category", "frame", "time (s)", "frame", "time (s)", "note"],
+        )
+        # One colour dot, showing the colour the event is drawn with (its category's).
+        self.assertEqual(len(pickers), 1)
+        self.assertEqual(pickers[0].q_color.props["model-value"], "#b5e48c")
+
+    async def test_editor_colour_pick_and_reset(self) -> None:
+        state.store.add_category("Mother")
+        rec = state.store.add_event("v", "v::", "Mother", 0, 10)
+        self.state.selected_event = rec.event_id
+        with ui_client() as client:
+            event_task._editor(self.state)  # noqa: SLF001
+            picker = next(el for el in client.elements.values() if isinstance(el, ui.color_picker))
+            _fire(picker.q_color, "change", "#123456")
+            self.assertEqual(state.store.get_event(rec.event_id).color, "#123456")  # type: ignore[union-attr]
+            reset = next(
+                el
+                for el in client.elements.values()
+                if isinstance(el, ui.button) and el.text == "Use the category's colour"
+            )
+            _fire(reset, "click")
+        self.assertIsNone(state.store.get_event(rec.event_id).color)  # type: ignore[union-attr]
+
+    async def test_editor_shows_inherited_attributes(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_event_type("Smile", attributes={"intensity": "1"})
+        rec = state.store.add_event(
+            "v", "v::", "Mother", 0, 10, label="Smile", event_type="Smile", attributes={"x": "y"}
+        )
+        self.state.selected_event = rec.event_id
+        with ui_client() as client:
+            event_task._editor(self.state)  # noqa: SLF001
+            values = {
+                getattr(el, "value", None)
+                for el in client.elements.values()
+                if hasattr(el, "value")
+            }
+        self.assertTrue({"intensity", "1", "x", "y", "Smile"} <= values)
+        with ui_client():
+            event_task._add_attribute(self.state)  # noqa: SLF001
+        # The new key avoids the inherited one too, and the default is not copied.
+        self.assertEqual(
+            state.store.get_event(rec.event_id).attributes,  # type: ignore[union-attr]
+            {"x": "y", "key": ""},
+        )
+
+    async def test_bar_and_manager_build(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_event_type("Smile", color="#b5e48c", attributes={"a": "b"})
+        self.state.active_event_type = "Smile"
+        with ui_client() as client:
+            event_task._category_bar(self.state)  # noqa: SLF001
+            event_task._participant_manager(self.state)  # noqa: SLF001
+            event_task._event_type_manager(self.state)  # noqa: SLF001
+            kind = state.store.event_types()[0]
+            event_task._event_type_row(self.state, kind, 0, 1, {"Smile"}, lambda: None)  # noqa: SLF001
+            texts = {getattr(el, "text", "") for el in client.elements.values()}
+        self.assertIn("(⇧1) Smile", texts)
+        self.assertIn("(⇧0) None", texts)
+        self.assertIn("(1) Mother", texts)
+
+    async def test_empty_bar_offers_to_add(self) -> None:
+        with ui_client() as client:
+            event_task._category_bar(self.state)  # noqa: SLF001
+            texts = {getattr(el, "text", "") for el in client.elements.values()}
+        self.assertIn("＋ Add participant", texts)
+        # Event categories: None plus the ⋯ button, never a text button.
+        self.assertIn("(⇧0) None", texts)
+        self.assertNotIn("＋ Add event category", texts)
+
+    async def test_each_half_opens_its_own_dialog(self) -> None:
+        with mock.patch.object(event_task.ui, "timer") as timer:
+            event_task._open_participants(self.state)  # noqa: SLF001
+            event_task._open_event_types(self.state)  # noqa: SLF001
+            builders = [call.args[1] for call in timer.call_args_list]
+        with mock.patch.object(event_task, "_manager_dialog") as dialog:
+            for build in builders:
+                build()
+        bodies = [call.args[1] for call in dialog.call_args_list]
+        self.assertEqual(
+            bodies,
+            [event_task._participant_manager, event_task._event_type_manager],  # noqa: SLF001
+        )
+
+    async def test_manager_rows_pick_colours(self) -> None:
+        state.store.add_category("Mother")
+        state.store.add_event_type("Smile", color="#b5e48c")
+        rebuilt: list[int] = []
+        with ui_client() as client:
+            event_task._manager_row(self.state, "Mother", 0, None, 0, 1, lambda: rebuilt.append(1))  # noqa: SLF001
+            kind = state.store.event_types()[0]
+            event_task._event_type_row(self.state, kind, 0, 1, set(), lambda: rebuilt.append(1))  # noqa: SLF001
+            first, second = [
+                el for el in client.elements.values() if isinstance(el, ui.color_picker)
+            ]
+            _fire(first.q_color, "change", "#111111")
+            _fire(second.q_color, "change", "#222222")
+            self.assertEqual(state.store.categories()[0].color, "#111111")
+            self.assertEqual(state.store.event_types()[0].color, "#222222")
+            # Only the event category can fall back (to the participant's colour).
+            resets = [
+                el
+                for el in client.elements.values()
+                if isinstance(el, ui.button) and el.text == "Use the participant's colour"
+            ]
+            self.assertEqual(len(resets), 1)
+            _fire(resets[0], "click")
+        self.assertIsNone(state.store.event_types()[0].color)
+        self.assertEqual(len(rebuilt), 3)
+        self.assertEqual(first.q_color.props["palette"], list(event_task._EVENT_COLORS))  # noqa: SLF001
+
+    async def test_manage_event_types(self) -> None:
+        for name in ("A", "B"):
+            state.store.add_event_type(name)
+        rebuilt: list[int] = []
+
+        def rebuild() -> None:
+            rebuilt.append(1)
+
+        event_task._move_event_type("B", -1, rebuild)  # noqa: SLF001
+        self.assertEqual([t.name for t in state.store.event_types()], ["B", "A"])
+        event_task._move_event_type("B", -1, rebuild)  # noqa: SLF001  # already first
+        self.state.active_event_type = "A"
+        with ui_client():
+            event_task._delete_event_type(self.state, "A", rebuild)  # noqa: SLF001  # unused
+        self.assertEqual([t.name for t in state.store.event_types()], ["B"])
+        self.assertIsNone(self.state.active_event_type)
+        self.assertEqual(len(rebuilt), 2)
+
+    async def test_type_attribute_rows_save_and_remove(self) -> None:
+        state.store.add_event_type("Smile", attributes={"a": "1"})
+        with ui_client():
+            event_task._type_attribute_editor(state.store.event_types()[0], lambda: None)  # noqa: SLF001
+        self.assertEqual(event_task._type_attributes("Smile"), {"a": "1"})  # noqa: SLF001
+        self.assertEqual(event_task._type_attributes("missing"), {})  # noqa: SLF001
+        self.assertEqual(event_task._free_key({"key": "", "key2": ""}), "key3")  # noqa: SLF001
+
+    async def test_export_route_serves_xlsx(self) -> None:
+        state.store.add_event_type("Smile", color="#b5e48c")
+        state.store.add_event("v", "v::", "Mother", 0, 25, label="Smile", event_type="Smile")
+        event_task._event_states["c1"] = self.state  # noqa: SLF001
+        response = event_task._export_route("c1", "video", "xlsx")  # noqa: SLF001
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.media_type, download.MIME_TYPES["xlsx"])
+        self.assertTrue(response.body.startswith(b"PK"))  # a zip, as every .xlsx is
+        csv_text = event_task._export_text(self.state, "video", "csv")  # noqa: SLF001
+        self.assertIn("Smile,Smile,,#b5e48c", csv_text or "")
 
     # ── zoom / pan / follow ──────────────────────────────────────────────────────
 

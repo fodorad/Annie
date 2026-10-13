@@ -55,6 +55,11 @@ Decision = Literal["accept", "drop"]
 #: ``event_track`` stays in the schema for back-compat but the UI no longer depends on it.
 #: Opening a pre-events database simply creates these tables empty — no column migration is
 #: needed for whole new tables.
+#:
+#: ``event_type`` holds the **event categories** (e.g. Smile / Gaze away): predefined kinds of
+#: event with a name, a colour and default ``attributes`` (JSON). Also DB-scoped. An event made
+#: with one records it in ``event.event_type`` and stays linked: renaming the type renames
+#: its events, and its colour and attributes apply wherever the event sets none of its own.
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS review (
     row_key            TEXT PRIMARY KEY,
@@ -79,6 +84,7 @@ CREATE TABLE IF NOT EXISTS event (
     note         TEXT NOT NULL DEFAULT '',
     attributes   TEXT NOT NULL DEFAULT '{}',
     color        TEXT,
+    event_type   TEXT,
     updated_at   TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS event_by_video ON event(row_key);
@@ -95,6 +101,14 @@ CREATE TABLE IF NOT EXISTS event_category (
     name        TEXT PRIMARY KEY,
     ordinal     INTEGER NOT NULL,
     color       TEXT,
+    updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS event_type (
+    name        TEXT PRIMARY KEY,
+    ordinal     INTEGER NOT NULL,
+    color       TEXT,
+    attributes  TEXT NOT NULL DEFAULT '{}',
     updated_at  TEXT NOT NULL
 );
 """
@@ -144,8 +158,10 @@ class EventRecord:
         label: Free-text label shown on the event box (empty when unnamed).
         note: Free-text note (empty when none).
         attributes: Arbitrary string key/value pairs; stored as a JSON object.
-        color: Per-event colour override (hex string), or ``None`` to inherit the track's
-            colour on the timeline.
+        color: Per-event colour override (hex string), or ``None`` to inherit the event
+            category's colour, else the track's, on the timeline.
+        event_type: The event category the event was made with (and stays linked to), or
+            ``None`` for a plain event.
         updated_at: ISO-8601 UTC timestamp of the last change.
     """
 
@@ -159,6 +175,7 @@ class EventRecord:
     note: str
     attributes: dict[str, str] = field(default_factory=dict)
     color: str | None = None
+    event_type: str | None = None
     updated_at: str = ""
 
 
@@ -179,6 +196,29 @@ class EventCategory:
     name: str
     ordinal: int
     color: str | None = None
+    updated_at: str = ""
+
+
+@dataclass(slots=True)
+class EventType:
+    """One event category in the Event-annotation task (e.g. ``"Smile"``).
+
+    DB-scoped like :class:`EventCategory`. A new event made with it gets its name as the label,
+    and stays linked: renaming the type renames its events; its colour and attributes apply
+    wherever the event sets none of its own (see :mod:`annie.dataset.events`).
+
+    Attributes:
+        name: The event category's name; unique within the DB.
+        ordinal: Order in the Category block (``0`` first; Shift+1 selects it).
+        color: Hex colour of its events, or ``None`` for the participant lane's colour.
+        attributes: Default key/value attributes of its events.
+        updated_at: ISO-8601 UTC timestamp of the last change.
+    """
+
+    name: str
+    ordinal: int
+    color: str | None = None
+    attributes: dict[str, str] = field(default_factory=dict)
     updated_at: str = ""
 
 
@@ -228,6 +268,8 @@ class ReviewStore:
         event_columns = {row["name"] for row in conn.execute("PRAGMA table_info(event)")}
         if "color" not in event_columns:
             conn.execute("ALTER TABLE event ADD COLUMN color TEXT")
+        if "event_type" not in event_columns:
+            conn.execute("ALTER TABLE event ADD COLUMN event_type TEXT")
 
     @contextmanager
     def _connect(self) -> Generator[sqlite3.Connection]:
@@ -243,7 +285,7 @@ class ReviewStore:
     # ── whole-database operations ──────────────────────────────────────────────
 
     def has_data(self) -> bool:
-        """Return whether any review, event, or participant category has been stored.
+        """Return whether any review, event, participant or event category has been stored.
 
         Used to decide whether switching to another database would leave progress
         behind (see :meth:`copy_to`).
@@ -251,7 +293,7 @@ class ReviewStore:
         with self._connect() as conn:
             return any(
                 conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone() is not None  # noqa: S608
-                for table in ("review", "event", "event_category")
+                for table in ("review", "event", "event_category", "event_type")
             )
 
     def copy_to(self, db_path: str | Path) -> ReviewStore:
@@ -614,6 +656,7 @@ class ReviewStore:
         note: str = "",
         attributes: dict[str, str] | None = None,
         color: str | None = None,
+        event_type: str | None = None,
     ) -> EventRecord:
         """Insert a new event on a track and return it (with its fresh id).
 
@@ -630,6 +673,7 @@ class ReviewStore:
             note: Optional event note.
             attributes: Optional arbitrary string key/value pairs.
             color: Optional per-event colour override (hex), or ``None`` to inherit the track.
+            event_type: The event category it is made with, or ``None`` for a plain event.
 
         Returns:
             The stored :class:`EventRecord`.
@@ -645,6 +689,7 @@ class ReviewStore:
             note=note,
             attributes=dict(attributes or {}),
             color=color,
+            event_type=event_type,
             updated_at=_now(),
         )
         with self._connect() as conn:
@@ -653,9 +698,9 @@ class ReviewStore:
                 """
                 INSERT INTO event
                     (event_id, video_id, row_key, track, start_frame, end_frame,
-                     label, note, attributes, color, updated_at)
+                     label, note, attributes, color, event_type, updated_at)
                 VALUES (:event_id, :video_id, :row_key, :track, :start_frame, :end_frame,
-                        :label, :note, :attributes, :color, :updated_at)
+                        :label, :note, :attributes, :color, :event_type, :updated_at)
                 """,
                 _event_params(record),
             )
@@ -672,12 +717,15 @@ class ReviewStore:
         Args:
             event_id: The event to update.
             **fields: Column/value pairs among ``track``, ``start_frame``, ``end_frame``,
-                ``label``, ``note``, ``attributes``, ``color``.
+                ``label``, ``note``, ``attributes``, ``color``, ``event_type``.
 
         Returns:
             The updated :class:`EventRecord`, or ``None`` if no such event exists.
         """
-        allowed = {"track", "start_frame", "end_frame", "label", "note", "attributes", "color"}
+        allowed = {
+            "track", "start_frame", "end_frame", "label", "note", "attributes", "color",
+            "event_type",
+        }  # fmt: skip
         unknown = set(fields) - allowed
         if unknown:
             raise ValueError(f"unknown event field(s): {sorted(unknown)}")
@@ -1020,6 +1068,183 @@ class ReviewStore:
                 )
         return len(names)
 
+    # ── event categories (event types) ─────────────────────────────────────────
+
+    def event_types(self) -> list[EventType]:
+        """Return the dataset's event categories, in their order (Shift+1 is the first).
+
+        Returns:
+            The event categories ordered by ``ordinal`` then ``name``.
+        """
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM event_type ORDER BY ordinal, name").fetchall()
+        return [_type_from_row(row) for row in rows]
+
+    def add_event_type(
+        self, name: str, color: str | None = None, attributes: dict[str, str] | None = None
+    ) -> EventType:
+        """Add an event category at the end of the order (idempotent on the name).
+
+        Args:
+            name: The event category's name (must be non-empty; caller validates).
+            color: Optional hex colour of its events.
+            attributes: Optional default key/value attributes of its events.
+
+        Returns:
+            The stored :class:`EventType` (the existing one if the name was already present).
+        """
+        with self._connect() as conn:
+            existing = conn.execute("SELECT * FROM event_type WHERE name = ?", (name,)).fetchone()
+            if existing is not None:
+                return _type_from_row(existing)
+            (count,) = conn.execute("SELECT COUNT(*) FROM event_type").fetchone()
+            record = EventType(
+                name=name,
+                ordinal=count,
+                color=color,
+                attributes=dict(attributes or {}),
+                updated_at=_now(),
+            )
+            conn.execute(
+                "INSERT INTO event_type (name, ordinal, color, attributes, updated_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (name, count, color, json.dumps(record.attributes), record.updated_at),
+            )
+        return record
+
+    def rename_event_type(self, old: str, new: str) -> None:
+        """Rename an event category; its events follow.
+
+        Events made with it point at the new name, and those whose label is still the old
+        name are relabelled (a label the user changed is kept). If ``new`` already exists,
+        the two merge: ``old``'s events move onto ``new`` and ``old`` is removed.
+
+        Args:
+            old: The current name.
+            new: The new name.
+        """
+        if old == new:
+            return
+        with self._connect() as conn:
+            merging = conn.execute("SELECT 1 FROM event_type WHERE name = ?", (new,)).fetchone()
+            conn.execute(
+                "UPDATE event SET label = ?, updated_at = ? WHERE event_type = ? AND label = ?",
+                (new, _now(), old, old),
+            )
+            conn.execute(
+                "UPDATE event SET event_type = ?, updated_at = ? WHERE event_type = ?",
+                (new, _now(), old),
+            )
+            if merging is not None:
+                conn.execute("DELETE FROM event_type WHERE name = ?", (old,))
+                self._repack_event_types(conn)
+            else:
+                conn.execute(
+                    "UPDATE event_type SET name = ?, updated_at = ? WHERE name = ?",
+                    (new, _now(), old),
+                )
+
+    def delete_event_type(self, name: str) -> None:
+        """Delete an event category without changing how its events look.
+
+        Each of its events first takes over what it inherited: the category's colour (unless
+        the event has its own) and its default attributes (the event's own values win). Then
+        the link is cleared, so the events stay as they were, just no longer linked.
+
+        Args:
+            name: The event category to remove.
+        """
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM event_type WHERE name = ?", (name,)).fetchone()
+            if row is None:
+                return
+            kind = _type_from_row(row)
+            for event_row in conn.execute(
+                "SELECT * FROM event WHERE event_type = ?", (name,)
+            ).fetchall():
+                event = _event_from_row(event_row)
+                conn.execute(
+                    "UPDATE event SET color = ?, attributes = ?, event_type = NULL, "
+                    "updated_at = ? WHERE event_id = ?",
+                    (
+                        event.color or kind.color,
+                        json.dumps({**kind.attributes, **event.attributes}),
+                        _now(),
+                        event.event_id,
+                    ),
+                )
+            conn.execute("DELETE FROM event_type WHERE name = ?", (name,))
+            self._repack_event_types(conn)
+
+    @staticmethod
+    def _repack_event_types(conn: sqlite3.Connection) -> None:
+        """Keep the event categories' ordinals 0..n-1 with no gaps."""
+        names = [
+            r["name"] for r in conn.execute("SELECT name FROM event_type ORDER BY ordinal, name")
+        ]
+        for i, name in enumerate(names):
+            conn.execute("UPDATE event_type SET ordinal = ? WHERE name = ?", (i, name))
+
+    def event_type_event_count(self, name: str) -> int:
+        """Return how many events are linked to an event category (for the delete warning).
+
+        Args:
+            name: The event category's name.
+
+        Returns:
+            The number of events whose ``event_type`` equals ``name``.
+        """
+        with self._connect() as conn:
+            (count,) = conn.execute(
+                "SELECT COUNT(*) FROM event WHERE event_type = ?", (name,)
+            ).fetchone()
+        return int(count)
+
+    def reorder_event_types(self, names: list[str]) -> None:
+        """Set the event categories' order to ``names`` (unlisted ones keep going after).
+
+        Args:
+            names: Event category names in the desired order; unknown names are ignored.
+        """
+        with self._connect() as conn:
+            current = [
+                r["name"]
+                for r in conn.execute("SELECT name FROM event_type ORDER BY ordinal, name")
+            ]
+            ordered = [n for n in names if n in current]
+            ordered += [n for n in current if n not in ordered]
+            for i, name in enumerate(ordered):
+                conn.execute(
+                    "UPDATE event_type SET ordinal = ?, updated_at = ? WHERE name = ?",
+                    (i, _now(), name),
+                )
+
+    def set_event_type_color(self, name: str, color: str | None) -> None:
+        """Set (or clear) an event category's colour; its events follow unless they have their own.
+
+        Args:
+            name: The event category's name.
+            color: A hex colour, or ``None`` for the participant lane's colour.
+        """
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE event_type SET color = ?, updated_at = ? WHERE name = ?",
+                (color, _now(), name),
+            )
+
+    def set_event_type_attributes(self, name: str, attributes: dict[str, str]) -> None:
+        """Replace an event category's default attributes.
+
+        Args:
+            name: The event category's name.
+            attributes: The new default key/value attributes.
+        """
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE event_type SET attributes = ?, updated_at = ? WHERE name = ?",
+                (json.dumps(dict(attributes)), _now(), name),
+            )
+
     def set_note(
         self, row_key: str, video_id: str, annotation_suffix: str | None, note: str
     ) -> ReviewRecord:
@@ -1183,6 +1408,24 @@ def _event_from_row(row: sqlite3.Row) -> EventRecord:
         note=row["note"],
         attributes={str(k): str(v) for k, v in attributes.items()},
         color=row["color"],
+        event_type=row["event_type"],
+        updated_at=row["updated_at"],
+    )
+
+
+def _type_from_row(row: sqlite3.Row) -> EventType:
+    """Build an :class:`EventType` from a SQLite row (attributes ← JSON, tolerant)."""
+    try:
+        attributes = json.loads(row["attributes"]) if row["attributes"] else {}
+    except (ValueError, TypeError):
+        attributes = {}
+    if not isinstance(attributes, dict):
+        attributes = {}
+    return EventType(
+        name=row["name"],
+        ordinal=int(row["ordinal"]),
+        color=row["color"],
+        attributes={str(k): str(v) for k, v in attributes.items()},
         updated_at=row["updated_at"],
     )
 

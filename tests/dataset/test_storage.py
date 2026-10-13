@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from annie.dataset.storage import EventCategory, ReviewStore
+from annie.dataset.storage import EventCategory, EventType, ReviewStore
 
 
 class TestReviewStore(unittest.TestCase):
@@ -453,10 +453,13 @@ class TestEventStore(unittest.TestCase):
                 "INSERT INTO event VALUES ('e', 'v', 'v::', 'speech', 0, 5, 'x', '', '{}', "
                 "'2020-01-01T00:00:00')"
             )
-        store = ReviewStore(legacy)  # opening adds the color column
+        store = ReviewStore(legacy)  # opening adds the color and event_type columns
         got = store.get_event("e")
         assert got is not None
         self.assertIsNone(got.color)
+        self.assertIsNone(got.event_type)
+        store.update_event("e", event_type="Smile")
+        self.assertEqual(store.get_event("e").event_type, "Smile")  # type: ignore[union-attr]
         store.update_event("e", color="#b5e48c")
         self.assertEqual(store.get_event("e").color, "#b5e48c")  # type: ignore[union-attr]
 
@@ -589,6 +592,122 @@ class TestEventCategories(unittest.TestCase):
         cat = EventCategory(name="Mother", ordinal=0)
         self.assertIsNone(cat.color)
         self.assertEqual(cat.updated_at, "")
+
+
+class TestEventTypes(unittest.TestCase):
+    """DB-scoped event categories: CRUD, order, linked events, and delete keeping their look."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.store = ReviewStore(self.tmp / "annie.db")
+
+    def _names(self) -> list[str]:
+        return [t.name for t in self.store.event_types()]
+
+    def _event(self, event_type: str | None, label: str, **fields: object) -> str:
+        rec = self.store.add_event(
+            "v", "v::", "Mother", 0, 10, label=label, event_type=event_type, **fields
+        )
+        return rec.event_id
+
+    def test_add_is_ordered_and_idempotent(self) -> None:
+        smile = self.store.add_event_type("Smile", color="#b5e48c", attributes={"intensity": "1"})
+        self.store.add_event_type("Gaze away")
+        again = self.store.add_event_type("Smile", color="#000000")
+        self.assertEqual(self._names(), ["Smile", "Gaze away"])
+        self.assertEqual(again, smile)
+        got = self.store.event_types()[0]
+        self.assertEqual(
+            (got.ordinal, got.color, got.attributes), (0, "#b5e48c", {"intensity": "1"})
+        )
+        self.assertTrue(self.store.has_data())
+
+    def test_add_event_links_its_type(self) -> None:
+        self.store.add_event_type("Smile")
+        got = self.store.get_event(self._event("Smile", "Smile"))
+        assert got is not None
+        self.assertEqual(got.event_type, "Smile")
+        self.assertIsNone(self.store.get_event(self._event(None, "x")).event_type)  # type: ignore[union-attr]
+
+    def test_rename_moves_events_and_default_labels(self) -> None:
+        self.store.add_event_type("Smile")
+        kept_name = self._event("Smile", "Smile")
+        own_name = self._event("Smile", "big grin")
+        self.store.rename_event_type("Smile", "Smiling")
+        self.assertEqual(self._names(), ["Smiling"])
+        first, second = self.store.get_event(kept_name), self.store.get_event(own_name)
+        assert first is not None and second is not None
+        self.assertEqual((first.event_type, first.label), ("Smiling", "Smiling"))
+        # A name the reviewer typed stays; the link still follows.
+        self.assertEqual((second.event_type, second.label), ("Smiling", "big grin"))
+        self.store.rename_event_type("Smiling", "Smiling")  # no-op
+        self.assertEqual(self._names(), ["Smiling"])
+
+    def test_rename_onto_an_existing_name_merges(self) -> None:
+        for name in ("Smile", "Laugh", "Grin"):
+            self.store.add_event_type(name)
+        event_id = self._event("Grin", "Grin")
+        self.store.rename_event_type("Grin", "Smile")
+        self.assertEqual(self._names(), ["Smile", "Laugh"])
+        self.assertEqual([t.ordinal for t in self.store.event_types()], [0, 1])
+        self.assertEqual(self.store.get_event(event_id).event_type, "Smile")  # type: ignore[union-attr]
+
+    def test_colour_and_attributes(self) -> None:
+        self.store.add_event_type("Smile")
+        self.store.set_event_type_color("Smile", "#ffb4a2")
+        self.store.set_event_type_attributes("Smile", {"side": "left"})
+        got = self.store.event_types()[0]
+        self.assertEqual((got.color, got.attributes), ("#ffb4a2", {"side": "left"}))
+        self.store.set_event_type_color("Smile", None)
+        self.assertIsNone(self.store.event_types()[0].color)
+
+    def test_reorder(self) -> None:
+        for name in ("A", "B", "C"):
+            self.store.add_event_type(name)
+        self.store.reorder_event_types(["C", "A", "unknown"])
+        self.assertEqual(self._names(), ["C", "A", "B"])
+        self.assertEqual([t.ordinal for t in self.store.event_types()], [0, 1, 2])
+
+    def test_event_count(self) -> None:
+        self.store.add_event_type("Smile")
+        self.assertEqual(self.store.event_type_event_count("Smile"), 0)
+        self._event("Smile", "Smile")
+        self._event("Smile", "Smile")
+        self.assertEqual(self.store.event_type_event_count("Smile"), 2)
+
+    def test_delete_keeps_how_its_events_look(self) -> None:
+        self.store.add_event_type(
+            "Smile", color="#b5e48c", attributes={"intensity": "1", "side": "l"}
+        )
+        self.store.add_event_type("Gaze away")
+        plain = self._event("Smile", "Smile")
+        own = self._event("Smile", "Smile", color="#a2d2ff", attributes={"side": "r"})
+        self.store.delete_event_type("Smile")
+        self.assertEqual(self._names(), ["Gaze away"])
+        self.assertEqual(self.store.event_types()[0].ordinal, 0)
+        first, second = self.store.get_event(plain), self.store.get_event(own)
+        assert first is not None and second is not None
+        self.assertIsNone(first.event_type)
+        self.assertEqual(first.color, "#b5e48c")
+        self.assertEqual(first.attributes, {"intensity": "1", "side": "l"})
+        # The event's own values win over the defaults it takes over.
+        self.assertEqual(second.color, "#a2d2ff")
+        self.assertEqual(second.attributes, {"intensity": "1", "side": "r"})
+        self.store.delete_event_type("missing")  # no-op
+
+    def test_unreadable_attributes_read_as_empty(self) -> None:
+        self.store.add_event_type("Smile")
+        with sqlite3.connect(self.tmp / "annie.db") as conn:
+            conn.execute("UPDATE event_type SET attributes = 'not json'")
+        self.assertEqual(self.store.event_types()[0].attributes, {})
+        with sqlite3.connect(self.tmp / "annie.db") as conn:
+            conn.execute("UPDATE event_type SET attributes = '[1, 2]'")
+        self.assertEqual(self.store.event_types()[0].attributes, {})
+
+    def test_default_dataclass_shape(self) -> None:
+        kind = EventType(name="Smile", ordinal=0)
+        self.assertIsNone(kind.color)
+        self.assertEqual(kind.attributes, {})
 
 
 class TestStoreCopy(unittest.TestCase):

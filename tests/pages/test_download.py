@@ -47,6 +47,13 @@ class TestSaveFromUrl(unittest.TestCase):
         self.assertIn("AbortError", js)
         self.assertIn("204", js)
 
+    def test_binary_files_survive_the_fetch(self) -> None:
+        # An .xlsx is a zip: reading it as text would corrupt it, so the bytes are kept.
+        js = download.save_from_url_js("a.xlsx", "/x", download.MIME_TYPES["xlsx"])
+        self.assertIn("response.arrayBuffer()", js)
+        self.assertNotIn("response.text()", js)
+        self.assertIn('".xlsx"', js)
+
     def test_filename_and_mime_are_escaped_literals(self) -> None:
         js = download.save_from_url_js('we"ird.csv', "/x", "text/csv")
         self.assertIn(json.dumps('we"ird.csv'), js)

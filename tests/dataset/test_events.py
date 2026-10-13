@@ -1,24 +1,31 @@
-"""Tests for the Event-annotation domain: frame/second maths and JSON/CSV export."""
+"""Tests for the Event-annotation domain: frame/second maths and JSON/CSV/XLSX export."""
 
 from __future__ import annotations
 
 import csv
+import io
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
+from openpyxl import load_workbook
+
 from annie.dataset.events import (
     build_export_tree,
     clamp_event,
+    effective_attributes,
+    effective_color,
     events_to_csv_text,
     events_to_json_text,
+    events_to_xlsx_bytes,
     export_events_csv,
     export_events_json,
+    export_events_xlsx,
     frames_to_seconds,
     seconds_to_frame,
 )
-from annie.dataset.storage import EventRecord
+from annie.dataset.storage import EventRecord, EventType
 
 
 def _event(
@@ -31,6 +38,7 @@ def _event(
     note: str = "",
     attributes: dict[str, str] | None = None,
     color: str | None = None,
+    event_type: str | None = None,
 ) -> EventRecord:
     return EventRecord(
         event_id=f"{video_id}-{track}-{start}",
@@ -43,6 +51,7 @@ def _event(
         note=note,
         attributes=attributes or {},
         color=color,
+        event_type=event_type,
         updated_at="2020-01-01T00:00:00",
     )
 
@@ -213,6 +222,102 @@ class TestMetaExport(unittest.TestCase):
         events = [_event("v", "speech", 0, 25)]
         self.assertEqual(events_to_csv_text(events, {}), events_to_csv_text(events, {}, {}))
         self.assertNotIn("meta", build_export_tree(events, {})["v"])
+
+
+_TYPES = {
+    "Smile": EventType(
+        name="Smile", ordinal=0, color="#b5e48c", attributes={"intensity": "1", "side": "l"}
+    ),
+    "Gaze away": EventType(name="Gaze away", ordinal=1),
+}
+
+
+class TestEffective(unittest.TestCase):
+    """An event linked to an event category inherits its colour and attributes; its own win."""
+
+    def test_colour_order(self) -> None:
+        linked = _event("v", "Mother", 0, 5, event_type="Smile")
+        self.assertEqual(effective_color(linked, _TYPES, "#ffffff"), "#b5e48c")
+        own = _event("v", "Mother", 0, 5, event_type="Smile", color="#a2d2ff")
+        self.assertEqual(effective_color(own, _TYPES, "#ffffff"), "#a2d2ff")
+        no_colour = _event("v", "Mother", 0, 5, event_type="Gaze away")
+        self.assertEqual(effective_color(no_colour, _TYPES, "#ffffff"), "#ffffff")
+        gone = _event("v", "Mother", 0, 5, event_type="Deleted")
+        self.assertIsNone(effective_color(gone, _TYPES))
+        self.assertIsNone(effective_color(_event("v", "Mother", 0, 5)))
+
+    def test_attributes_merge(self) -> None:
+        event = _event("v", "Mother", 0, 5, event_type="Smile", attributes={"side": "r"})
+        self.assertEqual(effective_attributes(event, _TYPES), {"intensity": "1", "side": "r"})
+        plain = _event("v", "Mother", 0, 5, attributes={"a": "b"})
+        self.assertEqual(effective_attributes(plain, _TYPES), {"a": "b"})
+        self.assertEqual(effective_attributes(plain), {"a": "b"})
+
+
+class TestExportWithEventTypes(unittest.TestCase):
+    def setUp(self) -> None:
+        self.events = [
+            _event("v", "Mother", 0, 25, label="Smile", event_type="Smile"),
+            _event("v", "Baby", 30, 50, label="look", color="#ffc8dd"),
+        ]
+
+    def test_json_has_type_and_effective_values(self) -> None:
+        tree = json.loads(events_to_json_text(self.events, {"v": 25.0}, None, _TYPES))
+        smile = tree["v"]["tracks"]["Mother"][0]
+        self.assertEqual(smile["event_type"], "Smile")
+        self.assertEqual(smile["color"], "#b5e48c")
+        self.assertEqual(smile["attributes"], {"intensity": "1", "side": "l"})
+        self.assertIsNone(tree["v"]["tracks"]["Baby"][0]["event_type"])
+
+    def test_csv_has_type_and_effective_values(self) -> None:
+        rows = list(csv.DictReader(io.StringIO(events_to_csv_text(self.events, {}, None, _TYPES))))
+        self.assertEqual(rows[0]["event_type"], "Smile")
+        self.assertEqual(rows[0]["color"], "#b5e48c")
+        self.assertEqual(rows[0]["attr_intensity"], "1")
+        self.assertEqual((rows[1]["event_type"], rows[1]["attr_intensity"]), ("", ""))
+
+
+class TestExportXlsx(unittest.TestCase):
+    """The Excel export: same columns as the CSV, typed numbers, a frozen and filtered header."""
+
+    def _sheet(self, data: bytes):  # noqa: ANN202 - an openpyxl worksheet
+        return load_workbook(io.BytesIO(data)).active
+
+    def test_same_columns_as_csv_with_numbers(self) -> None:
+        events = [
+            _event("v", "Mother", 0, 25, label="Smile", event_type="Smile", note="ok"),
+            _event("v", "Baby", 30, 50, attributes={"x": "y"}),
+        ]
+        meta = {"v": {"grp": "g1"}}
+        sheet = self._sheet(events_to_xlsx_bytes(events, {"v": 25.0}, meta, _TYPES))
+        header = [cell.value for cell in sheet[1]]
+        csv_header = events_to_csv_text(events, {"v": 25.0}, meta, _TYPES).splitlines()[0]
+        self.assertEqual(",".join(header), csv_header)
+        first = dict(zip(header, [cell.value for cell in sheet[2]], strict=True))
+        self.assertEqual(first["start_frame"], 0)
+        self.assertEqual(first["end_sec"], 1.0)
+        self.assertEqual((first["label"], first["event_type"]), ("Smile", "Smile"))
+        self.assertEqual((first["meta_grp"], first["attr_intensity"]), ("g1", "1"))
+        self.assertEqual(sheet.title, "Events")
+        self.assertEqual(sheet.freeze_panes, "A2")
+        self.assertEqual(sheet.auto_filter.ref, f"A1:{sheet.cell(3, len(header)).coordinate}")
+        self.assertTrue(sheet["A1"].font.bold)
+
+    def test_long_text_caps_the_column_width(self) -> None:
+        events = [_event("v", "Mother", 0, 5, note="n" * 500)]
+        sheet = self._sheet(events_to_xlsx_bytes(events, {}))
+        widths = [dim.width for dim in sheet.column_dimensions.values()]
+        self.assertLessEqual(max(widths), 60)
+
+    def test_no_events_is_a_header_only_sheet(self) -> None:
+        sheet = self._sheet(events_to_xlsx_bytes([], {}))
+        self.assertEqual(sheet.max_row, 1)
+        self.assertEqual(sheet["A1"].value, "video_id")
+
+    def test_writes_a_file(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        path = export_events_xlsx([_event("v", "Mother", 0, 5)], {"v": 25.0}, tmp / "a" / "e.xlsx")
+        self.assertEqual(self._sheet(path.read_bytes())["B2"].value, "Mother")
 
 
 if __name__ == "__main__":

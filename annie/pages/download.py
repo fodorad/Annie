@@ -23,7 +23,11 @@ _ILLEGAL = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 _MAX_STEM = 120
 """Longest accepted file-name stem, comfortably below every filesystem's limit."""
 
-MIME_TYPES: dict[str, str] = {"json": "application/json", "csv": "text/csv"}
+MIME_TYPES: dict[str, str] = {
+    "json": "application/json",
+    "csv": "text/csv",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
 """Extension → MIME type for the formats Annie exports."""
 
 
@@ -53,7 +57,7 @@ def sanitize_filename(name: str, *, extension: str, default_stem: str) -> str:
 def save_from_url_js(filename: str, url: str, mime: str) -> str:
     """Return a click handler that fetches ``url`` and saves it where the user picks.
 
-    The handler runs client-side *inside the click*: it fetches the text first (a local,
+    The handler runs client-side *inside the click*: it fetches the file first (a local,
     millisecond request, well inside the browser's transient-activation window), then opens
     the native Save dialog with ``filename`` prefilled and writes the file. A ``204``
     response means "nothing to export" and shows a notice instead of an empty file.
@@ -62,7 +66,7 @@ def save_from_url_js(filename: str, url: str, mime: str) -> str:
 
     Args:
         filename: Suggested file name, already sanitised.
-        url: Same-origin URL returning the file's text content.
+        url: Same-origin URL returning the file's content (text or binary).
         mime: MIME type, e.g. ``"text/csv"``.
 
     Returns:
@@ -79,7 +83,7 @@ def save_from_url_js(filename: str, url: str, mime: str) -> str:
         Quasar.Notify.create({{message: 'Nothing to export yet.', color: 'warning'}});
         return;
       }}
-      const blob = new Blob([await response.text()], {{type: mime}});
+      const blob = new Blob([await response.arrayBuffer()], {{type: mime}});
       if (window.showSaveFilePicker) {{
         try {{
           const handle = await window.showSaveFilePicker({{
@@ -111,7 +115,7 @@ def attach_save(element: ui.element, *, filename: str, url: str, extension: str)
     Args:
         element: A button or menu item.
         filename: Default file name offered in the Save dialog.
-        url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).
+        url: Same-origin URL serving the file (see :func:`save_from_url_js`).
         extension: File extension without the dot (selects the MIME type).
     """
     element.on(
@@ -126,7 +130,7 @@ def export_menu_item(label: str, *, filename: str, url: str, extension: str) -> 
     Args:
         label: Menu text.
         filename: Default file name offered in the Save dialog.
-        url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).
+        url: Same-origin URL serving the file (see :func:`save_from_url_js`).
         extension: File extension without the dot (selects the MIME type).
 
     Returns:
