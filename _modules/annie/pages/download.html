@@ -331,7 +331,11 @@
 <span class="n">_MAX_STEM</span> <span class="o">=</span> <span class="mi">120</span>
 <span class="sd">"""Longest accepted file-name stem, comfortably below every filesystem's limit."""</span>
 
-<span class="n">MIME_TYPES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"json"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">:</span> <span class="s2">"text/csv"</span><span class="p">}</span>
+<span class="n">MIME_TYPES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"json"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span>
+    <span class="s2">"csv"</span><span class="p">:</span> <span class="s2">"text/csv"</span><span class="p">,</span>
+    <span class="s2">"xlsx"</span><span class="p">:</span> <span class="s2">"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"</span><span class="p">,</span>
+<span class="p">}</span>
 <span class="sd">"""Extension → MIME type for the formats Annie exports."""</span>
 
 
@@ -366,7 +370,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">save_from_url_js</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mime</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return a click handler that fetches ``url`` and saves it where the user picks.</span>
 
-<span class="sd">    The handler runs client-side *inside the click*: it fetches the text first (a local,</span>
+<span class="sd">    The handler runs client-side *inside the click*: it fetches the file first (a local,</span>
 <span class="sd">    millisecond request, well inside the browser's transient-activation window), then opens</span>
 <span class="sd">    the native Save dialog with ``filename`` prefilled and writes the file. A ``204``</span>
 <span class="sd">    response means "nothing to export" and shows a notice instead of an empty file.</span>
@@ -375,7 +379,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        filename: Suggested file name, already sanitised.</span>
-<span class="sd">        url: Same-origin URL returning the file's text content.</span>
+<span class="sd">        url: Same-origin URL returning the file's content (text or binary).</span>
 <span class="sd">        mime: MIME type, e.g. ``"text/csv"``.</span>
 
 <span class="sd">    Returns:</span>
@@ -392,7 +396,7 @@
 <span class="s2">        Quasar.Notify.create(</span><span class="se">{{</span><span class="s2">message: 'Nothing to export yet.', color: 'warning'</span><span class="se">}}</span><span class="s2">);</span>
 <span class="s2">        return;</span>
 <span class="s2">      </span><span class="se">}}</span>
-<span class="s2">      const blob = new Blob([await response.text()], </span><span class="se">{{</span><span class="s2">type: mime</span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">      const blob = new Blob([await response.arrayBuffer()], </span><span class="se">{{</span><span class="s2">type: mime</span><span class="se">}}</span><span class="s2">);</span>
 <span class="s2">      if (window.showSaveFilePicker) </span><span class="se">{{</span>
 <span class="s2">        try </span><span class="se">{{</span>
 <span class="s2">          const handle = await window.showSaveFilePicker(</span><span class="se">{{</span>
@@ -427,7 +431,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        element: A button or menu item.</span>
 <span class="sd">        filename: Default file name offered in the Save dialog.</span>
-<span class="sd">        url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).</span>
+<span class="sd">        url: Same-origin URL serving the file (see :func:`save_from_url_js`).</span>
 <span class="sd">        extension: File extension without the dot (selects the MIME type).</span>
 <span class="sd">    """</span>
     <span class="n">element</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
@@ -445,7 +449,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        label: Menu text.</span>
 <span class="sd">        filename: Default file name offered in the Save dialog.</span>
-<span class="sd">        url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).</span>
+<span class="sd">        url: Same-origin URL serving the file (see :func:`save_from_url_js`).</span>
 <span class="sd">        extension: File extension without the dot (selects the MIME type).</span>
 
 <span class="sd">    Returns:</span>

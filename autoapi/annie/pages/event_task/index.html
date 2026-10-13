@@ -319,7 +319,7 @@
 (play/pause, ±5 s, frame-step, “Start/End here”), linked frame/second/timecode jump fields,
 then the SVG timeline (one lane per track) and an event editor. Events are authored from
 scratch and saved to the review DB <strong>immediately</strong> on every change — there is no Save button;
-export (JSON for code, CSV for a spreadsheet) is a separate step.</p>
+export (JSON for code, CSV or XLSX for a spreadsheet) is a separate step.</p>
 <p>Which video is shown comes from the Browse annotator queue, like Curation. Frame accuracy is
 provided by <a class="reference internal" href="../videoclock/index.html#module-annie.pages.videoclock" title="annie.pages.videoclock"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.pages.videoclock</span></code></a> (HTML5 <code class="docutils literal notranslate"><span class="pre">currentTime</span></code> stepping); the timeline is
 drawn by <a class="reference internal" href="../timeline/index.html#module-annie.pages.timeline" title="annie.pages.timeline"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.pages.timeline</span></code></a> (Python owns the model, JS reports gestures). The layout
@@ -334,7 +334,7 @@ their own modules.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.next_default_category_name" title="annie.pages.event_task.next_default_category_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">next_default_category_name</span></code></a>(→ str)</p></td>
-<td><p>Return the next free <code class="docutils literal notranslate"><span class="pre">&quot;Participant</span> <span class="pre">N&quot;</span></code> name given the existing category names.</p></td>
+<td><p>Return the next free <code class="docutils literal notranslate"><span class="pre">&quot;&lt;prefix&gt;</span> <span class="pre">N&quot;</span></code> name given the existing names.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.cleanup" title="annie.pages.event_task.cleanup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cleanup</span></code></a>(→ None)</p></td>
 <td><p>Drop a disconnected client's Event-annotation state and gesture handler flag.</p></td>
@@ -350,16 +350,20 @@ their own modules.</p>
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.event_task.next_default_category_name">
-<span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">next_default_category_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/event_task.html#next_default_category_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.event_task.next_default_category_name" title="Link to this definition">¶</a></dt>
-<dd><p>Return the next free <code class="docutils literal notranslate"><span class="pre">&quot;Participant</span> <span class="pre">N&quot;</span></code> name given the existing category names.</p>
-<p>Used when a category is added without a typed name, so “just click Add” still yields a
-clean, consistent label (<code class="docutils literal notranslate"><span class="pre">Participant</span> <span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">Participant</span> <span class="pre">3</span></code>, …) and never a collision.</p>
+<span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">next_default_category_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Participant'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/event_task.html#next_default_category_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.event_task.next_default_category_name" title="Link to this definition">¶</a></dt>
+<dd><p>Return the next free <code class="docutils literal notranslate"><span class="pre">&quot;&lt;prefix&gt;</span> <span class="pre">N&quot;</span></code> name given the existing names.</p>
+<p>Used when a participant or event category is added without a typed name, so “just
+click Add” still yields a clean, consistent label (<code class="docutils literal notranslate"><span class="pre">Participant</span> <span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">Event</span> <span class="pre">3</span></code>, …)
+and never a collision.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>existing</strong> – The category names already in use.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>existing</strong> – The names already in use.</p></li>
+<li><p><strong>prefix</strong> – The name’s first word, <code class="docutils literal notranslate"><span class="pre">&quot;Participant&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Event&quot;</span></code>.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">&quot;Participant</span> <span class="pre">N&quot;</span></code> for the smallest <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code> not already taken.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">&quot;&lt;prefix&gt;</span> <span class="pre">N&quot;</span></code> for the smallest <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code> not already taken.</p>
 </dd>
 </dl>
 </dd></dl>

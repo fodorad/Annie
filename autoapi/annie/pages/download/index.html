@@ -389,7 +389,7 @@ forced (added if missing, never doubled).</p>
 <dt class="sig sig-object py" id="annie.pages.download.save_from_url_js">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.download.</span></span><span class="sig-name descname"><span class="pre">save_from_url_js</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/download.html#save_from_url_js"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.download.save_from_url_js" title="Link to this definition">¶</a></dt>
 <dd><p>Return a click handler that fetches <code class="docutils literal notranslate"><span class="pre">url</span></code> and saves it where the user picks.</p>
-<p>The handler runs client-side <em>inside the click</em>: it fetches the text first (a local,
+<p>The handler runs client-side <em>inside the click</em>: it fetches the file first (a local,
 millisecond request, well inside the browser’s transient-activation window), then opens
 the native Save dialog with <code class="docutils literal notranslate"><span class="pre">filename</span></code> prefilled and writes the file. A <code class="docutils literal notranslate"><span class="pre">204</span></code>
 response means “nothing to export” and shows a notice instead of an empty file.
@@ -399,7 +399,7 @@ Safari) fall back to a normal download under <code class="docutils literal notra
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filename</strong> – Suggested file name, already sanitised.</p></li>
-<li><p><strong>url</strong> – Same-origin URL returning the file’s text content.</p></li>
+<li><p><strong>url</strong> – Same-origin URL returning the file’s content (text or binary).</p></li>
 <li><p><strong>mime</strong> – MIME type, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;text/csv&quot;</span></code>.</p></li>
 </ul>
 </dd>
@@ -418,7 +418,7 @@ Safari) fall back to a normal download under <code class="docutils literal notra
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>element</strong> – A button or menu item.</p></li>
 <li><p><strong>filename</strong> – Default file name offered in the Save dialog.</p></li>
-<li><p><strong>url</strong> – Same-origin URL serving the file’s text (see <a class="reference internal" href="#annie.pages.download.save_from_url_js" title="annie.pages.download.save_from_url_js"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_from_url_js()</span></code></a>).</p></li>
+<li><p><strong>url</strong> – Same-origin URL serving the file (see <a class="reference internal" href="#annie.pages.download.save_from_url_js" title="annie.pages.download.save_from_url_js"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_from_url_js()</span></code></a>).</p></li>
 <li><p><strong>extension</strong> – File extension without the dot (selects the MIME type).</p></li>
 </ul>
 </dd>
@@ -434,7 +434,7 @@ Safari) fall back to a normal download under <code class="docutils literal notra
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>label</strong> – Menu text.</p></li>
 <li><p><strong>filename</strong> – Default file name offered in the Save dialog.</p></li>
-<li><p><strong>url</strong> – Same-origin URL serving the file’s text (see <a class="reference internal" href="#annie.pages.download.save_from_url_js" title="annie.pages.download.save_from_url_js"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_from_url_js()</span></code></a>).</p></li>
+<li><p><strong>url</strong> – Same-origin URL serving the file (see <a class="reference internal" href="#annie.pages.download.save_from_url_js" title="annie.pages.download.save_from_url_js"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_from_url_js()</span></code></a>).</p></li>
 <li><p><strong>extension</strong> – File extension without the dot (selects the MIME type).</p></li>
 </ul>
 </dd>

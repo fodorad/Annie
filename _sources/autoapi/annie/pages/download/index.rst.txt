@@ -64,7 +64,7 @@ Module Contents
 
    Return a click handler that fetches ``url`` and saves it where the user picks.
 
-   The handler runs client-side *inside the click*: it fetches the text first (a local,
+   The handler runs client-side *inside the click*: it fetches the file first (a local,
    millisecond request, well inside the browser's transient-activation window), then opens
    the native Save dialog with ``filename`` prefilled and writes the file. A ``204``
    response means "nothing to export" and shows a notice instead of an empty file.
@@ -72,7 +72,7 @@ Module Contents
    Safari) fall back to a normal download under ``filename``.
 
    :param filename: Suggested file name, already sanitised.
-   :param url: Same-origin URL returning the file's text content.
+   :param url: Same-origin URL returning the file's content (text or binary).
    :param mime: MIME type, e.g. ``"text/csv"``.
 
    :returns: A JavaScript arrow function (as a string) for ``Element.on(..., js_handler=...)``.
@@ -84,7 +84,7 @@ Module Contents
 
    :param element: A button or menu item.
    :param filename: Default file name offered in the Save dialog.
-   :param url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).
+   :param url: Same-origin URL serving the file (see :func:`save_from_url_js`).
    :param extension: File extension without the dot (selects the MIME type).
 
 
@@ -94,7 +94,7 @@ Module Contents
 
    :param label: Menu text.
    :param filename: Default file name offered in the Save dialog.
-   :param url: Same-origin URL serving the file's text (see :func:`save_from_url_js`).
+   :param url: Same-origin URL serving the file (see :func:`save_from_url_js`).
    :param extension: File extension without the dot (selects the MIME type).
 
    :returns: The created menu item.

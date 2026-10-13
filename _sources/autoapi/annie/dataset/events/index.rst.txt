@@ -16,10 +16,14 @@ annie.dataset.events
    * frame ↔ second conversion, since the database is the source of truth in **frames**
      (fps-independent) while humans and exports think in seconds;
    * interval clamping, so a typed or dragged boundary can never leave the video;
-   * the two export shapes. **JSON** is nested — one object per video, tracks holding their
-     events with attributes inline — for downstream code. **CSV** is flat — one row per event,
-     attributes flattened into ``attr_<key>`` columns — for opening in a spreadsheet. That
-     split is deliberate: nested attributes do not live cleanly in a CSV cell.
+   * an event's **effective** colour and attributes: an event linked to an event category
+     (:class:`annie.dataset.storage.EventType`) inherits the category's colour and default
+     attributes, and its own values win;
+   * the export shapes. **JSON** is nested — one object per video, tracks holding their
+     events with attributes inline — for downstream code. **CSV** and **XLSX** are flat — one
+     row per event, attributes flattened into ``attr_<key>`` columns — for a spreadsheet
+     (XLSX opens in Excel with typed numbers, a frozen header and filters). That split is
+     deliberate: nested attributes do not live cleanly in a spreadsheet cell.
 
    Pure domain: no NiceGUI, no torch. The task UI and the store consume it.
 
@@ -33,11 +37,16 @@ Functions
    annie.dataset.events.frames_to_seconds
    annie.dataset.events.seconds_to_frame
    annie.dataset.events.clamp_event
+   annie.dataset.events.effective_color
+   annie.dataset.events.effective_attributes
    annie.dataset.events.build_export_tree
    annie.dataset.events.events_to_json_text
    annie.dataset.events.export_events_json
+   annie.dataset.events.event_table
    annie.dataset.events.events_to_csv_text
    annie.dataset.events.export_events_csv
+   annie.dataset.events.events_to_xlsx_bytes
+   annie.dataset.events.export_events_xlsx
 
 
 Module Contents
@@ -82,7 +91,30 @@ Module Contents
    :returns: The ordered, bounded ``(start, end)`` pair.
 
 
-.. py:function:: build_export_tree(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None) -> dict[str, dict[str, object]]
+.. py:function:: effective_color(event: annie.dataset.storage.EventRecord, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None, lane_color: str | None = None) -> str | None
+
+   Return the colour an event is drawn and exported with.
+
+   Its own colour wins, then its event category's, then the participant lane's.
+
+   :param event: The event.
+   :param types: Event categories by name (``None`` when there are none).
+   :param lane_color: The participant lane's colour, the last fallback.
+
+   :returns: A hex colour, or ``None`` when nothing sets one.
+
+
+.. py:function:: effective_attributes(event: annie.dataset.storage.EventRecord, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None) -> dict[str, str]
+
+   Return an event's attributes with its event category's defaults filled in.
+
+   :param event: The event.
+   :param types: Event categories by name (``None`` when there are none).
+
+   :returns: ``{**category defaults, **event's own}``, so the event's own values win.
+
+
+.. py:function:: build_export_tree(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None) -> dict[str, dict[str, object]]
 
    Group events into the nested ``video_id -> {fps, tracks}`` export structure.
 
@@ -95,11 +127,13 @@ Module Contents
                         missing here is exported with ``fps = 0`` and zero seconds (frames still stand).
    :param meta_by_video: Optional per-video metadata (e.g. the fields a nested layout captured
                          from the path), exported as a ``"meta"`` object when a video has any.
+   :param types: Event categories by name, so linked events export their effective colour
+                 and attributes.
 
    :returns: A mapping of ``video_id`` to ``{"fps": float, "tracks": {...}}`` (plus ``"meta"``).
 
 
-.. py:function:: events_to_json_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None) -> str
+.. py:function:: events_to_json_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None) -> str
 
    Render events as nested JSON text (one object per video).
 
@@ -110,6 +144,7 @@ Module Contents
    :param events: The events to render.
    :param fps_by_video: Frames per second per ``video_id``.
    :param meta_by_video: Optional per-video metadata exported as ``"meta"``.
+   :param types: Event categories by name (for effective colour and attributes).
 
    :returns: The JSON document as a string.
 
@@ -125,18 +160,32 @@ Module Contents
    :returns: The path written.
 
 
-.. py:function:: events_to_csv_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None) -> str
+.. py:function:: event_table(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None) -> tuple[list[str], list[dict[str, object]]]
 
-   Render events as flat CSV text (one row per event) for a spreadsheet.
+   Flatten events into spreadsheet rows (one per event), shared by CSV and XLSX.
 
-   Fixed columns come first, then one ``attr_<key>`` column per attribute key seen across
-   *all* events (empty where an event lacks that key), so colleagues can open and sort the
-   file in Excel. Attribute keys are sorted for a stable header.
+   Fixed columns come first, then one ``meta_<key>`` column per metadata key seen, then
+   one ``attr_<key>`` column per attribute key seen across *all* events (empty where an
+   event lacks that key), so colleagues can open and sort the file in Excel. Keys are
+   sorted for a stable header. Colour and attributes are the effective ones, so the file
+   is complete without the database.
+
+   :param events: The events to flatten.
+   :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+   :param meta_by_video: Optional per-video metadata.
+   :param types: Event categories by name (for effective colour and attributes).
+
+   :returns: The column names and the rows (frames as ints, seconds as floats, the rest text).
+
+
+.. py:function:: events_to_csv_text(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None) -> str
+
+   Render events as flat CSV text (one row per event; columns as :func:`event_table`).
 
    :param events: The events to render.
    :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
-   :param meta_by_video: Optional per-video metadata; one ``meta_<key>`` column per key seen,
-                         right after the fixed columns.
+   :param meta_by_video: Optional per-video metadata, as ``meta_<key>`` columns.
+   :param types: Event categories by name (for effective colour and attributes).
 
    :returns: The CSV document as a string.
 
@@ -148,6 +197,32 @@ Module Contents
    :param events: The events to write.
    :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
    :param path: Destination ``.csv`` path (parent directories are created).
+
+   :returns: The path written.
+
+
+.. py:function:: events_to_xlsx_bytes(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], meta_by_video: collections.abc.Mapping[str, collections.abc.Mapping[str, str]] | None = None, types: collections.abc.Mapping[str, annie.dataset.storage.EventType] | None = None) -> bytes
+
+   Render events as an Excel workbook (same columns as the CSV, see :func:`event_table`).
+
+   One ``Events`` sheet: a bold, frozen header with filters, frames and seconds stored as
+   numbers (so Excel sorts and sums them), and columns sized to their content.
+
+   :param events: The events to render.
+   :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+   :param meta_by_video: Optional per-video metadata, as ``meta_<key>`` columns.
+   :param types: Event categories by name (for effective colour and attributes).
+
+   :returns: The ``.xlsx`` file's bytes.
+
+
+.. py:function:: export_events_xlsx(events: collections.abc.Iterable[annie.dataset.storage.EventRecord], fps_by_video: collections.abc.Mapping[str, float], path: str | pathlib.Path) -> pathlib.Path
+
+   Write events to an Excel file (see :func:`events_to_xlsx_bytes`).
+
+   :param events: The events to write.
+   :param fps_by_video: Frames per second per ``video_id`` (for the derived seconds).
+   :param path: Destination ``.xlsx`` path (parent directories are created).
 
    :returns: The path written.
 

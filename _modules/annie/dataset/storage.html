@@ -363,6 +363,11 @@
 <span class="c1">#: ``event_track`` stays in the schema for back-compat but the UI no longer depends on it.</span>
 <span class="c1">#: Opening a pre-events database simply creates these tables empty — no column migration is</span>
 <span class="c1">#: needed for whole new tables.</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``event_type`` holds the **event categories** (e.g. Smile / Gaze away): predefined kinds of</span>
+<span class="c1">#: event with a name, a colour and default ``attributes`` (JSON). Also DB-scoped. An event made</span>
+<span class="c1">#: with one records it in ``event.event_type`` and stays linked: renaming the type renames</span>
+<span class="c1">#: its events, and its colour and attributes apply wherever the event sets none of its own.</span>
 <span class="n">_SCHEMA</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">CREATE TABLE IF NOT EXISTS review (</span>
 <span class="s2">    row_key            TEXT PRIMARY KEY,</span>
@@ -387,6 +392,7 @@
 <span class="s2">    note         TEXT NOT NULL DEFAULT '',</span>
 <span class="s2">    attributes   TEXT NOT NULL DEFAULT '</span><span class="si">{}</span><span class="s2">',</span>
 <span class="s2">    color        TEXT,</span>
+<span class="s2">    event_type   TEXT,</span>
 <span class="s2">    updated_at   TEXT NOT NULL</span>
 <span class="s2">);</span>
 <span class="s2">CREATE INDEX IF NOT EXISTS event_by_video ON event(row_key);</span>
@@ -403,6 +409,14 @@
 <span class="s2">    name        TEXT PRIMARY KEY,</span>
 <span class="s2">    ordinal     INTEGER NOT NULL,</span>
 <span class="s2">    color       TEXT,</span>
+<span class="s2">    updated_at  TEXT NOT NULL</span>
+<span class="s2">);</span>
+
+<span class="s2">CREATE TABLE IF NOT EXISTS event_type (</span>
+<span class="s2">    name        TEXT PRIMARY KEY,</span>
+<span class="s2">    ordinal     INTEGER NOT NULL,</span>
+<span class="s2">    color       TEXT,</span>
+<span class="s2">    attributes  TEXT NOT NULL DEFAULT '</span><span class="si">{}</span><span class="s2">',</span>
 <span class="s2">    updated_at  TEXT NOT NULL</span>
 <span class="s2">);</span>
 <span class="s2">"""</span>
@@ -457,8 +471,10 @@
 <span class="sd">        label: Free-text label shown on the event box (empty when unnamed).</span>
 <span class="sd">        note: Free-text note (empty when none).</span>
 <span class="sd">        attributes: Arbitrary string key/value pairs; stored as a JSON object.</span>
-<span class="sd">        color: Per-event colour override (hex string), or ``None`` to inherit the track's</span>
-<span class="sd">            colour on the timeline.</span>
+<span class="sd">        color: Per-event colour override (hex string), or ``None`` to inherit the event</span>
+<span class="sd">            category's colour, else the track's, on the timeline.</span>
+<span class="sd">        event_type: The event category the event was made with (and stays linked to), or</span>
+<span class="sd">            ``None`` for a plain event.</span>
 <span class="sd">        updated_at: ISO-8601 UTC timestamp of the last change.</span>
 <span class="sd">    """</span>
 
@@ -472,6 +488,7 @@
     <span class="n">note</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">event_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
 
@@ -495,6 +512,32 @@
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
+
+
+
+<div class="viewcode-block" id="EventType">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.EventType">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventType</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One event category in the Event-annotation task (e.g. ``"Smile"``).</span>
+
+<span class="sd">    DB-scoped like :class:`EventCategory`. A new event made with it gets its name as the label,</span>
+<span class="sd">    and stays linked: renaming the type renames its events; its colour and attributes apply</span>
+<span class="sd">    wherever the event sets none of its own (see :mod:`annie.dataset.events`).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name: The event category's name; unique within the DB.</span>
+<span class="sd">        ordinal: Order in the Category block (``0`` first; Shift+1 selects it).</span>
+<span class="sd">        color: Hex colour of its events, or ``None`` for the participant lane's colour.</span>
+<span class="sd">        attributes: Default key/value attributes of its events.</span>
+<span class="sd">        updated_at: ISO-8601 UTC timestamp of the last change.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
 
@@ -547,6 +590,8 @@
         <span class="n">event_columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA table_info(event)"</span><span class="p">)}</span>
         <span class="k">if</span> <span class="s2">"color"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event_columns</span><span class="p">:</span>
             <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"ALTER TABLE event ADD COLUMN color TEXT"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"event_type"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event_columns</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"ALTER TABLE event ADD COLUMN event_type TEXT"</span><span class="p">)</span>
 
     <span class="nd">@contextmanager</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">]:</span>
@@ -564,7 +609,7 @@
 <div class="viewcode-block" id="ReviewStore.has_data">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.has_data">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return whether any review, event, or participant category has been stored.</span>
+<span class="w">        </span><span class="sd">"""Return whether any review, event, participant or event category has been stored.</span>
 
 <span class="sd">        Used to decide whether switching to another database would leave progress</span>
 <span class="sd">        behind (see :meth:`copy_to`).</span>
@@ -572,7 +617,7 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SELECT 1 FROM </span><span class="si">{</span><span class="n">table</span><span class="si">}</span><span class="s2"> LIMIT 1"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># noqa: S608</span>
-                <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"review"</span><span class="p">,</span> <span class="s2">"event"</span><span class="p">,</span> <span class="s2">"event_category"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"review"</span><span class="p">,</span> <span class="s2">"event"</span><span class="p">,</span> <span class="s2">"event_category"</span><span class="p">,</span> <span class="s2">"event_type"</span><span class="p">)</span>
             <span class="p">)</span></div>
 
 
@@ -983,6 +1028,7 @@
         <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
         <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventRecord</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Insert a new event on a track and return it (with its fresh id).</span>
 
@@ -999,6 +1045,7 @@
 <span class="sd">            note: Optional event note.</span>
 <span class="sd">            attributes: Optional arbitrary string key/value pairs.</span>
 <span class="sd">            color: Optional per-event colour override (hex), or ``None`` to inherit the track.</span>
+<span class="sd">            event_type: The event category it is made with, or ``None`` for a plain event.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The stored :class:`EventRecord`.</span>
@@ -1014,6 +1061,7 @@
             <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
             <span class="n">attributes</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">attributes</span> <span class="ow">or</span> <span class="p">{}),</span>
             <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">,</span>
             <span class="n">updated_at</span><span class="o">=</span><span class="n">_now</span><span class="p">(),</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
@@ -1022,9 +1070,9 @@
 <span class="w">                </span><span class="sd">"""</span>
 <span class="sd">                INSERT INTO event</span>
 <span class="sd">                    (event_id, video_id, row_key, track, start_frame, end_frame,</span>
-<span class="sd">                     label, note, attributes, color, updated_at)</span>
+<span class="sd">                     label, note, attributes, color, event_type, updated_at)</span>
 <span class="sd">                VALUES (:event_id, :video_id, :row_key, :track, :start_frame, :end_frame,</span>
-<span class="sd">                        :label, :note, :attributes, :color, :updated_at)</span>
+<span class="sd">                        :label, :note, :attributes, :color, :event_type, :updated_at)</span>
 <span class="sd">                """</span><span class="p">,</span>
                 <span class="n">_event_params</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>
             <span class="p">)</span>
@@ -1044,12 +1092,15 @@
 <span class="sd">        Args:</span>
 <span class="sd">            event_id: The event to update.</span>
 <span class="sd">            **fields: Column/value pairs among ``track``, ``start_frame``, ``end_frame``,</span>
-<span class="sd">                ``label``, ``note``, ``attributes``, ``color``.</span>
+<span class="sd">                ``label``, ``note``, ``attributes``, ``color``, ``event_type``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The updated :class:`EventRecord`, or ``None`` if no such event exists.</span>
 <span class="sd">        """</span>
-        <span class="n">allowed</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"track"</span><span class="p">,</span> <span class="s2">"start_frame"</span><span class="p">,</span> <span class="s2">"end_frame"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">,</span> <span class="s2">"note"</span><span class="p">,</span> <span class="s2">"attributes"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">}</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"track"</span><span class="p">,</span> <span class="s2">"start_frame"</span><span class="p">,</span> <span class="s2">"end_frame"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">,</span> <span class="s2">"note"</span><span class="p">,</span> <span class="s2">"attributes"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">,</span>
+            <span class="s2">"event_type"</span><span class="p">,</span>
+        <span class="p">}</span>  <span class="c1"># fmt: skip</span>
         <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">-</span> <span class="n">allowed</span>
         <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown event field(s): </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1444,6 +1495,207 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span></div>
 
 
+    <span class="c1"># ── event categories (event types) ─────────────────────────────────────────</span>
+
+<div class="viewcode-block" id="ReviewStore.event_types">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.event_types">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">event_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventType</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return the dataset's event categories, in their order (Shift+1 is the first).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The event categories ordered by ``ordinal`` then ``name``.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM event_type ORDER BY ordinal, name"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_type_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.add_event_type">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.add_event_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_event_type</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventType</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add an event category at the end of the order (idempotent on the name).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The event category's name (must be non-empty; caller validates).</span>
+<span class="sd">            color: Optional hex colour of its events.</span>
+<span class="sd">            attributes: Optional default key/value attributes of its events.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The stored :class:`EventType` (the existing one if the name was already present).</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM event_type WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_type_from_row</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">count</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT COUNT(*) FROM event_type"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">EventType</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">ordinal</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                <span class="n">attributes</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">attributes</span> <span class="ow">or</span> <span class="p">{}),</span>
+                <span class="n">updated_at</span><span class="o">=</span><span class="n">_now</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"INSERT INTO event_type (name, ordinal, color, attributes, updated_at) "</span>
+                <span class="s2">"VALUES (?, ?, ?, ?, ?)"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">attributes</span><span class="p">),</span> <span class="n">record</span><span class="o">.</span><span class="n">updated_at</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">record</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.rename_event_type">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.rename_event_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rename_event_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Rename an event category; its events follow.</span>
+
+<span class="sd">        Events made with it point at the new name, and those whose label is still the old</span>
+<span class="sd">        name are relabelled (a label the user changed is kept). If ``new`` already exists,</span>
+<span class="sd">        the two merge: ``old``'s events move onto ``new`` and ``old`` is removed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            old: The current name.</span>
+<span class="sd">            new: The new name.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">old</span> <span class="o">==</span> <span class="n">new</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">merging</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT 1 FROM event_type WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">new</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event SET label = ?, updated_at = ? WHERE event_type = ? AND label = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">old</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event SET event_type = ?, updated_at = ? WHERE event_type = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">old</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">merging</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event_type WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">old</span><span class="p">,))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_repack_event_types</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event_type SET name = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">old</span><span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.delete_event_type">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.delete_event_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_event_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete an event category without changing how its events look.</span>
+
+<span class="sd">        Each of its events first takes over what it inherited: the category's colour (unless</span>
+<span class="sd">        the event has its own) and its default attributes (the event's own values win). Then</span>
+<span class="sd">        the link is cleared, so the events stay as they were, just no longer linked.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The event category to remove.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM event_type WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">_type_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">event_row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT * FROM event WHERE event_type = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+                <span class="n">event</span> <span class="o">=</span> <span class="n">_event_from_row</span><span class="p">(</span><span class="n">event_row</span><span class="p">)</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event SET color = ?, attributes = ?, event_type = NULL, "</span>
+                    <span class="s2">"updated_at = ? WHERE event_id = ?"</span><span class="p">,</span>
+                    <span class="p">(</span>
+                        <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="n">kind</span><span class="o">.</span><span class="n">color</span><span class="p">,</span>
+                        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="o">**</span><span class="n">kind</span><span class="o">.</span><span class="n">attributes</span><span class="p">,</span> <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">}),</span>
+                        <span class="n">_now</span><span class="p">(),</span>
+                        <span class="n">event</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"DELETE FROM event_type WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_repack_event_types</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repack_event_types</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Keep the event categories' ordinals 0..n-1 with no gaps."""</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">r</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT name FROM event_type ORDER BY ordinal, name"</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"UPDATE event_type SET ordinal = ? WHERE name = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+
+<div class="viewcode-block" id="ReviewStore.event_type_event_count">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.event_type_event_count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">event_type_event_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return how many events are linked to an event category (for the delete warning).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The event category's name.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The number of events whose ``event_type`` equals ``name``.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">count</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"SELECT COUNT(*) FROM event WHERE event_type = ?"</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">count</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.reorder_event_types">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.reorder_event_types">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reorder_event_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set the event categories' order to ``names`` (unlisted ones keep going after).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            names: Event category names in the desired order; unknown names are ignored.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">r</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT name FROM event_type ORDER BY ordinal, name"</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">ordered</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current</span><span class="p">]</span>
+            <span class="n">ordered</span> <span class="o">+=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ordered</span><span class="p">):</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE event_type SET ordinal = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">name</span><span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.set_event_type_color">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_event_type_color">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_event_type_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set (or clear) an event category's colour; its events follow unless they have their own.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The event category's name.</span>
+<span class="sd">            color: A hex colour, or ``None`` for the participant lane's colour.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event_type SET color = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">name</span><span class="p">),</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ReviewStore.set_event_type_attributes">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_event_type_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_event_type_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Replace an event category's default attributes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The event category's name.</span>
+<span class="sd">            attributes: The new default key/value attributes.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE event_type SET attributes = ?, updated_at = ? WHERE name = ?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">attributes</span><span class="p">)),</span> <span class="n">_now</span><span class="p">(),</span> <span class="n">name</span><span class="p">),</span>
+            <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="ReviewStore.set_note">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.set_note">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_note</span><span class="p">(</span>
@@ -1626,6 +1878,24 @@
         <span class="n">note</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"note"</span><span class="p">],</span>
         <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
         <span class="n">color</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"color"</span><span class="p">],</span>
+        <span class="n">event_type</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"event_type"</span><span class="p">],</span>
+        <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_type_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EventType</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build an :class:`EventType` from a SQLite row (attributes ← JSON, tolerant)."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">])</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">]</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attributes</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">EventType</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
+        <span class="n">ordinal</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ordinal"</span><span class="p">]),</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"color"</span><span class="p">],</span>
+        <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
         <span class="n">updated_at</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"updated_at"</span><span class="p">],</span>
     <span class="p">)</span>
 

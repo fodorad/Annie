@@ -317,10 +317,14 @@
 <span class="sd">* frame ↔ second conversion, since the database is the source of truth in **frames**</span>
 <span class="sd">  (fps-independent) while humans and exports think in seconds;</span>
 <span class="sd">* interval clamping, so a typed or dragged boundary can never leave the video;</span>
-<span class="sd">* the two export shapes. **JSON** is nested — one object per video, tracks holding their</span>
-<span class="sd">  events with attributes inline — for downstream code. **CSV** is flat — one row per event,</span>
-<span class="sd">  attributes flattened into ``attr_&lt;key&gt;`` columns — for opening in a spreadsheet. That</span>
-<span class="sd">  split is deliberate: nested attributes do not live cleanly in a CSV cell.</span>
+<span class="sd">* an event's **effective** colour and attributes: an event linked to an event category</span>
+<span class="sd">  (:class:`annie.dataset.storage.EventType`) inherits the category's colour and default</span>
+<span class="sd">  attributes, and its own values win;</span>
+<span class="sd">* the export shapes. **JSON** is nested — one object per video, tracks holding their</span>
+<span class="sd">  events with attributes inline — for downstream code. **CSV** and **XLSX** are flat — one</span>
+<span class="sd">  row per event, attributes flattened into ``attr_&lt;key&gt;`` columns — for a spreadsheet</span>
+<span class="sd">  (XLSX opens in Excel with typed numbers, a frozen header and filters). That split is</span>
+<span class="sd">  deliberate: nested attributes do not live cleanly in a spreadsheet cell.</span>
 
 <span class="sd">Pure domain: no NiceGUI, no torch. The task UI and the store consume it.</span>
 <span class="sd">"""</span>
@@ -336,7 +340,7 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventRecord</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">EventType</span>
 
 
 <div class="viewcode-block" id="frames_to_seconds">
@@ -407,7 +411,57 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_event_dict</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<div class="viewcode-block" id="effective_color">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.effective_color">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">effective_color</span><span class="p">(</span>
+    <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lane_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the colour an event is drawn and exported with.</span>
+
+<span class="sd">    Its own colour wins, then its event category's, then the participant lane's.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        event: The event.</span>
+<span class="sd">        types: Event categories by name (``None`` when there are none).</span>
+<span class="sd">        lane_color: The participant lane's colour, the last fallback.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A hex colour, or ``None`` when nothing sets one.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="p">(</span><span class="n">types</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">kind</span><span class="o">.</span><span class="n">color</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kind</span><span class="o">.</span><span class="n">color</span>
+    <span class="k">return</span> <span class="n">lane_color</span></div>
+
+
+
+<div class="viewcode-block" id="effective_attributes">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.effective_attributes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">effective_attributes</span><span class="p">(</span>
+    <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return an event's attributes with its event category's defaults filled in.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        event: The event.</span>
+<span class="sd">        types: Event categories by name (``None`` when there are none).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``{**category defaults, **event's own}``, so the event's own values win.</span>
+<span class="sd">    """</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="p">(</span><span class="n">types</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="n">kind</span><span class="o">.</span><span class="n">attributes</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">defaults</span><span class="p">,</span> <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">}</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_dict</span><span class="p">(</span>
+    <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Render one event as an export dict, with seconds derived from ``fps``."""</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"event_id"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span>
@@ -416,9 +470,10 @@
         <span class="s2">"start_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="s2">"end_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="s2">"label"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+        <span class="s2">"event_type"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="p">,</span>
         <span class="s2">"note"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
-        <span class="s2">"color"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span><span class="p">,</span>
-        <span class="s2">"attributes"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">),</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="n">effective_color</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">types</span><span class="p">),</span>
+        <span class="s2">"attributes"</span><span class="p">:</span> <span class="n">effective_attributes</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">types</span><span class="p">),</span>
     <span class="p">}</span>
 
 
@@ -428,6 +483,7 @@
     <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
     <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Group events into the nested ``video_id -&gt; {fps, tracks}`` export structure.</span>
 
@@ -441,6 +497,8 @@
 <span class="sd">            missing here is exported with ``fps = 0`` and zero seconds (frames still stand).</span>
 <span class="sd">        meta_by_video: Optional per-video metadata (e.g. the fields a nested layout captured</span>
 <span class="sd">            from the path), exported as a ``"meta"`` object when a video has any.</span>
+<span class="sd">        types: Event categories by name, so linked events export their effective colour</span>
+<span class="sd">            and attributes.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A mapping of ``video_id`` to ``{"fps": float, "tracks": {...}}`` (plus ``"meta"``).</span>
@@ -453,7 +511,7 @@
         <span class="n">fps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fps_by_video</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
         <span class="n">fps_of</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span>
         <span class="n">video_tracks</span> <span class="o">=</span> <span class="n">tracks_of</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">video_tracks</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_event_dict</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">fps</span><span class="p">))</span>
+        <span class="n">video_tracks</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_event_dict</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">types</span><span class="p">))</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="n">meta_by_video</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">tree</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">tracks_of</span><span class="p">:</span>
@@ -471,6 +529,7 @@
     <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
     <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Render events as nested JSON text (one object per video).</span>
 
@@ -482,11 +541,12 @@
 <span class="sd">        events: The events to render.</span>
 <span class="sd">        fps_by_video: Frames per second per ``video_id``.</span>
 <span class="sd">        meta_by_video: Optional per-video metadata exported as ``"meta"``.</span>
+<span class="sd">        types: Event categories by name (for effective colour and attributes).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The JSON document as a string.</span>
 <span class="sd">    """</span>
-    <span class="n">tree</span> <span class="o">=</span> <span class="n">build_export_tree</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">)</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">build_export_tree</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
@@ -515,30 +575,34 @@
 
 
 
-<div class="viewcode-block" id="events_to_csv_text">
-<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_csv_text">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">events_to_csv_text</span><span class="p">(</span>
+<div class="viewcode-block" id="event_table">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.event_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">event_table</span><span class="p">(</span>
     <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
     <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Render events as flat CSV text (one row per event) for a spreadsheet.</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Flatten events into spreadsheet rows (one per event), shared by CSV and XLSX.</span>
 
-<span class="sd">    Fixed columns come first, then one ``attr_&lt;key&gt;`` column per attribute key seen across</span>
-<span class="sd">    *all* events (empty where an event lacks that key), so colleagues can open and sort the</span>
-<span class="sd">    file in Excel. Attribute keys are sorted for a stable header.</span>
+<span class="sd">    Fixed columns come first, then one ``meta_&lt;key&gt;`` column per metadata key seen, then</span>
+<span class="sd">    one ``attr_&lt;key&gt;`` column per attribute key seen across *all* events (empty where an</span>
+<span class="sd">    event lacks that key), so colleagues can open and sort the file in Excel. Keys are</span>
+<span class="sd">    sorted for a stable header. Colour and attributes are the effective ones, so the file</span>
+<span class="sd">    is complete without the database.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        events: The events to render.</span>
+<span class="sd">        events: The events to flatten.</span>
 <span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
-<span class="sd">        meta_by_video: Optional per-video metadata; one ``meta_&lt;key&gt;`` column per key seen,</span>
-<span class="sd">            right after the fixed columns.</span>
+<span class="sd">        meta_by_video: Optional per-video metadata.</span>
+<span class="sd">        types: Event categories by name (for effective colour and attributes).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The CSV document as a string.</span>
+<span class="sd">        The column names and the rows (frames as ints, seconds as floats, the rest text).</span>
 <span class="sd">    """</span>
     <span class="n">events</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
-    <span class="n">attr_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">key</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">})</span>
+    <span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span><span class="n">effective_attributes</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">]</span>
+    <span class="n">attr_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">key</span> <span class="k">for</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">attributes</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">})</span>
     <span class="n">fixed</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">"video_id"</span><span class="p">,</span>
         <span class="s2">"track"</span><span class="p">,</span>
@@ -547,6 +611,7 @@
         <span class="s2">"start_sec"</span><span class="p">,</span>
         <span class="s2">"end_sec"</span><span class="p">,</span>
         <span class="s2">"label"</span><span class="p">,</span>
+        <span class="s2">"event_type"</span><span class="p">,</span>
         <span class="s2">"note"</span><span class="p">,</span>
         <span class="s2">"color"</span><span class="p">,</span>
     <span class="p">]</span>
@@ -557,10 +622,8 @@
         <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"meta_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">meta_keys</span><span class="p">),</span>
         <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">),</span>
     <span class="p">]</span>
-    <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
-    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
-    <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">event</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="n">fps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fps_by_video</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
         <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"video_id"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
@@ -570,14 +633,43 @@
             <span class="s2">"start_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">start_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="s2">"end_sec"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="s2">"label"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="s2">"event_type"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
             <span class="s2">"note"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
-            <span class="s2">"color"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="s2">"color"</span><span class="p">:</span> <span class="n">effective_color</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">meta_keys</span><span class="p">:</span>
             <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"meta_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attr_keys</span><span class="p">:</span>
-            <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"attr_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fields</span><span class="p">,</span> <span class="n">rows</span></div>
+
+
+
+<div class="viewcode-block" id="events_to_csv_text">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_csv_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">events_to_csv_text</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render events as flat CSV text (one row per event; columns as :func:`event_table`).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        events: The events to render.</span>
+<span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
+<span class="sd">        meta_by_video: Optional per-video metadata, as ``meta_&lt;key&gt;`` columns.</span>
+<span class="sd">        types: Event categories by name (for effective colour and attributes).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The CSV document as a string.</span>
+<span class="sd">    """</span>
+    <span class="n">fields</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">event_table</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
 
 
@@ -603,6 +695,82 @@
     <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">out</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="n">_XLSX_MAX_WIDTH</span> <span class="o">=</span> <span class="mi">60</span>
+<span class="sd">"""Widest a column is sized to (in characters), so a long note does not push the rest away."""</span>
+
+
+<div class="viewcode-block" id="events_to_xlsx_bytes">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.events_to_xlsx_bytes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">events_to_xlsx_bytes</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">meta_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render events as an Excel workbook (same columns as the CSV, see :func:`event_table`).</span>
+
+<span class="sd">    One ``Events`` sheet: a bold, frozen header with filters, frames and seconds stored as</span>
+<span class="sd">    numbers (so Excel sorts and sums them), and columns sized to their content.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        events: The events to render.</span>
+<span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
+<span class="sd">        meta_by_video: Optional per-video metadata, as ``meta_&lt;key&gt;`` columns.</span>
+<span class="sd">        types: Event categories by name (for effective colour and attributes).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The ``.xlsx`` file's bytes.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Imported here: only an Excel export needs it, so the app starts without loading it.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Workbook</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl.styles</span><span class="w"> </span><span class="kn">import</span> <span class="n">Font</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_column_letter</span>
+
+    <span class="n">fields</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">event_table</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+    <span class="n">book</span> <span class="o">=</span> <span class="n">Workbook</span><span class="p">()</span>
+    <span class="n">sheet</span> <span class="o">=</span> <span class="n">book</span><span class="o">.</span><span class="n">active</span>
+    <span class="k">assert</span> <span class="n">sheet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># a new workbook always has one sheet</span>
+    <span class="n">sheet</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">"Events"</span>
+    <span class="n">sheet</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">sheet</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">row</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">sheet</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">cell</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">Font</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sheet</span><span class="o">.</span><span class="n">freeze_panes</span> <span class="o">=</span> <span class="s2">"A2"</span>
+    <span class="n">sheet</span><span class="o">.</span><span class="n">auto_filter</span><span class="o">.</span><span class="n">ref</span> <span class="o">=</span> <span class="n">sheet</span><span class="o">.</span><span class="n">dimensions</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">field</span><span class="p">),</span> <span class="o">*</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">field</span><span class="p">]))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">)])</span>
+        <span class="n">sheet</span><span class="o">.</span><span class="n">column_dimensions</span><span class="p">[</span><span class="n">get_column_letter</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">width</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">_XLSX_MAX_WIDTH</span><span class="p">)</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">book</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="export_events_xlsx">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/events/index.html#annie.dataset.events.export_events_xlsx">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_events_xlsx</span><span class="p">(</span>
+    <span class="n">events</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">],</span>
+    <span class="n">fps_by_video</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write events to an Excel file (see :func:`events_to_xlsx_bytes`).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        events: The events to write.</span>
+<span class="sd">        fps_by_video: Frames per second per ``video_id`` (for the derived seconds).</span>
+<span class="sd">        path: Destination ``.xlsx`` path (parent directories are created).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The path written.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">events_to_xlsx_bytes</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
 </pre></div>

@@ -11,7 +11,7 @@ annie.pages.event_task
    (play/pause, ±5 s, frame-step, "Start/End here"), linked frame/second/timecode jump fields,
    then the SVG timeline (one lane per track) and an event editor. Events are authored from
    scratch and saved to the review DB **immediately** on every change — there is no Save button;
-   export (JSON for code, CSV for a spreadsheet) is a separate step.
+   export (JSON for code, CSV or XLSX for a spreadsheet) is a separate step.
 
    Which video is shown comes from the Browse annotator queue, like Curation. Frame accuracy is
    provided by :mod:`annie.pages.videoclock` (HTML5 ``currentTime`` stepping); the timeline is
@@ -38,16 +38,18 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: next_default_category_name(existing: list[str]) -> str
+.. py:function:: next_default_category_name(existing: list[str], prefix: str = 'Participant') -> str
 
-   Return the next free ``"Participant N"`` name given the existing category names.
+   Return the next free ``"<prefix> N"`` name given the existing names.
 
-   Used when a category is added without a typed name, so "just click Add" still yields a
-   clean, consistent label (``Participant 2``, ``Participant 3``, …) and never a collision.
+   Used when a participant or event category is added without a typed name, so "just
+   click Add" still yields a clean, consistent label (``Participant 2``, ``Event 3``, …)
+   and never a collision.
 
-   :param existing: The category names already in use.
+   :param existing: The names already in use.
+   :param prefix: The name's first word, ``"Participant"`` or ``"Event"``.
 
-   :returns: ``"Participant N"`` for the smallest ``N >= 1`` not already taken.
+   :returns: ``"<prefix> N"`` for the smallest ``N >= 1`` not already taken.
 
 
 .. py:function:: cleanup(client_id: str) -> None

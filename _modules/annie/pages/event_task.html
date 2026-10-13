@@ -312,7 +312,7 @@
 <span class="sd">(play/pause, ±5 s, frame-step, "Start/End here"), linked frame/second/timecode jump fields,</span>
 <span class="sd">then the SVG timeline (one lane per track) and an event editor. Events are authored from</span>
 <span class="sd">scratch and saved to the review DB **immediately** on every change — there is no Save button;</span>
-<span class="sd">export (JSON for code, CSV for a spreadsheet) is a separate step.</span>
+<span class="sd">export (JSON for code, CSV or XLSX for a spreadsheet) is a separate step.</span>
 
 <span class="sd">Which video is shown comes from the Browse annotator queue, like Curation. Frame accuracy is</span>
 <span class="sd">provided by :mod:`annie.pages.videoclock` (HTML5 ``currentTime`` stepping); the timeline is</span>
@@ -337,8 +337,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.events</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">clamp_event</span><span class="p">,</span>
+    <span class="n">effective_attributes</span><span class="p">,</span>
+    <span class="n">effective_color</span><span class="p">,</span>
     <span class="n">events_to_csv_text</span><span class="p">,</span>
     <span class="n">events_to_json_text</span><span class="p">,</span>
+    <span class="n">events_to_xlsx_bytes</span><span class="p">,</span>
     <span class="n">frames_to_seconds</span><span class="p">,</span>
     <span class="n">seconds_to_frame</span><span class="p">,</span>
 <span class="p">)</span>
@@ -353,7 +356,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericEventArguments</span><span class="p">,</span> <span class="n">KeyEventArguments</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventRecord</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">EventType</span>
 
 <span class="c1">#: Base name for the per-client timeline gesture event (the client id is appended, so one</span>
 <span class="c1">#: client's ``ui.on`` handler never fires on another's gestures).</span>
@@ -368,10 +371,6 @@
 <span class="c1">#: layout, and up to 840 for close frame work.</span>
 <span class="n">_VIDEO_HEIGHTS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">360</span><span class="p">,</span> <span class="mi">480</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">720</span><span class="p">,</span> <span class="mi">840</span><span class="p">)</span>
 
-<span class="c1">#: Name a freshly-created event carries until the reviewer renames it, so a new box is never</span>
-<span class="c1">#: blank on the timeline; the editor pre-selects it so typing replaces it in one go.</span>
-<span class="n">_DEFAULT_EVENT_LABEL</span> <span class="o">=</span> <span class="s2">"event_name"</span>
-
 <span class="c1">#: Fallback track name for an event captured before any category exists. Normally an event</span>
 <span class="c1">#: lands on the active category; this only applies if the user somehow captures with an empty</span>
 <span class="c1">#: category set (the UI blocks that by asking for a category first).</span>
@@ -380,26 +379,31 @@
 <span class="c1">#: The category a fresh dataset starts with, so annotation can begin immediately.</span>
 <span class="n">_DEFAULT_CATEGORY_NAME</span> <span class="o">=</span> <span class="s2">"Participant 1"</span>
 
+<span class="c1">#: The export menu's formats, by file extension: JSON for code, CSV and Excel for a spreadsheet.</span>
+<span class="n">_EXPORT_FORMATS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"json"</span><span class="p">:</span> <span class="s2">"JSON"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">:</span> <span class="s2">"CSV"</span><span class="p">,</span> <span class="s2">"xlsx"</span><span class="p">:</span> <span class="s2">"Excel (XLSX)"</span><span class="p">}</span>
+
 
 <div class="viewcode-block" id="next_default_category_name">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.next_default_category_name">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">next_default_category_name</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Return the next free ``"Participant N"`` name given the existing category names.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">next_default_category_name</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Participant"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the next free ``"&lt;prefix&gt; N"`` name given the existing names.</span>
 
-<span class="sd">    Used when a category is added without a typed name, so "just click Add" still yields a</span>
-<span class="sd">    clean, consistent label (``Participant 2``, ``Participant 3``, …) and never a collision.</span>
+<span class="sd">    Used when a participant or event category is added without a typed name, so "just</span>
+<span class="sd">    click Add" still yields a clean, consistent label (``Participant 2``, ``Event 3``, …)</span>
+<span class="sd">    and never a collision.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        existing: The category names already in use.</span>
+<span class="sd">        existing: The names already in use.</span>
+<span class="sd">        prefix: The name's first word, ``"Participant"`` or ``"Event"``.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ``"Participant N"`` for the smallest ``N &gt;= 1`` not already taken.</span>
+<span class="sd">        ``"&lt;prefix&gt; N"`` for the smallest ``N &gt;= 1`` not already taken.</span>
 <span class="sd">    """</span>
     <span class="n">taken</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="k">while</span> <span class="sa">f</span><span class="s2">"Participant </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">taken</span><span class="p">:</span>
+    <span class="k">while</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">taken</span><span class="p">:</span>
         <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Participant </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
@@ -466,8 +470,6 @@
 <span class="sd">        video_height: Current video box height in px.</span>
 <span class="sd">        selected_event: The id of the event open in the editor, or ``None``.</span>
 <span class="sd">        pending_start: A frame set by ``I`` awaiting an ``O`` to close the event.</span>
-<span class="sd">        focus_name: Transient flag: the next rebuild should focus the editor's name input</span>
-<span class="sd">            (set right after finalising a new event, cleared once the focus is issued).</span>
 <span class="sd">        restore_frame: Transient frame the video should be re-seeked to after a full rebuild</span>
 <span class="sd">            recreates the ``&lt;video&gt;`` (which the browser resets to 0); ``None`` when no</span>
 <span class="sd">            restore is pending. Cleared once issued.</span>
@@ -475,6 +477,8 @@
 <span class="sd">            before they exist. Transient: replaced on every rebuild.</span>
 <span class="sd">        active_category: The participant category a newly-captured event lands on. Defaults to</span>
 <span class="sd">            the first category; ``None`` when the dataset has no categories yet.</span>
+<span class="sd">        active_event_type: The event category a newly-captured event is made with (its name,</span>
+<span class="sd">            colour and default attributes), or ``None`` for a plain event.</span>
 <span class="sd">    """</span>
 
     <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -489,9 +493,9 @@
     <span class="n">video_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">480</span>
     <span class="n">selected_event</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">pending_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">focus_name</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">restore_frame</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">active_category</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">active_event_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">position</span><span class="p">:</span> <span class="n">_PositionFields</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -569,6 +573,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">():</span>
         <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_category</span><span class="p">(</span><span class="n">_DEFAULT_CATEGORY_NAME</span><span class="p">)</span>
     <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="n">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">entry</span>
 
 
@@ -645,10 +650,10 @@
 
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Export"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"download"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">menu</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">scope</span><span class="p">,</span> <span class="n">scope_label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"This video"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"session"</span><span class="p">,</span> <span class="s2">"All session"</span><span class="p">)):</span>
-                <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">fmt_label</span> <span class="ow">in</span> <span class="n">_EXPORT_FORMATS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="n">stem</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span> <span class="k">else</span> <span class="s2">"session"</span>
                     <span class="n">download</span><span class="o">.</span><span class="n">export_menu_item</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scope_label</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scope_label</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">fmt_label</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                         <span class="n">filename</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">sanitize_filename</span><span class="p">(</span>
                             <span class="sa">f</span><span class="s2">"annie_events_</span><span class="si">{</span><span class="n">stem</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'video'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                             <span class="n">extension</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
@@ -835,42 +840,100 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_category_bar</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The Category block: participants on the left half, event categories on the right.</span>
+
+<span class="sd">    Both halves share one Manage dialog. On a narrow screen the halves stack.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-start gap-4 wrap"</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-1 min-w-[18rem] items-center gap-2 wrap"</span><span class="p">):</span>
+            <span class="n">_participant_chips</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-1 min-w-[18rem] items-center gap-2 wrap"</span><span class="p">):</span>
+            <span class="n">_event_type_chips</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+
+
+<span class="c1">#: The fill of an active chip that has no colour of its own (None, or an uncoloured event</span>
+<span class="c1">#: category): light, so its dark text stays readable.</span>
+<span class="n">_PLAIN_CHIP_FILL</span> <span class="o">=</span> <span class="s2">"#dde1e6"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_chip</span><span class="p">(</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">on_click</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A category chip: filled with its colour when active, outlined in it otherwise.</span>
+
+<span class="sd">    A chip without a colour is outlined in grey and filled light grey when active.</span>
+<span class="sd">    """</span>
+    <span class="n">btn</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">on_click</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span> <span class="k">if</span> <span class="n">active</span> <span class="k">else</span> <span class="s2">"outline"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense no-caps"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
+        <span class="n">btn</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">colour</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">_PLAIN_CHIP_FILL</span><span class="si">}</span><span class="s2"> !important;color:#1a1a1a !important"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">colour</span> <span class="ow">or</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span>
+        <span class="n">btn</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2"> !important;border-color:</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2"> !important"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">btn</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_manage_button</span><span class="p">(</span><span class="n">on_click</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ⋯ button at the end of a half of the bar, opening that half's dialog."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"more_horiz"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">on_click</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">tooltip</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_participant_chips</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The participant chips (click to make active, number badge) plus a Manage button.</span>
 
-<span class="sd">    The active category — where a newly-captured event lands — is highlighted. When the</span>
-<span class="sd">    dataset has no categories yet, a single "Add category" prompt stands in.</span>
+<span class="sd">    The active participant — the lane a newly-captured event lands on — is highlighted.</span>
+<span class="sd">    When the dataset has no participants yet, a single "Add participant" prompt stands in.</span>
 <span class="sd">    """</span>
     <span class="n">categories</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 wrap"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Category"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-                <span class="s2">"＋ Add category"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"group_add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
-                <span class="s2">"Define the categories for this dataset (e.g. Mother, Baby)"</span>
-            <span class="p">)</span>
-            <span class="k">return</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">categories</span><span class="p">):</span>
-            <span class="n">active</span> <span class="o">=</span> <span class="n">cat</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_category</span>
-            <span class="n">colour</span> <span class="o">=</span> <span class="n">_category_color</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
-            <span class="c1"># "(1) Participant 1": the parenthesised number is the quick-switch key, kept</span>
-            <span class="c1"># visually apart from the name so it never reads as part of it.</span>
-            <span class="n">btn</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span> <span class="k">if</span> <span class="n">active</span> <span class="k">else</span> <span class="s2">"outline"</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense no-caps"</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="c1"># The active chip is filled with its lane colour; the rest are outlined.</span>
-            <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
-                <span class="n">btn</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2"> !important;color:#1a1a1a !important"</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">btn</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2"> !important;border-color:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2"> !important"</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"more_horiz"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-            <span class="s2">"flat dense round"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Manage categories (add, rename, delete, reorder, colour)"</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Participants"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
+            <span class="s2">"＋ Add participant"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"group_add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_open_participants</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+            <span class="s2">"Define the participants for this dataset (e.g. Mother, Baby)"</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">categories</span><span class="p">):</span>
+        <span class="c1"># "(1) Participant 1": the parenthesised number is the quick-switch key, kept</span>
+        <span class="c1"># visually apart from the name so it never reads as part of it.</span>
+        <span class="n">_chip</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">_category_color</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">color</span><span class="p">),</span>
+            <span class="n">active</span><span class="o">=</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_category</span><span class="p">,</span>
+            <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="n">_manage_button</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_open_participants</span><span class="p">(</span><span class="n">state_</span><span class="p">),</span> <span class="s2">"Manage participants"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_type_chips</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The event-category chips: None first, then each category with its Shift+digit badge.</span>
+
+<span class="sd">    With a category active, a captured event gets its name, colour and default attributes,</span>
+<span class="sd">    so nothing needs typing.</span>
+<span class="sd">    """</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Event categories"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
+    <span class="n">_chip</span><span class="p">(</span>
+        <span class="s2">"(⇧0) None"</span><span class="p">,</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">active</span><span class="o">=</span><span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_set_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Capture plain events, with no event category"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">kind</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">types</span><span class="p">):</span>
+        <span class="n">badge</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"(⇧</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">) "</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">9</span> <span class="k">else</span> <span class="s2">""</span>  <span class="c1"># noqa: PLR2004 - Shift+1..9</span>
+        <span class="n">_chip</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">badge</span><span class="si">}{</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">.</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">active</span><span class="o">=</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span><span class="p">,</span>
+            <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">_set_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="n">_manage_button</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">_open_event_types</span><span class="p">(</span><span class="n">state_</span><span class="p">),</span>
+        <span class="s2">"Manage event categories (e.g. Smile: a name, colour and attributes)"</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -886,69 +949,156 @@
         <span class="n">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">categories</span><span class="p">[</span><span class="n">ordinal</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Open the participant manager dialog (add / rename / delete / reorder / colour)."""</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_category_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Choose the event category new events are made with (``None`` = plain events)."""</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_category_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The dialog where categories are defined — the only place a name is typed.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_event_type_by_ordinal</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Choose the event category by its 0-based position; ``-1`` is None (backs Shift+digit)."""</span>
+    <span class="k">if</span> <span class="n">ordinal</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">_set_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">ordinal</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">):</span>
+        <span class="n">_set_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">types</span><span class="p">[</span><span class="n">ordinal</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-<span class="sd">    Everywhere else a category is picked from the list, so names stay consistent (no</span>
-<span class="sd">    "Mother" vs "mom" drift). Rename moves existing events; delete warns when the category</span>
-<span class="sd">    still holds events.</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drop the active event category if it no longer exists (back to None)."""</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()}:</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_types_by_name</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EventType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The dataset's event categories, keyed by name (for effective colour and attributes)."""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">kind</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_open_participants</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open the participants dialog (add / rename / delete / reorder / colour)."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">_participant_manager</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_open_event_types</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open the event categories dialog (add / rename / attributes / reorder / colour)."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">_event_type_manager</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_EventState</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A dialog around one manager: participants or event categories.</span>
+
+<span class="sd">    It is the only place a name is typed: everywhere else a name is picked from the list,</span>
+<span class="sd">    so names stay consistent (no "Mother" vs "mom" drift). Renaming is safe, since events</span>
+<span class="sd">    follow the new name; deleting warns when events still use it.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state_: The client's event state.</span>
+<span class="sd">        body: :func:`_participant_manager` or :func:`_event_type_manager`.</span>
 <span class="sd">    """</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[32rem] max-w-full gap-2"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Categories for this dataset"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
-            <span class="s2">"These lanes are shared by every video in this dataset. Rename is safe — existing "</span>
-            <span class="s2">"events follow the new name."</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-        <span class="n">rows</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">rebuild_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">categories</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()</span>
-            <span class="k">with</span> <span class="n">rows</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">categories</span><span class="p">):</span>
-                    <span class="n">_manager_row</span><span class="p">(</span>
-                        <span class="n">state_</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">),</span> <span class="n">rebuild_rows</span>
-                    <span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"No categories yet — add the first below."</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="p">)</span>
-
-        <span class="n">rebuild_rows</span><span class="p">()</span>
-
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 mt-2"</span><span class="p">):</span>
-            <span class="n">new_in</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"New category (blank = next Participant N)"</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
-            <span class="p">)</span>
-
-            <span class="k">def</span><span class="w"> </span><span class="nf">add_new</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># A blank name falls back to the next free "Participant N", so "just click Add"</span>
-                <span class="c1"># still yields a clean, consistent label with no typing (and no collisions).</span>
-                <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()]</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="n">next_default_category_name</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_category</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-                <span class="n">new_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-                <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
-                <span class="n">rebuild_rows</span><span class="p">()</span>
-
-            <span class="n">new_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"keydown.enter"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">add_new</span><span class="p">())</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">add_new</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated dense"</span><span class="p">)</span>
-
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[34rem] max-w-full gap-1"</span><span class="p">):</span>
+        <span class="n">body</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end mt-2"</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Done"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
 
     <span class="k">await</span> <span class="n">dialog</span>
     <span class="c1"># Reflect any changes (names, order, colours, active) on the main surface.</span>
     <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="n">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_participant_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The participants dialog: one row per participant lane, and an Add field."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Participants"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+        <span class="s2">"Shared by every video in this dataset; one timeline lane each, keys 1–9 choose one. "</span>
+        <span class="s2">"Rename is safe — existing events follow the new name."</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rebuild_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">categories</span><span class="p">):</span>
+                <span class="n">_manager_row</span><span class="p">(</span>
+                    <span class="n">state_</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">cat</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">),</span> <span class="n">rebuild_rows</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"No participants yet — add the first below."</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+
+    <span class="n">rebuild_rows</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 mt-2 no-wrap"</span><span class="p">):</span>
+        <span class="n">new_in</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"New participant (blank = next Participant N)"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">add_new</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># A blank name falls back to the next free "Participant N", so "just click Add"</span>
+            <span class="c1"># still yields a clean, consistent label with no typing (and no collisions).</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()]</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="n">next_default_category_name</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_category</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">new_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+            <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+            <span class="n">rebuild_rows</span><span class="p">()</span>
+
+        <span class="n">new_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"keydown.enter"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">add_new</span><span class="p">())</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">add_new</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated dense"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_type_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The event categories dialog: one row per event category, and an Add field."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Event categories"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+        <span class="s2">"Shared by every video in this dataset. A new event takes the chosen category's name, "</span>
+        <span class="s2">"colour and attributes; Shift+1–9 choose one, Shift+0 none."</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">)</span>
+    <span class="c1"># Which rows have their attributes open, kept across rebuilds of the list.</span>
+    <span class="n">open_attributes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rebuild_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">kind</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">types</span><span class="p">):</span>
+                <span class="n">_event_type_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">),</span> <span class="n">open_attributes</span><span class="p">,</span> <span class="n">rebuild_rows</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">types</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"No event categories yet — add one below (e.g. Smile)."</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+                    <span class="s2">"text-sm"</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">rebuild_rows</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 mt-2 no-wrap"</span><span class="p">):</span>
+        <span class="n">new_in</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"New event category (blank = next Event N)"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">add_new</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">types</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">]</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="n">next_default_category_name</span><span class="p">(</span>
+                <span class="n">existing</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">"Event"</span>
+            <span class="p">)</span>
+            <span class="c1"># Each new category starts with the next palette colour, so the chips differ.</span>
+            <span class="n">colour</span> <span class="o">=</span> <span class="n">_EVENT_COLORS</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_EVENT_COLORS</span><span class="p">)]</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_event_type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colour</span><span class="p">)</span>
+            <span class="n">new_in</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+            <span class="n">rebuild_rows</span><span class="p">()</span>
+
+        <span class="n">new_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"keydown.enter"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">add_new</span><span class="p">())</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">add_new</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated dense"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_manager_row</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913 - a row needs its category + position context</span>
@@ -960,17 +1110,14 @@
     <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One editable row in the manager: reorder, colour, rename, delete."""</span>
+<span class="w">    </span><span class="sd">"""One editable participant row in the manager: reorder, colour, rename, delete."""</span>
     <span class="n">colour</span> <span class="o">=</span> <span class="n">_category_color</span><span class="p">(</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 no-wrap"</span><span class="p">):</span>
-        <span class="c1"># A colour dot that cycles through the palette on click (simple, no nested picker).</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_cycle_category_color</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-            <span class="s2">"round dense flat"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2">;width:20px;height:20px;min-width:20px;min-height:20px;"</span>
-            <span class="sa">f</span><span class="s2">"border-radius:50%;border:2px solid #00000055"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Change this category's colour"</span><span class="p">)</span>
-
+        <span class="n">_colour_button</span><span class="p">(</span>
+            <span class="n">colour</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">picked</span><span class="p">:</span> <span class="n">_set_category_colour</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">picked</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">),</span>
+            <span class="n">tooltip</span><span class="o">=</span><span class="s2">"Change this participant's colour"</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">name_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">do_rename</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -982,33 +1129,183 @@
                 <span class="n">rebuild</span><span class="p">()</span>
 
         <span class="n">name_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">do_rename</span><span class="p">)</span>
-
-        <span class="n">up</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-            <span class="n">icon</span><span class="o">=</span><span class="s2">"arrow_upward"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_move_category</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">up</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"disable"</span><span class="p">)</span>
-        <span class="n">down</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
-            <span class="n">icon</span><span class="o">=</span><span class="s2">"arrow_downward"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_move_category</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="n">total</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">down</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"disable"</span><span class="p">)</span>
+        <span class="n">_move_buttons</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">delta</span><span class="p">:</span> <span class="n">_move_category</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">))</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"delete"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_delete_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
             <span class="s2">"flat dense round"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this category"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this participant"</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_cycle_category_color</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Advance a category's colour to the next palette swatch."""</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">palette</span> <span class="o">=</span> <span class="n">_EVENT_COLORS</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">i</span> <span class="o">=</span> <span class="n">palette</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">color</span><span class="p">)</span> <span class="k">if</span> <span class="n">current</span><span class="o">.</span><span class="n">color</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_category_color</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">palette</span><span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">)])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_event_type_row</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913 - a row needs its category + position context</span>
+    <span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">EventType</span><span class="p">,</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">open_attributes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One editable event-category row: colour, rename, attributes, reorder, delete.</span>
+
+<span class="sd">    The attributes button opens the category's default attributes below the row.</span>
+<span class="sd">    """</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">kind</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 no-wrap"</span><span class="p">):</span>
+        <span class="n">_colour_button</span><span class="p">(</span>
+            <span class="n">kind</span><span class="o">.</span><span class="n">color</span> <span class="ow">or</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">picked</span><span class="p">:</span> <span class="n">_set_type_colour</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">picked</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">),</span>
+            <span class="n">tooltip</span><span class="o">=</span><span class="s2">"Change this event category's colour (grey = the participant's colour)"</span><span class="p">,</span>
+            <span class="n">reset_label</span><span class="o">=</span><span class="s2">"Use the participant's colour"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">name_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">do_rename</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="p">(</span><span class="n">name_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">new</span> <span class="ow">and</span> <span class="n">new</span> <span class="o">!=</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">rename_event_type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="o">=</span> <span class="n">new</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">open_attributes</span><span class="p">:</span>
+                    <span class="n">open_attributes</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">open_attributes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+                <span class="n">rebuild</span><span class="p">()</span>
+
+        <span class="n">name_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">do_rename</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">toggle_attributes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">open_attributes</span><span class="o">.</span><span class="n">symmetric_difference_update</span><span class="p">({</span><span class="n">name</span><span class="p">})</span>
+            <span class="n">rebuild</span><span class="p">()</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kind</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="k">if</span> <span class="n">count</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"tune"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">toggle_attributes</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat dense"</span> <span class="o">+</span> <span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="n">count</span> <span class="k">else</span> <span class="s2">" round"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Default attributes"</span><span class="p">)</span>
+        <span class="n">_move_buttons</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">delta</span><span class="p">:</span> <span class="n">_move_event_type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">))</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"delete"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_delete_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"flat dense round"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this event category (its events keep how they look)"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">open_attributes</span><span class="p">:</span>
+        <span class="n">_type_attribute_editor</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_colour_button</span><span class="p">(</span>
+    <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">on_pick</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">reset_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A colour dot that opens a colour picker: a spectrum and hue slider, plus the palette.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        colour: The colour the dot shows now (and the picker starts on).</span>
+<span class="sd">        on_pick: Called with the picked hex colour, or ``None`` for the reset.</span>
+<span class="sd">        tooltip: The dot's hover text.</span>
+<span class="sd">        reset_label: When given, the picker gets a button with this text that picks ``None``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The dot.</span>
+<span class="sd">    """</span>
+    <span class="c1"># A plain div, not a q-btn: Quasar's button padding warps a tiny round button into an</span>
+    <span class="c1"># ellipse, while a fixed-size div with border-radius:50% is a true circle.</span>
+    <span class="n">dot</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2">;width:22px;height:22px;min-width:22px;min-height:22px;"</span>
+        <span class="s2">"border-radius:50%;border:2px solid #00000055;cursor:pointer;box-sizing:border-box"</span>
+    <span class="p">)</span>
+    <span class="n">dot</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">tooltip</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">dot</span><span class="p">:</span>
+        <span class="c1"># A menu attached to the dot: it opens on click, and a pick fires on release.</span>
+        <span class="n">picker</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">color_picker</span><span class="p">(</span><span class="n">on_pick</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">on_pick</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">color</span><span class="p">))</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">colour</span><span class="p">)</span>
+        <span class="n">picker</span><span class="o">.</span><span class="n">q_color</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s2">"palette"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_EVENT_COLORS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reset_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">picker</span><span class="p">:</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">picker</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="n">on_pick</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">reset_label</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"format_color_reset"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">reset</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                    <span class="s2">"flat dense no-caps"</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dot</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_move_buttons</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">move</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ↑ ↓ buttons of a manager row, disabled at the ends of the list."""</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"arrow_upward"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">move</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">up</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"disable"</span><span class="p">)</span>
+    <span class="n">down</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"arrow_downward"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">move</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="n">total</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">down</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"disable"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_type_attribute_editor</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="n">EventType</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""An event category's default attributes: key/value rows and an Add button."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1 pl-8"</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kind</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">_type_attribute_row</span><span class="p">(</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_type_attributes</span><span class="p">(</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">attrs</span><span class="p">[</span><span class="n">_free_key</span><span class="p">(</span><span class="n">attrs</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">""</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_event_type_attributes</span><span class="p">(</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+            <span class="n">rebuild</span><span class="p">()</span>
+
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add attribute"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">add</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_type_attribute_row</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One key/value row of an event category's default attributes."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 no-wrap"</span><span class="p">):</span>
+        <span class="n">key_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"key"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="n">val_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"value"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="n">val_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">new_key</span><span class="p">,</span> <span class="n">new_value</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+                <span class="k">return</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_type_attributes</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new_key</span><span class="p">:</span>
+                <span class="n">attrs</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_event_type_attributes</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+            <span class="n">rebuild</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_type_attributes</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_event_type_attributes</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+            <span class="n">rebuild</span><span class="p">()</span>
+
+        <span class="n">key_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">save</span><span class="p">)</span>
+        <span class="n">val_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">save</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"close"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">remove</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_type_attributes</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""An event category's default attributes, read fresh from the store."""</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">_types_by_name</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_free_key</span><span class="p">(</span><span class="n">attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The first of ``key``, ``key2``, ``key3``… not yet in ``attrs`` (for a new attribute)."""</span>
+    <span class="n">key</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="s2">"key"</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"key</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="n">key</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_category_colour</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Store a participant's picked colour (``None`` = its palette colour) and redraw."""</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_category_color</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
+    <span class="n">rebuild</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_type_colour</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Store an event category's picked colour (``None`` = the participant's) and redraw."""</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_event_type_color</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
     <span class="n">rebuild</span><span class="p">()</span>
 
 
@@ -1020,6 +1317,17 @@
     <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
         <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">names</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">reorder_categories</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">rebuild</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_move_event_type</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Move an event category up (-1) or down (+1), which changes its Shift+digit key."""</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">delta</span>
+    <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+        <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">names</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">reorder_event_types</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
         <span class="n">rebuild</span><span class="p">()</span>
 
 
@@ -1047,6 +1355,41 @@
             <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">delete_category</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
             <span class="n">rebuild</span><span class="p">()</span>
+
+    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">confirm</span><span class="p">,</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_delete_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Delete an event category; ask first when events still use it.</span>
+
+<span class="sd">    The events themselves stay: they keep the name, colour and attributes they had, and</span>
+<span class="sd">    are just no longer linked (see :meth:`ReviewStore.delete_event_type`).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">delete_event_type</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+        <span class="n">rebuild</span><span class="p">()</span>
+
+    <span class="n">count</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_type_event_count</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">delete</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">confirm</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"gap-2"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Delete the event category “</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">”?"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm font-medium"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Its </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> event(s) stay and keep their name, colour and attributes; "</span>
+                <span class="s2">"they just no longer follow this category."</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end gap-2"</span><span class="p">):</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Delete"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                    <span class="s2">"unelevated color=negative"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="k">await</span> <span class="n">dialog</span><span class="p">:</span>
+            <span class="n">delete</span><span class="p">()</span>
 
     <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">confirm</span><span class="p">,</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -1098,6 +1441,7 @@
     <span class="c1"># Lanes come from the DB-scoped categories (one per participant), not per-video tracks, so</span>
     <span class="c1"># every video of this dataset shows the same lanes in the same order — including empty ones.</span>
     <span class="n">grouped</span> <span class="o">=</span> <span class="n">_events_by_track</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="n">_types_by_name</span><span class="p">()</span>
     <span class="n">tracks</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">timeline</span><span class="o">.</span><span class="n">TimelineTrack</span><span class="p">(</span>
             <span class="n">category</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -1108,7 +1452,8 @@
                     <span class="n">e</span><span class="o">.</span><span class="n">end_frame</span><span class="p">,</span>
                     <span class="n">e</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
                     <span class="n">selected</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">event_id</span> <span class="o">==</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span>
-                    <span class="n">color</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">color</span><span class="p">,</span>
+                    <span class="c1"># Its own colour, else its event category's; the lane's is the fallback.</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">effective_color</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">types</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">grouped</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">category</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">[])</span>
             <span class="p">],</span>
@@ -1187,7 +1532,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The selected event's editor: name, note, start/end, key-value attributes, delete."""</span>
+<span class="w">    </span><span class="sd">"""The selected event's editor: participant, category, start/end, colour + note, attributes.</span>
+
+<span class="sd">    Stacked top to bottom in the side card. The event category is the event's name.</span>
+<span class="sd">    """</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Select or create an event to edit it."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1204,37 +1552,21 @@
                 <span class="s2">"flat dense round"</span>
             <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Delete this event [Del]"</span><span class="p">)</span>
 
-        <span class="c1"># The event's name is its timeline label — stored in the same `label` field.</span>
-        <span class="n">name_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"annie-event-name-</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span>
-        <span class="n">name_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dense id=</span><span class="si">{</span><span class="n">name_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-        <span class="n">name_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name_in</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">focus_name</span><span class="p">:</span>
-            <span class="c1"># Just finalised a new event: focus the name and select its text so the reviewer</span>
-            <span class="c1"># types over the default in one go. One-shot — cleared so later rebuilds don't</span>
-            <span class="c1"># steal focus. The input the native id lands on is the inner &lt;input&gt; element.</span>
-            <span class="n">state_</span><span class="o">.</span><span class="n">focus_name</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span>
-                <span class="mf">0.05</span><span class="p">,</span>
-                <span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">run_javascript</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"const w=document.getElementById('</span><span class="si">{</span><span class="n">name_id</span><span class="si">}</span><span class="s2">');"</span>
-                    <span class="sa">f</span><span class="s2">" const el=w?w.querySelector('input'):null;"</span>
-                    <span class="sa">f</span><span class="s2">" if(el)</span><span class="se">{{</span><span class="s2">el.focus();el.select();</span><span class="se">}}</span><span class="s2">"</span>
-                <span class="p">),</span>
-                <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
+        <span class="c1"># Participant: picked from the list (never free text) to move the event between lanes.</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">categories</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"participant"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                <span class="s2">"dense"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">_move_event_to_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
 
-        <span class="c1"># Category: pick from the category list (never free text) to move the event between</span>
-        <span class="c1"># lanes. Only shown when categories exist.</span>
-        <span class="n">category_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">()]</span>
-        <span class="k">if</span> <span class="n">category_names</span><span class="p">:</span>
-            <span class="n">picker</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">category_names</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"category"</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">picker</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">_move_event_to_category</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-
-        <span class="n">_color_picker</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="c1"># Event category: what the event is, and so its name. "" stands for None.</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="n">_types_by_name</span><span class="p">()</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">""</span><span class="p">:</span> <span class="s2">"None"</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">types</span><span class="p">}}</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">options</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"event category"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+            <span class="s2">"dense"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">_set_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">))</span>
 
         <span class="c1"># Start and end each get their own row: a frame field and a seconds field kept in</span>
         <span class="c1"># two-way sync, so either can be typed. Both commit through clamp_event, which keeps</span>
@@ -1248,10 +1580,21 @@
         <span class="n">_bound_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="s2">"Start"</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">,</span> <span class="n">commit_bounds</span><span class="p">)</span>
         <span class="n">_bound_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="s2">"End"</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">,</span> <span class="n">commit_bounds</span><span class="p">)</span>
 
-        <span class="n">note_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"note"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-        <span class="n">note_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note_in</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="c1"># Colour and note share a row: the dot shows the colour the event is drawn with.</span>
+        <span class="n">lane</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">event</span><span class="o">.</span><span class="n">track</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">lane_colour</span> <span class="o">=</span> <span class="n">_category_color</span><span class="p">(</span><span class="n">lane</span><span class="o">.</span><span class="n">ordinal</span><span class="p">,</span> <span class="n">lane</span><span class="o">.</span><span class="n">color</span><span class="p">)</span> <span class="k">if</span> <span class="n">lane</span> <span class="k">else</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 no-wrap"</span><span class="p">):</span>
+            <span class="n">_colour_button</span><span class="p">(</span>
+                <span class="n">effective_color</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">lane_colour</span><span class="p">)</span> <span class="ow">or</span> <span class="n">lane_colour</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">picked</span><span class="p">:</span> <span class="n">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">picked</span><span class="p">),</span>
+                <span class="n">tooltip</span><span class="o">=</span><span class="s2">"This event's colour"</span><span class="p">,</span>
+                <span class="n">reset_label</span><span class="o">=</span><span class="s2">"Use the category's colour"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">note_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"note"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+            <span class="n">note_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note_in</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
 
-        <span class="n">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">kind</span><span class="o">.</span><span class="n">attributes</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{})</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bound_row</span><span class="p">(</span>
@@ -1301,31 +1644,6 @@
         <span class="n">sec_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">from_sec</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_color_picker</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A row of eight pastel swatches (plus a reset) to colour-code the selected event.</span>
-
-<span class="sd">    Clicking a swatch sets the event's colour override; the reset returns it to the track's</span>
-<span class="sd">    colour. The current choice is ringed so it reads at a glance.</span>
-<span class="sd">    """</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 wrap"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Colour"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">swatch</span> <span class="ow">in</span> <span class="n">_EVENT_COLORS</span><span class="p">:</span>
-            <span class="n">selected</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">color</span> <span class="o">==</span> <span class="n">swatch</span>
-            <span class="n">ring</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">EVENT_SELECTED</span> <span class="k">if</span> <span class="n">selected</span> <span class="k">else</span> <span class="s2">"#00000055"</span>
-            <span class="c1"># A plain div, not a q-btn: Quasar's button padding/min-width warps a tiny</span>
-            <span class="c1"># round button into an ellipse. A fixed-size div with border-radius:50% is a</span>
-            <span class="c1"># true circle. The click is wired with .on('click', ...).</span>
-            <span class="n">swatch_el</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"background:</span><span class="si">{</span><span class="n">swatch</span><span class="si">}</span><span class="s2">;width:22px;height:22px;min-width:22px;min-height:22px;"</span>
-                <span class="sa">f</span><span class="s2">"border-radius:50%;border:2px solid </span><span class="si">{</span><span class="n">ring</span><span class="si">}</span><span class="s2">;cursor:pointer;box-sizing:border-box"</span>
-            <span class="p">)</span>
-            <span class="n">swatch_el</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"click"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="o">=</span><span class="n">swatch</span><span class="p">:</span> <span class="n">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
-            <span class="n">swatch_el</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">swatch</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"format_color_reset"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-            <span class="s2">"flat dense round"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Use the track's colour"</span><span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Set (or clear) the selected event's colour override and rebuild."""</span>
     <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1334,28 +1652,44 @@
     <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The add/remove key-value attribute rows for one event."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The add/remove key-value attribute rows for one event.</span>
+
+<span class="sd">    Shows the **effective** attributes: the event category's ``defaults`` with the event's</span>
+<span class="sd">    own values over them. Editing an inherited value stores it on the event (an override);</span>
+<span class="sd">    removing an override brings the default back.</span>
+<span class="sd">    """</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Attributes"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-            <span class="n">_attribute_row</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="o">**</span><span class="n">defaults</span><span class="p">,</span> <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">attributes</span><span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">_attribute_row</span><span class="p">(</span>
+                <span class="n">state_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">inherited</span><span class="o">=</span><span class="n">key</span> <span class="ow">in</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">own</span><span class="o">=</span><span class="n">key</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">attributes</span>
+            <span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add attribute"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_add_attribute</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
         <span class="s2">"flat dense"</span>
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_row</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One editable key/value attribute row; edits rewrite the event's whole attribute map.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_attribute_row</span><span class="p">(</span>
+    <span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">inherited</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">own</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One editable key/value attribute row; edits rewrite the event's own attribute map.</span>
 
 <span class="sd">    ``key`` is captured per row (each row is its own function scope), so renaming or removing</span>
-<span class="sd">    a key acts on the right entry without the default-argument loop-capture trick.</span>
+<span class="sd">    a key acts on the right entry without the default-argument loop-capture trick. An</span>
+<span class="sd">    attribute the event only inherits has no remove button, since the default stays anyway.</span>
 <span class="sd">    """</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-1 no-wrap"</span><span class="p">):</span>
         <span class="n">key_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"key"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
         <span class="n">val_in</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">placeholder</span><span class="o">=</span><span class="s2">"value"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inherited</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">own</span><span class="p">:</span>
+            <span class="n">val_in</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s1">'input-class="text-italic text-grey-7"'</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                <span class="s2">"From the event category; type to change it for this event"</span>
+            <span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_save</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">key_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">val_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+                <span class="k">return</span>  <span class="c1"># a blur without a change; never turn a default into an override</span>
             <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_current_attributes</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span>
             <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="n">new_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key_in</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -1370,7 +1704,10 @@
 
         <span class="n">key_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">_save</span><span class="p">)</span>
         <span class="n">val_in</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">_save</span><span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"close"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_remove</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">own</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"close"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_remove</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense round"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                <span class="s2">"Back to the event category's value"</span> <span class="k">if</span> <span class="n">inherited</span> <span class="k">else</span> <span class="s2">"Remove"</span>
+            <span class="p">)</span>
 
 
 <span class="c1"># ── actions ────────────────────────────────────────────────────────────────────</span>
@@ -1387,12 +1724,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_attribute</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Add a blank attribute key so the reviewer can fill it in."""</span>
     <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_current_attributes</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span>
-    <span class="n">base</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="s2">"key"</span><span class="p">,</span> <span class="mi">1</span>
-    <span class="n">key</span> <span class="o">=</span> <span class="n">base</span>
-    <span class="k">while</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
-        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
-    <span class="n">attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">shown</span> <span class="o">=</span> <span class="n">effective_attributes</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">_types_by_name</span><span class="p">())</span> <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">attrs</span>
+    <span class="n">attrs</span><span class="p">[</span><span class="n">_free_key</span><span class="p">(</span><span class="n">shown</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attrs</span><span class="p">)</span>
 
 
@@ -1402,6 +1736,18 @@
         <span class="k">return</span>
     <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
     <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Link the selected event to an event category (``None`` unlinks it).</span>
+
+<span class="sd">    The event category is the event's name, so its label follows: the category's name, or</span>
+<span class="sd">    no label for a plain event.</span>
+<span class="sd">    """</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_move_event_to_category</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">category</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1463,13 +1809,13 @@
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_finalise</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Close the armed event at the current frame, select it, and focus its name field.</span>
+<span class="w">    </span><span class="sd">"""Close the armed event at the current frame and select it.</span>
 
 <span class="sd">    The span runs from ``pending_start`` (or the current frame, if end is pressed without a</span>
 <span class="sd">    prior start) to the current frame, clamped into the video. The new event lands on the</span>
-<span class="sd">    **active category** (the participant the user is annotating) and is selected; ``focus_name``</span>
-<span class="sd">    asks the next rebuild to focus the editor's name input so the reviewer can type over the</span>
-<span class="sd">    default name. If no category exists yet, the user is asked to add one first.</span>
+<span class="sd">    **active category** (the participant the user is annotating) and is selected. With an</span>
+<span class="sd">    **active event category** it is named after it and linked to it; otherwise it is a plain</span>
+<span class="sd">    event with no label. If no category exists yet, the user is asked to add one first.</span>
 <span class="sd">    """</span>
     <span class="n">category</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_category</span> <span class="ow">or</span> <span class="n">_DEFAULT_TRACK</span>
     <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">active_category</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">categories</span><span class="p">():</span>
@@ -1485,12 +1831,20 @@
     <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span> <span class="o">=</span> <span class="n">frame</span>
     <span class="n">start</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">frame</span>
     <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">clamp_event</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
+    <span class="c1"># With an event category chosen, the event is named after it and linked to it (so it</span>
+    <span class="c1"># takes the category's colour and attributes); a plain event has no label.</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">_types_by_name</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
     <span class="n">record</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_event</span><span class="p">(</span>
-        <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">_DEFAULT_EVENT_LABEL</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">category</span><span class="p">,</span>
+        <span class="n">lo</span><span class="p">,</span>
+        <span class="n">hi</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="o">=</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">event_id</span>
-    <span class="n">state_</span><span class="o">.</span><span class="n">focus_name</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="c1"># A full rebuild is needed so the new event box appears on the timeline; that recreates the</span>
     <span class="c1"># &lt;video&gt;, which the browser resets to frame 0, so restore it to where the reviewer was.</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="o">=</span> <span class="n">frame</span>
@@ -1569,8 +1923,11 @@
     <span class="n">_refresh_timeline</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_export_text</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Render the current video's or the whole session's events, or ``None`` if there are none."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_export_text</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render the current video's or the whole session's events, or ``None`` if there are none.</span>
+
+<span class="sd">    JSON and CSV come back as text, XLSX as the workbook's bytes.</span>
+<span class="sd">    """</span>
     <span class="n">events</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">events_for</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">"video"</span>
@@ -1580,25 +1937,28 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">fps_by_video</span> <span class="o">=</span> <span class="n">_fps_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">state_</span><span class="p">)</span>
     <span class="n">meta_by_video</span> <span class="o">=</span> <span class="n">_meta_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="n">_types_by_name</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">events_to_json_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"xlsx"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">events_to_xlsx_bytes</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">events_to_csv_text</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">fps_by_video</span><span class="p">,</span> <span class="n">meta_by_video</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
 
 
 <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/annie/export/events/</span><span class="si">{client_id}</span><span class="s2">/</span><span class="si">{scope}</span><span class="s2">/</span><span class="si">{fmt}</span><span class="s2">"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_export_route</span><span class="p">(</span><span class="n">client_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Serve an event export's text to the browser, which saves it via the Save dialog.</span>
+<span class="w">    </span><span class="sd">"""Serve an event export to the browser, which saves it via the Save dialog.</span>
 
 <span class="sd">    ``204`` means there is nothing to export (or an unknown client/format), which the</span>
 <span class="sd">    browser-side handler reports instead of writing an empty file.</span>
 <span class="sd">    """</span>
     <span class="n">state_</span> <span class="o">=</span> <span class="n">_event_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">client_id</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">state_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">scope</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"session"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fmt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">state_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">scope</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"session"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fmt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_EXPORT_FORMATS</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">204</span><span class="p">)</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="n">_export_text</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">_export_text</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">204</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">MIME_TYPES</span><span class="p">[</span><span class="n">fmt</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">download</span><span class="o">.</span><span class="n">MIME_TYPES</span><span class="p">[</span><span class="n">fmt</span><span class="p">])</span>
 
 
 <span class="c1"># ── helpers ────────────────────────────────────────────────────────────────────</span>
@@ -1727,7 +2087,11 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">keydown</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">repeat</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">" "</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">modifiers</span><span class="o">.</span><span class="n">shift</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Digit"</span><span class="p">):</span>
+            <span class="c1"># Shift+1..9 choose an event category, Shift+0 none. Matched on the physical key,</span>
+            <span class="c1"># since Shift+1 types "!" on a US keyboard and something else on other layouts.</span>
+            <span class="n">_set_event_type_by_ordinal</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"Digit"</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">" "</span><span class="p">:</span>
             <span class="n">videoclock</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">vid_id</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">arrow_left</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">modifiers</span><span class="o">.</span><span class="n">shift</span><span class="p">:</span>
             <span class="n">videoclock</span><span class="o">.</span><span class="n">nudge_seconds</span><span class="p">(</span><span class="n">vid_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">)</span>

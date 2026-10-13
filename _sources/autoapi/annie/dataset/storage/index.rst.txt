@@ -36,6 +36,7 @@ Classes
    annie.dataset.storage.ReviewRecord
    annie.dataset.storage.EventRecord
    annie.dataset.storage.EventCategory
+   annie.dataset.storage.EventType
    annie.dataset.storage.ReviewStore
 
 
@@ -136,8 +137,13 @@ Module Contents
 
    .. attribute:: color
 
-      Per-event colour override (hex string), or ``None`` to inherit the track's
-      colour on the timeline.
+      Per-event colour override (hex string), or ``None`` to inherit the event
+      category's colour, else the track's, on the timeline.
+
+   .. attribute:: event_type
+
+      The event category the event was made with (and stays linked to), or
+      ``None`` for a plain event.
 
    .. attribute:: updated_at
 
@@ -168,6 +174,35 @@ Module Contents
       ISO-8601 UTC timestamp of the last change.
 
 
+.. py:class:: EventType
+
+   One event category in the Event-annotation task (e.g. ``"Smile"``).
+
+   DB-scoped like :class:`EventCategory`. A new event made with it gets its name as the label,
+   and stays linked: renaming the type renames its events; its colour and attributes apply
+   wherever the event sets none of its own (see :mod:`annie.dataset.events`).
+
+   .. attribute:: name
+
+      The event category's name; unique within the DB.
+
+   .. attribute:: ordinal
+
+      Order in the Category block (``0`` first; Shift+1 selects it).
+
+   .. attribute:: color
+
+      Hex colour of its events, or ``None`` for the participant lane's colour.
+
+   .. attribute:: attributes
+
+      Default key/value attributes of its events.
+
+   .. attribute:: updated_at
+
+      ISO-8601 UTC timestamp of the last change.
+
+
 .. py:class:: ReviewStore(db_path: str | pathlib.Path)
 
    A thin, connection-per-call wrapper over the ``review`` table.
@@ -184,7 +219,7 @@ Module Contents
 
    .. py:method:: has_data() -> bool
 
-      Return whether any review, event, or participant category has been stored.
+      Return whether any review, event, participant or event category has been stored.
 
       Used to decide whether switching to another database would leave progress
       behind (see :meth:`copy_to`).
@@ -380,7 +415,7 @@ Module Contents
 
 
 
-   .. py:method:: add_event(video_id: str, row_key: str, track: str, start_frame: int, end_frame: int, *, label: str = '', note: str = '', attributes: dict[str, str] | None = None, color: str | None = None) -> EventRecord
+   .. py:method:: add_event(video_id: str, row_key: str, track: str, start_frame: int, end_frame: int, *, label: str = '', note: str = '', attributes: dict[str, str] | None = None, color: str | None = None, event_type: str | None = None) -> EventRecord
 
       Insert a new event on a track and return it (with its fresh id).
 
@@ -396,6 +431,7 @@ Module Contents
       :param note: Optional event note.
       :param attributes: Optional arbitrary string key/value pairs.
       :param color: Optional per-event colour override (hex), or ``None`` to inherit the track.
+      :param event_type: The event category it is made with, or ``None`` for a plain event.
 
       :returns: The stored :class:`EventRecord`.
 
@@ -412,7 +448,7 @@ Module Contents
 
       :param event_id: The event to update.
       :param \*\*fields: Column/value pairs among ``track``, ``start_frame``, ``end_frame``,
-                         ``label``, ``note``, ``attributes``, ``color``.
+                         ``label``, ``note``, ``attributes``, ``color``, ``event_type``.
 
       :returns: The updated :class:`EventRecord`, or ``None`` if no such event exists.
 
@@ -597,6 +633,87 @@ Module Contents
 
       :returns: The number of categories created (``0`` if the table was already populated or
                 there are no events).
+
+
+
+   .. py:method:: event_types() -> list[EventType]
+
+      Return the dataset's event categories, in their order (Shift+1 is the first).
+
+      :returns: The event categories ordered by ``ordinal`` then ``name``.
+
+
+
+   .. py:method:: add_event_type(name: str, color: str | None = None, attributes: dict[str, str] | None = None) -> EventType
+
+      Add an event category at the end of the order (idempotent on the name).
+
+      :param name: The event category's name (must be non-empty; caller validates).
+      :param color: Optional hex colour of its events.
+      :param attributes: Optional default key/value attributes of its events.
+
+      :returns: The stored :class:`EventType` (the existing one if the name was already present).
+
+
+
+   .. py:method:: rename_event_type(old: str, new: str) -> None
+
+      Rename an event category; its events follow.
+
+      Events made with it point at the new name, and those whose label is still the old
+      name are relabelled (a label the user changed is kept). If ``new`` already exists,
+      the two merge: ``old``'s events move onto ``new`` and ``old`` is removed.
+
+      :param old: The current name.
+      :param new: The new name.
+
+
+
+   .. py:method:: delete_event_type(name: str) -> None
+
+      Delete an event category without changing how its events look.
+
+      Each of its events first takes over what it inherited: the category's colour (unless
+      the event has its own) and its default attributes (the event's own values win). Then
+      the link is cleared, so the events stay as they were, just no longer linked.
+
+      :param name: The event category to remove.
+
+
+
+   .. py:method:: event_type_event_count(name: str) -> int
+
+      Return how many events are linked to an event category (for the delete warning).
+
+      :param name: The event category's name.
+
+      :returns: The number of events whose ``event_type`` equals ``name``.
+
+
+
+   .. py:method:: reorder_event_types(names: list[str]) -> None
+
+      Set the event categories' order to ``names`` (unlisted ones keep going after).
+
+      :param names: Event category names in the desired order; unknown names are ignored.
+
+
+
+   .. py:method:: set_event_type_color(name: str, color: str | None) -> None
+
+      Set (or clear) an event category's colour; its events follow unless they have their own.
+
+      :param name: The event category's name.
+      :param color: A hex colour, or ``None`` for the participant lane's colour.
+
+
+
+   .. py:method:: set_event_type_attributes(name: str, attributes: dict[str, str]) -> None
+
+      Replace an event category's default attributes.
+
+      :param name: The event category's name.
+      :param attributes: The new default key/value attributes.
 
 
 

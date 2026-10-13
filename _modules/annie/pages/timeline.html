@@ -413,6 +413,12 @@
 
 
 
+<span class="c1">#: Makes an SVG element ignore the pointer, so clicks pass through to what is underneath.</span>
+<span class="c1">#: A ``style``, not the ``pointer-events`` attribute: ``ui.html`` sanitises with DOMPurify,</span>
+<span class="c1">#: which drops that SVG attribute but keeps inline styles.</span>
+<span class="n">_NO_POINTER</span> <span class="o">=</span> <span class="s1">'style="pointer-events:none"'</span>
+
+
 <div class="viewcode-block" id="pack_lanes">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/timeline/index.html#annie.pages.timeline.pack_lanes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">pack_lanes</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TimelineEvent</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
@@ -572,7 +578,7 @@
     <span class="c1"># by the caller after render for the current time; it starts at the window's left edge.</span>
     <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="sa">f</span><span class="s1">'&lt;line class="annie-playhead" x1="0%" y1="0" x2="0%" y2="</span><span class="si">{</span><span class="n">height</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
-        <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PLAYHEAD</span><span class="si">}</span><span class="s1">" stroke-width="2" pointer-events="none"/&gt;'</span>
+        <span class="sa">f</span><span class="s1">'stroke="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PLAYHEAD</span><span class="si">}</span><span class="s1">" stroke-width="2" </span><span class="si">{</span><span class="n">_NO_POINTER</span><span class="si">}</span><span class="s1">/&gt;'</span>
     <span class="p">)</span>
     <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"&lt;/svg&gt;"</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
@@ -601,7 +607,7 @@
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s1">'&lt;rect class="annie-pending" x="0%" y="</span><span class="si">{</span><span class="n">lanes_top</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="0%" '</span>
             <span class="sa">f</span><span class="s1">'height="</span><span class="si">{</span><span class="n">band_h</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" fill="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PENDING</span><span class="si">}</span><span class="s1">" fill-opacity="0.25" '</span>
-            <span class="sa">f</span><span class="s1">'pointer-events="none"/&gt;'</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_NO_POINTER</span><span class="si">}</span><span class="s2">/&gt;"</span>
         <span class="p">)</span>
         <span class="k">return</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">pending_start</span> <span class="k">if</span> <span class="n">pending_end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pending_end</span>
@@ -611,7 +617,7 @@
     <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="sa">f</span><span class="s1">'&lt;rect class="annie-pending" x="</span><span class="si">{</span><span class="n">x0</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">%" y="</span><span class="si">{</span><span class="n">lanes_top</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
         <span class="sa">f</span><span class="s1">'width="</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">x1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">x0</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">%" height="</span><span class="si">{</span><span class="n">band_h</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
-        <span class="sa">f</span><span class="s1">'fill="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PENDING</span><span class="si">}</span><span class="s1">" fill-opacity="0.25" pointer-events="none"/&gt;'</span>
+        <span class="sa">f</span><span class="s1">'fill="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_PENDING</span><span class="si">}</span><span class="s1">" fill-opacity="0.25" </span><span class="si">{</span><span class="n">_NO_POINTER</span><span class="si">}</span><span class="s1">/&gt;'</span>
     <span class="p">)</span>
 
 
@@ -681,10 +687,12 @@
         <span class="sa">f</span><span class="s2">"&lt;title&gt;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&lt;/title&gt;&lt;/rect&gt;"</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">label</span> <span class="ow">and</span> <span class="n">_label_fits</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">box_w</span><span class="p">):</span>
+        <span class="c1"># The label must never take the click from its box (a click on the name selects the</span>
+        <span class="c1"># event), so it ignores the pointer, on the text too since it is what gets hit.</span>
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s1">'&lt;svg x="</span><span class="si">{</span><span class="n">x0</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">%" y="</span><span class="si">{</span><span class="n">box_y</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="</span><span class="si">{</span><span class="n">box_w</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">%" height="</span><span class="si">{</span><span class="n">box_h</span><span class="si">}</span><span class="s1">" '</span>
-            <span class="sa">f</span><span class="s1">'pointer-events="none"&gt;&lt;text x="50%" y="</span><span class="si">{</span><span class="n">box_h</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
-            <span class="sa">f</span><span class="s1">'text-anchor="middle" fill="#1a1a1a"&gt;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">&lt;/text&gt;&lt;/svg&gt;'</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">_NO_POINTER</span><span class="si">}</span><span class="s1">&gt;&lt;text x="50%" y="</span><span class="si">{</span><span class="n">box_h</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" '</span>
+            <span class="sa">f</span><span class="s1">'text-anchor="middle" fill="#1a1a1a" </span><span class="si">{</span><span class="n">_NO_POINTER</span><span class="si">}</span><span class="s1">&gt;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">&lt;/text&gt;&lt;/svg&gt;'</span>
         <span class="p">)</span>
 
 
@@ -722,7 +730,7 @@
     <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="sa">f</span><span class="s1">'&lt;rect x="2" y="</span><span class="si">{</span><span class="n">band_y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">3</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" width="9" height="9" rx="2" '</span>
         <span class="sa">f</span><span class="s1">'fill="</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s1">" stroke="</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">EVENT_BORDER</span><span class="si">}</span><span class="s1">" stroke-width="0.75" '</span>
-        <span class="sa">f</span><span class="s1">'pointer-events="none"/&gt;'</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_NO_POINTER</span><span class="si">}</span><span class="s2">/&gt;"</span>
     <span class="p">)</span>
     <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="sa">f</span><span class="s1">'&lt;text x="15" y="</span><span class="si">{</span><span class="n">baseline</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">" fill="#1a1a1a" '</span>
