@@ -48,10 +48,10 @@ from annie.dataset.sources import (
 )
 from annie.dataset.storage import ReviewStore
 from annie.pages import annotator, browse
-from annie.pages.csv_dialog import configure_csv
+from annie.pages.csv_dialog import VIDEO_ID_TARGET, Targets, configure_table
 from annie.pages.folder_picker import pick_directory, pick_file
 from annie.pages.utils import notify_detached
-from annie.parsers.csvmeta import read_header, read_rows
+from annie.parsers.csvmeta import read_header, read_rows, short_name
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
 
 if TYPE_CHECKING:
@@ -122,11 +122,26 @@ def _switch_review_db(path: Path) -> None:
 _METRICS: dict[str, ui.label] = {}
 
 
-def _video_stems() -> set[str]:
-    """Current video stems, used to auto-suggest a CSV key column."""
+def _match_targets() -> Targets:
+    """What a label table's IDs can match, per video: the video id and each path field.
+
+    Path fields come from the video folder's nested layout (e.g. ``{subject}``), so a
+    table keyed by subject can tag every video of that subject.
+    """
     if state.scan is None:
-        return set()
-    return {e.video_id for e in state.scan.entries if e.has_video}
+        return {VIDEO_ID_TARGET: {}}
+    videos = [e for e in state.scan.entries if e.has_video]
+    targets: Targets = {VIDEO_ID_TARGET: {e.video_id: e.video_id for e in videos}}
+    video = state.registry.video
+    if video is not None and video.layout is not None:
+        for name in video.layout.field_names():
+            targets[name] = {e.video_id: e.labels.get(name, "") for e in videos}
+    return targets
+
+
+def _taken_tag_names() -> set[str]:
+    """Tag names Browse already shows: other tables' tags and path fields."""
+    return set(state.scan.label_columns) if state.scan is not None else set()
 
 
 async def _apply_changes() -> None:
@@ -458,9 +473,13 @@ async def _add_kind(kind: SourceKind) -> None:
         chosen = await pick_file(start)
         if not chosen:
             return
-        source = await configure_csv(chosen, _video_stems())
-        if source is None:
+        tables = await configure_table(chosen, _match_targets(), _taken_tag_names())
+        if not tables:
             return
+        for table in tables:
+            state.registry.add(table)
+        await _apply_changes()
+        return
     else:
         start = (
             {
@@ -814,6 +833,18 @@ def _layout_notice(source: DataSource) -> None:
         ).classes("text-xs").style(f"color:{theme.WARNING}")
 
 
+def _table_summary(source: DataSource) -> str:
+    """One line describing how a table joins: key, match target, order, tag names."""
+    target = f"{{{source.match_field}}}" if source.match_field else VIDEO_ID_TARGET
+    how = "contained in" if source.match_substring else "matches"
+    parts = [f"{short_name(source.key_column or '')} {how} {target}"]
+    if source.order_column:
+        direction = "newest/largest" if source.order_descending else "oldest/smallest"
+        parts.append(f"repeats: {direction} '{source.order_column}' wins")
+    parts.append("tags: " + ", ".join(source.tag_name(col) for col in source.value_columns))
+    return " · ".join(parts)
+
+
 def _source_card(source: DataSource) -> None:
     """Render one configured source row."""
     with ui.card().classes("w-full"), ui.row().classes("w-full items-center gap-3 no-wrap"):
@@ -824,9 +855,7 @@ def _source_card(source: DataSource) -> None:
                 _availability_chip(source)
             ui.label(str(source.path)).classes("text-xs break-all").style(f"color:{theme.NEUTRAL}")
             if source.kind is SourceKind.CSV and source.value_columns:
-                ui.label(
-                    f"key: {source.key_column} · columns: {', '.join(source.value_columns)}"
-                ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+                ui.label(_table_summary(source)).classes("text-xs").style(f"color:{theme.NEUTRAL}")
             if source.kind is SourceKind.VIDEO:
                 _layout_notice(source)
                 _layout_editor(source)

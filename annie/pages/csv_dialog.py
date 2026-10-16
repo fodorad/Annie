@@ -1,15 +1,19 @@
-"""CSV configuration dialogs (UI).
+"""Table configuration dialogs: CSV files and Excel workbooks (UI).
 
-Two modals, both opened after the user has picked a CSV file:
+Opened after the user has picked a file:
 
-* :func:`configure_csv` (Dataset tab) — describe how the file joins to the dataset:
-  its **role** (label tags vs the protagonist track), the **key column** that matches
-  the video id (auto-suggested), and the **value columns** to surface. It returns a
-  fully-formed :class:`~annie.sources.DataSource`.
+* :func:`configure_table` (Dataset tab) — describe how a CSV or workbook joins to the
+  dataset. A CSV picks a **role** (label tags, protagonist track, segmentation); a
+  workbook lists every sheet, and each included sheet becomes its own label source.
+  For label tables a :class:`_JoinEditor` chooses the **ID column** and what it
+  **matches** (the whole video id or a nested-layout path field such as
+  ``{subject}``), optionally by substring, resolves repeated IDs with an explicit
+  **order column**, and names each feature column's tag. A live summary shows how
+  many videos would get a row.
 * :func:`select_id_column` (Browse tab) — pick the column holding the video ids to
   restrict the Browse list to.
 
-Both return ``None`` if cancelled.
+All return ``None`` if cancelled.
 """
 
 from __future__ import annotations
@@ -21,19 +25,209 @@ from nicegui import ui
 
 from annie.core import theme
 from annie.dataset.manipulate import detect_type
+from annie.dataset.scanning import join_summary
 from annie.dataset.sources import CsvRole, DataSource, SegmentationBand, SourceKind
 from annie.parsers.csvmeta import (
     distinct_column_values,
+    duplicate_report,
+    order_rows,
     read_header,
     read_rows,
+    short_name,
+    suggest_join,
     suggest_key_column,
 )
+from annie.parsers.workbook import is_workbook, read_sheet, sheet_names
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
 #: Column value types offered in the CSV configuration dialog.
 _TYPES = ("str", "int", "float")
+
+VIDEO_ID_TARGET = "video id"
+"""Match target meaning "the whole video id" (path fields are identifiers, never this)."""
+
+_ORDER_HINTS = ("timestamp", "time", "date", "created", "updated")
+"""Column-name fragments that suggest a column orders rows in time."""
+
+#: A table's match targets: target name to ``{video id: value the ID must match}``.
+Targets = dict[str, dict[str, str]]
+
+
+def tag_clashes(sources: list[DataSource], taken: set[str]) -> list[str]:
+    """Return tag names that would collide, in the order they appear.
+
+    A tag must be unique across the new sources and everything already shown in
+    Browse (other tables' tags and nested-layout path fields), or one would silently
+    overwrite the other.
+
+    Args:
+        sources: The label sources about to be added.
+        taken: Tag names already in use.
+
+    Returns:
+        Each clashing name once; empty when all are unique.
+    """
+    seen = set(taken)
+    clashes: list[str] = []
+    for source in sources:
+        for column in source.value_columns:
+            name = source.tag_name(column)
+            if name in seen and name not in clashes:
+                clashes.append(name)
+            seen.add(name)
+    return clashes
+
+
+class _JoinEditor:
+    """Join, duplicate and column controls for one label table (a CSV or a sheet).
+
+    Builds its widgets into the current UI context. :meth:`collect` turns the choices
+    into a :class:`~annie.dataset.sources.DataSource`, or explains what is missing.
+    """
+
+    def __init__(self, header: list[str], rows: list[dict[str, str]], targets: Targets) -> None:
+        self._header = header
+        self._rows = rows
+        self._targets = targets
+        self._has_duplicates = False
+        offered = {name: set(values.values()) - {""} for name, values in targets.items()}
+        best = suggest_join(rows, header, offered)
+        sample = rows[:500]
+        detected = {col: detect_type((row.get(col) or "") for row in sample) for col in header}
+        order_guess = next(
+            (col for col in header if any(hint in col.lower() for hint in _ORDER_HINTS)), None
+        )
+
+        with ui.row().classes("w-full gap-2 no-wrap"):
+            self._key = ui.select(
+                header, value=best.column if best else header[0], label="ID column"
+            ).classes("flex-grow min-w-0")
+            self._match = (
+                ui.select(
+                    list(targets), value=best.target if best else VIDEO_ID_TARGET, label="Matches"
+                )
+                .classes("w-44")
+                .tooltip("What the IDs are compared with: the whole video id, or one path field")
+            )
+        self._substring = ui.checkbox(
+            "ID is part of the name (substring match)", value=False
+        ).tooltip(
+            "Link a row to every video whose name contains the ID. If one name contains "
+            "several IDs, the longest wins."
+        )
+        self._summary = ui.label().classes("text-sm")
+        with ui.column().classes("w-full gap-1") as self._duplicates:
+            self._duplicate_note = ui.label().classes("text-sm").style(f"color:{theme.WARNING}")
+            with ui.row().classes("w-full gap-2 no-wrap items-center"):
+                self._order = ui.select(header, value=order_guess, label="Order by").classes(
+                    "flex-grow min-w-0"
+                )
+                self._descending = ui.toggle(
+                    {True: "Newest / largest first", False: "Oldest / smallest first"}, value=True
+                ).props("dense no-caps")
+
+        with ui.row().classes("w-full items-center justify-between mt-1"):
+            ui.label("Feature columns · tag name · type").classes("text-sm").style(
+                f"color:{theme.NEUTRAL}"
+            )
+            with ui.row().classes("gap-1"):
+                ui.button("Select all", on_click=lambda: self._set_all(True)).props("flat dense")
+                ui.button("Clear", on_click=lambda: self._set_all(False)).props("flat dense")
+        self._checks: dict[str, ui.checkbox] = {}
+        self._names: dict[str, ui.input] = {}
+        self._types: dict[str, ui.select] = {}
+        with ui.column().classes("w-full gap-0 max-h-72 overflow-auto"):
+            for col in header:
+                with ui.row().classes("w-full items-center gap-2 no-wrap"):
+                    self._checks[col] = (
+                        ui.checkbox(short_name(col, 60), value=False)
+                        .classes("w-64 min-w-0")
+                        .tooltip(col)
+                    )
+                    self._names[col] = (
+                        ui.input(value=short_name(col)).props("dense outlined").classes("flex-grow")
+                    )
+                    self._types[col] = (
+                        ui.select(list(_TYPES), value=detected[col])
+                        .props("dense outlined")
+                        .classes("w-24")
+                    )
+
+        for element in (self._key, self._match, self._substring, self._order, self._descending):
+            element.on_value_change(lambda _: self.refresh())
+        self.refresh()
+
+    def _set_all(self, value: bool) -> None:
+        for box in self._checks.values():
+            box.set_value(value)
+
+    def refresh(self) -> None:
+        """Recompute the match summary and the duplicate controls from the choices."""
+        key = self._key.value
+        if not key:
+            return
+        order = self._order.value
+        descending = bool(self._descending.value)
+        duplicated = duplicate_report(self._rows, key).duplicated
+        self._has_duplicates = bool(duplicated)
+        self._duplicates.set_visibility(self._has_duplicates)
+        rows = self._rows
+        if self._has_duplicates:
+            note = f"{len(duplicated)} IDs appear more than once — choose which row counts."
+            if order:
+                ties = duplicate_report(self._rows, key, order, descending=descending).ties
+                if ties:
+                    note += f" {len(ties)} still tie on '{order}'; file order decides those."
+                rows = order_rows(self._rows, order, descending=descending)
+            self._duplicate_note.set_text(note)
+        keys = [(row.get(key) or "").strip() for row in rows]
+        summary = join_summary(
+            keys, self._targets.get(self._match.value, {}), substring=bool(self._substring.value)
+        )
+        text = (
+            f"{summary.videos_matched} of {summary.videos_total} videos matched · "
+            f"{summary.keys_used} of {summary.keys_total} IDs used"
+        )
+        color = theme.DANGER if summary.videos_matched == 0 else theme.NEUTRAL
+        if summary.ambiguous:
+            text += f" · {summary.ambiguous} ambiguous (longest ID wins)"
+            color = theme.WARNING
+        self._summary.set_text(text)
+        self._summary.style(f"color:{color}")
+
+    def collect(self, path: Path, sheet: str | None) -> DataSource | str:
+        """Build the label source, or return a message saying what is missing.
+
+        Args:
+            path: The table file.
+            sheet: The worksheet, for a workbook.
+
+        Returns:
+            The :class:`~annie.dataset.sources.DataSource`, or an error message.
+        """
+        selected = tuple(col for col, box in self._checks.items() if box.value)
+        if not selected:
+            return "select at least one feature column."
+        if self._has_duplicates and not self._order.value:
+            return "IDs repeat, so choose an 'Order by' column to decide which row counts."
+        names = {col: self._names[col].value.strip() for col in selected}
+        match = self._match.value
+        return DataSource(
+            SourceKind.CSV,
+            path,
+            role=CsvRole.LABELS,
+            key_column=self._key.value,
+            value_columns=selected,
+            column_types={col: self._types[col].value for col in selected},
+            sheet=sheet,
+            match_field=None if match == VIDEO_ID_TARGET else match,
+            match_substring=bool(self._substring.value),
+            column_names={col: name for col, name in names.items() if name and name != col},
+            order_column=self._order.value if self._has_duplicates else None,
+            order_descending=bool(self._descending.value),
+        )
 
 
 def _guess_column(header: list[str], needle: str) -> str | None:
@@ -99,29 +293,129 @@ def _bands_editor(header: list[str]) -> _BandsEditor:
     return _BandsEditor(header)
 
 
-async def configure_csv(path: str | Path, video_stems: Iterable[str]) -> DataSource | None:
+async def configure_table(
+    path: str | Path, targets: Targets, taken: set[str]
+) -> list[DataSource] | None:
+    """Configure a CSV or an Excel workbook as one or more sources.
+
+    Args:
+        path: The chosen file.
+        targets: What IDs can match: :data:`VIDEO_ID_TARGET` plus each path field, each
+            mapping video id to the value an ID must equal (or contain).
+        taken: Tag names already in use (see :func:`tag_clashes`).
+
+    Returns:
+        The sources to add (one per included sheet for a workbook), or ``None`` if
+        cancelled.
+    """
+    if is_workbook(path):
+        return await _configure_workbook(Path(path), targets, taken)
+    source = await configure_csv(path, targets, taken)
+    return [source] if source is not None else None
+
+
+def _clash_message(sources: list[DataSource], taken: set[str]) -> str | None:
+    """A notification for clashing tag names, or ``None`` when all are unique."""
+    clashes = tag_clashes(sources, taken)
+    if not clashes:
+        return None
+    return f"Tag name already used: {', '.join(clashes)} — rename it in the tag name box."
+
+
+async def _configure_workbook(
+    path: Path, targets: Targets, taken: set[str]
+) -> list[DataSource] | None:
+    """Workbook dialog: one expandable section per sheet, each joined separately."""
+    names = sheet_names(path)
+    if not names:
+        ui.notify("That workbook could not be read.", color=theme.DANGER)
+        return None
+    offered = {name: set(values.values()) - {""} for name, values in targets.items()}
+    editors: dict[str, _JoinEditor] = {}
+    includes: dict[str, ui.checkbox] = {}
+
+    def _build(sheet: str, body: ui.column, header: list[str], rows: list[dict[str, str]]) -> None:
+        """Build a sheet's controls the first time it is opened (sheets can be wide)."""
+        if sheet in editors:
+            return
+        with body:
+            if not header or not rows:
+                ui.label("This sheet has no table to read.").style(f"color:{theme.NEUTRAL}")
+                return
+            includes[sheet] = ui.checkbox("Include this sheet", value=True)
+            editors[sheet] = _JoinEditor(header, rows, targets)
+
+    with ui.dialog() as dialog, ui.card().classes("w-[52rem] max-w-full gap-2"):
+        ui.label(f"Add workbook — {path.name}").classes("text-lg font-medium")
+        ui.label(
+            "Open a sheet to include it, then choose its ID column and the feature columns "
+            "to show as tags. Each included sheet becomes its own label source."
+        ).classes("text-sm").style(f"color:{theme.NEUTRAL}")
+        with ui.column().classes("w-full gap-1 max-h-[65vh] overflow-auto"):
+            for sheet in names:
+                header, rows = read_sheet(path, sheet)
+                hint = suggest_join(rows, header, offered) if header else None
+                caption = f"{len(rows)} rows · {len(header)} columns"
+                if hint is not None:
+                    column = short_name(hint.column, 30)
+                    caption += f" · '{column}' matches {hint.matched} {hint.target} values"
+                with ui.expansion(sheet, caption=caption).classes("w-full") as section:
+                    body = ui.column().classes("w-full gap-2")
+                section.on_value_change(
+                    lambda e, sh=sheet, b=body, h=header, r=rows: (
+                        _build(sh, b, h, r) if e.value else None
+                    )
+                )
+
+        def _confirm() -> None:
+            chosen = [sheet for sheet, box in includes.items() if box.value]
+            if not chosen:
+                ui.notify("Open a sheet and include it first.", color=theme.WARNING)
+                return
+            sources: list[DataSource] = []
+            for sheet in chosen:
+                result = editors[sheet].collect(path, sheet)
+                if isinstance(result, str):
+                    ui.notify(f"{sheet}: {result}", color=theme.WARNING)
+                    return
+                sources.append(result)
+            clash = _clash_message(sources, taken)
+            if clash:
+                ui.notify(clash, color=theme.WARNING)
+                return
+            dialog.submit(sources)
+
+        with ui.row().classes("w-full justify-end gap-2 mt-2"):
+            ui.button("Cancel", on_click=lambda: dialog.submit(None)).props("flat")
+            ui.button("Add sheets", icon="add", on_click=_confirm).props("unelevated")
+
+    return await dialog
+
+
+async def configure_csv(path: str | Path, targets: Targets, taken: set[str]) -> DataSource | None:
     """Open the CSV configuration modal and return the resulting source.
 
     Args:
         path: The chosen CSV file.
-        video_stems: Known video stems, used to auto-suggest the key column.
+        targets: Match targets for label tables (see :func:`configure_table`).
+        taken: Tag names already in use.
 
     Returns:
         A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.
     """
     csv_path = Path(path)
     header = read_header(csv_path)
-    stems = set(video_stems)
-    suggested = suggest_key_column(csv_path, stems) or (header[0] if header else None)
-
     if not header:
         ui.notify("That CSV has no header row.", color=theme.DANGER)
         return None
 
-    sample = read_rows(csv_path)[:500]
+    stems = set(targets.get(VIDEO_ID_TARGET, {}))
+    suggested = suggest_key_column(csv_path, stems) or header[0]
+    rows = read_rows(csv_path)
+    sample = rows[:500]
     detected = {col: detect_type((row.get(col) or "") for row in sample) for col in header}
 
-    with ui.dialog() as dialog, ui.card().classes("w-[34rem] max-w-full gap-2"):
+    with ui.dialog() as dialog, ui.card().classes("w-[44rem] max-w-full gap-2"):
         ui.label(f"Add CSV — {csv_path.name}").classes("text-lg font-medium")
 
         role = ui.select(
@@ -134,73 +428,67 @@ async def configure_csv(path: str | Path, video_stems: Iterable[str]) -> DataSou
             label="Use as",
         ).classes("w-full")
 
-        key = ui.select(header, value=suggested, label="Key column (joins to video id)").classes(
-            "w-full"
-        )
+        with ui.column().classes("w-full gap-2") as labels_box:
+            editor = _JoinEditor(header, rows, targets)
 
-        segment_col = (
-            ui.select(
-                header,
-                value=_guess_column(header, "segment"),
-                label="Row id column (makes each clip's decision distinct)",
+        with ui.column().classes("w-full gap-2") as other_box:
+            key = ui.select(
+                header, value=suggested, label="Key column (joins to video id)"
+            ).classes("w-full")
+            segment_col = (
+                ui.select(
+                    header,
+                    value=_guess_column(header, "segment"),
+                    label="Row id column (makes each clip's decision distinct)",
+                )
+                .classes("w-full")
+                .tooltip(
+                    "Several rows share one video id, so this is what tells them apart: each "
+                    "clip's accept/drop is saved under {video_id}_{row id}. Pick the column "
+                    "that is unique within a video, e.g. segment_id."
+                )
             )
-            .classes("w-full")
-            .tooltip(
-                "Several rows share one video id, so this is what tells them apart: each "
-                "clip's accept/drop is saved under {video_id}_{row id}. Pick the column "
-                "that is unique within a video, e.g. segment_id."
-            )
-        )
-        bands = _bands_editor(header)
+            bands = _bands_editor(header)
+            track_col = ui.select(header, value=None, label="Track-id column").classes("w-full")
+            checks: dict[str, ui.checkbox] = {}
+            types: dict[str, ui.select] = {}
+            with ui.column().classes("w-full gap-0 max-h-72 overflow-auto") as checkbox_box:
+                ui.label("Value columns").classes("text-sm").style(f"color:{theme.NEUTRAL}")
+                for col in header:
+                    with ui.row().classes("w-full items-center gap-2 no-wrap"):
+                        checks[col] = ui.checkbox(col, value=False).classes("flex-grow")
+                        types[col] = (
+                            ui.select(list(_TYPES), value=detected[col])
+                            .props("dense outlined")
+                            .classes("w-28")
+                        )
 
-        with ui.row().classes("w-full items-center justify-between mt-1"):
-            ui.label("Value columns").classes("text-sm").style(f"color:{theme.NEUTRAL}")
-            with ui.row().classes("gap-1"):
-                ui.button("Select all", on_click=lambda: _set_all(True)).props("flat dense")
-                ui.button("Clear", on_click=lambda: _set_all(False)).props("flat dense")
+        def _show_role() -> None:
+            is_labels = role.value == CsvRole.LABELS
+            labels_box.set_visibility(is_labels)
+            other_box.set_visibility(not is_labels)
+            track_col.set_visibility(role.value == CsvRole.PROTAGONIST)
+            # Segmentation value columns double as label tags.
+            checkbox_box.set_visibility(role.value == CsvRole.SEGMENTATION)
+            segment_col.set_visibility(role.value == CsvRole.SEGMENTATION)
+            bands.container.set_visibility(role.value == CsvRole.SEGMENTATION)
 
-        checks: dict[str, ui.checkbox] = {}
-        types: dict[str, ui.select] = {}
-        track_col = ui.select(header, value=None, label="Track-id column").classes("w-full")
-
-        def _set_all(value: bool) -> None:
-            for box in checks.values():
-                box.set_value(value)
-
-        @ui.refreshable
-        def _value_controls() -> None:
-            is_protagonist = role.value == CsvRole.PROTAGONIST
-            is_segmentation = role.value == CsvRole.SEGMENTATION
-            track_col.set_visibility(is_protagonist)
-            # value columns double as label tags for both labels and segmentation.
-            checkbox_box.set_visibility(not is_protagonist)
-            segment_col.set_visibility(is_segmentation)
-            bands.container.set_visibility(is_segmentation)
-
-        with ui.column().classes("w-full gap-0 max-h-72 overflow-auto") as checkbox_box:
-            for col in header:
-                with ui.row().classes("w-full items-center gap-2 no-wrap"):
-                    checks[col] = ui.checkbox(col, value=False).classes("flex-grow")
-                    types[col] = (
-                        ui.select(list(_TYPES), value=detected[col])
-                        .props("dense outlined")
-                        .classes("w-28")
-                    )
-
-        role.on_value_change(lambda _: _value_controls.refresh())
-        _value_controls()
+        role.on_value_change(lambda _: _show_role())
+        _show_role()
 
         def _confirm() -> None:
             if role.value == CsvRole.PROTAGONIST:
                 if not track_col.value:
                     ui.notify("Pick the track-id column.", color=theme.WARNING)
                     return
-                source = DataSource(
-                    SourceKind.CSV,
-                    csv_path,
-                    role=CsvRole.PROTAGONIST,
-                    key_column=key.value,
-                    value_columns=(track_col.value,),
+                dialog.submit(
+                    DataSource(
+                        SourceKind.CSV,
+                        csv_path,
+                        role=CsvRole.PROTAGONIST,
+                        key_column=key.value,
+                        value_columns=(track_col.value,),
+                    )
                 )
             elif role.value == CsvRole.SEGMENTATION:
                 if not segment_col.value:
@@ -211,30 +499,28 @@ async def configure_csv(path: str | Path, video_stems: Iterable[str]) -> DataSou
                     ui.notify("Add at least one start/end band.", color=theme.WARNING)
                     return
                 selected = tuple(col for col, box in checks.items() if box.value)
-                source = DataSource(
-                    SourceKind.CSV,
-                    csv_path,
-                    role=CsvRole.SEGMENTATION,
-                    key_column=key.value,
-                    segment_column=segment_col.value,
-                    bands=chosen_bands,
-                    value_columns=selected,
-                    column_types={col: types[col].value for col in selected},
+                dialog.submit(
+                    DataSource(
+                        SourceKind.CSV,
+                        csv_path,
+                        role=CsvRole.SEGMENTATION,
+                        key_column=key.value,
+                        segment_column=segment_col.value,
+                        bands=chosen_bands,
+                        value_columns=selected,
+                        column_types={col: types[col].value for col in selected},
+                    )
                 )
             else:
-                selected = tuple(col for col, box in checks.items() if box.value)
-                if not selected:
-                    ui.notify("Select at least one value column.", color=theme.WARNING)
+                result = editor.collect(csv_path, None)
+                if isinstance(result, str):
+                    ui.notify(result[0].upper() + result[1:], color=theme.WARNING)
                     return
-                source = DataSource(
-                    SourceKind.CSV,
-                    csv_path,
-                    role=CsvRole.LABELS,
-                    key_column=key.value,
-                    value_columns=selected,
-                    column_types={col: types[col].value for col in selected},
-                )
-            dialog.submit(source)
+                clash = _clash_message([result], taken)
+                if clash:
+                    ui.notify(clash, color=theme.WARNING)
+                    return
+                dialog.submit(result)
 
         with ui.row().classes("w-full justify-end gap-2 mt-2"):
             ui.button("Cancel", on_click=lambda: dialog.submit(None)).props("flat")

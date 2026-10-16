@@ -17,6 +17,7 @@ from annie.dataset.sources import (
     SourceKind,
     SourceRegistry,
 )
+from tests.fixtures import write_workbook
 
 
 class TestConfigIO(unittest.TestCase):
@@ -350,6 +351,87 @@ class TestLayoutConfig(unittest.TestCase):
         (self.tmp / "g" / "clip_a.mp4").write_bytes(b"")
         source = DataSource(SourceKind.VIDEO, self.tmp, layout=VideoLayout("{g}/clip_{p}.mp4"))
         self.assertEqual(source.count(), 1)
+
+
+class TestTableOptions(unittest.TestCase):
+    """Workbook sheets, path-field matching, tag names and duplicate order persist."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def test_round_trip(self) -> None:
+        reg = SourceRegistry()
+        reg.add(
+            DataSource(
+                SourceKind.CSV,
+                self.tmp / "intake.xlsx",
+                key_column="subject",
+                value_columns=("score",),
+                column_types={"score": "float"},
+                sheet="visits",
+                match_field="subject",
+                match_substring=True,
+                column_names={"score": "Visit score"},
+                order_column="when",
+                order_descending=False,
+            )
+        )
+        out = datasets.save_config(self.tmp / "c.json", reg, "C", relative_to=self.tmp)
+        _name, loaded, _db = datasets.load_config(out)
+        source = loaded.label_sources[0]
+        self.assertEqual(
+            (
+                source.sheet,
+                source.match_field,
+                source.match_substring,
+                source.column_names,
+                source.order_column,
+                source.order_descending,
+            ),
+            ("visits", "subject", True, {"score": "Visit score"}, "when", False),
+        )
+
+    def test_plain_csv_config_has_no_table_options(self) -> None:
+        reg = SourceRegistry()
+        reg.add(
+            DataSource(SourceKind.CSV, self.tmp / "l.csv", key_column="id", value_columns=("v",))
+        )
+        entry = datasets.to_config_dict(reg, "C")["sources"][0]
+        self.assertFalse(
+            {"sheet", "match_field", "match_substring", "column_names", "order_column"} & set(entry)
+        )
+        _name, loaded, _db = datasets.load_config(
+            datasets.save_config(self.tmp / "c.json", reg, "C")
+        )
+        source = loaded.label_sources[0]
+        self.assertEqual(
+            (source.sheet, source.match_field, source.order_descending), (None, None, True)
+        )
+
+    def test_types_are_detected_from_the_saved_sheet(self) -> None:
+        book = write_workbook(
+            self.tmp / "intake.xlsx", {"first": [["n"], ["text"]], "visits": [["n"], [1.5]]}
+        )
+        config = self.tmp / "c.json"
+        config.write_text(
+            json.dumps(
+                {
+                    "name": "C",
+                    "sources": [
+                        {
+                            "kind": "csv",
+                            "path": book.name,
+                            "key_column": "n",
+                            "value_columns": ["n"],
+                            "sheet": "visits",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        _name, loaded, _db = datasets.load_config(config)
+        self.assertEqual(loaded.label_sources[0].column_types, {"n": "float"})
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from openpyxl import Workbook
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -89,6 +91,19 @@ def write_table(path: Path, header: list[str], rows: list[dict[str, str]]) -> Pa
     lines = [",".join(header)]
     lines.extend(",".join(row.get(col, "") for col in header) for row in rows)
     path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8", newline="")
+    return path
+
+
+def write_workbook(path: Path, sheets: dict[str, list[list[object]]]) -> Path:
+    """Write an ``.xlsx`` with one worksheet per ``{name: rows}`` (rows are cell-value lists)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    book = Workbook()
+    book.remove(book.active)
+    for name, rows in sheets.items():
+        sheet = book.create_sheet(name)
+        for row in rows:
+            sheet.append(row)
+    book.save(path)
     return path
 
 

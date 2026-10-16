@@ -240,7 +240,10 @@ def _tags(entry: VideoEntry) -> _RowBadges:
     for column in columns:
         value = _display_label(entry, column)
         if value:
-            ui.badge(f"{column}: {value}", color=theme.LABEL_COLOR)
+            badge = ui.badge(f"{column}: {value}", color=theme.LABEL_COLOR)
+            origin = entry.label_origins.get(column)
+            if origin:  # which file, sheet and row the value came from
+                badge.tooltip(origin)
     return badges
 
 
