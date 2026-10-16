@@ -643,25 +643,65 @@ async def _remove(source: DataSource) -> None:
 # ── metric cards ─────────────────────────────────────────────────────────────
 
 
-def _metric_card(title: str, key: str, color: str) -> None:
-    """Build one overview metric card and register its value label under ``key``."""
+@dataclass(slots=True, frozen=True)
+class MetricCard:
+    """One overview metric card on the Dataset tab.
+
+    Attributes:
+        title: The card's caption.
+        key: The :attr:`ScanResult.counts` key it shows.
+        color: The caption colour.
+    """
+
+    title: str
+    key: str
+    color: str
+
+
+def metric_rows(registry: SourceRegistry) -> list[list[MetricCard]]:
+    """The overview cards that fit the configured sources, as rows (empty rows dropped).
+
+    ``# videos`` is always shown; vdet and track cards appear only once that folder is a
+    source, so a plain video dataset is not cluttered with face-tracking counts.
+
+    Args:
+        registry: The configured sources.
+
+    Returns:
+        Rows of cards: file counts first, then per-video coverage.
+    """
+    has_vdet = registry.vdet is not None
+    has_track = registry.track is not None
+    counts = [MetricCard("# videos", "num_videos", theme.NEUTRAL)]
+    coverage: list[MetricCard] = []
+    if has_vdet and has_track:
+        coverage.append(
+            MetricCard("# videos with vdet + track", "videos_vdet_and_track", theme.PRIMARY)
+        )
+    if has_vdet:
+        counts.append(MetricCard("# vdet files", "num_vdet_files", theme.VDET_COLOR))
+        coverage.append(MetricCard("# videos with vdet", "videos_with_vdet", theme.VDET_COLOR))
+    if has_track:
+        counts.append(MetricCard("# track files", "num_track_files", theme.TRACK_COLOR))
+        coverage.append(MetricCard("# videos with track", "videos_with_track", theme.TRACK_COLOR))
+    return [row for row in (counts, coverage) if row]
+
+
+def _metric_card(card: MetricCard) -> None:
+    """Build one overview metric card and register its value label under its key."""
     with ui.card().classes("flex-1 min-w-[8rem]"):
-        ui.label(title).style(f"color:{color}").classes("text-sm")
-        _METRICS[key] = ui.label("—").classes("text-2xl font-medium")
+        ui.label(card.title).style(f"color:{card.color}").classes("text-sm")
+        _METRICS[card.key] = ui.label("—").classes("text-2xl font-medium")
 
 
 @ui.refreshable
 def _metric_cards() -> None:
-    """Build the two rows of overview metric cards and fill them from the scan."""
+    """Build the overview metric cards for the configured sources and fill them from the scan."""
     _METRICS.clear()
-    with ui.row().classes("w-full gap-3"):
-        _metric_card("# videos", "num_videos", theme.NEUTRAL)
-        _metric_card("# vdet files", "num_vdet_files", theme.VDET_COLOR)
-        _metric_card("# track files", "num_track_files", theme.TRACK_COLOR)
-    with ui.row().classes("w-full gap-3"):
-        _metric_card("# videos with vdet + track", "videos_vdet_and_track", theme.PRIMARY)
-        _metric_card("# videos with vdet", "videos_with_vdet", theme.VDET_COLOR)
-        _metric_card("# videos with track", "videos_with_track", theme.TRACK_COLOR)
+    for row in metric_rows(state.registry):
+        with ui.row().classes("w-full gap-3"):
+            for card in row:
+                _metric_card(card)
 
     counts = state.scan.counts if state.scan is not None else {}
     for key, label in _METRICS.items():

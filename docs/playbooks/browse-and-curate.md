@@ -21,8 +21,9 @@ source re-scans in place, so the metrics update immediately.
 
 What to notice:
 
-- **Metric cards** summarise the scan: videos, vdet files, track files, and how many
-  videos have each annotation.
+- **Metric cards** summarise the scan. `# videos` is always there; the vdet / track file
+  counts and how many videos have each annotation appear only once that folder is a
+  source.
 - Each **source card** shows an Available / Unavailable chip and, for tables, how the key
   column joins, how repeated IDs resolve, and the tags it contributes.
 - The **Tasks** panel below (scrolled off here) lists what each Annotator task needs and
