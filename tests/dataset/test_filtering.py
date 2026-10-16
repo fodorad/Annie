@@ -6,7 +6,14 @@ import unittest
 from pathlib import Path
 
 from annie.core.models import VideoEntry
-from annie.dataset.filtering import FilterSpec, ReviewState, apply_filters, matches
+from annie.dataset.filtering import (
+    FilterSpec,
+    ReviewState,
+    apply_filters,
+    drop_facets,
+    matches,
+    source_facets,
+)
 
 
 def _entry(
@@ -117,6 +124,23 @@ class TestMatches(unittest.TestCase):
         # AND across columns: add an Angry constraint the entry fails.
         spec2 = FilterSpec(labels={"Sentiment": {"negative"}, "Angry": {"0.50"}})
         self.assertFalse(matches(self.entry, self.liked, spec2))
+
+
+class TestSourceFacets(unittest.TestCase):
+    def test_a_plain_video_dataset_offers_none(self) -> None:
+        self.assertEqual(source_facets(has_vdet=False, has_track=False), set())
+
+    def test_each_folder_brings_its_facet_and_the_video_file_check(self) -> None:
+        self.assertEqual(source_facets(has_vdet=True, has_track=False), {"vdet", "video"})
+        self.assertEqual(source_facets(has_vdet=False, has_track=True), {"tracks", "video"})
+
+    def test_dropped_facets_stop_filtering_and_others_survive(self) -> None:
+        spec = FilterSpec(video="missing", vdet="has", tracks="one", audio="has")
+        drop_facets(spec, {"tracks"})
+        self.assertEqual((spec.video, spec.vdet, spec.tracks), ("any", "any", "one"))
+        self.assertEqual(spec.audio, "has")
+        no_vdet = VideoEntry("x", Path("x.mp4"), track_ids=[1], track_paths=[Path("t.csv")])
+        self.assertTrue(matches(no_vdet, ReviewState(), spec, has_audio=True))
 
 
 class TestApplyFilters(unittest.TestCase):
