@@ -21,10 +21,11 @@ source re-scans in place, so the metrics update immediately.
 
 What to notice:
 
-- **Metric cards** summarise the scan: videos, vdet files, track files, and how many
-  videos have each annotation.
-- Each **source card** shows an Available / Unavailable chip and, for CSVs, the key
-  column and the value columns it contributes.
+- **Metric cards** summarise the scan. `# videos` is always there; the vdet / track file
+  counts and how many videos have each annotation appear only once that folder is a
+  source.
+- Each **source card** shows an Available / Unavailable chip and, for tables, how the key
+  column joins, how repeated IDs resolve, and the tags it contributes.
 - The **Tasks** panel below (scrolled off here) lists what each Annotator task needs and
   whether it is *Ready* — a task is offered in the Annotator exactly when it is ready
   here.
@@ -34,6 +35,28 @@ What to notice:
   Annie asks which to keep and sets the other aside under Persistence), and the next
   start reopens the last loaded or saved config automatically — unless `ANNIE_*` env
   vars define the dataset.
+
+### Label tables: CSV files and Excel workbooks
+
+**Add data source → Table (CSV / Excel)** accepts a `.csv` or an `.xlsx` workbook. A
+workbook lists every sheet; open one, keep **Include this sheet** ticked, and configure it
+— each included sheet becomes its own label source. For each table:
+
+- **ID column** and **Matches** say how a row finds its videos. *video id* compares the
+  whole id. With a nested video layout you can instead match one **path field**: a sheet
+  keyed by subject, `4021`, then tags every video under `{subject}/clip_{part}.mp4` of
+  that subject (`4021_a`, `4021_b`, …).
+- **ID is part of the name** (off by default) links a row to every video whose id — or
+  path field — *contains* the ID. If a name contains several IDs the longest wins, and the
+  summary counts such videos as ambiguous.
+- When an ID appears on more than one row, Annie requires an **Order by** column and a
+  direction (e.g. a timestamp, newest first), so which row counts never depends on how the
+  file happens to be sorted. Rows that still tie on that value are reported.
+- Each feature column gets a **tag name**, prefilled from its header and editable, so a
+  long question can become a short Browse tag. Tag names must be unique across tables and
+  path fields.
+- The live summary shows how many videos would get a row. In Browse, hovering a tag
+  shows where its value came from, e.g. `intake.xlsx › visits · subject = 4021`.
 
 ---
 
@@ -126,6 +149,8 @@ routing, not supervision — so it stays in Browse.
 | Concern | Module |
 |---|---|
 | Source registry, task readiness | {mod}`annie.dataset.sources` |
+| Reading CSV / Excel tables, duplicate order | {mod}`annie.parsers.csvmeta`, {mod}`annie.parsers.workbook` |
+| Joining tables to videos (path field, substring) | {mod}`annie.dataset.scanning` |
 | Config save/load, per-config database | {mod}`annie.dataset.datasets` |
 | Label transforms (round, threshold) | {mod}`annie.dataset.manipulate` |
 | Filter predicates | {mod}`annie.dataset.filtering` |

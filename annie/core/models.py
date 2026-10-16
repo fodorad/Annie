@@ -143,6 +143,9 @@ class VideoEntry:
         labels: Per-video label values gathered from CSV label sources, keyed by
             column name (e.g. ``{"Sentiment": "negative", "Angry": "0.33"}``).
             Drives the Browse label tags and the label filters.
+        label_origins: Where each label value came from, keyed like ``labels`` — e.g.
+            ``"intake.xlsx › visits · subject = 4021"`` for a table row, or
+            ``"path field {part}"`` for a nested-layout field. Shown on hover in Browse.
         row_id: The video's **1-based position in the whole scanned dataset**,
             assigned once by :mod:`annie.dataset.scanning` over the full sorted
             manifest. It identifies the sample, not its slot in whatever list is
@@ -160,6 +163,7 @@ class VideoEntry:
     active_track_id: int = NO_ACTIVE_TRACK
     status: RowStatus = "linked"
     labels: dict[str, str] = field(default_factory=dict)
+    label_origins: dict[str, str] = field(default_factory=dict)
     row_id: int = 0
 
     @property

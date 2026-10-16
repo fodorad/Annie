@@ -600,9 +600,14 @@ class TestLayoutBadgesAndMeta(unittest.IsolatedAsyncioTestCase):
         self.root = Path(tempfile.mkdtemp())
         state.store = ReviewStore(self.root / "annie.db")
         entry = VideoEntry(
-            video_id="s1_a", video_path=None, labels={"grp": "g1", "part": "a", "Other": "z"}
+            video_id="s1_a",
+            video_path=None,
+            labels={"grp": "g1", "part": "a", "Other": "z", "Empty": "", "Text": "word " * 20},
+            label_origins={"Other": "t.xlsx › s · id = g1"},
         )
-        state.scan = ScanResult(entries=[entry])
+        state.scan = ScanResult(
+            entries=[entry], label_columns=["grp", "part", "Other", "Empty", "Text"]
+        )
         state.registry = SourceRegistry()
         state.registry.add(
             DataSource(SourceKind.VIDEO, self.root, layout=VideoLayout("{grp}/clip_{part}.mp4"))
@@ -614,6 +619,19 @@ class TestLayoutBadgesAndMeta(unittest.IsolatedAsyncioTestCase):
 
     async def test_badges_show_only_layout_fields_in_pattern_order(self) -> None:
         self.assertEqual(event_task._layout_badges(self.entry), ["g1", "a"])  # noqa: SLF001
+
+    async def test_label_badges_show_loaded_tags_with_their_origin(self) -> None:
+        badges = event_task._label_badges(self.entry)  # noqa: SLF001
+        self.assertEqual(badges[0], ("Other: z", "t.xlsx › s · id = g1"))
+        text, hint = badges[1]  # a long value is shortened, in full on hover
+        self.assertTrue(text.startswith("Text: word") and text.endswith("…"))
+        self.assertEqual(hint, "word " * 20)
+
+    async def test_flat_folder_shows_every_label_tag(self) -> None:
+        state.registry = SourceRegistry()
+        state.registry.add(DataSource(SourceKind.VIDEO, self.root))
+        texts = [text for text, _ in event_task._label_badges(self.entry)]  # noqa: SLF001
+        self.assertEqual(texts[:3], ["grp: g1", "part: a", "Other: z"])
 
     async def test_no_badges_for_a_flat_folder(self) -> None:
         state.registry = SourceRegistry()

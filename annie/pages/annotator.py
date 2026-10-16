@@ -252,7 +252,7 @@ def _original_placeholder(entry: VideoEntry, scale: float = 1.0) -> None:
     box = ui.column().classes("items-center justify-center").style(_box_style(scale))
     if entry.video_path is None:
         with box:
-            ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("audio only — no video frames")
+            ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("video file not found")
         return
     video_path = entry.video_path
 

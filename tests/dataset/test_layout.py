@@ -45,9 +45,11 @@ class TestMatching(unittest.TestCase):
         layout = VideoLayout("{grp}/clip_{part}.mp4")
         self.assertEqual(layout.video_id({"grp": "g", "part": "p"}), "g_p")
 
-    def test_id_template(self) -> None:
-        layout = VideoLayout("{grp}/clip_{part}.mp4", "{part}-{grp}")
-        self.assertEqual(layout.video_id({"grp": "g", "part": "p"}), "p-g")
+    def test_fixed_folders_are_not_part_of_the_id(self) -> None:
+        layout = VideoLayout("Sets/{sub}/view/sess_{part}.mp4")
+        fields = layout.match("Sets/s1/view/sess_a.mp4")
+        self.assertEqual(fields, {"sub": "s1", "part": "a"})
+        self.assertEqual(layout.video_id(fields or {}), "s1_a")
 
 
 class TestValidation(unittest.TestCase):
@@ -58,15 +60,13 @@ class TestValidation(unittest.TestCase):
             VideoLayout("../{a}.mp4"),
             VideoLayout("plain.mp4"),
             VideoLayout("{a}/{a}.mp4"),
-            VideoLayout("{a}.mp4", "{nope}"),
-            VideoLayout("{a}.mp4", "no_fields"),
         ]
         for layout in bad:
             with self.assertRaises(ValueError, msg=layout):
                 layout.validate()
 
     def test_valid_layout_passes(self) -> None:
-        VideoLayout("{a}/{b}.mp4", "{b}_{a}").validate()
+        VideoLayout("{a}/{b}.mp4").validate()
 
 
 class TestDiscover(unittest.TestCase):
@@ -83,18 +83,18 @@ class TestDiscover(unittest.TestCase):
             ".hidden/s9/clip_a.mp4",
             "g1/s3/other/clip_a.mp4",
         )
-        report = VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{sub}_{part}").discover(self.root)
-        self.assertEqual([v.video_id for v in report.videos], ["s1_a", "s2_b"])
+        report = VideoLayout("{grp}/{sub}/clip_{part}.mp4").discover(self.root)
+        self.assertEqual([v.video_id for v in report.videos], ["g1_s1_a", "g1_s2_b"])
         self.assertEqual(report.videos[0].fields, {"grp": "g1", "sub": "s1", "part": "a"})
         self.assertEqual(report.videos[0].path, self.root / "g1/s1/clip_a.mp4")
         self.assertEqual(report.collisions, [])
 
     def test_collisions_are_reported_and_first_kept(self) -> None:
         _touch(self.root, "g1/s1/clip_a.mp4", "g2/s1/clip_a.mp4")
-        report = VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{sub}_{part}").discover(self.root)
+        report = VideoLayout("**/{sub}/clip_{part}.mp4").discover(self.root)
         self.assertEqual(report.collisions, ["s1_a"])
         self.assertEqual(len(report.videos), 1)
-        self.assertEqual(report.videos[0].fields["grp"], "g1")
+        self.assertEqual(report.videos[0].path, self.root / "g1/s1/clip_a.mp4")
 
     def test_missing_root_is_empty_and_invalid_layout_raises(self) -> None:
         self.assertEqual(VideoLayout("{a}.mp4").discover(self.root / "nope").videos, [])

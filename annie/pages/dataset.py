@@ -48,10 +48,10 @@ from annie.dataset.sources import (
 )
 from annie.dataset.storage import ReviewStore
 from annie.pages import annotator, browse
-from annie.pages.csv_dialog import configure_csv
+from annie.pages.csv_dialog import VIDEO_ID_TARGET, Targets, configure_table
 from annie.pages.folder_picker import pick_directory, pick_file
 from annie.pages.utils import notify_detached
-from annie.parsers.csvmeta import read_header, read_rows
+from annie.parsers.csvmeta import read_header, read_rows, short_name
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
 
 if TYPE_CHECKING:
@@ -122,11 +122,26 @@ def _switch_review_db(path: Path) -> None:
 _METRICS: dict[str, ui.label] = {}
 
 
-def _video_stems() -> set[str]:
-    """Current video stems, used to auto-suggest a CSV key column."""
+def _match_targets() -> Targets:
+    """What a label table's IDs can match, per video: the video id and each path field.
+
+    Path fields come from the video folder's nested layout (e.g. ``{subject}``), so a
+    table keyed by subject can tag every video of that subject.
+    """
     if state.scan is None:
-        return set()
-    return {e.video_id for e in state.scan.entries if e.has_video}
+        return {VIDEO_ID_TARGET: {}}
+    videos = [e for e in state.scan.entries if e.has_video]
+    targets: Targets = {VIDEO_ID_TARGET: {e.video_id: e.video_id for e in videos}}
+    video = state.registry.video
+    if video is not None and video.layout is not None:
+        for name in video.layout.field_names():
+            targets[name] = {e.video_id: e.labels.get(name, "") for e in videos}
+    return targets
+
+
+def _taken_tag_names() -> set[str]:
+    """Tag names Browse already shows: other tables' tags and path fields."""
+    return set(state.scan.label_columns) if state.scan is not None else set()
 
 
 async def _apply_changes() -> None:
@@ -458,9 +473,13 @@ async def _add_kind(kind: SourceKind) -> None:
         chosen = await pick_file(start)
         if not chosen:
             return
-        source = await configure_csv(chosen, _video_stems())
-        if source is None:
+        tables = await configure_table(chosen, _match_targets(), _taken_tag_names())
+        if not tables:
             return
+        for table in tables:
+            state.registry.add(table)
+        await _apply_changes()
+        return
     else:
         start = (
             {
@@ -624,25 +643,65 @@ async def _remove(source: DataSource) -> None:
 # ── metric cards ─────────────────────────────────────────────────────────────
 
 
-def _metric_card(title: str, key: str, color: str) -> None:
-    """Build one overview metric card and register its value label under ``key``."""
+@dataclass(slots=True, frozen=True)
+class MetricCard:
+    """One overview metric card on the Dataset tab.
+
+    Attributes:
+        title: The card's caption.
+        key: The :attr:`ScanResult.counts` key it shows.
+        color: The caption colour.
+    """
+
+    title: str
+    key: str
+    color: str
+
+
+def metric_rows(registry: SourceRegistry) -> list[list[MetricCard]]:
+    """The overview cards that fit the configured sources, as rows (empty rows dropped).
+
+    ``# videos`` is always shown; vdet and track cards appear only once that folder is a
+    source, so a plain video dataset is not cluttered with face-tracking counts.
+
+    Args:
+        registry: The configured sources.
+
+    Returns:
+        Rows of cards: file counts first, then per-video coverage.
+    """
+    has_vdet = registry.vdet is not None
+    has_track = registry.track is not None
+    counts = [MetricCard("# videos", "num_videos", theme.NEUTRAL)]
+    coverage: list[MetricCard] = []
+    if has_vdet and has_track:
+        coverage.append(
+            MetricCard("# videos with vdet + track", "videos_vdet_and_track", theme.PRIMARY)
+        )
+    if has_vdet:
+        counts.append(MetricCard("# vdet files", "num_vdet_files", theme.VDET_COLOR))
+        coverage.append(MetricCard("# videos with vdet", "videos_with_vdet", theme.VDET_COLOR))
+    if has_track:
+        counts.append(MetricCard("# track files", "num_track_files", theme.TRACK_COLOR))
+        coverage.append(MetricCard("# videos with track", "videos_with_track", theme.TRACK_COLOR))
+    return [row for row in (counts, coverage) if row]
+
+
+def _metric_card(card: MetricCard) -> None:
+    """Build one overview metric card and register its value label under its key."""
     with ui.card().classes("flex-1 min-w-[8rem]"):
-        ui.label(title).style(f"color:{color}").classes("text-sm")
-        _METRICS[key] = ui.label("—").classes("text-2xl font-medium")
+        ui.label(card.title).style(f"color:{card.color}").classes("text-sm")
+        _METRICS[card.key] = ui.label("—").classes("text-2xl font-medium")
 
 
 @ui.refreshable
 def _metric_cards() -> None:
-    """Build the two rows of overview metric cards and fill them from the scan."""
+    """Build the overview metric cards for the configured sources and fill them from the scan."""
     _METRICS.clear()
-    with ui.row().classes("w-full gap-3"):
-        _metric_card("# videos", "num_videos", theme.NEUTRAL)
-        _metric_card("# vdet files", "num_vdet_files", theme.VDET_COLOR)
-        _metric_card("# track files", "num_track_files", theme.TRACK_COLOR)
-    with ui.row().classes("w-full gap-3"):
-        _metric_card("# videos with vdet + track", "videos_vdet_and_track", theme.PRIMARY)
-        _metric_card("# videos with vdet", "videos_with_vdet", theme.VDET_COLOR)
-        _metric_card("# videos with track", "videos_with_track", theme.TRACK_COLOR)
+    for row in metric_rows(state.registry):
+        with ui.row().classes("w-full gap-3"):
+            for card in row:
+                _metric_card(card)
 
     counts = state.scan.counts if state.scan is not None else {}
     for key, label in _METRICS.items():
@@ -673,12 +732,11 @@ class LayoutCommit:
     error: str | None = None
 
 
-def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
-    """Build and validate a :class:`VideoLayout` from the Layout text boxes.
+def layout_from_input(pattern: str) -> VideoLayout:
+    """Build and validate a :class:`VideoLayout` from the Pattern box.
 
     Args:
-        pattern: The pattern box (path relative to the root, with ``{field}`` placeholders).
-        id_template: The video-id box; empty means "join the fields with ``_``".
+        pattern: The pattern box (path relative to the folder, with ``{field}`` placeholders).
 
     Returns:
         The validated layout.
@@ -686,73 +744,65 @@ def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
     Raises:
         ValueError: With a user-readable message if the layout is unusable.
     """
-    layout = VideoLayout(pattern.strip(), id_template.strip() or None)
+    layout = VideoLayout(pattern.strip())
     layout.validate()
     return layout
 
 
-def layout_commit(pattern: str, id_template: str, current: VideoLayout | None) -> LayoutCommit:
-    """Decide what to do when a Layout box is committed (blur / Enter).
+def layout_commit(pattern: str, current: VideoLayout | None) -> LayoutCommit:
+    """Decide what to do when the Pattern box is committed (blur / Enter).
 
     Args:
         pattern: The pattern box text.
-        id_template: The video-id box text.
         current: The layout already applied to the source, if any.
 
     Returns:
         ``LayoutCommit(layout=...)`` to apply a new valid layout; ``LayoutCommit(error=...)``
-        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the boxes
-        still describe the applied layout, or the pattern is still empty (nothing to do yet).
+        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the box
+        still describes the applied layout, or is still empty (nothing to do yet).
     """
     if not pattern.strip():
         return LayoutCommit()
     try:
-        candidate = layout_from_inputs(pattern, id_template)
+        candidate = layout_from_input(pattern)
     except ValueError as exc:
         return LayoutCommit(error=str(exc))
     return LayoutCommit() if candidate == current else LayoutCommit(layout=candidate)
 
 
 def _layout_editor(source: DataSource) -> None:
-    """The Layout control on the Videos-folder card: flat folder, or a nested path template.
+    """The Layout control on the Videos-folder card: flat folder, or a nested path pattern.
 
-    There is no Preview/Apply button: committing either box (blur or Enter) validates the
-    layout, applies it, and rescans, and the result line under the card is the preview.
+    There is no Preview/Apply button: committing the pattern (blur or Enter) validates it,
+    applies it, and rescans, and the result line under the card is the preview.
     """
     layout = source.layout
-    nested = ui.switch("Nested layout", value=layout is not None).tooltip(
-        "Off: one video per .mp4 directly in this folder. On: describe where videos sit below it."
+    nested = ui.switch("Videos in subfolders", value=layout is not None).tooltip(
+        "Off: the .mp4 files directly in this folder, id = file name. "
+        "On: a pattern finds the videos anywhere below this folder."
     )
     with ui.column().classes("w-full gap-1").bind_visibility_from(nested, "value"):
         pattern = (
-            ui.input(
-                "Pattern — path of each video relative to this folder",
-                value=layout.pattern if layout else "",
+            ui.input("Pattern, relative to this folder", value=layout.pattern if layout else "")
+            .props('hint="e.g. Recordings/{subject}/clip_{part}.mp4"')
+            .classes("w-full")
+            .tooltip(
+                "Type folder and file names as they are; {name} stands for the part that "
+                "varies and becomes a Browse tag. The video id joins the {name} values "
+                "with _ (e.g. 4021_a). Press Enter to apply."
             )
-            .props('hint="e.g. {group}/{subject}/clip_{part}.mp4"')
-            .classes("w-full")
         )
-        id_template = (
-            ui.input("Video id (optional)", value=(layout.id_template or "") if layout else "")
-            .props('hint="e.g. {subject}_{part} — empty joins all fields with _"')
-            .classes("w-full")
-        )
-        ui.label(
-            "{name} captures part of a path or file name; each captured field becomes a Browse "
-            "tag/filter. The video id must be unique. Press Enter or click away to apply."
-        ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
         error = ui.label().classes("text-xs break-words").style(f"color:{theme.UNAVAILABLE}")
 
         async def _commit() -> None:
-            outcome = layout_commit(pattern.value or "", id_template.value or "", source.layout)
+            outcome = layout_commit(pattern.value or "", source.layout)
             error.set_text(outcome.error or "")
             if outcome.layout is not None:
                 source.layout = outcome.layout
                 await _apply_changes()
 
-        for box in (pattern, id_template):
-            box.on("blur", _commit)
-            box.on("keydown.enter", _commit)
+        pattern.on("blur", _commit)
+        pattern.on("keydown.enter", _commit)
 
     async def _toggle(event: ValueChangeEventArguments) -> None:
         if not event.value and source.layout is not None:  # back to a flat folder
@@ -810,8 +860,20 @@ def _layout_notice(source: DataSource) -> None:
     ):
         ui.label(
             "No videos directly in this folder, but it contains nested videos. "
-            "Turn on Nested layout to describe where they are."
+            "Turn on Videos in subfolders to describe where they are."
         ).classes("text-xs").style(f"color:{theme.WARNING}")
+
+
+def _table_summary(source: DataSource) -> str:
+    """One line describing how a table joins: key, match target, order, tag names."""
+    target = f"{{{source.match_field}}}" if source.match_field else VIDEO_ID_TARGET
+    how = "contained in" if source.match_substring else "matches"
+    parts = [f"{short_name(source.key_column or '')} {how} {target}"]
+    if source.order_column:
+        direction = "newest/largest" if source.order_descending else "oldest/smallest"
+        parts.append(f"repeats: {direction} '{source.order_column}' wins")
+    parts.append("tags: " + ", ".join(source.tag_name(col) for col in source.value_columns))
+    return " · ".join(parts)
 
 
 def _source_card(source: DataSource) -> None:
@@ -824,9 +886,7 @@ def _source_card(source: DataSource) -> None:
                 _availability_chip(source)
             ui.label(str(source.path)).classes("text-xs break-all").style(f"color:{theme.NEUTRAL}")
             if source.kind is SourceKind.CSV and source.value_columns:
-                ui.label(
-                    f"key: {source.key_column} · columns: {', '.join(source.value_columns)}"
-                ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
+                ui.label(_table_summary(source)).classes("text-xs").style(f"color:{theme.NEUTRAL}")
             if source.kind is SourceKind.VIDEO:
                 _layout_notice(source)
                 _layout_editor(source)

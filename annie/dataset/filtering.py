@@ -57,8 +57,9 @@ class FilterSpec:
 
     Attributes:
         name_prefix: keep only videos whose id starts with this (case-insensitive).
-        video: video-frames presence facet.
-        audio: audio-stream presence facet (uses the probed cache; see ``audio_of``).
+        video: video-file presence facet (rows from vdet/track files may have none).
+        audio: audio-stream presence facet (ffprobe, cached as rows are viewed; see
+            ``audio_of``). Rows not yet probed fail ``has`` and ``missing``.
         vdet: vdet-presence facet.
         tracks: track-count facet.
         frames: frame-count facet (uses the probed cache; see ``frames_of``).
@@ -105,6 +106,45 @@ class FilterSpec:
             or any(self.labels.values())
             or self.id_list is not None
         )
+
+
+SOURCE_FACETS: tuple[str, ...] = ("video", "vdet", "tracks")
+"""Facets that only make sense when a vdet or track folder is a source."""
+
+
+def source_facets(*, has_vdet: bool, has_track: bool) -> set[str]:
+    """The source-dependent facets that fit the configured sources.
+
+    ``vdet`` needs a vdet folder and ``tracks`` a track folder. ``video`` (does the video
+    file exist) needs either: only vdet/track files can produce a row without a video.
+
+    Args:
+        has_vdet: Whether a vdet folder is configured.
+        has_track: Whether a track folder is configured.
+
+    Returns:
+        The names (from :data:`SOURCE_FACETS`) to offer in the filter bar.
+    """
+    facets: set[str] = set()
+    if has_vdet:
+        facets.add("vdet")
+    if has_track:
+        facets.add("tracks")
+    if has_vdet or has_track:
+        facets.add("video")
+    return facets
+
+
+def drop_facets(spec: FilterSpec, keep: set[str]) -> None:
+    """Turn off every source-dependent facet not in ``keep``, so a hidden box never filters.
+
+    Args:
+        spec: The filter spec to update in place.
+        keep: The source-dependent facets still offered (see :func:`source_facets`).
+    """
+    for name in SOURCE_FACETS:
+        if name not in keep:
+            setattr(spec, name, "any")
 
 
 def _presence_ok(present: bool | None, facet: PresenceFilter) -> bool:

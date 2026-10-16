@@ -17,6 +17,7 @@ from annie.dataset.sources import (
     SourceKind,
     SourceRegistry,
 )
+from tests.fixtures import write_workbook
 
 
 class TestConfigIO(unittest.TestCase):
@@ -321,7 +322,7 @@ class TestLayoutConfig(unittest.TestCase):
 
     def test_layout_round_trips(self) -> None:
         reg = SourceRegistry()
-        layout = VideoLayout("{grp}/clip_{part}.mp4", "{grp}-{part}")
+        layout = VideoLayout("{grp}/clip_{part}.mp4")
         reg.add(DataSource(SourceKind.VIDEO, self.tmp / "root", layout=layout))
         path = datasets.save_config(self.tmp / "c.json", reg, "n")
         _, loaded, _ = datasets.load_config(path)
@@ -338,18 +339,109 @@ class TestLayoutConfig(unittest.TestCase):
         assert loaded.video is not None
         self.assertIsNone(loaded.video.layout)
 
-    def test_pattern_only_layout_omits_id_template(self) -> None:
+    def test_layout_saves_only_the_pattern(self) -> None:
         reg = SourceRegistry()
         reg.add(DataSource(SourceKind.VIDEO, self.tmp, layout=VideoLayout("{a}.mp4")))
         self.assertEqual(
             datasets.to_config_dict(reg, "n")["sources"][0]["layout"], {"pattern": "{a}.mp4"}
         )
 
+    def test_old_id_template_is_ignored_with_a_warning(self) -> None:
+        layout = {"pattern": "{a}/{b}.mp4", "id_template": "{b}"}
+        config = {"name": "n", "sources": [{"kind": "video", "path": ".", "layout": layout}]}
+        (self.tmp / "old.json").write_text(json.dumps(config), encoding="utf-8")
+        with self.assertLogs("annie.dataset.datasets", level="WARNING") as logs:
+            _, loaded, _ = datasets.load_config(self.tmp / "old.json")
+        assert loaded.video is not None
+        self.assertEqual(loaded.video.layout, VideoLayout("{a}/{b}.mp4"))
+        self.assertIn("id template", logs.output[0])
+
     def test_source_count_uses_the_layout(self) -> None:
         (self.tmp / "g").mkdir()
         (self.tmp / "g" / "clip_a.mp4").write_bytes(b"")
         source = DataSource(SourceKind.VIDEO, self.tmp, layout=VideoLayout("{g}/clip_{p}.mp4"))
         self.assertEqual(source.count(), 1)
+
+
+class TestTableOptions(unittest.TestCase):
+    """Workbook sheets, path-field matching, tag names and duplicate order persist."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def test_round_trip(self) -> None:
+        reg = SourceRegistry()
+        reg.add(
+            DataSource(
+                SourceKind.CSV,
+                self.tmp / "intake.xlsx",
+                key_column="subject",
+                value_columns=("score",),
+                column_types={"score": "float"},
+                sheet="visits",
+                match_field="subject",
+                match_substring=True,
+                column_names={"score": "Visit score"},
+                order_column="when",
+                order_descending=False,
+            )
+        )
+        out = datasets.save_config(self.tmp / "c.json", reg, "C", relative_to=self.tmp)
+        _name, loaded, _db = datasets.load_config(out)
+        source = loaded.label_sources[0]
+        self.assertEqual(
+            (
+                source.sheet,
+                source.match_field,
+                source.match_substring,
+                source.column_names,
+                source.order_column,
+                source.order_descending,
+            ),
+            ("visits", "subject", True, {"score": "Visit score"}, "when", False),
+        )
+
+    def test_plain_csv_config_has_no_table_options(self) -> None:
+        reg = SourceRegistry()
+        reg.add(
+            DataSource(SourceKind.CSV, self.tmp / "l.csv", key_column="id", value_columns=("v",))
+        )
+        entry = datasets.to_config_dict(reg, "C")["sources"][0]
+        self.assertFalse(
+            {"sheet", "match_field", "match_substring", "column_names", "order_column"} & set(entry)
+        )
+        _name, loaded, _db = datasets.load_config(
+            datasets.save_config(self.tmp / "c.json", reg, "C")
+        )
+        source = loaded.label_sources[0]
+        self.assertEqual(
+            (source.sheet, source.match_field, source.order_descending), (None, None, True)
+        )
+
+    def test_types_are_detected_from_the_saved_sheet(self) -> None:
+        book = write_workbook(
+            self.tmp / "intake.xlsx", {"first": [["n"], ["text"]], "visits": [["n"], [1.5]]}
+        )
+        config = self.tmp / "c.json"
+        config.write_text(
+            json.dumps(
+                {
+                    "name": "C",
+                    "sources": [
+                        {
+                            "kind": "csv",
+                            "path": book.name,
+                            "key_column": "n",
+                            "value_columns": ["n"],
+                            "sheet": "visits",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        _name, loaded, _db = datasets.load_config(config)
+        self.assertEqual(loaded.label_sources[0].column_types, {"n": "float"})
 
 
 if __name__ == "__main__":

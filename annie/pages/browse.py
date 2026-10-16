@@ -43,7 +43,7 @@ from nicegui import background_tasks, context, run, ui
 from annie.core import logbook, theme
 from annie.core.state import state
 from annie.dataset import manipulate
-from annie.dataset.filtering import FilterSpec, apply_filters
+from annie.dataset.filtering import FilterSpec, apply_filters, drop_facets, source_facets
 from annie.media import probe
 from annie.media.decode import media_available
 from annie.media.preview import (
@@ -240,7 +240,10 @@ def _tags(entry: VideoEntry) -> _RowBadges:
     for column in columns:
         value = _display_label(entry, column)
         if value:
-            ui.badge(f"{column}: {value}", color=theme.LABEL_COLOR)
+            badge = ui.badge(f"{column}: {value}", color=theme.LABEL_COLOR)
+            origin = entry.label_origins.get(column)
+            if origin:  # which file, sheet and row the value came from
+                badge.tooltip(origin)
     return badges
 
 
@@ -346,7 +349,7 @@ def _original_box(entry: VideoEntry) -> None:
     )
     if entry.video_path is None:
         with box:
-            ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("audio only — no video frames")
+            ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("video file not found")
         return
     video_path = entry.video_path
 
@@ -600,7 +603,7 @@ def _grid_box(entry: VideoEntry, *, can_decode: bool) -> None:
         )
         if not entry.has_video:
             with slot:
-                ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("audio only — no video frames")
+                ui.icon("videocam_off", color=theme.NEUTRAL).tooltip("video file not found")
         # The selection ring/tint sits above the frame so it is never hidden by it.
         overlay = ui.element("div").style(
             "position:absolute;inset:0;border-radius:8px;pointer-events:none;z-index:3"
@@ -830,6 +833,12 @@ def _facet_select(
     return select
 
 
+def _source_facets() -> set[str]:
+    """The vdet/track-dependent facets the configured sources support."""
+    registry = state.registry
+    return source_facets(has_vdet=registry.vdet is not None, has_track=registry.track is not None)
+
+
 @ui.refreshable
 def _filters() -> None:
     """Build the filter controls (rebuilt when a transform changes the facets)."""
@@ -847,21 +856,37 @@ def _filters() -> None:
         )
         name.on_value_change(lambda e: (_set("name_prefix", e.value or ""), on_change()))
 
-        _facet_select("video", "video", {"has": "has video", "missing": "no video"}, on_change)
+        facets = _source_facets()
+        if "video" in facets:
+            video = _facet_select(
+                "video",
+                "video file",
+                {"has": "has video file", "missing": "no video file"},
+                on_change,
+            )
+            with video:
+                ui.tooltip("Whether the video file exists; vdet/track files can lack one").props(
+                    "delay=600"
+                )
 
         audio = _facet_select(
             "audio", "audio", {"has": "has audio", "missing": "no audio"}, on_change
         )
         with audio:
-            ui.tooltip("Audio is probed as rows are viewed").props("delay=600")
+            ui.tooltip(
+                "ffprobe checks each video for an audio stream as its row is viewed; "
+                "rows not viewed yet are unknown and hidden by this filter"
+            ).props("delay=600")
 
-        _facet_select("vdet", "vdet", {"has": "has vdet", "missing": "no vdet"}, on_change)
-        _facet_select(
-            "tracks",
-            "tracks",
-            {"none": "0 tracks", "one": "1 track", "multi": "2+ tracks"},
-            on_change,
-        )
+        if "vdet" in facets:
+            _facet_select("vdet", "vdet", {"has": "has vdet", "missing": "no vdet"}, on_change)
+        if "tracks" in facets:
+            _facet_select(
+                "tracks",
+                "tracks",
+                {"none": "0 tracks", "one": "1 track", "multi": "2+ tracks"},
+                on_change,
+            )
 
         _frames_filter(on_change)
 
@@ -1104,6 +1129,7 @@ def _content() -> None:
                 "Install the 'media' extra to see frame thumbnails and rendered clips."
             ).classes("text-xs").style(f"color:{theme.WARNING}")
 
+        drop_facets(_state().spec, _source_facets())  # a removed source must not keep filtering
         _manipulate()
         # The caption keeps a CSV id filter visible while the panel is collapsed.
         spec = _state().spec

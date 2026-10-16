@@ -13,13 +13,16 @@ changes (add/remove on the Dataset tab). It stays linear in the number of files:
 * A ``.vdet`` matches by exact stem; a ``__track{N}.csv`` matches by the part
   before ``__track``. Both fall back to a longest-stem-first prefix scan only on
   a miss.
-* A label/protagonist CSV row matches a video by exact key-column value.
+* A label/protagonist table row matches a video by exact key-column value — or, for a
+  label table, by a nested-layout path field (``match_field``) and optionally by
+  substring (``match_substring``, see :func:`match_keys`).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from annie.core.models import NO_ACTIVE_TRACK, RowStatus, VideoEntry
 from annie.dataset.sources import (
@@ -31,12 +34,27 @@ from annie.dataset.sources import (
     SourceRegistry,
     _is_junk,
 )
-from annie.parsers.csvmeta import load_value_map
+from annie.parsers.csvmeta import load_value_map, short_name
 from annie.parsers.participants import DEFAULT_VALUE_COLUMN, resolved_mapping
 from annie.parsers.track import track_id_from_name
 
-#: A label source's value map: ``video_id -> {column: value}``.
-_LabelMap = dict[str, dict[str, str]]
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+
+@dataclass(slots=True)
+class _LabelTable:
+    """One loaded label table, ready to join.
+
+    Attributes:
+        source: The configured source.
+        values: Key to ``{tag name: value}`` (winning row per key).
+        origin: Provenance prefix, e.g. ``"intake.xlsx › visits · subject"``.
+    """
+
+    source: DataSource
+    values: dict[str, dict[str, str]]
+    origin: str
 
 
 def _iter_files(
@@ -219,19 +237,145 @@ def _active_mapping(source: DataSource | None) -> dict[str, int]:
     return resolved_mapping(source.path, source.key_column, source.value_columns[0])
 
 
-def _label_maps(sources: list[DataSource]) -> tuple[list[_LabelMap], list[str]]:
-    """Load each label source's value map; return ``(maps, ordered_columns)``."""
-    maps: list[_LabelMap] = []
-    columns: list[str] = []
+def _label_tables(sources: list[DataSource]) -> tuple[list[_LabelTable], list[str]]:
+    """Load each label table, values keyed by tag name; return ``(tables, ordered_tags)``."""
+    tables: list[_LabelTable] = []
+    tags: list[str] = []
     for source in sources:
         if source.key_column is None or not source.value_columns:
             continue
-        value_map = load_value_map(source.path, source.key_column, source.value_columns)
-        maps.append(value_map)
+        raw = load_value_map(
+            source.path,
+            source.key_column,
+            source.value_columns,
+            sheet=source.sheet,
+            order_column=source.order_column,
+            descending=source.order_descending,
+        )
+        values = {
+            key: {source.tag_name(col): value for col, value in row.items()}
+            for key, row in raw.items()
+        }
+        where = f"{source.path.name} › {source.sheet}" if source.sheet else source.path.name
+        tables.append(_LabelTable(source, values, f"{where} · {short_name(source.key_column)}"))
         for col in source.value_columns:
-            if col not in columns:
-                columns.append(col)
-    return maps, columns
+            if source.tag_name(col) not in tags:
+                tags.append(source.tag_name(col))
+    return tables, tags
+
+
+def match_keys(
+    keys: Iterable[str], targets: Iterable[str], *, substring: bool
+) -> tuple[dict[str, str], set[str]]:
+    """Link table keys to match targets (video ids or path-field values).
+
+    Exact matching (the default) is a set lookup. With ``substring`` a target links to
+    a key it *contains*: keys are grouped by length and each target is slid over once
+    per distinct key length, so the cost stays near-linear rather than keys × targets.
+    When a target contains several keys the **longest** wins; an equal-length tie goes
+    to the key that comes first in ``keys`` (the table's winning-row order). Such
+    targets are reported as ambiguous.
+
+    Args:
+        keys: The table's keys, in priority order.
+        targets: The strings to link.
+        substring: Match keys contained in a target instead of equal to it.
+
+    Returns:
+        ``(target -> key, ambiguous targets)``; unmatched targets are absent.
+    """
+    ordered = list(dict.fromkeys(keys))
+    if not substring:
+        known = set(ordered)
+        return {t: t for t in targets if t in known}, set()
+    rank = {key: index for index, key in enumerate(ordered)}
+    by_length: dict[int, set[str]] = {}
+    for key in ordered:
+        by_length.setdefault(len(key), set()).add(key)
+    lengths = sorted(by_length, reverse=True)
+    matched: dict[str, str] = {}
+    ambiguous: set[str] = set()
+    for target in targets:
+        found: list[str] = []
+        for length in lengths:
+            if length > len(target):
+                continue
+            windows = {target[i : i + length] for i in range(len(target) - length + 1)}
+            hits = sorted(windows & by_length[length], key=rank.__getitem__)
+            found.extend(hits)
+            if len(found) > 1:
+                break  # the winner is already fixed; one more hit proves ambiguity
+        if found:
+            matched[target] = found[0]
+            if len(found) > 1:
+                ambiguous.add(target)
+    return matched, ambiguous
+
+
+@dataclass(slots=True, frozen=True)
+class JoinSummary:
+    """How well a table's keys link to the videos (shown while configuring a table).
+
+    Attributes:
+        videos_matched: Videos that get a row.
+        videos_total: All videos considered.
+        keys_used: Distinct keys that link to at least one video.
+        keys_total: Distinct non-empty keys in the table.
+        ambiguous: Matched videos whose target contained more than one key.
+    """
+
+    videos_matched: int
+    videos_total: int
+    keys_used: int
+    keys_total: int
+    ambiguous: int
+
+
+def join_summary(
+    keys: Iterable[str], video_targets: dict[str, str], *, substring: bool
+) -> JoinSummary:
+    """Summarise a prospective join for the table dialog.
+
+    Args:
+        keys: The table's keys in priority order (see :func:`match_keys`).
+        video_targets: Video id to the string its key must match (the id itself or a
+            path-field value); an empty string means the video has no target.
+        substring: Whether keys match by substring.
+
+    Returns:
+        A :class:`JoinSummary`.
+    """
+    distinct = [key for key in dict.fromkeys(keys) if key]
+    matched, ambiguous = match_keys(
+        distinct, {t for t in video_targets.values() if t}, substring=substring
+    )
+    linked = [vid for vid, target in video_targets.items() if target in matched]
+    return JoinSummary(
+        videos_matched=len(linked),
+        videos_total=len(video_targets),
+        keys_used=len({matched[video_targets[vid]] for vid in linked}),
+        keys_total=len(distinct),
+        ambiguous=sum(1 for vid in linked if video_targets[vid] in ambiguous),
+    )
+
+
+def _key_by_video(
+    table: _LabelTable, video_ids: list[str], layout_fields: dict[str, dict[str, str]]
+) -> dict[str, str]:
+    """Map each video id to the table key it joins to (absent when none)."""
+    field_name = table.source.match_field
+    targets = {
+        video_id: video_id
+        if field_name is None
+        else layout_fields.get(video_id, {}).get(field_name)
+        for video_id in video_ids
+    }
+    matched, _ambiguous = match_keys(
+        table.values,
+        {t for t in targets.values() if t},
+        substring=table.source.match_substring,
+    )
+    return {vid: matched[t] for vid, t in targets.items() if t and t in matched}
 
 
 def build_manifest(registry: SourceRegistry) -> ScanResult:
@@ -297,7 +441,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
         num_track_files += 1
 
     active = _active_mapping(registry.protagonist)
-    label_maps, label_columns = _label_maps(registry.label_sources)
+    label_tables, label_columns = _label_tables(registry.label_sources)
     for fields in layout_fields.values():  # path-derived fields are tags/filters too
         for name in fields:
             if name not in label_columns:
@@ -305,21 +449,27 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
     label_column_types: dict[str, str] = {}
     for source in registry.label_sources:
         for column in source.value_columns:
-            label_column_types[column] = source.column_types.get(column, "str")
+            label_column_types[source.tag_name(column)] = source.column_types.get(column, "str")
 
+    video_ids = sorted(set(videos) | set(vdets) | set(tracks))
+    joins = [(table, _key_by_video(table, video_ids, layout_fields)) for table in label_tables]
     entries: list[VideoEntry] = []
     # Numbered over the full sorted manifest, before any filtering, so a row's id
     # identifies the sample rather than its position in whatever list is on screen.
-    for row_id, video_id in enumerate(sorted(set(videos) | set(vdets) | set(tracks)), start=1):
+    for row_id, video_id in enumerate(video_ids, start=1):
         video_tracks = sorted(tracks.get(video_id, []), key=lambda item: item[0])
         track_ids = [tid for tid, _ in video_tracks]
         track_paths = [p for _, p in video_tracks]
         vdet_matches = vdets.get(video_id)
         vdet_file = _primary_vdet(video_id, vdet_matches) if vdet_matches else None
         labels: dict[str, str] = dict(layout_fields.get(video_id, {}))
-        for value_map in label_maps:
-            if video_id in value_map:
-                labels.update(value_map[video_id])
+        origins = {name: f"path field {{{name}}}" for name in labels}
+        for table, key_of in joins:
+            key = key_of.get(video_id)
+            if key is None:
+                continue
+            labels.update(table.values[key])
+            origins.update({tag: f"{table.origin} = {key}" for tag in table.values[key]})
         entries.append(
             VideoEntry(
                 video_id=video_id,
@@ -333,6 +483,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
                     has_annotation=vdet_file is not None or bool(track_paths),
                 ),
                 labels=labels,
+                label_origins=origins,
                 row_id=row_id,
             )
         )

@@ -14,6 +14,7 @@ users load configs via the file picker or save their own.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -28,6 +29,9 @@ from annie.dataset.sources import (
     SourceRegistry,
 )
 from annie.parsers.csvmeta import read_rows
+
+_LOG = logging.getLogger(__name__)
+"""Logger for config loading notices."""
 
 
 def repo_data_dir() -> Path:
@@ -103,18 +107,21 @@ def config_name(path: str | Path) -> str:
     return str(data.get("name") or file.stem)
 
 
-def _auto_detect_column_types(csv_path: Path, value_columns: tuple[str, ...]) -> dict[str, str]:
+def _auto_detect_column_types(
+    csv_path: Path, value_columns: tuple[str, ...], sheet: str | None = None
+) -> dict[str, str]:
     """Detect int/float/str for each value column by sampling up to 500 rows.
 
     Args:
-        csv_path: Path to the CSV file.
+        csv_path: Path to the CSV file or workbook.
         value_columns: The columns whose types should be detected.
+        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.
 
     Returns:
         A ``{column: type_str}`` mapping where type is ``"int"``, ``"float"``,
         or ``"str"``.
     """
-    rows = read_rows(csv_path)[:500]
+    rows = read_rows(csv_path, sheet)[:500]
     return {col: detect_type(row.get(col, "") for row in rows) for col in value_columns}
 
 
@@ -150,7 +157,9 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
             if declared_types:
                 column_types = declared_types
             else:
-                column_types = _auto_detect_column_types(resolved, value_columns)
+                column_types = _auto_detect_column_types(
+                    resolved, value_columns, entry.get("sheet")
+                )
             bands = tuple(
                 SegmentationBand(b["name"], b["start_column"], b["end_column"])
                 for b in entry.get("bands", [])
@@ -165,15 +174,28 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
                     column_types=column_types,
                     segment_column=entry.get("segment_column"),
                     bands=bands,
+                    sheet=entry.get("sheet"),
+                    match_field=entry.get("match_field"),
+                    match_substring=bool(entry.get("match_substring", False)),
+                    column_names=dict(entry.get("column_names", {})),
+                    order_column=entry.get("order_column"),
+                    order_descending=bool(entry.get("order_descending", True)),
                 )
             )
         else:
             layout_raw = entry.get("layout")
             layout = (
-                VideoLayout(layout_raw["pattern"], layout_raw.get("id_template"))
+                VideoLayout(layout_raw["pattern"])
                 if layout_raw and kind is SourceKind.VIDEO
                 else None
             )
+            if layout is not None and "id_template" in layout_raw:
+                _LOG.warning(
+                    "Ignoring the removed video id template %r in %s; ids now join the "
+                    "pattern fields with '_'.",
+                    layout_raw["id_template"],
+                    file.name,
+                )
             registry.add(DataSource(kind, resolved, layout=layout))
     db_path: Path | None = None
     if "db" in data:
@@ -224,6 +246,18 @@ def to_config_dict(
             entry["value_columns"] = list(source.value_columns)
             if source.column_types:
                 entry["column_types"] = dict(source.column_types)
+            # Table options are written only when set, so older configs stay unchanged.
+            if source.sheet is not None:
+                entry["sheet"] = source.sheet
+            if source.match_field is not None:
+                entry["match_field"] = source.match_field
+            if source.match_substring:
+                entry["match_substring"] = True
+            if source.column_names:
+                entry["column_names"] = dict(source.column_names)
+            if source.order_column is not None:
+                entry["order_column"] = source.order_column
+                entry["order_descending"] = source.order_descending
             if source.is_segmentation:
                 entry["segment_column"] = source.segment_column
                 entry["bands"] = [
@@ -232,8 +266,6 @@ def to_config_dict(
                 ]
         if source.layout is not None:
             entry["layout"] = {"pattern": source.layout.pattern}
-            if source.layout.id_template is not None:
-                entry["layout"]["id_template"] = source.layout.id_template
         sources.append(entry)
     result: dict = {"name": name, "sources": sources}
     if db_path is not None:

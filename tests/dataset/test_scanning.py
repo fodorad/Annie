@@ -8,7 +8,14 @@ from pathlib import Path
 
 from annie.core.models import VideoEntry
 from annie.dataset.layout import VideoLayout
-from annie.dataset.scanning import ScanResult, build_manifest, resolve_video_stem, scan_dataset
+from annie.dataset.scanning import (
+    ScanResult,
+    build_manifest,
+    join_summary,
+    match_keys,
+    resolve_video_stem,
+    scan_dataset,
+)
 from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry
 from tests.fixtures import (
     write_appledouble_junk,
@@ -17,6 +24,7 @@ from tests.fixtures import (
     write_track,
     write_vdet,
     write_video,
+    write_workbook,
 )
 
 HEURISTIC = "participant_face_track_heuristic.csv"
@@ -256,8 +264,8 @@ class TestNestedLayout(unittest.TestCase):
         return build_manifest(reg)
 
     def test_ids_paths_and_fields_become_labels(self) -> None:
-        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{sub}_{part}"))
-        self.assertEqual([e.video_id for e in result.entries], ["s1_a", "s1_b", "s2_a"])
+        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4"))
+        self.assertEqual([e.video_id for e in result.entries], ["g1_s1_a", "g1_s1_b", "g1_s2_a"])
         first = result.entries[0]
         self.assertEqual(first.video_path, self.root / "g1/s1/clip_a.mp4")
         self.assertEqual(first.labels, {"grp": "g1", "sub": "s1", "part": "a"})
@@ -266,7 +274,7 @@ class TestNestedLayout(unittest.TestCase):
         self.assertEqual(result.layout_collisions, [])
 
     def test_collisions_surface_on_the_result(self) -> None:
-        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{part}"))
+        result = self._scan(VideoLayout("**/clip_{part}.mp4"))
         self.assertEqual(result.layout_collisions, ["a"])  # s1/a and s2/a both map to "a"
         self.assertEqual(sorted(e.video_id for e in result.entries), ["a", "b"])
 
@@ -279,6 +287,124 @@ class TestNestedLayout(unittest.TestCase):
         result = self._scan(None)
         self.assertEqual(result.entries, [])  # videos live in sub-folders only
         self.assertIsNone(result.layout_error)
+
+
+class TestMatchKeys(unittest.TestCase):
+    """Linking table ids to match targets (a video id or a path-field value)."""
+
+    def test_exact_is_the_default(self) -> None:
+        matched, ambiguous = match_keys(["s1"], ["s1", "s1_a"], substring=False)
+        self.assertEqual((matched, ambiguous), ({"s1": "s1"}, set()))
+
+    def test_substring_links_ids_inside_longer_names(self) -> None:
+        matched, ambiguous = match_keys(["4021"], ["rec4021_a", "rec4022_a"], substring=True)
+        self.assertEqual((matched, ambiguous), ({"rec4021_a": "4021"}, set()))
+
+    def test_longest_contained_id_wins_and_is_flagged(self) -> None:
+        matched, ambiguous = match_keys(["40", "4021"], ["x4021"], substring=True)
+        self.assertEqual(matched, {"x4021": "4021"})
+        self.assertEqual(ambiguous, {"x4021"})
+
+    def test_equal_length_tie_goes_to_the_earlier_id(self) -> None:
+        matched, ambiguous = match_keys(["bb", "aa"], ["aa_bb"], substring=True)
+        self.assertEqual((matched, ambiguous), ({"aa_bb": "bb"}, {"aa_bb"}))
+
+
+class TestTableJoins(unittest.TestCase):
+    """Label tables joined on a path field, by substring, renamed, with provenance."""
+
+    def setUp(self) -> None:
+        self.root = Path(tempfile.mkdtemp())
+        for rel in ("4021/clip_a.mp4", "4021/clip_b.mp4", "4022/clip_a.mp4", "9999/clip_a.mp4"):
+            path = self.root / "videos" / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"")
+        self.book = write_workbook(
+            self.root / "intake.xlsx",
+            {
+                "legend": [["code", "meaning"], [1, "yes"]],
+                "visits": [
+                    ["subject", "when", "score"],
+                    [4021.0, "2024-01-01", "low"],
+                    [4021.0, "2024-06-01", "high"],
+                    [4022.0, "2024-02-01", "mid"],
+                ],
+            },
+        )
+
+    def _scan(self, table: DataSource) -> ScanResult:
+        reg = SourceRegistry()
+        layout = VideoLayout("{subject}/clip_{part}.mp4")
+        reg.add(DataSource(SourceKind.VIDEO, self.root / "videos", layout=layout))
+        reg.add(table)
+        return build_manifest(reg)
+
+    def _visits(self, **overrides: object) -> DataSource:
+        options: dict = {
+            "sheet": "visits",
+            "key_column": "subject",
+            "value_columns": ("score",),
+            "match_field": "subject",
+            "order_column": "when",
+        }
+        options.update(overrides)
+        return DataSource(SourceKind.CSV, self.book, **options)
+
+    def test_a_sheet_row_tags_every_video_of_its_subject(self) -> None:
+        by_id = self._scan(self._visits()).by_video_id
+        self.assertEqual(by_id["4021_a"].labels["score"], "high")  # newest row wins
+        self.assertEqual(by_id["4021_b"].labels["score"], "high")
+        self.assertEqual(by_id["4022_a"].labels["score"], "mid")
+        self.assertNotIn("score", by_id["9999_a"].labels)
+
+    def test_ascending_order_keeps_the_oldest_row(self) -> None:
+        by_id = self._scan(self._visits(order_descending=False)).by_video_id
+        self.assertEqual(by_id["4021_a"].labels["score"], "low")
+
+    def test_whole_video_id_matching_finds_nothing_here(self) -> None:
+        by_id = self._scan(self._visits(match_field=None)).by_video_id
+        self.assertNotIn("score", by_id["4021_a"].labels)
+
+    def test_substring_matching_on_the_video_id(self) -> None:
+        by_id = self._scan(self._visits(match_field=None, match_substring=True)).by_video_id
+        self.assertEqual(by_id["4021_b"].labels["score"], "high")
+
+    def test_renamed_tag_and_its_provenance(self) -> None:
+        result = self._scan(self._visits(column_names={"score": "Visit score"}))
+        entry = result.by_video_id["4022_a"]
+        self.assertEqual(entry.labels["Visit score"], "mid")
+        self.assertIn("Visit score", result.label_columns)
+        self.assertEqual(
+            entry.label_origins["Visit score"], "intake.xlsx › visits · subject = 4022"
+        )
+        self.assertEqual(entry.label_origins["part"], "path field {part}")
+
+    def test_column_types_follow_the_tag_name(self) -> None:
+        result = self._scan(
+            self._visits(column_names={"score": "Visit score"}, column_types={"score": "str"})
+        )
+        self.assertEqual(result.label_column_types["Visit score"], "str")
+
+
+class TestJoinSummary(unittest.TestCase):
+    """The numbers the table dialog shows while the user picks how to join."""
+
+    def test_counts_videos_ids_and_ambiguity(self) -> None:
+        targets = {"4021_a": "4021", "4021_b": "4021", "4022_a": "4022", "9999_a": "9999"}
+        summary = join_summary(["4021", "4022", "5000"], targets, substring=False)
+        self.assertEqual(
+            (summary.videos_matched, summary.videos_total, summary.keys_used, summary.keys_total),
+            (3, 4, 2, 3),
+        )
+        self.assertEqual(summary.ambiguous, 0)
+
+    def test_ambiguous_videos_are_counted(self) -> None:
+        summary = join_summary(["40", "4021"], {"x4021": "x4021", "y40": "y40"}, substring=True)
+        self.assertEqual((summary.videos_matched, summary.ambiguous), (2, 1))
+
+    def test_videos_without_a_target_count_as_unmatched(self) -> None:
+        summary = join_summary(["a"], {"v1": "a", "v2": ""}, substring=False)
+        self.assertEqual((summary.videos_matched, summary.videos_total), (1, 2))
 
 
 if __name__ == "__main__":

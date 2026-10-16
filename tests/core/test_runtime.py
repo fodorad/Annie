@@ -340,4 +340,6 @@ class TestExamples(unittest.TestCase):
         data = Path(__file__).resolve().parents[2] / "data"
         self.assertTrue(runtime.examples_installed(data))
         for folder in data.iterdir():
+            if folder.name.startswith("."):  # OS junk (e.g. Finder's .DS_Store), never tracked
+                continue
             self.assertIn(folder.name, runtime.EXAMPLE_FOLDERS)

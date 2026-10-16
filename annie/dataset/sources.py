@@ -90,7 +90,7 @@ KIND_LABELS: dict[SourceKind, str] = {
     SourceKind.VIDEO: "Videos folder",
     SourceKind.VDET: "Vdet folder",
     SourceKind.TRACK: "Track folder",
-    SourceKind.CSV: "CSV file",
+    SourceKind.CSV: "Table (CSV / Excel)",
 }
 """Short human label per kind, for the Dataset source list and the add menu."""
 
@@ -131,6 +131,18 @@ class DataSource:
         layout: For a :attr:`SourceKind.VIDEO` folder, an optional nested
             :class:`~annie.dataset.layout.VideoLayout`. ``None`` means a flat folder
             (one video per file, id = file stem).
+        sheet: For a table that is an Excel workbook, the worksheet it reads.
+            ``None`` for a CSV.
+        match_field: For a label table, the nested-layout path field (e.g.
+            ``"subject"``) its key column matches; ``None`` matches the whole video id.
+        match_substring: For a label table, link a row to every video whose match
+            target *contains* the key instead of equalling it.
+        column_names: For a label table, the short tag name shown for a value column;
+            columns absent here keep their header as the name.
+        order_column: For a label table whose key repeats, the column whose order
+            decides which row counts (e.g. a timestamp). ``None`` when keys are unique.
+        order_descending: Direction for ``order_column``; ``True`` keeps the largest /
+            newest row.
     """
 
     kind: SourceKind
@@ -142,6 +154,12 @@ class DataSource:
     segment_column: str | None = None
     bands: tuple[SegmentationBand, ...] = ()
     layout: VideoLayout | None = None
+    sheet: str | None = None
+    match_field: str | None = None
+    match_substring: bool = False
+    column_names: dict[str, str] = field(default_factory=dict)
+    order_column: str | None = None
+    order_descending: bool = True
 
     @property
     def is_folder(self) -> bool:
@@ -171,8 +189,12 @@ class DataSource:
                 return "Protagonist file"
             if self.is_segmentation:
                 return "Segmentation file"
-            return "Label file"
+            return f"Label sheet: {self.sheet}" if self.sheet else "Label file"
         return KIND_LABELS[self.kind]
+
+    def tag_name(self, column: str) -> str:
+        """The tag / filter name shown for one of this table's value columns."""
+        return self.column_names.get(column) or column
 
     def count(self) -> int:
         """Count the items the source contributes (cheap; no matching).
@@ -192,7 +214,7 @@ class DataSource:
         if self.kind is SourceKind.TRACK:
             tracks = self.path.glob(TRACK_GLOB)
             return sum(1 for p in tracks if p.is_file() and not _is_junk(p.name))
-        return count_rows(self.path)
+        return count_rows(self.path, self.sheet)
 
 
 def _count_suffixes(directory: Path, suffixes: tuple[str, ...]) -> int:
