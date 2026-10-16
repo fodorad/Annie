@@ -41,6 +41,7 @@ from annie.media.decode import media_available, video_metadata
 from annie.media.preview import report_decode_failure
 from annie.pages import download, timeline, videoclock
 from annie.pages.timeline_view import TimelineView
+from annie.parsers.csvmeta import short_name
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -326,8 +327,13 @@ def _toolbar(state_: _EventState, entries: list[VideoEntry]) -> None:
         ui.label(f"video {state_.index + 1} / {len(entries)} — {state_.video_id}").classes(
             "text-sm font-medium"
         )
-        for value in _layout_badges(entries[state_.index]):
+        entry = entries[state_.index]
+        for value in _layout_badges(entry):
             ui.badge(value).props("outline")
+        for text, hint in _label_badges(entry):
+            badge = ui.badge(text, color=theme.LABEL_COLOR)
+            if hint:
+                badge.tooltip(hint)
         ui.button(icon="chevron_right", on_click=lambda: _step_video(state_, 1)).props(
             "flat round"
         ).tooltip("Next video")
@@ -1656,6 +1662,27 @@ def _layout_badges(entry: VideoEntry) -> list[str]:
     if video is None or video.layout is None:
         return []
     return [entry.labels[name] for name in video.layout.field_names() if name in entry.labels]
+
+
+def _label_badges(entry: VideoEntry) -> list[tuple[str, str]]:
+    """The loaded label tags of ``entry`` as ``(text, tooltip)``, like Browse shows.
+
+    Path fields are left out (they are the outline badges) and empty values skipped. A long
+    value is shortened in the badge; the tooltip then carries it in full, followed by the
+    origin (which file, sheet and row it came from).
+    """
+    scan = state.scan
+    video = state.registry.video
+    path_fields = set(video.layout.field_names()) if video and video.layout else set()
+    badges: list[tuple[str, str]] = []
+    for column in scan.label_columns if scan is not None else []:
+        value = entry.labels.get(column, "")
+        if column in path_fields or not value:
+            continue
+        shown = short_name(value)
+        hints = [value if shown != value else "", entry.label_origins.get(column, "")]
+        badges.append((f"{column}: {shown}", " · ".join(h for h in hints if h)))
+    return badges
 
 
 def _meta_by_video(events: list[EventRecord]) -> dict[str, dict[str, str]]:
