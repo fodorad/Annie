@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.17.0](https://github.com/fodorad/Annie/compare/v1.16.0...v1.17.0) (2026-10-16)
+
+
+### Features
+
+* **dataset:** Excel workbook label sources joined on path fields ([#81](https://github.com/fodorad/Annie/issues/81)) ([921073d](https://github.com/fodorad/Annie/commit/921073ded9d699fceb17ca6f034c4608f7188cb0))
+
 ## [1.16.0](https://github.com/fodorad/Annie/compare/v1.15.0...v1.16.0) (2026-10-13)
 
 
