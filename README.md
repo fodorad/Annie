@@ -59,9 +59,9 @@ See the [playbooks](https://fodorad.github.io/Annie/playbooks/) for screen-by-sc
   filter facets (e.g. `Sentiment: negative`, `Angry: 0.33`). Dataset-agnostic by
   construction.
 - **Nested video layouts** — videos do not have to sit in one flat folder. On the Videos-folder card
-  turn on **Nested layout** and describe where they live with a path template relative to the folder,
-  e.g. `{group}/{subject}/clip_{part}.mp4`, plus an optional video id such as `{subject}_{part}`.
-  Annie scans below the folder, builds a unique id per video, and turns each `{field}` into a Browse
+  turn on **Videos in subfolders** and describe where they live with a pattern relative to the folder,
+  e.g. `Recordings/{subject}/clip_{part}.mp4`. Annie scans below the folder, joins the `{field}`
+  values into the video id (`4021_a`), and turns each `{field}` into a Browse
   tag/filter (and an export column), with a live preview of what was found. The layout is stored in
   your saved config, so it is set up once. Without a layout a flat folder is expected, as before.
 - **Stem matching** — videos pair with vdet/track files by filename stem (exact +

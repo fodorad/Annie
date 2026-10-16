@@ -692,12 +692,11 @@ class LayoutCommit:
     error: str | None = None
 
 
-def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
-    """Build and validate a :class:`VideoLayout` from the Layout text boxes.
+def layout_from_input(pattern: str) -> VideoLayout:
+    """Build and validate a :class:`VideoLayout` from the Pattern box.
 
     Args:
-        pattern: The pattern box (path relative to the root, with ``{field}`` placeholders).
-        id_template: The video-id box; empty means "join the fields with ``_``".
+        pattern: The pattern box (path relative to the folder, with ``{field}`` placeholders).
 
     Returns:
         The validated layout.
@@ -705,73 +704,65 @@ def layout_from_inputs(pattern: str, id_template: str) -> VideoLayout:
     Raises:
         ValueError: With a user-readable message if the layout is unusable.
     """
-    layout = VideoLayout(pattern.strip(), id_template.strip() or None)
+    layout = VideoLayout(pattern.strip())
     layout.validate()
     return layout
 
 
-def layout_commit(pattern: str, id_template: str, current: VideoLayout | None) -> LayoutCommit:
-    """Decide what to do when a Layout box is committed (blur / Enter).
+def layout_commit(pattern: str, current: VideoLayout | None) -> LayoutCommit:
+    """Decide what to do when the Pattern box is committed (blur / Enter).
 
     Args:
         pattern: The pattern box text.
-        id_template: The video-id box text.
         current: The layout already applied to the source, if any.
 
     Returns:
         ``LayoutCommit(layout=...)`` to apply a new valid layout; ``LayoutCommit(error=...)``
-        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the boxes
-        still describe the applied layout, or the pattern is still empty (nothing to do yet).
+        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the box
+        still describes the applied layout, or is still empty (nothing to do yet).
     """
     if not pattern.strip():
         return LayoutCommit()
     try:
-        candidate = layout_from_inputs(pattern, id_template)
+        candidate = layout_from_input(pattern)
     except ValueError as exc:
         return LayoutCommit(error=str(exc))
     return LayoutCommit() if candidate == current else LayoutCommit(layout=candidate)
 
 
 def _layout_editor(source: DataSource) -> None:
-    """The Layout control on the Videos-folder card: flat folder, or a nested path template.
+    """The Layout control on the Videos-folder card: flat folder, or a nested path pattern.
 
-    There is no Preview/Apply button: committing either box (blur or Enter) validates the
-    layout, applies it, and rescans, and the result line under the card is the preview.
+    There is no Preview/Apply button: committing the pattern (blur or Enter) validates it,
+    applies it, and rescans, and the result line under the card is the preview.
     """
     layout = source.layout
-    nested = ui.switch("Nested layout", value=layout is not None).tooltip(
-        "Off: one video per .mp4 directly in this folder. On: describe where videos sit below it."
+    nested = ui.switch("Videos in subfolders", value=layout is not None).tooltip(
+        "Off: the .mp4 files directly in this folder, id = file name. "
+        "On: a pattern finds the videos anywhere below this folder."
     )
     with ui.column().classes("w-full gap-1").bind_visibility_from(nested, "value"):
         pattern = (
-            ui.input(
-                "Pattern — path of each video relative to this folder",
-                value=layout.pattern if layout else "",
+            ui.input("Pattern, relative to this folder", value=layout.pattern if layout else "")
+            .props('hint="e.g. Recordings/{subject}/clip_{part}.mp4"')
+            .classes("w-full")
+            .tooltip(
+                "Type folder and file names as they are; {name} stands for the part that "
+                "varies and becomes a Browse tag. The video id joins the {name} values "
+                "with _ (e.g. 4021_a). Press Enter to apply."
             )
-            .props('hint="e.g. {group}/{subject}/clip_{part}.mp4"')
-            .classes("w-full")
         )
-        id_template = (
-            ui.input("Video id (optional)", value=(layout.id_template or "") if layout else "")
-            .props('hint="e.g. {subject}_{part} — empty joins all fields with _"')
-            .classes("w-full")
-        )
-        ui.label(
-            "{name} captures part of a path or file name; each captured field becomes a Browse "
-            "tag/filter. The video id must be unique. Press Enter or click away to apply."
-        ).classes("text-xs").style(f"color:{theme.NEUTRAL}")
         error = ui.label().classes("text-xs break-words").style(f"color:{theme.UNAVAILABLE}")
 
         async def _commit() -> None:
-            outcome = layout_commit(pattern.value or "", id_template.value or "", source.layout)
+            outcome = layout_commit(pattern.value or "", source.layout)
             error.set_text(outcome.error or "")
             if outcome.layout is not None:
                 source.layout = outcome.layout
                 await _apply_changes()
 
-        for box in (pattern, id_template):
-            box.on("blur", _commit)
-            box.on("keydown.enter", _commit)
+        pattern.on("blur", _commit)
+        pattern.on("keydown.enter", _commit)
 
     async def _toggle(event: ValueChangeEventArguments) -> None:
         if not event.value and source.layout is not None:  # back to a flat folder
@@ -829,7 +820,7 @@ def _layout_notice(source: DataSource) -> None:
     ):
         ui.label(
             "No videos directly in this folder, but it contains nested videos. "
-            "Turn on Nested layout to describe where they are."
+            "Turn on Videos in subfolders to describe where they are."
         ).classes("text-xs").style(f"color:{theme.WARNING}")
 
 

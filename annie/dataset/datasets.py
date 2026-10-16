@@ -14,6 +14,7 @@ users load configs via the file picker or save their own.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -28,6 +29,9 @@ from annie.dataset.sources import (
     SourceRegistry,
 )
 from annie.parsers.csvmeta import read_rows
+
+_LOG = logging.getLogger(__name__)
+"""Logger for config loading notices."""
 
 
 def repo_data_dir() -> Path:
@@ -181,10 +185,17 @@ def load_config(path: str | Path) -> tuple[str, SourceRegistry, Path | None]:
         else:
             layout_raw = entry.get("layout")
             layout = (
-                VideoLayout(layout_raw["pattern"], layout_raw.get("id_template"))
+                VideoLayout(layout_raw["pattern"])
                 if layout_raw and kind is SourceKind.VIDEO
                 else None
             )
+            if layout is not None and "id_template" in layout_raw:
+                _LOG.warning(
+                    "Ignoring the removed video id template %r in %s; ids now join the "
+                    "pattern fields with '_'.",
+                    layout_raw["id_template"],
+                    file.name,
+                )
             registry.add(DataSource(kind, resolved, layout=layout))
     db_path: Path | None = None
     if "db" in data:
@@ -255,8 +266,6 @@ def to_config_dict(
                 ]
         if source.layout is not None:
             entry["layout"] = {"pattern": source.layout.pattern}
-            if source.layout.id_template is not None:
-                entry["layout"]["id_template"] = source.layout.id_template
         sources.append(entry)
     result: dict = {"name": name, "sources": sources}
     if db_path is not None:

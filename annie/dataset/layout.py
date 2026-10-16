@@ -2,10 +2,9 @@
 
 A flat folder needs no layout — one video per file, id = file stem. Real datasets are often
 nested (``<root>/<group>/<subject>/clip_<part>.mp4``), where the file stem alone is neither
-unique nor informative. A :class:`VideoLayout` describes such a tree once:
-
-    pattern     ``{group}/{subject}/clip_{part}.mp4``   (path relative to the root)
-    id_template ``{subject}_{part}``                    (how the unique video id is built)
+unique nor informative. A :class:`VideoLayout` describes such a tree once with a pattern
+relative to the root, e.g. ``{group}/{subject}/clip_{part}.mp4``; the video id joins the
+captured fields with ``_`` (``g1_s1_a``).
 
 ``{name}`` captures one path segment, or part of a file name when mixed with literal text;
 ``**`` matches any number of directories. The captured fields become the video's labels, so
@@ -66,7 +65,7 @@ class DiscoveredVideo:
 
     Attributes:
         path: Absolute path of the file.
-        video_id: The unique id built from the id template.
+        video_id: The captured fields joined with ``_`` in pattern order.
         fields: The captured template fields, e.g. ``{"subject": "s1", "part": "x"}``.
     """
 
@@ -108,12 +107,9 @@ class VideoLayout:
 
     Attributes:
         pattern: Path of the videos relative to the root, with ``{field}`` placeholders.
-        id_template: Template for the unique video id, using the same fields. ``None``
-            joins every field with ``_`` in pattern order.
     """
 
     pattern: str
-    id_template: str | None = None
 
     def field_names(self) -> list[str]:
         """The pattern's field names in order of appearance (unique)."""
@@ -124,7 +120,7 @@ class VideoLayout:
 
         Raises:
             ValueError: If the pattern is empty, absolute, climbs out of the root (``..``),
-                repeats a field, has no fields, or the id template uses an unknown field.
+                repeats a field, or has no fields.
         """
         pattern = self.pattern.strip()
         if not pattern:
@@ -136,14 +132,6 @@ class VideoLayout:
             raise ValueError("The pattern needs at least one {field} placeholder.")
         if len(names) != len(set(names)):
             raise ValueError("Each {field} may appear only once in the pattern.")
-        if self.id_template is not None:
-            unknown = set(_FIELD.findall(self.id_template)) - set(names)
-            if unknown:
-                raise ValueError(
-                    f"The video id uses unknown field(s): {', '.join(sorted(unknown))}."
-                )
-            if not _FIELD.search(self.id_template):
-                raise ValueError("The video id template needs at least one {field}.")
 
     def _regex(self) -> re.Pattern[str]:
         """Compile the pattern to an anchored regex over the posix relative path."""
@@ -168,10 +156,8 @@ class VideoLayout:
         return found.groupdict() if found else None
 
     def video_id(self, fields: Mapping[str, str]) -> str:
-        """Build the video id for a match's ``fields``."""
-        if self.id_template is None:
-            return "_".join(fields[name] for name in self.field_names())
-        return _FIELD.sub(lambda m: fields[m.group(1)], self.id_template)
+        """Build the video id for a match's ``fields``: the values joined with ``_``."""
+        return "_".join(fields[name] for name in self.field_names())
 
     def discover(self, root: Path) -> DiscoveryReport:
         """Scan ``root`` recursively for files matching the pattern.

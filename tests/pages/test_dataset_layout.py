@@ -9,41 +9,36 @@ from annie.core.models import VideoEntry
 from annie.dataset.layout import VideoLayout
 from annie.dataset.scanning import ScanResult
 from annie.dataset.sources import DataSource, SourceKind
-from annie.pages.dataset import LayoutCommit, layout_commit, layout_from_inputs, layout_summary
+from annie.pages.dataset import LayoutCommit, layout_commit, layout_from_input, layout_summary
 
 
-class TestLayoutFromInputs(unittest.TestCase):
-    def test_trims_and_maps_empty_id_to_default(self) -> None:
-        layout = layout_from_inputs("  {a}/clip_{b}.mp4 ", "   ")
-        self.assertEqual(layout.pattern, "{a}/clip_{b}.mp4")
-        self.assertIsNone(layout.id_template)
-
-    def test_keeps_a_custom_id_template(self) -> None:
-        self.assertEqual(layout_from_inputs("{a}/{b}.mp4", " {b}_{a} ").id_template, "{b}_{a}")
+class TestLayoutFromInput(unittest.TestCase):
+    def test_trims_the_pattern(self) -> None:
+        self.assertEqual(layout_from_input("  {a}/clip_{b}.mp4 ").pattern, "{a}/clip_{b}.mp4")
 
     def test_invalid_input_raises_a_readable_error(self) -> None:
-        for pattern, ident in (("", ""), ("plain.mp4", ""), ("{a}.mp4", "{x}")):
+        for pattern in ("", "plain.mp4", "{a}/{a}.mp4"):
             with self.assertRaises(ValueError):
-                layout_from_inputs(pattern, ident)
+                layout_from_input(pattern)
 
 
 class TestLayoutCommit(unittest.TestCase):
     def test_valid_new_layout_is_applied(self) -> None:
-        outcome = layout_commit("{a}/clip_{b}.mp4", "", None)
+        outcome = layout_commit("{a}/clip_{b}.mp4", None)
         self.assertEqual(outcome.layout, VideoLayout("{a}/clip_{b}.mp4"))
         self.assertIsNone(outcome.error)
 
     def test_unchanged_layout_does_nothing(self) -> None:
-        current = VideoLayout("{a}.mp4", "{a}")
-        self.assertEqual(layout_commit(" {a}.mp4 ", " {a} ", current), LayoutCommit())
+        current = VideoLayout("{a}.mp4")
+        self.assertEqual(layout_commit(" {a}.mp4 ", current), LayoutCommit())
 
     def test_invalid_layout_reports_and_applies_nothing(self) -> None:
-        outcome = layout_commit("plain.mp4", "", None)
+        outcome = layout_commit("plain.mp4", None)
         self.assertIsNone(outcome.layout)
         self.assertIn("placeholder", outcome.error or "")
 
     def test_empty_pattern_is_not_an_error_yet(self) -> None:
-        self.assertEqual(layout_commit("  ", "", None), LayoutCommit())
+        self.assertEqual(layout_commit("  ", None), LayoutCommit())
 
 
 class TestLayoutSummary(unittest.TestCase):

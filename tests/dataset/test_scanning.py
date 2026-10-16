@@ -264,8 +264,8 @@ class TestNestedLayout(unittest.TestCase):
         return build_manifest(reg)
 
     def test_ids_paths_and_fields_become_labels(self) -> None:
-        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{sub}_{part}"))
-        self.assertEqual([e.video_id for e in result.entries], ["s1_a", "s1_b", "s2_a"])
+        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4"))
+        self.assertEqual([e.video_id for e in result.entries], ["g1_s1_a", "g1_s1_b", "g1_s2_a"])
         first = result.entries[0]
         self.assertEqual(first.video_path, self.root / "g1/s1/clip_a.mp4")
         self.assertEqual(first.labels, {"grp": "g1", "sub": "s1", "part": "a"})
@@ -274,7 +274,7 @@ class TestNestedLayout(unittest.TestCase):
         self.assertEqual(result.layout_collisions, [])
 
     def test_collisions_surface_on_the_result(self) -> None:
-        result = self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4", "{part}"))
+        result = self._scan(VideoLayout("**/clip_{part}.mp4"))
         self.assertEqual(result.layout_collisions, ["a"])  # s1/a and s2/a both map to "a"
         self.assertEqual(sorted(e.video_id for e in result.entries), ["a", "b"])
 

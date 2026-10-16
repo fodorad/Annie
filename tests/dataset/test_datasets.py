@@ -322,7 +322,7 @@ class TestLayoutConfig(unittest.TestCase):
 
     def test_layout_round_trips(self) -> None:
         reg = SourceRegistry()
-        layout = VideoLayout("{grp}/clip_{part}.mp4", "{grp}-{part}")
+        layout = VideoLayout("{grp}/clip_{part}.mp4")
         reg.add(DataSource(SourceKind.VIDEO, self.tmp / "root", layout=layout))
         path = datasets.save_config(self.tmp / "c.json", reg, "n")
         _, loaded, _ = datasets.load_config(path)
@@ -339,12 +339,22 @@ class TestLayoutConfig(unittest.TestCase):
         assert loaded.video is not None
         self.assertIsNone(loaded.video.layout)
 
-    def test_pattern_only_layout_omits_id_template(self) -> None:
+    def test_layout_saves_only_the_pattern(self) -> None:
         reg = SourceRegistry()
         reg.add(DataSource(SourceKind.VIDEO, self.tmp, layout=VideoLayout("{a}.mp4")))
         self.assertEqual(
             datasets.to_config_dict(reg, "n")["sources"][0]["layout"], {"pattern": "{a}.mp4"}
         )
+
+    def test_old_id_template_is_ignored_with_a_warning(self) -> None:
+        layout = {"pattern": "{a}/{b}.mp4", "id_template": "{b}"}
+        config = {"name": "n", "sources": [{"kind": "video", "path": ".", "layout": layout}]}
+        (self.tmp / "old.json").write_text(json.dumps(config), encoding="utf-8")
+        with self.assertLogs("annie.dataset.datasets", level="WARNING") as logs:
+            _, loaded, _ = datasets.load_config(self.tmp / "old.json")
+        assert loaded.video is not None
+        self.assertEqual(loaded.video.layout, VideoLayout("{a}/{b}.mp4"))
+        self.assertIn("id template", logs.output[0])
 
     def test_source_count_uses_the_layout(self) -> None:
         (self.tmp / "g").mkdir()
