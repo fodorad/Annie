@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -321,13 +322,16 @@
 <span class="sd">* A ``.vdet`` matches by exact stem; a ``__track{N}.csv`` matches by the part</span>
 <span class="sd">  before ``__track``. Both fall back to a longest-stem-first prefix scan only on</span>
 <span class="sd">  a miss.</span>
-<span class="sd">* A label/protagonist CSV row matches a video by exact key-column value.</span>
+<span class="sd">* A label/protagonist table row matches a video by exact key-column value — or, for a</span>
+<span class="sd">  label table, by a nested-layout path field (``match_field``) and optionally by</span>
+<span class="sd">  substring (``match_substring``, see :func:`match_keys`).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">NO_ACTIVE_TRACK</span><span class="p">,</span> <span class="n">RowStatus</span><span class="p">,</span> <span class="n">VideoEntry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -339,12 +343,27 @@
     <span class="n">SourceRegistry</span><span class="p">,</span>
     <span class="n">_is_junk</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_value_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_value_map</span><span class="p">,</span> <span class="n">short_name</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span> <span class="n">resolved_mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.track</span><span class="w"> </span><span class="kn">import</span> <span class="n">track_id_from_name</span>
 
-<span class="c1">#: A label source's value map: ``video_id -&gt; {column: value}``.</span>
-<span class="n">_LabelMap</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_LabelTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One loaded label table, ready to join.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        source: The configured source.</span>
+<span class="sd">        values: Key to ``{tag name: value}`` (winning row per key).</span>
+<span class="sd">        origin: Provenance prefix, e.g. ``"intake.xlsx › visits · subject"``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+    <span class="n">origin</span><span class="p">:</span> <span class="nb">str</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_iter_files</span><span class="p">(</span>
@@ -536,19 +555,154 @@
     <span class="k">return</span> <span class="n">resolved_mapping</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_label_maps</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">_LabelMap</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Load each label source's value map; return ``(maps, ordered_columns)``."""</span>
-    <span class="n">maps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_LabelMap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_label_tables</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">_LabelTable</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Load each label table, values keyed by tag name; return ``(tables, ordered_tags)``."""</span>
+    <span class="n">tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_LabelTable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">value_map</span> <span class="o">=</span> <span class="n">load_value_map</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">)</span>
-        <span class="n">maps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value_map</span><span class="p">)</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">load_value_map</span><span class="p">(</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">,</span>
+            <span class="n">sheet</span><span class="o">=</span><span class="n">source</span><span class="o">.</span><span class="n">sheet</span><span class="p">,</span>
+            <span class="n">order_column</span><span class="o">=</span><span class="n">source</span><span class="o">.</span><span class="n">order_column</span><span class="p">,</span>
+            <span class="n">descending</span><span class="o">=</span><span class="n">source</span><span class="o">.</span><span class="n">order_descending</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="p">{</span><span class="n">source</span><span class="o">.</span><span class="n">tag_name</span><span class="p">(</span><span class="n">col</span><span class="p">):</span> <span class="n">value</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> › </span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">sheet</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">sheet</span> <span class="k">else</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_LabelTable</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2"> · </span><span class="si">{</span><span class="n">short_name</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
-                <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">maps</span><span class="p">,</span> <span class="n">columns</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">tag_name</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+                <span class="n">tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">tag_name</span><span class="p">(</span><span class="n">col</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">tables</span><span class="p">,</span> <span class="n">tags</span>
+
+
+<div class="viewcode-block" id="match_keys">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.match_keys">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">match_keys</span><span class="p">(</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">substring</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Link table keys to match targets (video ids or path-field values).</span>
+
+<span class="sd">    Exact matching (the default) is a set lookup. With ``substring`` a target links to</span>
+<span class="sd">    a key it *contains*: keys are grouped by length and each target is slid over once</span>
+<span class="sd">    per distinct key length, so the cost stays near-linear rather than keys × targets.</span>
+<span class="sd">    When a target contains several keys the **longest** wins; an equal-length tie goes</span>
+<span class="sd">    to the key that comes first in ``keys`` (the table's winning-row order). Such</span>
+<span class="sd">    targets are reported as ambiguous.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        keys: The table's keys, in priority order.</span>
+<span class="sd">        targets: The strings to link.</span>
+<span class="sd">        substring: Match keys contained in a target instead of equal to it.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(target -&gt; key, ambiguous targets)``; unmatched targets are absent.</span>
+<span class="sd">    """</span>
+    <span class="n">ordered</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">substring</span><span class="p">:</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ordered</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">targets</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">known</span><span class="p">},</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ordered</span><span class="p">)}</span>
+    <span class="n">by_length</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
+        <span class="n">by_length</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">by_length</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">matched</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ambiguous</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+        <span class="n">found</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">length</span> <span class="ow">in</span> <span class="n">lengths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">windows</span> <span class="o">=</span> <span class="p">{</span><span class="n">target</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">length</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">-</span> <span class="n">length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)}</span>
+            <span class="n">hits</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">windows</span> <span class="o">&amp;</span> <span class="n">by_length</span><span class="p">[</span><span class="n">length</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="n">rank</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">)</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span>  <span class="c1"># the winner is already fixed; one more hit proves ambiguity</span>
+        <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
+            <span class="n">matched</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">found</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">ambiguous</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">matched</span><span class="p">,</span> <span class="n">ambiguous</span></div>
+
+
+
+<div class="viewcode-block" id="JoinSummary">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.JoinSummary">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">JoinSummary</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""How well a table's keys link to the videos (shown while configuring a table).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        videos_matched: Videos that get a row.</span>
+<span class="sd">        videos_total: All videos considered.</span>
+<span class="sd">        keys_used: Distinct keys that link to at least one video.</span>
+<span class="sd">        keys_total: Distinct non-empty keys in the table.</span>
+<span class="sd">        ambiguous: Matched videos whose target contained more than one key.</span>
+<span class="sd">    """</span>
+
+    <span class="n">videos_matched</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">videos_total</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">keys_used</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">keys_total</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">ambiguous</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="join_summary">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/scanning/index.html#annie.dataset.scanning.join_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">join_summary</span><span class="p">(</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">video_targets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">substring</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JoinSummary</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Summarise a prospective join for the table dialog.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        keys: The table's keys in priority order (see :func:`match_keys`).</span>
+<span class="sd">        video_targets: Video id to the string its key must match (the id itself or a</span>
+<span class="sd">            path-field value); an empty string means the video has no target.</span>
+<span class="sd">        substring: Whether keys match by substring.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`JoinSummary`.</span>
+<span class="sd">    """</span>
+    <span class="n">distinct</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="k">if</span> <span class="n">key</span><span class="p">]</span>
+    <span class="n">matched</span><span class="p">,</span> <span class="n">ambiguous</span> <span class="o">=</span> <span class="n">match_keys</span><span class="p">(</span>
+        <span class="n">distinct</span><span class="p">,</span> <span class="p">{</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">video_targets</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span><span class="p">},</span> <span class="n">substring</span><span class="o">=</span><span class="n">substring</span>
+    <span class="p">)</span>
+    <span class="n">linked</span> <span class="o">=</span> <span class="p">[</span><span class="n">vid</span> <span class="k">for</span> <span class="n">vid</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">video_targets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">matched</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">JoinSummary</span><span class="p">(</span>
+        <span class="n">videos_matched</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">linked</span><span class="p">),</span>
+        <span class="n">videos_total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">video_targets</span><span class="p">),</span>
+        <span class="n">keys_used</span><span class="o">=</span><span class="nb">len</span><span class="p">({</span><span class="n">matched</span><span class="p">[</span><span class="n">video_targets</span><span class="p">[</span><span class="n">vid</span><span class="p">]]</span> <span class="k">for</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">linked</span><span class="p">}),</span>
+        <span class="n">keys_total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">distinct</span><span class="p">),</span>
+        <span class="n">ambiguous</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">linked</span> <span class="k">if</span> <span class="n">video_targets</span><span class="p">[</span><span class="n">vid</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ambiguous</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_key_by_video</span><span class="p">(</span>
+    <span class="n">table</span><span class="p">:</span> <span class="n">_LabelTable</span><span class="p">,</span> <span class="n">video_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">layout_fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map each video id to the table key it joins to (absent when none)."""</span>
+    <span class="n">field_name</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">match_field</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">video_id</span><span class="p">:</span> <span class="n">video_id</span>
+        <span class="k">if</span> <span class="n">field_name</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="n">layout_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">video_ids</span>
+    <span class="p">}</span>
+    <span class="n">matched</span><span class="p">,</span> <span class="n">_ambiguous</span> <span class="o">=</span> <span class="n">match_keys</span><span class="p">(</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">{</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span><span class="p">},</span>
+        <span class="n">substring</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">match_substring</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">vid</span><span class="p">:</span> <span class="n">matched</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">vid</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">and</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">matched</span><span class="p">}</span>
 
 
 <div class="viewcode-block" id="build_manifest">
@@ -616,7 +770,7 @@
         <span class="n">num_track_files</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="n">active</span> <span class="o">=</span> <span class="n">_active_mapping</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">protagonist</span><span class="p">)</span>
-    <span class="n">label_maps</span><span class="p">,</span> <span class="n">label_columns</span> <span class="o">=</span> <span class="n">_label_maps</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">label_sources</span><span class="p">)</span>
+    <span class="n">label_tables</span><span class="p">,</span> <span class="n">label_columns</span> <span class="o">=</span> <span class="n">_label_tables</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">label_sources</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">fields</span> <span class="ow">in</span> <span class="n">layout_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>  <span class="c1"># path-derived fields are tags/filters too</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">label_columns</span><span class="p">:</span>
@@ -624,21 +778,27 @@
     <span class="n">label_column_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">label_sources</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
-            <span class="n">label_column_types</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">column_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">"str"</span><span class="p">)</span>
+            <span class="n">label_column_types</span><span class="p">[</span><span class="n">source</span><span class="o">.</span><span class="n">tag_name</span><span class="p">(</span><span class="n">column</span><span class="p">)]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">column_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">"str"</span><span class="p">)</span>
 
+    <span class="n">video_ids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">videos</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">vdets</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">tracks</span><span class="p">))</span>
+    <span class="n">joins</span> <span class="o">=</span> <span class="p">[(</span><span class="n">table</span><span class="p">,</span> <span class="n">_key_by_video</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">video_ids</span><span class="p">,</span> <span class="n">layout_fields</span><span class="p">))</span> <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">label_tables</span><span class="p">]</span>
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># Numbered over the full sorted manifest, before any filtering, so a row's id</span>
     <span class="c1"># identifies the sample rather than its position in whatever list is on screen.</span>
-    <span class="k">for</span> <span class="n">row_id</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">videos</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">vdets</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">tracks</span><span class="p">)),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">row_id</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">video_ids</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="n">video_tracks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tracks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">track_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">tid</span> <span class="k">for</span> <span class="n">tid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">video_tracks</span><span class="p">]</span>
         <span class="n">track_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">video_tracks</span><span class="p">]</span>
         <span class="n">vdet_matches</span> <span class="o">=</span> <span class="n">vdets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
         <span class="n">vdet_file</span> <span class="o">=</span> <span class="n">_primary_vdet</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="n">vdet_matches</span><span class="p">)</span> <span class="k">if</span> <span class="n">vdet_matches</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">layout_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="k">for</span> <span class="n">value_map</span> <span class="ow">in</span> <span class="n">label_maps</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">value_map</span><span class="p">:</span>
-                <span class="n">labels</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value_map</span><span class="p">[</span><span class="n">video_id</span><span class="p">])</span>
+        <span class="n">origins</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"path field </span><span class="se">{{</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">key_of</span> <span class="ow">in</span> <span class="n">joins</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key_of</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="n">origins</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">tag</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">table</span><span class="o">.</span><span class="n">origin</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">]})</span>
         <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">VideoEntry</span><span class="p">(</span>
                 <span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">,</span>
@@ -652,6 +812,7 @@
                     <span class="n">has_annotation</span><span class="o">=</span><span class="n">vdet_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="n">track_paths</span><span class="p">),</span>
                 <span class="p">),</span>
                 <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                <span class="n">label_origins</span><span class="o">=</span><span class="n">origins</span><span class="p">,</span>
                 <span class="n">row_id</span><span class="o">=</span><span class="n">row_id</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>

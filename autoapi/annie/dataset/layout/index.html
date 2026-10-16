@@ -268,6 +268,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -317,11 +318,9 @@
 <p>Nested video layouts: find videos below a root with a <code class="docutils literal notranslate"><span class="pre">{field}</span></code> path template (pure).</p>
 <p>A flat folder needs no layout — one video per file, id = file stem. Real datasets are often
 nested (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/&lt;group&gt;/&lt;subject&gt;/clip_&lt;part&gt;.mp4</span></code>), where the file stem alone is neither
-unique nor informative. A <a class="reference internal" href="#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code></a> describes such a tree once:</p>
-<blockquote>
-<div><p>pattern     <code class="docutils literal notranslate"><span class="pre">{group}/{subject}/clip_{part}.mp4</span></code>   (path relative to the root)
-id_template <code class="docutils literal notranslate"><span class="pre">{subject}_{part}</span></code>                    (how the unique video id is built)</p>
-</div></blockquote>
+unique nor informative. A <a class="reference internal" href="#annie.dataset.layout.VideoLayout" title="annie.dataset.layout.VideoLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code></a> describes such a tree once with a pattern
+relative to the root, e.g. <code class="docutils literal notranslate"><span class="pre">{group}/{subject}/clip_{part}.mp4</span></code>; the video id joins the
+captured fields with <code class="docutils literal notranslate"><span class="pre">_</span></code> (<code class="docutils literal notranslate"><span class="pre">g1_s1_a</span></code>).</p>
 <p><code class="docutils literal notranslate"><span class="pre">{name}</span></code> captures one path segment, or part of a file name when mixed with literal text;
 <code class="docutils literal notranslate"><span class="pre">**</span></code> matches any number of directories. The captured fields become the video’s labels, so
 Browse can tag and filter by them. Nothing here knows any particular dataset.</p>
@@ -389,7 +388,7 @@ first hit, so it is cheap on a tree that has videos and only walks fully when it
 <dl class="py attribute">
 <dt class="sig sig-object py" id="annie.dataset.layout.DiscoveredVideo.video_id">
 <span class="sig-name descname"><span class="pre">video_id</span></span><a class="headerlink" href="#annie.dataset.layout.DiscoveredVideo.video_id" title="Link to this definition">¶</a></dt>
-<dd><p>The unique id built from the id template.</p>
+<dd><p>The captured fields joined with <code class="docutils literal notranslate"><span class="pre">_</span></code> in pattern order.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -434,13 +433,6 @@ first hit, so it is cheap on a tree that has videos and only walks fully when it
 <dd><p>Path of the videos relative to the root, with <code class="docutils literal notranslate"><span class="pre">{field}</span></code> placeholders.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.id_template">
-<span class="sig-name descname"><span class="pre">id_template</span></span><a class="headerlink" href="#annie.dataset.layout.VideoLayout.id_template" title="Link to this definition">¶</a></dt>
-<dd><p>Template for the unique video id, using the same fields. <code class="docutils literal notranslate"><span class="pre">None</span></code>
-joins every field with <code class="docutils literal notranslate"><span class="pre">_</span></code> in pattern order.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.field_names">
 <span class="sig-name descname"><span class="pre">field_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.field_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.field_names" title="Link to this definition">¶</a></dt>
@@ -454,7 +446,7 @@ joins every field with <code class="docutils literal notranslate"><span class="p
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – If the pattern is empty, absolute, climbs out of the root (<code class="docutils literal notranslate"><span class="pre">..</span></code>),
-repeats a field, has no fields, or the id template uses an unknown field.</p>
+repeats a field, or has no fields.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -468,7 +460,7 @@ repeats a field, has no fields, or the id template uses an unknown field.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.layout.VideoLayout.video_id">
 <span class="sig-name descname"><span class="pre">video_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/layout.html#VideoLayout.video_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.layout.VideoLayout.video_id" title="Link to this definition">¶</a></dt>
-<dd><p>Build the video id for a match’s <code class="docutils literal notranslate"><span class="pre">fields</span></code>.</p>
+<dd><p>Build the video id for a match’s <code class="docutils literal notranslate"><span class="pre">fields</span></code>: the values joined with <code class="docutils literal notranslate"><span class="pre">_</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -568,7 +560,6 @@ repeats a field, has no fields, or the id template uses an unknown field.</p>
 </li>
 <li><a class="reference internal" href="#annie.dataset.layout.VideoLayout"><code class="docutils literal notranslate"><span class="pre">VideoLayout</span></code></a><ul>
 <li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.pattern"><code class="docutils literal notranslate"><span class="pre">VideoLayout.pattern</span></code></a></li>
-<li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.id_template"><code class="docutils literal notranslate"><span class="pre">VideoLayout.id_template</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.field_names"><code class="docutils literal notranslate"><span class="pre">VideoLayout.field_names()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.validate"><code class="docutils literal notranslate"><span class="pre">VideoLayout.validate()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.layout.VideoLayout.match"><code class="docutils literal notranslate"><span class="pre">VideoLayout.match()</span></code></a></li>

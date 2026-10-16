@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -407,7 +408,7 @@
     <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span> <span class="s2">"Videos folder"</span><span class="p">,</span>
     <span class="n">SourceKind</span><span class="o">.</span><span class="n">VDET</span><span class="p">:</span> <span class="s2">"Vdet folder"</span><span class="p">,</span>
     <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span> <span class="s2">"Track folder"</span><span class="p">,</span>
-    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span> <span class="s2">"CSV file"</span><span class="p">,</span>
+    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span> <span class="s2">"Table (CSV / Excel)"</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="sd">"""Short human label per kind, for the Dataset source list and the add menu."""</span>
 
@@ -450,6 +451,18 @@
 <span class="sd">        layout: For a :attr:`SourceKind.VIDEO` folder, an optional nested</span>
 <span class="sd">            :class:`~annie.dataset.layout.VideoLayout`. ``None`` means a flat folder</span>
 <span class="sd">            (one video per file, id = file stem).</span>
+<span class="sd">        sheet: For a table that is an Excel workbook, the worksheet it reads.</span>
+<span class="sd">            ``None`` for a CSV.</span>
+<span class="sd">        match_field: For a label table, the nested-layout path field (e.g.</span>
+<span class="sd">            ``"subject"``) its key column matches; ``None`` matches the whole video id.</span>
+<span class="sd">        match_substring: For a label table, link a row to every video whose match</span>
+<span class="sd">            target *contains* the key instead of equalling it.</span>
+<span class="sd">        column_names: For a label table, the short tag name shown for a value column;</span>
+<span class="sd">            columns absent here keep their header as the name.</span>
+<span class="sd">        order_column: For a label table whose key repeats, the column whose order</span>
+<span class="sd">            decides which row counts (e.g. a timestamp). ``None`` when keys are unique.</span>
+<span class="sd">        order_descending: Direction for ``order_column``; ``True`` keeps the largest /</span>
+<span class="sd">            newest row.</span>
 <span class="sd">    """</span>
 
     <span class="n">kind</span><span class="p">:</span> <span class="n">SourceKind</span>
@@ -461,6 +474,12 @@
     <span class="n">segment_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">bands</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SegmentationBand</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">layout</span><span class="p">:</span> <span class="n">VideoLayout</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">match_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">match_substring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">column_names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">order_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">order_descending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -490,8 +509,15 @@
                 <span class="k">return</span> <span class="s2">"Protagonist file"</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_segmentation</span><span class="p">:</span>
                 <span class="k">return</span> <span class="s2">"Segmentation file"</span>
-            <span class="k">return</span> <span class="s2">"Label file"</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"Label sheet: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sheet</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sheet</span> <span class="k">else</span> <span class="s2">"Label file"</span>
         <span class="k">return</span> <span class="n">KIND_LABELS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DataSource.tag_name">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.DataSource.tag_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tag_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The tag / filter name shown for one of this table's value columns."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="ow">or</span> <span class="n">column</span></div>
+
 
 <div class="viewcode-block" id="DataSource.count">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/sources/index.html#annie.dataset.sources.DataSource.count">[docs]</a>
@@ -513,7 +539,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">TRACK</span><span class="p">:</span>
             <span class="n">tracks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">TRACK_GLOB</span><span class="p">)</span>
             <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tracks</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_junk</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">count_rows</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">count_rows</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sheet</span><span class="p">)</span></div>
 </div>
 
 

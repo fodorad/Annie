@@ -268,6 +268,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -327,7 +328,9 @@ changes (add/remove on the Dataset tab). It stays linear in the number of files:
 <li><p>A <code class="docutils literal notranslate"><span class="pre">.vdet</span></code> matches by exact stem; a <code class="docutils literal notranslate"><span class="pre">__track{N}.csv</span></code> matches by the part
 before <code class="docutils literal notranslate"><span class="pre">__track</span></code>. Both fall back to a longest-stem-first prefix scan only on
 a miss.</p></li>
-<li><p>A label/protagonist CSV row matches a video by exact key-column value.</p></li>
+<li><p>A label/protagonist table row matches a video by exact key-column value — or, for a
+label table, by a nested-layout path field (<code class="docutils literal notranslate"><span class="pre">match_field</span></code>) and optionally by
+substring (<code class="docutils literal notranslate"><span class="pre">match_substring</span></code>, see <a class="reference internal" href="#annie.dataset.scanning.match_keys" title="annie.dataset.scanning.match_keys"><code class="xref py py-func docutils literal notranslate"><span class="pre">match_keys()</span></code></a>).</p></li>
 </ul>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
@@ -336,6 +339,9 @@ a miss.</p></li>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.ScanResult" title="annie.dataset.scanning.ScanResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScanResult</span></code></a></p></td>
 <td><p>The outcome of a dataset scan.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.JoinSummary" title="annie.dataset.scanning.JoinSummary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JoinSummary</span></code></a></p></td>
+<td><p>How well a table's keys link to the videos (shown while configuring a table).</p></td>
 </tr>
 </tbody>
 </table>
@@ -348,6 +354,12 @@ a miss.</p></li>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.resolve_video_stem" title="annie.dataset.scanning.resolve_video_stem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_video_stem</span></code></a>(→ str | None)</p></td>
 <td><p>Find the video stem an annotation belongs to, longest-stem-first.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.match_keys" title="annie.dataset.scanning.match_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_keys</span></code></a>(→ tuple[dict[str, str], set[str]])</p></td>
+<td><p>Link table keys to match targets (video ids or path-field values).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.join_summary" title="annie.dataset.scanning.join_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_summary</span></code></a>(→ JoinSummary)</p></td>
+<td><p>Summarise a prospective join for the table dialog.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.build_manifest" title="annie.dataset.scanning.build_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_manifest</span></code></a>(→ ScanResult)</p></td>
 <td><p>Scan all sources in <code class="docutils literal notranslate"><span class="pre">registry</span></code> into a per-video manifest.</p></td>
@@ -474,6 +486,85 @@ ensures <code class="docutils literal notranslate"><span class="pre">X2</span></
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="annie.dataset.scanning.match_keys">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.scanning.</span></span><span class="sig-name descname"><span class="pre">match_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">substring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/scanning.html#match_keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.scanning.match_keys" title="Link to this definition">¶</a></dt>
+<dd><p>Link table keys to match targets (video ids or path-field values).</p>
+<p>Exact matching (the default) is a set lookup. With <code class="docutils literal notranslate"><span class="pre">substring</span></code> a target links to
+a key it <em>contains</em>: keys are grouped by length and each target is slid over once
+per distinct key length, so the cost stays near-linear rather than keys × targets.
+When a target contains several keys the <strong>longest</strong> wins; an equal-length tie goes
+to the key that comes first in <code class="docutils literal notranslate"><span class="pre">keys</span></code> (the table’s winning-row order). Such
+targets are reported as ambiguous.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keys</strong> – The table’s keys, in priority order.</p></li>
+<li><p><strong>targets</strong> – The strings to link.</p></li>
+<li><p><strong>substring</strong> – Match keys contained in a target instead of equal to it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(target</span> <span class="pre">-&gt;</span> <span class="pre">key,</span> <span class="pre">ambiguous</span> <span class="pre">targets)</span></code>; unmatched targets are absent.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.dataset.scanning.JoinSummary">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.dataset.scanning.</span></span><span class="sig-name descname"><span class="pre">JoinSummary</span></span><a class="reference internal" href="../../../../_modules/annie/dataset/scanning.html#JoinSummary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.scanning.JoinSummary" title="Link to this definition">¶</a></dt>
+<dd><p>How well a table’s keys link to the videos (shown while configuring a table).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.JoinSummary.videos_matched">
+<span class="sig-name descname"><span class="pre">videos_matched</span></span><a class="headerlink" href="#annie.dataset.scanning.JoinSummary.videos_matched" title="Link to this definition">¶</a></dt>
+<dd><p>Videos that get a row.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.JoinSummary.videos_total">
+<span class="sig-name descname"><span class="pre">videos_total</span></span><a class="headerlink" href="#annie.dataset.scanning.JoinSummary.videos_total" title="Link to this definition">¶</a></dt>
+<dd><p>All videos considered.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.JoinSummary.keys_used">
+<span class="sig-name descname"><span class="pre">keys_used</span></span><a class="headerlink" href="#annie.dataset.scanning.JoinSummary.keys_used" title="Link to this definition">¶</a></dt>
+<dd><p>Distinct keys that link to at least one video.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.JoinSummary.keys_total">
+<span class="sig-name descname"><span class="pre">keys_total</span></span><a class="headerlink" href="#annie.dataset.scanning.JoinSummary.keys_total" title="Link to this definition">¶</a></dt>
+<dd><p>Distinct non-empty keys in the table.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.dataset.scanning.JoinSummary.ambiguous">
+<span class="sig-name descname"><span class="pre">ambiguous</span></span><a class="headerlink" href="#annie.dataset.scanning.JoinSummary.ambiguous" title="Link to this definition">¶</a></dt>
+<dd><p>Matched videos whose target contained more than one key.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.dataset.scanning.join_summary">
+<span class="sig-prename descclassname"><span class="pre">annie.dataset.scanning.</span></span><span class="sig-name descname"><span class="pre">join_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">substring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.scanning.JoinSummary" title="annie.dataset.scanning.JoinSummary"><span class="pre">JoinSummary</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/scanning.html#join_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.scanning.join_summary" title="Link to this definition">¶</a></dt>
+<dd><p>Summarise a prospective join for the table dialog.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keys</strong> – The table’s keys in priority order (see <a class="reference internal" href="#annie.dataset.scanning.match_keys" title="annie.dataset.scanning.match_keys"><code class="xref py py-func docutils literal notranslate"><span class="pre">match_keys()</span></code></a>).</p></li>
+<li><p><strong>video_targets</strong> – Video id to the string its key must match (the id itself or a
+path-field value); an empty string means the video has no target.</p></li>
+<li><p><strong>substring</strong> – Whether keys match by substring.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#annie.dataset.scanning.JoinSummary" title="annie.dataset.scanning.JoinSummary"><code class="xref py py-class docutils literal notranslate"><span class="pre">JoinSummary</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="annie.dataset.scanning.build_manifest">
 <span class="sig-prename descclassname"><span class="pre">annie.dataset.scanning.</span></span><span class="sig-name descname"><span class="pre">build_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../sources/index.html#annie.dataset.sources.SourceRegistry" title="annie.dataset.sources.SourceRegistry"><span class="pre">annie.dataset.sources.SourceRegistry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.dataset.scanning.ScanResult" title="annie.dataset.scanning.ScanResult"><span class="pre">ScanResult</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/scanning.html#build_manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.scanning.build_manifest" title="Link to this definition">¶</a></dt>
 <dd><p>Scan all sources in <code class="docutils literal notranslate"><span class="pre">registry</span></code> into a per-video manifest.</p>
@@ -590,6 +681,16 @@ columns) and delegates to <a class="reference internal" href="#annie.dataset.sca
 </ul>
 </li>
 <li><a class="reference internal" href="#annie.dataset.scanning.resolve_video_stem"><code class="docutils literal notranslate"><span class="pre">resolve_video_stem()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.match_keys"><code class="docutils literal notranslate"><span class="pre">match_keys()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.JoinSummary"><code class="docutils literal notranslate"><span class="pre">JoinSummary</span></code></a><ul>
+<li><a class="reference internal" href="#annie.dataset.scanning.JoinSummary.videos_matched"><code class="docutils literal notranslate"><span class="pre">JoinSummary.videos_matched</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.JoinSummary.videos_total"><code class="docutils literal notranslate"><span class="pre">JoinSummary.videos_total</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.JoinSummary.keys_used"><code class="docutils literal notranslate"><span class="pre">JoinSummary.keys_used</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.JoinSummary.keys_total"><code class="docutils literal notranslate"><span class="pre">JoinSummary.keys_total</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.scanning.JoinSummary.ambiguous"><code class="docutils literal notranslate"><span class="pre">JoinSummary.ambiguous</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.dataset.scanning.join_summary"><code class="docutils literal notranslate"><span class="pre">join_summary()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.build_manifest"><code class="docutils literal notranslate"><span class="pre">build_manifest()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.scanning.scan_dataset"><code class="docutils literal notranslate"><span class="pre">scan_dataset()</span></code></a></li>
 </ul>

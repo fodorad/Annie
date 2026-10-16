@@ -24,5 +24,6 @@ Submodules
    /autoapi/annie/parsers/participants/index
    /autoapi/annie/parsers/track/index
    /autoapi/annie/parsers/vdet/index
+   /autoapi/annie/parsers/workbook/index
 
 

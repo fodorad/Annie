@@ -210,6 +210,12 @@ Module Contents
       column name (e.g. ``{"Sentiment": "negative", "Angry": "0.33"}``).
       Drives the Browse label tags and the label filters.
 
+   .. attribute:: label_origins
+
+      Where each label value came from, keyed like ``labels`` — e.g.
+      ``"intake.xlsx › visits · subject = 4021"`` for a table row, or
+      ``"path field {part}"`` for a nested-layout field. Shown on hover in Browse.
+
    .. attribute:: row_id
 
       The video's **1-based position in the whole scanned dataset**,

@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -370,8 +371,9 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        name_prefix: keep only videos whose id starts with this (case-insensitive).</span>
-<span class="sd">        video: video-frames presence facet.</span>
-<span class="sd">        audio: audio-stream presence facet (uses the probed cache; see ``audio_of``).</span>
+<span class="sd">        video: video-file presence facet (rows from vdet/track files may have none).</span>
+<span class="sd">        audio: audio-stream presence facet (ffprobe, cached as rows are viewed; see</span>
+<span class="sd">            ``audio_of``). Rows not yet probed fail ``has`` and ``missing``.</span>
 <span class="sd">        vdet: vdet-presence facet.</span>
 <span class="sd">        tracks: track-count facet.</span>
 <span class="sd">        frames: frame-count facet (uses the probed cache; see ``frames_of``).</span>
@@ -418,6 +420,51 @@
             <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">)</span></div>
+
+
+
+<span class="n">SOURCE_FACETS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"vdet"</span><span class="p">,</span> <span class="s2">"tracks"</span><span class="p">)</span>
+<span class="sd">"""Facets that only make sense when a vdet or track folder is a source."""</span>
+
+
+<div class="viewcode-block" id="source_facets">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.source_facets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">source_facets</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">has_vdet</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_track</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The source-dependent facets that fit the configured sources.</span>
+
+<span class="sd">    ``vdet`` needs a vdet folder and ``tracks`` a track folder. ``video`` (does the video</span>
+<span class="sd">    file exist) needs either: only vdet/track files can produce a row without a video.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        has_vdet: Whether a vdet folder is configured.</span>
+<span class="sd">        has_track: Whether a track folder is configured.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The names (from :data:`SOURCE_FACETS`) to offer in the filter bar.</span>
+<span class="sd">    """</span>
+    <span class="n">facets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">has_vdet</span><span class="p">:</span>
+        <span class="n">facets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"vdet"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_track</span><span class="p">:</span>
+        <span class="n">facets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"tracks"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_vdet</span> <span class="ow">or</span> <span class="n">has_track</span><span class="p">:</span>
+        <span class="n">facets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"video"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">facets</span></div>
+
+
+
+<div class="viewcode-block" id="drop_facets">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/filtering/index.html#annie.dataset.filtering.drop_facets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_facets</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">FilterSpec</span><span class="p">,</span> <span class="n">keep</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Turn off every source-dependent facet not in ``keep``, so a hidden box never filters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        spec: The filter spec to update in place.</span>
+<span class="sd">        keep: The source-dependent facets still offered (see :func:`source_facets`).</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SOURCE_FACETS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">)</span></div>
 
 
 

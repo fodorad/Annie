@@ -190,6 +190,36 @@ Module Contents
       :class:`~annie.dataset.layout.VideoLayout`. ``None`` means a flat folder
       (one video per file, id = file stem).
 
+   .. attribute:: sheet
+
+      For a table that is an Excel workbook, the worksheet it reads.
+      ``None`` for a CSV.
+
+   .. attribute:: match_field
+
+      For a label table, the nested-layout path field (e.g.
+      ``"subject"``) its key column matches; ``None`` matches the whole video id.
+
+   .. attribute:: match_substring
+
+      For a label table, link a row to every video whose match
+      target *contains* the key instead of equalling it.
+
+   .. attribute:: column_names
+
+      For a label table, the short tag name shown for a value column;
+      columns absent here keep their header as the name.
+
+   .. attribute:: order_column
+
+      For a label table whose key repeats, the column whose order
+      decides which row counts (e.g. a timestamp). ``None`` when keys are unique.
+
+   .. attribute:: order_descending
+
+      Direction for ``order_column``; ``True`` keeps the largest /
+      newest row.
+
 
    .. py:property:: is_folder
       :type: bool
@@ -224,6 +254,12 @@ Module Contents
 
 
       A short label for the Dataset source list.
+
+
+   .. py:method:: tag_name(column: str) -> str
+
+      The tag / filter name shown for one of this table's value columns.
+
 
 
    .. py:method:: count() -> int

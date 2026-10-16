@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -351,7 +352,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">manipulate</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.filtering</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterSpec</span><span class="p">,</span> <span class="n">apply_filters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.filtering</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterSpec</span><span class="p">,</span> <span class="n">apply_filters</span><span class="p">,</span> <span class="n">drop_facets</span><span class="p">,</span> <span class="n">source_facets</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -548,7 +549,10 @@
     <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">_display_label</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">LABEL_COLOR</span><span class="p">)</span>
+            <span class="n">badge</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">LABEL_COLOR</span><span class="p">)</span>
+            <span class="n">origin</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">label_origins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">origin</span><span class="p">:</span>  <span class="c1"># which file, sheet and row the value came from</span>
+                <span class="n">badge</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">badges</span>
 
 
@@ -654,7 +658,7 @@
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"videocam_off"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"audio only — no video frames"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"videocam_off"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"video file not found"</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">video_path</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span>
 
@@ -908,7 +912,7 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">has_video</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"videocam_off"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"audio only — no video frames"</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"videocam_off"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"video file not found"</span><span class="p">)</span>
         <span class="c1"># The selection ring/tint sits above the frame so it is never hidden by it.</span>
         <span class="n">overlay</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
             <span class="s2">"position:absolute;inset:0;border-radius:8px;pointer-events:none;z-index:3"</span>
@@ -1138,6 +1142,12 @@
     <span class="k">return</span> <span class="n">select</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_source_facets</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The vdet/track-dependent facets the configured sources support."""</span>
+    <span class="n">registry</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span>
+    <span class="k">return</span> <span class="n">source_facets</span><span class="p">(</span><span class="n">has_vdet</span><span class="o">=</span><span class="n">registry</span><span class="o">.</span><span class="n">vdet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">has_track</span><span class="o">=</span><span class="n">registry</span><span class="o">.</span><span class="n">track</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+
+
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_filters</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the filter controls (rebuilt when a transform changes the facets)."""</span>
@@ -1155,21 +1165,37 @@
         <span class="p">)</span>
         <span class="n">name</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_set</span><span class="p">(</span><span class="s2">"name_prefix"</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span> <span class="n">on_change</span><span class="p">()))</span>
 
-        <span class="n">_facet_select</span><span class="p">(</span><span class="s2">"video"</span><span class="p">,</span> <span class="s2">"video"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"has"</span><span class="p">:</span> <span class="s2">"has video"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">:</span> <span class="s2">"no video"</span><span class="p">},</span> <span class="n">on_change</span><span class="p">)</span>
+        <span class="n">facets</span> <span class="o">=</span> <span class="n">_source_facets</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">"video"</span> <span class="ow">in</span> <span class="n">facets</span><span class="p">:</span>
+            <span class="n">video</span> <span class="o">=</span> <span class="n">_facet_select</span><span class="p">(</span>
+                <span class="s2">"video"</span><span class="p">,</span>
+                <span class="s2">"video file"</span><span class="p">,</span>
+                <span class="p">{</span><span class="s2">"has"</span><span class="p">:</span> <span class="s2">"has video file"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">:</span> <span class="s2">"no video file"</span><span class="p">},</span>
+                <span class="n">on_change</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">video</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Whether the video file exists; vdet/track files can lack one"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                    <span class="s2">"delay=600"</span>
+                <span class="p">)</span>
 
         <span class="n">audio</span> <span class="o">=</span> <span class="n">_facet_select</span><span class="p">(</span>
             <span class="s2">"audio"</span><span class="p">,</span> <span class="s2">"audio"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"has"</span><span class="p">:</span> <span class="s2">"has audio"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">:</span> <span class="s2">"no audio"</span><span class="p">},</span> <span class="n">on_change</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="n">audio</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Audio is probed as rows are viewed"</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"delay=600"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                <span class="s2">"ffprobe checks each video for an audio stream as its row is viewed; "</span>
+                <span class="s2">"rows not viewed yet are unknown and hidden by this filter"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"delay=600"</span><span class="p">)</span>
 
-        <span class="n">_facet_select</span><span class="p">(</span><span class="s2">"vdet"</span><span class="p">,</span> <span class="s2">"vdet"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"has"</span><span class="p">:</span> <span class="s2">"has vdet"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">:</span> <span class="s2">"no vdet"</span><span class="p">},</span> <span class="n">on_change</span><span class="p">)</span>
-        <span class="n">_facet_select</span><span class="p">(</span>
-            <span class="s2">"tracks"</span><span class="p">,</span>
-            <span class="s2">"tracks"</span><span class="p">,</span>
-            <span class="p">{</span><span class="s2">"none"</span><span class="p">:</span> <span class="s2">"0 tracks"</span><span class="p">,</span> <span class="s2">"one"</span><span class="p">:</span> <span class="s2">"1 track"</span><span class="p">,</span> <span class="s2">"multi"</span><span class="p">:</span> <span class="s2">"2+ tracks"</span><span class="p">},</span>
-            <span class="n">on_change</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"vdet"</span> <span class="ow">in</span> <span class="n">facets</span><span class="p">:</span>
+            <span class="n">_facet_select</span><span class="p">(</span><span class="s2">"vdet"</span><span class="p">,</span> <span class="s2">"vdet"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"has"</span><span class="p">:</span> <span class="s2">"has vdet"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">:</span> <span class="s2">"no vdet"</span><span class="p">},</span> <span class="n">on_change</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"tracks"</span> <span class="ow">in</span> <span class="n">facets</span><span class="p">:</span>
+            <span class="n">_facet_select</span><span class="p">(</span>
+                <span class="s2">"tracks"</span><span class="p">,</span>
+                <span class="s2">"tracks"</span><span class="p">,</span>
+                <span class="p">{</span><span class="s2">"none"</span><span class="p">:</span> <span class="s2">"0 tracks"</span><span class="p">,</span> <span class="s2">"one"</span><span class="p">:</span> <span class="s2">"1 track"</span><span class="p">,</span> <span class="s2">"multi"</span><span class="p">:</span> <span class="s2">"2+ tracks"</span><span class="p">},</span>
+                <span class="n">on_change</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="n">_frames_filter</span><span class="p">(</span><span class="n">on_change</span><span class="p">)</span>
 
@@ -1412,6 +1438,7 @@
                 <span class="s2">"Install the 'media' extra to see frame thumbnails and rendered clips."</span>
             <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
+        <span class="n">drop_facets</span><span class="p">(</span><span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span><span class="p">,</span> <span class="n">_source_facets</span><span class="p">())</span>  <span class="c1"># a removed source must not keep filtering</span>
         <span class="n">_manipulate</span><span class="p">()</span>
         <span class="c1"># The caption keeps a CSV id filter visible while the panel is collapsed.</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span>

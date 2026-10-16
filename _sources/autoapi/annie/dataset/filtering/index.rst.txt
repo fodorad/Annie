@@ -29,6 +29,7 @@ Attributes
    annie.dataset.filtering.TrackFilter
    annie.dataset.filtering.ReviewFilter
    annie.dataset.filtering.FramesFilter
+   annie.dataset.filtering.SOURCE_FACETS
 
 
 Classes
@@ -45,6 +46,8 @@ Functions
 
 .. autoapisummary::
 
+   annie.dataset.filtering.source_facets
+   annie.dataset.filtering.drop_facets
    annie.dataset.filtering.matches
    annie.dataset.filtering.apply_filters
 
@@ -108,11 +111,12 @@ Module Contents
 
    .. attribute:: video
 
-      video-frames presence facet.
+      video-file presence facet (rows from vdet/track files may have none).
 
    .. attribute:: audio
 
-      audio-stream presence facet (uses the probed cache; see ``audio_of``).
+      audio-stream presence facet (ffprobe, cached as rows are viewed; see
+      ``audio_of``). Rows not yet probed fail ``has`` and ``missing``.
 
    .. attribute:: vdet
 
@@ -166,6 +170,34 @@ Module Contents
 
 
       Whether any facet is set (so the UI can show a "clear" affordance).
+
+
+.. py:data:: SOURCE_FACETS
+   :type:  tuple[str, ...]
+   :value: ('video', 'vdet', 'tracks')
+
+
+   Facets that only make sense when a vdet or track folder is a source.
+
+.. py:function:: source_facets(*, has_vdet: bool, has_track: bool) -> set[str]
+
+   The source-dependent facets that fit the configured sources.
+
+   ``vdet`` needs a vdet folder and ``tracks`` a track folder. ``video`` (does the video
+   file exist) needs either: only vdet/track files can produce a row without a video.
+
+   :param has_vdet: Whether a vdet folder is configured.
+   :param has_track: Whether a track folder is configured.
+
+   :returns: The names (from :data:`SOURCE_FACETS`) to offer in the filter bar.
+
+
+.. py:function:: drop_facets(spec: FilterSpec, keep: set[str]) -> None
+
+   Turn off every source-dependent facet not in ``keep``, so a hidden box never filters.
+
+   :param spec: The filter spec to update in place.
+   :param keep: The source-dependent facets still offered (see :func:`source_facets`).
 
 
 .. py:function:: matches(entry, review: ReviewState, spec: FilterSpec, *, has_audio: bool | None = None, num_frames: int | None = None, label_of: collections.abc.Callable[[annie.core.models.VideoEntry, str], str | None] | None = None) -> bool

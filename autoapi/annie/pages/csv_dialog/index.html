@@ -268,6 +268,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -314,22 +315,47 @@
         <article role="main" id="furo-main-content">
           <section id="module-annie.pages.csv_dialog">
 <span id="annie-pages-csv-dialog"></span><h1>annie.pages.csv_dialog<a class="headerlink" href="#module-annie.pages.csv_dialog" title="Link to this heading">¶</a></h1>
-<p>CSV configuration dialogs (UI).</p>
-<p>Two modals, both opened after the user has picked a CSV file:</p>
+<p>Table configuration dialogs: CSV files and Excel workbooks (UI).</p>
+<p>Opened after the user has picked a file:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv" title="annie.pages.csv_dialog.configure_csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">configure_csv()</span></code></a> (Dataset tab) — describe how the file joins to the dataset:
-its <strong>role</strong> (label tags vs the protagonist track), the <strong>key column</strong> that matches
-the video id (auto-suggested), and the <strong>value columns</strong> to surface. It returns a
-fully-formed <code class="xref py py-class docutils literal notranslate"><span class="pre">DataSource</span></code>.</p></li>
+<li><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_table" title="annie.pages.csv_dialog.configure_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">configure_table()</span></code></a> (Dataset tab) — describe how a CSV or workbook joins to the
+dataset. A CSV picks a <strong>role</strong> (label tags, protagonist track, segmentation); a
+workbook lists every sheet, and each included sheet becomes its own label source.
+For label tables a <code class="xref py py-class docutils literal notranslate"><span class="pre">_JoinEditor</span></code> chooses the <strong>ID column</strong> and what it
+<strong>matches</strong> (the whole video id or a nested-layout path field such as
+<code class="docutils literal notranslate"><span class="pre">{subject}</span></code>), optionally by substring, resolves repeated IDs with an explicit
+<strong>order column</strong>, and names each feature column’s tag. A live summary shows how
+many videos would get a row.</p></li>
 <li><p><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column" title="annie.pages.csv_dialog.select_id_column"><code class="xref py py-func docutils literal notranslate"><span class="pre">select_id_column()</span></code></a> (Browse tab) — pick the column holding the video ids to
 restrict the Browse list to.</p></li>
 </ul>
-<p>Both return <code class="docutils literal notranslate"><span class="pre">None</span></code> if cancelled.</p>
+<p>All return <code class="docutils literal notranslate"><span class="pre">None</span></code> if cancelled.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.VIDEO_ID_TARGET" title="annie.pages.csv_dialog.VIDEO_ID_TARGET"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VIDEO_ID_TARGET</span></code></a></p></td>
+<td><p>Match target meaning &quot;the whole video id&quot; (path fields are identifiers, never this).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.Targets" title="annie.pages.csv_dialog.Targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Targets</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.tag_clashes" title="annie.pages.csv_dialog.tag_clashes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tag_clashes</span></code></a>(→ list[str])</p></td>
+<td><p>Return tag names that would collide, in the order they appear.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_table" title="annie.pages.csv_dialog.configure_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_table</span></code></a>(...)</p></td>
+<td><p>Configure a CSV or an Excel workbook as one or more sources.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv" title="annie.pages.csv_dialog.configure_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_csv</span></code></a>(→ annie.dataset.sources.DataSource | None)</p></td>
 <td><p>Open the CSV configuration modal and return the resulting source.</p></td>
 </tr>
@@ -342,15 +368,67 @@ restrict the Browse list to.</p></li>
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.pages.csv_dialog.VIDEO_ID_TARGET">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">VIDEO_ID_TARGET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'video</span> <span class="pre">id'</span></span><a class="headerlink" href="#annie.pages.csv_dialog.VIDEO_ID_TARGET" title="Link to this definition">¶</a></dt>
+<dd><p>Match target meaning “the whole video id” (path fields are identifiers, never this).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.pages.csv_dialog.Targets">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">Targets</span></span><a class="headerlink" href="#annie.pages.csv_dialog.Targets" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.csv_dialog.tag_clashes">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">tag_clashes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../dataset/sources/index.html#annie.dataset.sources.DataSource" title="annie.dataset.sources.DataSource"><span class="pre">annie.dataset.sources.DataSource</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taken</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/csv_dialog.html#tag_clashes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.csv_dialog.tag_clashes" title="Link to this definition">¶</a></dt>
+<dd><p>Return tag names that would collide, in the order they appear.</p>
+<p>A tag must be unique across the new sources and everything already shown in
+Browse (other tables’ tags and nested-layout path fields), or one would silently
+overwrite the other.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sources</strong> – The label sources about to be added.</p></li>
+<li><p><strong>taken</strong> – Tag names already in use.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each clashing name once; empty when all are unique.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.csv_dialog.configure_table">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">configure_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.pages.csv_dialog.Targets" title="annie.pages.csv_dialog.Targets"><span class="pre">Targets</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">taken</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../dataset/sources/index.html#annie.dataset.sources.DataSource" title="annie.dataset.sources.DataSource"><span class="pre">annie.dataset.sources.DataSource</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/csv_dialog.html#configure_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.csv_dialog.configure_table" title="Link to this definition">¶</a></dt>
+<dd><p>Configure a CSV or an Excel workbook as one or more sources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – The chosen file.</p></li>
+<li><p><strong>targets</strong> – What IDs can match: <a class="reference internal" href="#annie.pages.csv_dialog.VIDEO_ID_TARGET" title="annie.pages.csv_dialog.VIDEO_ID_TARGET"><code class="xref py py-data docutils literal notranslate"><span class="pre">VIDEO_ID_TARGET</span></code></a> plus each path field, each
+mapping video id to the value an ID must equal (or contain).</p></li>
+<li><p><strong>taken</strong> – Tag names already in use (see <a class="reference internal" href="#annie.pages.csv_dialog.tag_clashes" title="annie.pages.csv_dialog.tag_clashes"><code class="xref py py-func docutils literal notranslate"><span class="pre">tag_clashes()</span></code></a>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sources to add (one per included sheet for a workbook), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if
+cancelled.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.csv_dialog.configure_csv">
-<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">configure_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_stems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../dataset/sources/index.html#annie.dataset.sources.DataSource" title="annie.dataset.sources.DataSource"><span class="pre">annie.dataset.sources.DataSource</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/csv_dialog.html#configure_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.csv_dialog.configure_csv" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">configure_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.pages.csv_dialog.Targets" title="annie.pages.csv_dialog.Targets"><span class="pre">Targets</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">taken</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../dataset/sources/index.html#annie.dataset.sources.DataSource" title="annie.dataset.sources.DataSource"><span class="pre">annie.dataset.sources.DataSource</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/csv_dialog.html#configure_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.csv_dialog.configure_csv" title="Link to this definition">¶</a></dt>
 <dd><p>Open the CSV configuration modal and return the resulting source.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> – The chosen CSV file.</p></li>
-<li><p><strong>video_stems</strong> – Known video stems, used to auto-suggest the key column.</p></li>
+<li><p><strong>targets</strong> – Match targets for label tables (see <a class="reference internal" href="#annie.pages.csv_dialog.configure_table" title="annie.pages.csv_dialog.configure_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">configure_table()</span></code></a>).</p></li>
+<li><p><strong>taken</strong> – Tag names already in use.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -440,8 +518,13 @@ if cancelled or if the CSV has no header.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">annie.pages.csv_dialog</a><ul>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.pages.csv_dialog.VIDEO_ID_TARGET"><code class="docutils literal notranslate"><span class="pre">VIDEO_ID_TARGET</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.csv_dialog.Targets"><code class="docutils literal notranslate"><span class="pre">Targets</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.csv_dialog.tag_clashes"><code class="docutils literal notranslate"><span class="pre">tag_clashes()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.csv_dialog.configure_table"><code class="docutils literal notranslate"><span class="pre">configure_table()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv"><code class="docutils literal notranslate"><span class="pre">configure_csv()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column"><code class="docutils literal notranslate"><span class="pre">select_id_column()</span></code></a></li>
 </ul>

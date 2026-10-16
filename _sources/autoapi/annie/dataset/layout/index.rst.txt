@@ -9,10 +9,9 @@ annie.dataset.layout
 
    A flat folder needs no layout — one video per file, id = file stem. Real datasets are often
    nested (``<root>/<group>/<subject>/clip_<part>.mp4``), where the file stem alone is neither
-   unique nor informative. A :class:`VideoLayout` describes such a tree once:
-
-       pattern     ``{group}/{subject}/clip_{part}.mp4``   (path relative to the root)
-       id_template ``{subject}_{part}``                    (how the unique video id is built)
+   unique nor informative. A :class:`VideoLayout` describes such a tree once with a pattern
+   relative to the root, e.g. ``{group}/{subject}/clip_{part}.mp4``; the video id joins the
+   captured fields with ``_`` (``g1_s1_a``).
 
    ``{name}`` captures one path segment, or part of a file name when mixed with literal text;
    ``**`` matches any number of directories. The captured fields become the video's labels, so
@@ -64,7 +63,7 @@ Module Contents
 
    .. attribute:: video_id
 
-      The unique id built from the id template.
+      The captured fields joined with ``_`` in pattern order.
 
    .. attribute:: fields
 
@@ -98,11 +97,6 @@ Module Contents
 
       Path of the videos relative to the root, with ``{field}`` placeholders.
 
-   .. attribute:: id_template
-
-      Template for the unique video id, using the same fields. ``None``
-      joins every field with ``_`` in pattern order.
-
 
    .. py:method:: field_names() -> list[str]
 
@@ -115,7 +109,7 @@ Module Contents
       Check the layout is usable.
 
       :raises ValueError: If the pattern is empty, absolute, climbs out of the root (``..``),
-          repeats a field, has no fields, or the id template uses an unknown field.
+          repeats a field, or has no fields.
 
 
 
@@ -127,7 +121,7 @@ Module Contents
 
    .. py:method:: video_id(fields: collections.abc.Mapping[str, str]) -> str
 
-      Build the video id for a match's ``fields``.
+      Build the video id for a match's ``fields``: the values joined with ``_``.
 
 
 

@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -306,22 +307,32 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.parsers.csvmeta</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Generic CSV metadata parser for label / protagonist sources (domain).</span>
+<span></span><span class="sd">"""Generic table metadata parser for label / protagonist sources (domain).</span>
 
 <span class="sd">Unlike the fixed 17-column detection schema (:mod:`annie.parsers.base`), a label</span>
-<span class="sd">CSV has an arbitrary shape: the user picks which column joins to the video id (the</span>
+<span class="sd">table has an arbitrary shape: the user picks which column joins to the video id (the</span>
 <span class="sd">**key column**) and which columns to surface as tags/filters (the **value</span>
 <span class="sd">columns**). This module reads headers, suggests a key column by matching values</span>
-<span class="sd">against the known video stems, and builds a ``video_id -&gt; {column: value}`` map.</span>
+<span class="sd">against the known video stems, and builds a ``key -&gt; {column: value}`` map.</span>
 
-<span class="sd">It is pure and dependency-light (stdlib :mod:`csv` only), so it is unit-tested</span>
-<span class="sd">without any media backend.</span>
+<span class="sd">A table is a CSV file or one worksheet of an Excel workbook: every reader takes an</span>
+<span class="sd">optional ``sheet`` and hands workbooks to :mod:`annie.parsers.workbook`, so callers</span>
+<span class="sd">never care which format they read.</span>
+
+<span class="sd">When a key repeats, an explicit **order column** decides which row counts (e.g. the</span>
+<span class="sd">newest timestamp); see :func:`order_rows` and :func:`duplicate_report`.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.workbook</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_workbook</span><span class="p">,</span> <span class="n">read_sheet</span>
+
+<span class="n">_SHORT_NAME_LIMIT</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="sd">"""Longest default tag name; long headers (e.g. whole survey questions) are cut to this."""</span>
 
 <span class="c1">#: Column names commonly used as the join key, tried when no video stems match.</span>
 <span class="n">_KEY_HINTS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"uuid"</span><span class="p">,</span> <span class="s2">"video_id"</span><span class="p">,</span> <span class="s2">"video"</span><span class="p">,</span> <span class="s2">"id"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="s2">"filename"</span><span class="p">,</span> <span class="s2">"stem"</span><span class="p">)</span>
@@ -329,16 +340,19 @@
 
 <div class="viewcode-block" id="read_header">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.read_header">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_header</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Return the column names of a CSV (its header row).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_header</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the column names of a table (its header row).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Path to the CSV file.</span>
+<span class="sd">        path: Path to the CSV file or workbook.</span>
+<span class="sd">        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The header column names in order, or an empty list if the file is empty</span>
 <span class="sd">        or missing.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">read_sheet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -350,15 +364,18 @@
 
 <div class="viewcode-block" id="read_rows">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.read_rows">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Read a CSV into column-keyed dict rows (BOM- and CRLF-tolerant).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Read a table into column-keyed dict rows (CSV: BOM- and CRLF-tolerant).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Path to the CSV file.</span>
+<span class="sd">        path: Path to the CSV file or workbook.</span>
+<span class="sd">        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        One dict per data row, keyed by column name. Empty if missing.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">read_sheet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -369,15 +386,18 @@
 
 <div class="viewcode-block" id="count_rows">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.count_rows">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">count_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Count data rows in a CSV (excludes the header), cheaply.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Count data rows in a table (excludes the header), cheaply.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Path to the CSV file.</span>
+<span class="sd">        path: Path to the CSV file or workbook.</span>
+<span class="sd">        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The number of data rows, or ``0`` if missing/empty.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">read_sheet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="mi">0</span>
@@ -389,7 +409,11 @@
 <div class="viewcode-block" id="suggest_key_column">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.suggest_key_column">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">suggest_key_column</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">video_stems</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">video_stems</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Guess which column joins the CSV to videos.</span>
 
@@ -402,16 +426,17 @@
 <span class="sd">        path: Path to the CSV file.</span>
 <span class="sd">        video_stems: Known video stems to match against, or ``None``.</span>
 <span class="sd">        sample: Maximum number of rows to inspect.</span>
+<span class="sd">        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The suggested key-column name, or ``None`` if the file has no header.</span>
 <span class="sd">    """</span>
-    <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">if</span> <span class="n">video_stems</span><span class="p">:</span>
-        <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">)[:</span><span class="n">sample</span><span class="p">]</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)[:</span><span class="n">sample</span><span class="p">]</span>
         <span class="n">best_col</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">[(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
@@ -435,26 +460,220 @@
 <div class="viewcode-block" id="load_value_map">
 <a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.load_value_map">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_value_map</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">value_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">order_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">descending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Build a ``key -&gt; {value_column: value}`` mapping from a CSV.</span>
+<span class="w">    </span><span class="sd">"""Build a ``key -&gt; {value_column: value}`` mapping from a table.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Path to the CSV file.</span>
+<span class="sd">        path: Path to the CSV file or workbook.</span>
 <span class="sd">        key_column: The column whose value identifies the video (the join key).</span>
 <span class="sd">        value_columns: The columns to carry into each entry.</span>
+<span class="sd">        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.</span>
+<span class="sd">        order_column: Decides which row counts when a key repeats: rows are ordered by</span>
+<span class="sd">            it (see :func:`order_rows`) and the first row per key wins.</span>
+<span class="sd">        descending: Order direction; ``True`` puts the largest / newest value first.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Mapping from the (stripped) key value to a dict of the selected column</span>
-<span class="sd">        values. Rows with an empty key are skipped; later rows win on a key clash.</span>
+<span class="sd">        values, in winning-row order. Rows with an empty key are skipped. Without an</span>
+<span class="sd">        ``order_column`` a repeated key keeps its last row (the historical rule; the</span>
+<span class="sd">        Dataset tab requires an order column whenever a key repeats).</span>
 <span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">order_column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">order_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">order_column</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="n">descending</span><span class="p">)</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
         <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span> <span class="ow">or</span> <span class="p">(</span><span class="n">order_column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">value_columns</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">mapping</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_number</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether ``value`` parses as a number."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="order_rows">
+<a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.order_rows">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">order_rows</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">descending</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Return ``rows`` sorted by ``column``, stably, with empty values always last.</span>
+
+<span class="sd">    The column compares **numerically** when every non-empty value is a number</span>
+<span class="sd">    (``9 &lt; 10``), otherwise as text — which also orders ISO dates and timestamps</span>
+<span class="sd">    chronologically, the form :mod:`annie.parsers.workbook` gives Excel dates. Rows with</span>
+<span class="sd">    equal values keep their file order, so the result is always deterministic.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rows: Dict rows as returned by :func:`read_rows`.</span>
+<span class="sd">        column: The column to order by.</span>
+<span class="sd">        descending: ``True`` for largest / newest first.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A new, ordered list (the input is not modified).</span>
+<span class="sd">    """</span>
+    <span class="n">filled</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="n">empty</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_number</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">filled</span><span class="p">):</span>
+        <span class="n">filled</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">column</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="n">descending</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filled</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">reverse</span><span class="o">=</span><span class="n">descending</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filled</span> <span class="o">+</span> <span class="n">empty</span></div>
+
+
+
+<div class="viewcode-block" id="DuplicateReport">
+<a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.DuplicateReport">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""How a table's key column repeats, for the Dataset tab's warning.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        duplicated: Keys that appear on more than one row, in first-seen order.</span>
+<span class="sd">        ties: Duplicated keys whose two leading rows (after ordering) share the same</span>
+<span class="sd">            order value, so only file order separates them. Every duplicated key is a</span>
+<span class="sd">            tie when no order column is given.</span>
+<span class="sd">    """</span>
+
+    <span class="n">duplicated</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">ties</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="duplicate_report">
+<a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.duplicate_report">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">duplicate_report</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">descending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DuplicateReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Report the repeated keys of a table and which of them the order can't separate.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rows: Dict rows as returned by :func:`read_rows`.</span>
+<span class="sd">        key_column: The join-key column.</span>
+<span class="sd">        order_column: The column chosen to resolve repeats, or ``None``.</span>
+<span class="sd">        descending: The chosen order direction.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`DuplicateReport`.</span>
+<span class="sd">    """</span>
+    <span class="n">ordered</span> <span class="o">=</span> <span class="n">order_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">order_column</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="n">descending</span><span class="p">)</span> <span class="k">if</span> <span class="n">order_column</span> <span class="k">else</span> <span class="n">rows</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
+            <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="n">first_seen</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">first_seen</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">DuplicateReport</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">first_seen</span><span class="p">:</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">duplicated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">order_column</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">ties</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span>
+            <span class="n">group</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">ties</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">report</span></div>
+
+
+
+<div class="viewcode-block" id="JoinSuggestion">
+<a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.JoinSuggestion">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">JoinSuggestion</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A proposed way to join a table to the videos.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        column: The table column holding the ids.</span>
+<span class="sd">        target: What the ids match: a target name passed to :func:`suggest_join`.</span>
+<span class="sd">        matched: How many distinct ids of that column the target contains.</span>
+<span class="sd">    """</span>
+
+    <span class="n">column</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">matched</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="suggest_join">
+<a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.suggest_join">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">suggest_join</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">header</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JoinSuggestion</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Propose the (id column, target) pair whose values overlap the most.</span>
+
+<span class="sd">    A target is anything ids can match: all video ids, or the values of one nested-</span>
+<span class="sd">    layout path field such as ``{subject}``. Ties go to the earlier column, then the</span>
+<span class="sd">    earlier target, so the first target (the video id) wins when both fit equally.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rows: Dict rows as returned by :func:`read_rows`.</span>
+<span class="sd">        header: The table's column names, in order.</span>
+<span class="sd">        targets: Target name to the set of values it offers.</span>
+<span class="sd">        sample: Maximum number of rows to inspect.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The best :class:`JoinSuggestion`, or ``None`` when no column matches anything.</span>
+<span class="sd">    """</span>
+    <span class="n">best</span><span class="p">:</span> <span class="n">JoinSuggestion</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[:</span><span class="n">sample</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">{(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">head</span><span class="p">}</span> <span class="o">-</span> <span class="p">{</span><span class="s2">""</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">offered</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">matched</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span> <span class="o">&amp;</span> <span class="n">offered</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">matched</span> <span class="ow">and</span> <span class="p">(</span><span class="n">best</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">matched</span> <span class="o">&gt;</span> <span class="n">best</span><span class="o">.</span><span class="n">matched</span><span class="p">):</span>
+                <span class="n">best</span> <span class="o">=</span> <span class="n">JoinSuggestion</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">matched</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best</span></div>
+
+
+
+<div class="viewcode-block" id="short_name">
+<a class="viewcode-back" href="../../../autoapi/annie/parsers/csvmeta/index.html#annie.parsers.csvmeta.short_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">short_name</span><span class="p">(</span><span class="n">header</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_SHORT_NAME_LIMIT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Prefill for a tag name: the header on one line, cut at a word within ``limit``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        header: The column header (may be a long, multi-line question).</span>
+<span class="sd">        limit: Maximum length of the result.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The header with whitespace collapsed; when longer than ``limit``, cut back to</span>
+<span class="sd">        the last whole word and marked with ``…``.</span>
+<span class="sd">    """</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">limit</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">text</span>
+    <span class="n">cut</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span> <span class="n">limit</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">" "</span> <span class="ow">in</span> <span class="n">cut</span><span class="p">:</span>
+        <span class="n">cut</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cut</span><span class="si">}</span><span class="s2">…"</span></div>
 
 
 

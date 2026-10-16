@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -356,10 +357,10 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReviewStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_csv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">configure_table</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">notify_detached</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_header</span><span class="p">,</span> <span class="n">read_rows</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_header</span><span class="p">,</span> <span class="n">read_rows</span><span class="p">,</span> <span class="n">short_name</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span> <span class="n">DEFAULT_VALUE_COLUMN</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -430,11 +431,26 @@
 <span class="n">_METRICS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_video_stems</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Current video stems, used to auto-suggest a CSV key column."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_match_targets</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Targets</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What a label table's IDs can match, per video: the video id and each path field.</span>
+
+<span class="sd">    Path fields come from the video folder's nested layout (e.g. ``{subject}``), so a</span>
+<span class="sd">    table keyed by subject can tag every video of that subject.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">return</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">video_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">VIDEO_ID_TARGET</span><span class="p">:</span> <span class="p">{}}</span>
+    <span class="n">videos</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">has_video</span><span class="p">]</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span> <span class="o">=</span> <span class="p">{</span><span class="n">VIDEO_ID_TARGET</span><span class="p">:</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">video_id</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">video_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">videos</span><span class="p">}}</span>
+    <span class="n">video</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">video</span>
+    <span class="k">if</span> <span class="n">video</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">video</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">video</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">field_names</span><span class="p">():</span>
+            <span class="n">targets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">video_id</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">videos</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">targets</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_taken_tag_names</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Tag names Browse already shows: other tables' tags and path fields."""</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">label_columns</span><span class="p">)</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_apply_changes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -766,9 +782,13 @@
         <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_file</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">configure_csv</span><span class="p">(</span><span class="n">chosen</span><span class="p">,</span> <span class="n">_video_stems</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tables</span> <span class="o">=</span> <span class="k">await</span> <span class="n">configure_table</span><span class="p">(</span><span class="n">chosen</span><span class="p">,</span> <span class="n">_match_targets</span><span class="p">(),</span> <span class="n">_taken_tag_names</span><span class="p">())</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tables</span><span class="p">:</span>
             <span class="k">return</span>
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
+        <span class="k">return</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">start</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">{</span>
@@ -932,25 +952,71 @@
 <span class="c1"># ── metric cards ─────────────────────────────────────────────────────────────</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_metric_card</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build one overview metric card and register its value label under ``key``."""</span>
+<div class="viewcode-block" id="MetricCard">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/dataset/index.html#annie.pages.dataset.MetricCard">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetricCard</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One overview metric card on the Dataset tab.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        title: The card's caption.</span>
+<span class="sd">        key: The :attr:`ScanResult.counts` key it shows.</span>
+<span class="sd">        color: The caption colour.</span>
+<span class="sd">    """</span>
+
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="metric_rows">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/dataset/index.html#annie.pages.dataset.metric_rows">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">metric_rows</span><span class="p">(</span><span class="n">registry</span><span class="p">:</span> <span class="n">SourceRegistry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">MetricCard</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The overview cards that fit the configured sources, as rows (empty rows dropped).</span>
+
+<span class="sd">    ``# videos`` is always shown; vdet and track cards appear only once that folder is a</span>
+<span class="sd">    source, so a plain video dataset is not cluttered with face-tracking counts.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        registry: The configured sources.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Rows of cards: file counts first, then per-video coverage.</span>
+<span class="sd">    """</span>
+    <span class="n">has_vdet</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">vdet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">has_track</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">track</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="n">MetricCard</span><span class="p">(</span><span class="s2">"# videos"</span><span class="p">,</span> <span class="s2">"num_videos"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)]</span>
+    <span class="n">coverage</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetricCard</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">has_vdet</span> <span class="ow">and</span> <span class="n">has_track</span><span class="p">:</span>
+        <span class="n">coverage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">MetricCard</span><span class="p">(</span><span class="s2">"# videos with vdet + track"</span><span class="p">,</span> <span class="s2">"videos_vdet_and_track"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_vdet</span><span class="p">:</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MetricCard</span><span class="p">(</span><span class="s2">"# vdet files"</span><span class="p">,</span> <span class="s2">"num_vdet_files"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">))</span>
+        <span class="n">coverage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MetricCard</span><span class="p">(</span><span class="s2">"# videos with vdet"</span><span class="p">,</span> <span class="s2">"videos_with_vdet"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">has_track</span><span class="p">:</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MetricCard</span><span class="p">(</span><span class="s2">"# track files"</span><span class="p">,</span> <span class="s2">"num_track_files"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">))</span>
+        <span class="n">coverage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MetricCard</span><span class="p">(</span><span class="s2">"# videos with track"</span><span class="p">,</span> <span class="s2">"videos_with_track"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">coverage</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span><span class="p">]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_card</span><span class="p">(</span><span class="n">card</span><span class="p">:</span> <span class="n">MetricCard</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build one overview metric card and register its value label under its key."""</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-1 min-w-[8rem]"</span><span class="p">):</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
-        <span class="n">_METRICS</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"—"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-2xl font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">color</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+        <span class="n">_METRICS</span><span class="p">[</span><span class="n">card</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"—"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-2xl font-medium"</span><span class="p">)</span>
 
 
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_metric_cards</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build the two rows of overview metric cards and fill them from the scan."""</span>
+<span class="w">    </span><span class="sd">"""Build the overview metric cards for the configured sources and fill them from the scan."""</span>
     <span class="n">_METRICS</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">):</span>
-        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">"# videos"</span><span class="p">,</span> <span class="s2">"num_videos"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
-        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">"# vdet files"</span><span class="p">,</span> <span class="s2">"num_vdet_files"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">)</span>
-        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">"# track files"</span><span class="p">,</span> <span class="s2">"num_track_files"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">):</span>
-        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">"# videos with vdet + track"</span><span class="p">,</span> <span class="s2">"videos_vdet_and_track"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">"# videos with vdet"</span><span class="p">,</span> <span class="s2">"videos_with_vdet"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">VDET_COLOR</span><span class="p">)</span>
-        <span class="n">_metric_card</span><span class="p">(</span><span class="s2">"# videos with track"</span><span class="p">,</span> <span class="s2">"videos_with_track"</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">TRACK_COLOR</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">metric_rows</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">card</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+                <span class="n">_metric_card</span><span class="p">(</span><span class="n">card</span><span class="p">)</span>
 
     <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_METRICS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -984,14 +1050,13 @@
 
 
 
-<div class="viewcode-block" id="layout_from_inputs">
-<a class="viewcode-back" href="../../../autoapi/annie/pages/dataset/index.html#annie.pages.dataset.layout_from_inputs">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">layout_from_inputs</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">id_template</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VideoLayout</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build and validate a :class:`VideoLayout` from the Layout text boxes.</span>
+<div class="viewcode-block" id="layout_from_input">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/dataset/index.html#annie.pages.dataset.layout_from_input">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">layout_from_input</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VideoLayout</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build and validate a :class:`VideoLayout` from the Pattern box.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        pattern: The pattern box (path relative to the root, with ``{field}`` placeholders).</span>
-<span class="sd">        id_template: The video-id box; empty means "join the fields with ``_``".</span>
+<span class="sd">        pattern: The pattern box (path relative to the folder, with ``{field}`` placeholders).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The validated layout.</span>
@@ -999,7 +1064,7 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: With a user-readable message if the layout is unusable.</span>
 <span class="sd">    """</span>
-    <span class="n">layout</span> <span class="o">=</span> <span class="n">VideoLayout</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">id_template</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">VideoLayout</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
     <span class="n">layout</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">layout</span></div>
 
@@ -1007,23 +1072,22 @@
 
 <div class="viewcode-block" id="layout_commit">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/dataset/index.html#annie.pages.dataset.layout_commit">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">layout_commit</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">id_template</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="n">VideoLayout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LayoutCommit</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Decide what to do when a Layout box is committed (blur / Enter).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">layout_commit</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="n">VideoLayout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LayoutCommit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Decide what to do when the Pattern box is committed (blur / Enter).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        pattern: The pattern box text.</span>
-<span class="sd">        id_template: The video-id box text.</span>
 <span class="sd">        current: The layout already applied to the source, if any.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ``LayoutCommit(layout=...)`` to apply a new valid layout; ``LayoutCommit(error=...)``</span>
-<span class="sd">        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the boxes</span>
-<span class="sd">        still describe the applied layout, or the pattern is still empty (nothing to do yet).</span>
+<span class="sd">        for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the box</span>
+<span class="sd">        still describes the applied layout, or is still empty (nothing to do yet).</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">pattern</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">LayoutCommit</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">candidate</span> <span class="o">=</span> <span class="n">layout_from_inputs</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">id_template</span><span class="p">)</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">layout_from_input</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">LayoutCommit</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">LayoutCommit</span><span class="p">()</span> <span class="k">if</span> <span class="n">candidate</span> <span class="o">==</span> <span class="n">current</span> <span class="k">else</span> <span class="n">LayoutCommit</span><span class="p">(</span><span class="n">layout</span><span class="o">=</span><span class="n">candidate</span><span class="p">)</span></div>
@@ -1031,45 +1095,38 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_layout_editor</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The Layout control on the Videos-folder card: flat folder, or a nested path template.</span>
+<span class="w">    </span><span class="sd">"""The Layout control on the Videos-folder card: flat folder, or a nested path pattern.</span>
 
-<span class="sd">    There is no Preview/Apply button: committing either box (blur or Enter) validates the</span>
-<span class="sd">    layout, applies it, and rescans, and the result line under the card is the preview.</span>
+<span class="sd">    There is no Preview/Apply button: committing the pattern (blur or Enter) validates it,</span>
+<span class="sd">    applies it, and rescans, and the result line under the card is the preview.</span>
 <span class="sd">    """</span>
     <span class="n">layout</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span>
-    <span class="n">nested</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="s2">"Nested layout"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
-        <span class="s2">"Off: one video per .mp4 directly in this folder. On: describe where videos sit below it."</span>
+    <span class="n">nested</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="s2">"Videos in subfolders"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+        <span class="s2">"Off: the .mp4 files directly in this folder, id = file name. "</span>
+        <span class="s2">"On: a pattern finds the videos anywhere below this folder."</span>
     <span class="p">)</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">)</span><span class="o">.</span><span class="n">bind_visibility_from</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">):</span>
         <span class="n">pattern</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span>
-                <span class="s2">"Pattern — path of each video relative to this folder"</span><span class="p">,</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">pattern</span> <span class="k">if</span> <span class="n">layout</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"Pattern, relative to this folder"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">pattern</span> <span class="k">if</span> <span class="n">layout</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s1">'hint="e.g. Recordings/</span><span class="si">{subject}</span><span class="s1">/clip_</span><span class="si">{part}</span><span class="s1">.mp4"'</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                <span class="s2">"Type folder and file names as they are; </span><span class="si">{name}</span><span class="s2"> stands for the part that "</span>
+                <span class="s2">"varies and becomes a Browse tag. The video id joins the </span><span class="si">{name}</span><span class="s2"> values "</span>
+                <span class="s2">"with _ (e.g. 4021_a). Press Enter to apply."</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s1">'hint="e.g. </span><span class="si">{group}</span><span class="s1">/</span><span class="si">{subject}</span><span class="s1">/clip_</span><span class="si">{part}</span><span class="s1">.mp4"'</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">id_template</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"Video id (optional)"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">id_template</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="k">if</span> <span class="n">layout</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s1">'hint="e.g. </span><span class="si">{subject}</span><span class="s1">_</span><span class="si">{part}</span><span class="s1"> — empty joins all fields with _"'</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
-            <span class="s2">"</span><span class="si">{name}</span><span class="s2"> captures part of a path or file name; each captured field becomes a Browse "</span>
-            <span class="s2">"tag/filter. The video id must be unique. Press Enter or click away to apply."</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs break-words"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">UNAVAILABLE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_commit</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">outcome</span> <span class="o">=</span> <span class="n">layout_commit</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">id_template</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span><span class="p">)</span>
+            <span class="n">outcome</span> <span class="o">=</span> <span class="n">layout_commit</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span><span class="p">)</span>
             <span class="n">error</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">error</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">source</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">outcome</span><span class="o">.</span><span class="n">layout</span>
                 <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
 
-        <span class="k">for</span> <span class="n">box</span> <span class="ow">in</span> <span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">id_template</span><span class="p">):</span>
-            <span class="n">box</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">_commit</span><span class="p">)</span>
-            <span class="n">box</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"keydown.enter"</span><span class="p">,</span> <span class="n">_commit</span><span class="p">)</span>
+        <span class="n">pattern</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"blur"</span><span class="p">,</span> <span class="n">_commit</span><span class="p">)</span>
+        <span class="n">pattern</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"keydown.enter"</span><span class="p">,</span> <span class="n">_commit</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_toggle</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">ValueChangeEventArguments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">value</span> <span class="ow">and</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># back to a flat folder</span>
@@ -1130,8 +1187,20 @@
     <span class="p">):</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
             <span class="s2">"No videos directly in this folder, but it contains nested videos. "</span>
-            <span class="s2">"Turn on Nested layout to describe where they are."</span>
+            <span class="s2">"Turn on Videos in subfolders to describe where they are."</span>
         <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_table_summary</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One line describing how a table joins: key, match target, order, tag names."""</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">{{</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">match_field</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">match_field</span> <span class="k">else</span> <span class="n">VIDEO_ID_TARGET</span>
+    <span class="n">how</span> <span class="o">=</span> <span class="s2">"contained in"</span> <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">match_substring</span> <span class="k">else</span> <span class="s2">"matches"</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">short_name</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">how</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">order_column</span><span class="p">:</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="s2">"newest/largest"</span> <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">order_descending</span> <span class="k">else</span> <span class="s2">"oldest/smallest"</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"repeats: </span><span class="si">{</span><span class="n">direction</span><span class="si">}</span><span class="s2"> '</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">order_column</span><span class="si">}</span><span class="s2">' wins"</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"tags: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">tag_name</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s2">" · "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_source_card</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1144,9 +1213,7 @@
                 <span class="n">_availability_chip</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs break-all"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span> <span class="ow">and</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"key: </span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="si">}</span><span class="s2"> · columns: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">_table_summary</span><span class="p">(</span><span class="n">source</span><span class="p">))</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span><span class="p">:</span>
                 <span class="n">_layout_notice</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
                 <span class="n">_layout_editor</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>

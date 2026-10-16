@@ -268,6 +268,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -580,6 +581,14 @@ Drives the Browse label tags and the label filters.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.models.VideoEntry.label_origins">
+<span class="sig-name descname"><span class="pre">label_origins</span></span><a class="headerlink" href="#annie.core.models.VideoEntry.label_origins" title="Link to this definition">¶</a></dt>
+<dd><p>Where each label value came from, keyed like <code class="docutils literal notranslate"><span class="pre">labels</span></code> — e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;intake.xlsx</span> <span class="pre">›</span> <span class="pre">visits</span> <span class="pre">·</span> <span class="pre">subject</span> <span class="pre">=</span> <span class="pre">4021&quot;</span></code> for a table row, or
+<code class="docutils literal notranslate"><span class="pre">&quot;path</span> <span class="pre">field</span> <span class="pre">{part}&quot;</span></code> for a nested-layout field. Shown on hover in Browse.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.models.VideoEntry.row_id">
 <span class="sig-name descname"><span class="pre">row_id</span></span><a class="headerlink" href="#annie.core.models.VideoEntry.row_id" title="Link to this definition">¶</a></dt>
 <dd><p>The video’s <strong>1-based position in the whole scanned dataset</strong>,
@@ -730,6 +739,7 @@ built by hand rather than by a scan).</p>
 <li><a class="reference internal" href="#annie.core.models.VideoEntry.active_track_id"><code class="docutils literal notranslate"><span class="pre">VideoEntry.active_track_id</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.models.VideoEntry.status"><code class="docutils literal notranslate"><span class="pre">VideoEntry.status</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.models.VideoEntry.labels"><code class="docutils literal notranslate"><span class="pre">VideoEntry.labels</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.models.VideoEntry.label_origins"><code class="docutils literal notranslate"><span class="pre">VideoEntry.label_origins</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.models.VideoEntry.row_id"><code class="docutils literal notranslate"><span class="pre">VideoEntry.row_id</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.models.VideoEntry.has_video"><code class="docutils literal notranslate"><span class="pre">VideoEntry.has_video</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.models.VideoEntry.has_vdet"><code class="docutils literal notranslate"><span class="pre">VideoEntry.has_vdet</span></code></a></li>

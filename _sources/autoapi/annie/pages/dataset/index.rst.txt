@@ -33,6 +33,7 @@ Classes
 
 .. autoapisummary::
 
+   annie.pages.dataset.MetricCard
    annie.pages.dataset.LayoutCommit
 
 
@@ -41,7 +42,8 @@ Functions
 
 .. autoapisummary::
 
-   annie.pages.dataset.layout_from_inputs
+   annie.pages.dataset.metric_rows
+   annie.pages.dataset.layout_from_input
    annie.pages.dataset.layout_commit
    annie.pages.dataset.layout_summary
    annie.pages.dataset.render
@@ -53,6 +55,36 @@ Module Contents
 .. py:data:: CarryAction
 
    What saving a config should do with the progress in the currently open database.
+
+.. py:class:: MetricCard
+
+   One overview metric card on the Dataset tab.
+
+   .. attribute:: title
+
+      The card's caption.
+
+   .. attribute:: key
+
+      The :attr:`ScanResult.counts` key it shows.
+
+   .. attribute:: color
+
+      The caption colour.
+
+
+.. py:function:: metric_rows(registry: annie.dataset.sources.SourceRegistry) -> list[list[MetricCard]]
+
+   The overview cards that fit the configured sources, as rows (empty rows dropped).
+
+   ``# videos`` is always shown; vdet and track cards appear only once that folder is a
+   source, so a plain video dataset is not cluttered with face-tracking counts.
+
+   :param registry: The configured sources.
+
+   :returns: file counts first, then per-video coverage.
+   :rtype: Rows of cards
+
 
 .. py:class:: LayoutCommit
 
@@ -67,29 +99,27 @@ Module Contents
       A user-readable validation message, or ``None``.
 
 
-.. py:function:: layout_from_inputs(pattern: str, id_template: str) -> annie.dataset.layout.VideoLayout
+.. py:function:: layout_from_input(pattern: str) -> annie.dataset.layout.VideoLayout
 
-   Build and validate a :class:`VideoLayout` from the Layout text boxes.
+   Build and validate a :class:`VideoLayout` from the Pattern box.
 
-   :param pattern: The pattern box (path relative to the root, with ``{field}`` placeholders).
-   :param id_template: The video-id box; empty means "join the fields with ``_``".
+   :param pattern: The pattern box (path relative to the folder, with ``{field}`` placeholders).
 
    :returns: The validated layout.
 
    :raises ValueError: With a user-readable message if the layout is unusable.
 
 
-.. py:function:: layout_commit(pattern: str, id_template: str, current: annie.dataset.layout.VideoLayout | None) -> LayoutCommit
+.. py:function:: layout_commit(pattern: str, current: annie.dataset.layout.VideoLayout | None) -> LayoutCommit
 
-   Decide what to do when a Layout box is committed (blur / Enter).
+   Decide what to do when the Pattern box is committed (blur / Enter).
 
    :param pattern: The pattern box text.
-   :param id_template: The video-id box text.
    :param current: The layout already applied to the source, if any.
 
    :returns: ``LayoutCommit(layout=...)`` to apply a new valid layout; ``LayoutCommit(error=...)``
-             for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the boxes
-             still describe the applied layout, or the pattern is still empty (nothing to do yet).
+             for an invalid one (nothing is applied); an empty ``LayoutCommit()`` when the box
+             still describes the applied layout, or is still empty (nothing to do yet).
 
 
 .. py:function:: layout_summary(source: annie.dataset.sources.DataSource, scan: annie.dataset.scanning.ScanResult | None) -> str | None

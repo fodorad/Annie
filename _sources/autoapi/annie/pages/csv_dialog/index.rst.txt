@@ -5,19 +5,32 @@ annie.pages.csv_dialog
 
 .. autoapi-nested-parse::
 
-   CSV configuration dialogs (UI).
+   Table configuration dialogs: CSV files and Excel workbooks (UI).
 
-   Two modals, both opened after the user has picked a CSV file:
+   Opened after the user has picked a file:
 
-   * :func:`configure_csv` (Dataset tab) — describe how the file joins to the dataset:
-     its **role** (label tags vs the protagonist track), the **key column** that matches
-     the video id (auto-suggested), and the **value columns** to surface. It returns a
-     fully-formed :class:`~annie.sources.DataSource`.
+   * :func:`configure_table` (Dataset tab) — describe how a CSV or workbook joins to the
+     dataset. A CSV picks a **role** (label tags, protagonist track, segmentation); a
+     workbook lists every sheet, and each included sheet becomes its own label source.
+     For label tables a :class:`_JoinEditor` chooses the **ID column** and what it
+     **matches** (the whole video id or a nested-layout path field such as
+     ``{subject}``), optionally by substring, resolves repeated IDs with an explicit
+     **order column**, and names each feature column's tag. A live summary shows how
+     many videos would get a row.
    * :func:`select_id_column` (Browse tab) — pick the column holding the video ids to
      restrict the Browse list to.
 
-   Both return ``None`` if cancelled.
+   All return ``None`` if cancelled.
 
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.pages.csv_dialog.VIDEO_ID_TARGET
+   annie.pages.csv_dialog.Targets
 
 
 Functions
@@ -25,6 +38,8 @@ Functions
 
 .. autoapisummary::
 
+   annie.pages.csv_dialog.tag_clashes
+   annie.pages.csv_dialog.configure_table
    annie.pages.csv_dialog.configure_csv
    annie.pages.csv_dialog.select_id_column
 
@@ -32,14 +47,52 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: configure_csv(path: str | pathlib.Path, video_stems: collections.abc.Iterable[str]) -> annie.dataset.sources.DataSource | None
+.. py:data:: VIDEO_ID_TARGET
+   :value: 'video id'
+
+
+   Match target meaning "the whole video id" (path fields are identifiers, never this).
+
+.. py:data:: Targets
+
+.. py:function:: tag_clashes(sources: list[annie.dataset.sources.DataSource], taken: set[str]) -> list[str]
+
+   Return tag names that would collide, in the order they appear.
+
+   A tag must be unique across the new sources and everything already shown in
+   Browse (other tables' tags and nested-layout path fields), or one would silently
+   overwrite the other.
+
+   :param sources: The label sources about to be added.
+   :param taken: Tag names already in use.
+
+   :returns: Each clashing name once; empty when all are unique.
+
+
+.. py:function:: configure_table(path: str | pathlib.Path, targets: Targets, taken: set[str]) -> list[annie.dataset.sources.DataSource] | None
+   :async:
+
+
+   Configure a CSV or an Excel workbook as one or more sources.
+
+   :param path: The chosen file.
+   :param targets: What IDs can match: :data:`VIDEO_ID_TARGET` plus each path field, each
+                   mapping video id to the value an ID must equal (or contain).
+   :param taken: Tag names already in use (see :func:`tag_clashes`).
+
+   :returns: The sources to add (one per included sheet for a workbook), or ``None`` if
+             cancelled.
+
+
+.. py:function:: configure_csv(path: str | pathlib.Path, targets: Targets, taken: set[str]) -> annie.dataset.sources.DataSource | None
    :async:
 
 
    Open the CSV configuration modal and return the resulting source.
 
    :param path: The chosen CSV file.
-   :param video_stems: Known video stems, used to auto-suggest the key column.
+   :param targets: Match targets for label tables (see :func:`configure_table`).
+   :param taken: Tag names already in use.
 
    :returns: A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.
 

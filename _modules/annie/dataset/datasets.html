@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -322,6 +323,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
@@ -336,6 +338,9 @@
     <span class="n">SourceRegistry</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_rows</span>
+
+<span class="n">_LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="sd">"""Logger for config loading notices."""</span>
 
 
 <div class="viewcode-block" id="repo_data_dir">
@@ -423,18 +428,21 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_auto_detect_column_types</span><span class="p">(</span><span class="n">csv_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">value_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_auto_detect_column_types</span><span class="p">(</span>
+    <span class="n">csv_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">value_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Detect int/float/str for each value column by sampling up to 500 rows.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        csv_path: Path to the CSV file.</span>
+<span class="sd">        csv_path: Path to the CSV file or workbook.</span>
 <span class="sd">        value_columns: The columns whose types should be detected.</span>
+<span class="sd">        sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A ``{column: type_str}`` mapping where type is ``"int"``, ``"float"``,</span>
 <span class="sd">        or ``"str"``.</span>
 <span class="sd">    """</span>
-    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">detect_type</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">value_columns</span><span class="p">}</span>
 
 
@@ -472,7 +480,9 @@
             <span class="k">if</span> <span class="n">declared_types</span><span class="p">:</span>
                 <span class="n">column_types</span> <span class="o">=</span> <span class="n">declared_types</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">column_types</span> <span class="o">=</span> <span class="n">_auto_detect_column_types</span><span class="p">(</span><span class="n">resolved</span><span class="p">,</span> <span class="n">value_columns</span><span class="p">)</span>
+                <span class="n">column_types</span> <span class="o">=</span> <span class="n">_auto_detect_column_types</span><span class="p">(</span>
+                    <span class="n">resolved</span><span class="p">,</span> <span class="n">value_columns</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sheet"</span><span class="p">)</span>
+                <span class="p">)</span>
             <span class="n">bands</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
                 <span class="n">SegmentationBand</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="s2">"start_column"</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="s2">"end_column"</span><span class="p">])</span>
                 <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bands"</span><span class="p">,</span> <span class="p">[])</span>
@@ -487,15 +497,28 @@
                     <span class="n">column_types</span><span class="o">=</span><span class="n">column_types</span><span class="p">,</span>
                     <span class="n">segment_column</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"segment_column"</span><span class="p">),</span>
                     <span class="n">bands</span><span class="o">=</span><span class="n">bands</span><span class="p">,</span>
+                    <span class="n">sheet</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sheet"</span><span class="p">),</span>
+                    <span class="n">match_field</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"match_field"</span><span class="p">),</span>
+                    <span class="n">match_substring</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"match_substring"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+                    <span class="n">column_names</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"column_names"</span><span class="p">,</span> <span class="p">{})),</span>
+                    <span class="n">order_column</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"order_column"</span><span class="p">),</span>
+                    <span class="n">order_descending</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"order_descending"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">layout_raw</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"layout"</span><span class="p">)</span>
             <span class="n">layout</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">VideoLayout</span><span class="p">(</span><span class="n">layout_raw</span><span class="p">[</span><span class="s2">"pattern"</span><span class="p">],</span> <span class="n">layout_raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id_template"</span><span class="p">))</span>
+                <span class="n">VideoLayout</span><span class="p">(</span><span class="n">layout_raw</span><span class="p">[</span><span class="s2">"pattern"</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">layout_raw</span> <span class="ow">and</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">SourceKind</span><span class="o">.</span><span class="n">VIDEO</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">)</span>
+            <span class="k">if</span> <span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"id_template"</span> <span class="ow">in</span> <span class="n">layout_raw</span><span class="p">:</span>
+                <span class="n">_LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">"Ignoring the removed video id template </span><span class="si">%r</span><span class="s2"> in </span><span class="si">%s</span><span class="s2">; ids now join the "</span>
+                    <span class="s2">"pattern fields with '_'."</span><span class="p">,</span>
+                    <span class="n">layout_raw</span><span class="p">[</span><span class="s2">"id_template"</span><span class="p">],</span>
+                    <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">DataSource</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">resolved</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">))</span>
     <span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="s2">"db"</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
@@ -549,6 +572,18 @@
             <span class="n">entry</span><span class="p">[</span><span class="s2">"value_columns"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">column_types</span><span class="p">:</span>
                 <span class="n">entry</span><span class="p">[</span><span class="s2">"column_types"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">column_types</span><span class="p">)</span>
+            <span class="c1"># Table options are written only when set, so older configs stay unchanged.</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">sheet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">"sheet"</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">sheet</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">match_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">"match_field"</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">match_field</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">match_substring</span><span class="p">:</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">"match_substring"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">"column_names"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">column_names</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">order_column</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">"order_column"</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">order_column</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s2">"order_descending"</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">order_descending</span>
             <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">is_segmentation</span><span class="p">:</span>
                 <span class="n">entry</span><span class="p">[</span><span class="s2">"segment_column"</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">segment_column</span>
                 <span class="n">entry</span><span class="p">[</span><span class="s2">"bands"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
@@ -557,8 +592,6 @@
                 <span class="p">]</span>
         <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">entry</span><span class="p">[</span><span class="s2">"layout"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"pattern"</span><span class="p">:</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">pattern</span><span class="p">}</span>
-            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">id_template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">entry</span><span class="p">[</span><span class="s2">"layout"</span><span class="p">][</span><span class="s2">"id_template"</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">id_template</span>
         <span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
     <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"sources"</span><span class="p">:</span> <span class="n">sources</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">db_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

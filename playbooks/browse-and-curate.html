@@ -268,6 +268,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -330,10 +331,11 @@ source re-scans in place, so the metrics update immediately.</p>
 <p><img alt="Dataset tab with the MOSEI example config loaded" src="../_images/dataset-sources.png" /></p>
 <p>What to notice:</p>
 <ul class="simple">
-<li><p><strong>Metric cards</strong> summarise the scan: videos, vdet files, track files, and how many
-videos have each annotation.</p></li>
-<li><p>Each <strong>source card</strong> shows an Available / Unavailable chip and, for CSVs, the key
-column and the value columns it contributes.</p></li>
+<li><p><strong>Metric cards</strong> summarise the scan. <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">videos</span></code> is always there; the vdet / track file
+counts and how many videos have each annotation appear only once that folder is a
+source.</p></li>
+<li><p>Each <strong>source card</strong> shows an Available / Unavailable chip and, for tables, how the key
+column joins, how repeated IDs resolve, and the tags it contributes.</p></li>
 <li><p>The <strong>Tasks</strong> panel below (scrolled off here) lists what each Annotator task needs and
 whether it is <em>Ready</em> — a task is offered in the Annotator exactly when it is ready
 here.</p></li>
@@ -344,6 +346,29 @@ Annie asks which to keep and sets the other aside under Persistence), and the ne
 start reopens the last loaded or saved config automatically — unless <code class="docutils literal notranslate"><span class="pre">ANNIE_*</span></code> env
 vars define the dataset.</p></li>
 </ul>
+<section id="label-tables-csv-files-and-excel-workbooks">
+<h3>Label tables: CSV files and Excel workbooks<a class="headerlink" href="#label-tables-csv-files-and-excel-workbooks" title="Link to this heading">¶</a></h3>
+<p><strong>Add data source → Table (CSV / Excel)</strong> accepts a <code class="docutils literal notranslate"><span class="pre">.csv</span></code> or an <code class="docutils literal notranslate"><span class="pre">.xlsx</span></code> workbook. A
+workbook lists every sheet; open one, keep <strong>Include this sheet</strong> ticked, and configure it
+— each included sheet becomes its own label source. For each table:</p>
+<ul class="simple">
+<li><p><strong>ID column</strong> and <strong>Matches</strong> say how a row finds its videos. <em>video id</em> compares the
+whole id. With a nested video layout you can instead match one <strong>path field</strong>: a sheet
+keyed by subject, <code class="docutils literal notranslate"><span class="pre">4021</span></code>, then tags every video under <code class="docutils literal notranslate"><span class="pre">{subject}/clip_{part}.mp4</span></code> of
+that subject (<code class="docutils literal notranslate"><span class="pre">4021_a</span></code>, <code class="docutils literal notranslate"><span class="pre">4021_b</span></code>, …).</p></li>
+<li><p><strong>ID is part of the name</strong> (off by default) links a row to every video whose id — or
+path field — <em>contains</em> the ID. If a name contains several IDs the longest wins, and the
+summary counts such videos as ambiguous.</p></li>
+<li><p>When an ID appears on more than one row, Annie requires an <strong>Order by</strong> column and a
+direction (e.g. a timestamp, newest first), so which row counts never depends on how the
+file happens to be sorted. Rows that still tie on that value are reported.</p></li>
+<li><p>Each feature column gets a <strong>tag name</strong>, prefilled from its header and editable, so a
+long question can become a short Browse tag. Tag names must be unique across tables and
+path fields.</p></li>
+<li><p>The live summary shows how many videos would get a row. In Browse, hovering a tag
+shows where its value came from, e.g. <code class="docutils literal notranslate"><span class="pre">intake.xlsx</span> <span class="pre">›</span> <span class="pre">visits</span> <span class="pre">·</span> <span class="pre">subject</span> <span class="pre">=</span> <span class="pre">4021</span></code>.</p></li>
+</ul>
+</section>
 </section>
 <hr class="docutils" />
 <section id="step-2-reshape-label-columns-with-manipulate">
@@ -436,6 +461,12 @@ routing, not supervision — so it stays in Browse.</p>
 <tr class="row-even"><td><p>Source registry, task readiness</p></td>
 <td><p><a class="reference internal" href="../autoapi/annie/dataset/sources/index.html#module-annie.dataset.sources" title="annie.dataset.sources"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.dataset.sources</span></code></a></p></td>
 </tr>
+<tr class="row-odd"><td><p>Reading CSV / Excel tables, duplicate order</p></td>
+<td><p><a class="reference internal" href="../autoapi/annie/parsers/csvmeta/index.html#module-annie.parsers.csvmeta" title="annie.parsers.csvmeta"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers.csvmeta</span></code></a>, <a class="reference internal" href="../autoapi/annie/parsers/workbook/index.html#module-annie.parsers.workbook" title="annie.parsers.workbook"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers.workbook</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Joining tables to videos (path field, substring)</p></td>
+<td><p><a class="reference internal" href="../autoapi/annie/dataset/scanning/index.html#module-annie.dataset.scanning" title="annie.dataset.scanning"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.dataset.scanning</span></code></a></p></td>
+</tr>
 <tr class="row-odd"><td><p>Config save/load, per-config database</p></td>
 <td><p><a class="reference internal" href="../autoapi/annie/dataset/datasets/index.html#module-annie.dataset.datasets" title="annie.dataset.datasets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.dataset.datasets</span></code></a></p></td>
 </tr>
@@ -516,7 +547,10 @@ routing, not supervision — so it stays in Browse.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Playbook — Dataset, Browse &amp; Curation</a><ul>
-<li><a class="reference internal" href="#step-1-define-the-dataset-on-the-dataset-tab">Step 1 — Define the dataset on the Dataset tab</a></li>
+<li><a class="reference internal" href="#step-1-define-the-dataset-on-the-dataset-tab">Step 1 — Define the dataset on the Dataset tab</a><ul>
+<li><a class="reference internal" href="#label-tables-csv-files-and-excel-workbooks">Label tables: CSV files and Excel workbooks</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#step-2-reshape-label-columns-with-manipulate">Step 2 — Reshape label columns with Manipulate</a></li>
 <li><a class="reference internal" href="#step-3-select-the-samples-you-want-to-supervise">Step 3 — Select the samples you want to supervise</a></li>
 <li><a class="reference internal" href="#step-4-curate-the-queued-videos-in-the-annotator">Step 4 — Curate the queued videos in the Annotator</a></li>

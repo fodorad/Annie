@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -306,18 +307,22 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for annie.pages.csv_dialog</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""CSV configuration dialogs (UI).</span>
+<span></span><span class="sd">"""Table configuration dialogs: CSV files and Excel workbooks (UI).</span>
 
-<span class="sd">Two modals, both opened after the user has picked a CSV file:</span>
+<span class="sd">Opened after the user has picked a file:</span>
 
-<span class="sd">* :func:`configure_csv` (Dataset tab) — describe how the file joins to the dataset:</span>
-<span class="sd">  its **role** (label tags vs the protagonist track), the **key column** that matches</span>
-<span class="sd">  the video id (auto-suggested), and the **value columns** to surface. It returns a</span>
-<span class="sd">  fully-formed :class:`~annie.sources.DataSource`.</span>
+<span class="sd">* :func:`configure_table` (Dataset tab) — describe how a CSV or workbook joins to the</span>
+<span class="sd">  dataset. A CSV picks a **role** (label tags, protagonist track, segmentation); a</span>
+<span class="sd">  workbook lists every sheet, and each included sheet becomes its own label source.</span>
+<span class="sd">  For label tables a :class:`_JoinEditor` chooses the **ID column** and what it</span>
+<span class="sd">  **matches** (the whole video id or a nested-layout path field such as</span>
+<span class="sd">  ``{subject}``), optionally by substring, resolves repeated IDs with an explicit</span>
+<span class="sd">  **order column**, and names each feature column's tag. A live summary shows how</span>
+<span class="sd">  many videos would get a row.</span>
 <span class="sd">* :func:`select_id_column` (Browse tab) — pick the column holding the video ids to</span>
 <span class="sd">  restrict the Browse list to.</span>
 
-<span class="sd">Both return ``None`` if cancelled.</span>
+<span class="sd">All return ``None`` if cancelled.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -329,19 +334,212 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.manipulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">detect_type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.scanning</span><span class="w"> </span><span class="kn">import</span> <span class="n">join_summary</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvRole</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">,</span> <span class="n">SegmentationBand</span><span class="p">,</span> <span class="n">SourceKind</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">distinct_column_values</span><span class="p">,</span>
+    <span class="n">duplicate_report</span><span class="p">,</span>
+    <span class="n">order_rows</span><span class="p">,</span>
     <span class="n">read_header</span><span class="p">,</span>
     <span class="n">read_rows</span><span class="p">,</span>
+    <span class="n">short_name</span><span class="p">,</span>
+    <span class="n">suggest_join</span><span class="p">,</span>
     <span class="n">suggest_key_column</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.workbook</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_workbook</span><span class="p">,</span> <span class="n">read_sheet</span><span class="p">,</span> <span class="n">sheet_names</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 
 <span class="c1">#: Column value types offered in the CSV configuration dialog.</span>
 <span class="n">_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="s2">"int"</span><span class="p">,</span> <span class="s2">"float"</span><span class="p">)</span>
+
+<span class="n">VIDEO_ID_TARGET</span> <span class="o">=</span> <span class="s2">"video id"</span>
+<span class="sd">"""Match target meaning "the whole video id" (path fields are identifiers, never this)."""</span>
+
+<span class="n">_ORDER_HINTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"timestamp"</span><span class="p">,</span> <span class="s2">"time"</span><span class="p">,</span> <span class="s2">"date"</span><span class="p">,</span> <span class="s2">"created"</span><span class="p">,</span> <span class="s2">"updated"</span><span class="p">)</span>
+<span class="sd">"""Column-name fragments that suggest a column orders rows in time."""</span>
+
+<span class="c1">#: A table's match targets: target name to ``{video id: value the ID must match}``.</span>
+<span class="n">Targets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+
+
+<div class="viewcode-block" id="tag_clashes">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.tag_clashes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tag_clashes</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">],</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return tag names that would collide, in the order they appear.</span>
+
+<span class="sd">    A tag must be unique across the new sources and everything already shown in</span>
+<span class="sd">    Browse (other tables' tags and nested-layout path fields), or one would silently</span>
+<span class="sd">    overwrite the other.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sources: The label sources about to be added.</span>
+<span class="sd">        taken: Tag names already in use.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Each clashing name once; empty when all are unique.</span>
+<span class="sd">    """</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">taken</span><span class="p">)</span>
+    <span class="n">clashes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">tag_name</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">clashes</span><span class="p">:</span>
+                <span class="n">clashes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">clashes</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_JoinEditor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Join, duplicate and column controls for one label table (a CSV or a sheet).</span>
+
+<span class="sd">    Builds its widgets into the current UI context. :meth:`collect` turns the choices</span>
+<span class="sd">    into a :class:`~annie.dataset.sources.DataSource`, or explains what is missing.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_header</span> <span class="o">=</span> <span class="n">header</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rows</span> <span class="o">=</span> <span class="n">rows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_targets</span> <span class="o">=</span> <span class="n">targets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicates</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">offered</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="p">{</span><span class="s2">""</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">suggest_join</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">offered</span><span class="p">)</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span>
+        <span class="n">detected</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">detect_type</span><span class="p">((</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">}</span>
+        <span class="n">order_guess</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">hint</span> <span class="ow">in</span> <span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">hint</span> <span class="ow">in</span> <span class="n">_ORDER_HINTS</span><span class="p">)),</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2 no-wrap"</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                <span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">best</span><span class="o">.</span><span class="n">column</span> <span class="k">if</span> <span class="n">best</span> <span class="k">else</span> <span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">"ID column"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow min-w-0"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_match</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                    <span class="nb">list</span><span class="p">(</span><span class="n">targets</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">best</span><span class="o">.</span><span class="n">target</span> <span class="k">if</span> <span class="n">best</span> <span class="k">else</span> <span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Matches"</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-44"</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"What the IDs are compared with: the whole video id, or one path field"</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_substring</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span>
+            <span class="s2">"ID is part of the name (substring match)"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+            <span class="s2">"Link a row to every video whose name contains the ID. If one name contains "</span>
+            <span class="s2">"several IDs, the longest wins."</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_summary</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">)</span> <span class="k">as</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duplicates</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_note</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2 no-wrap items-center"</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_order</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">order_guess</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Order by"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
+                    <span class="s2">"flex-grow min-w-0"</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_descending</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span>
+                    <span class="p">{</span><span class="kc">True</span><span class="p">:</span> <span class="s2">"Newest / largest first"</span><span class="p">,</span> <span class="kc">False</span><span class="p">:</span> <span class="s2">"Oldest / smallest first"</span><span class="p">},</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense no-caps"</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-between mt-1"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Feature columns · tag name · type"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"gap-1"</span><span class="p">):</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Select all"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_all</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Clear"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_all</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-0 max-h-72 overflow-auto"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 no-wrap"</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="n">short_name</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-64 min-w-0"</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">short_name</span><span class="p">(</span><span class="n">col</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense outlined"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">_TYPES</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">detected</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+                        <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense outlined"</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-24"</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_substring</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_order</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_descending</span><span class="p">):</span>
+            <span class="n">element</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">box</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">box</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Recompute the match summary and the duplicate controls from the choices."""</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_order</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">descending</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_descending</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">duplicated</span> <span class="o">=</span> <span class="n">duplicate_report</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rows</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">duplicated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicates</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">duplicated</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_duplicates</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicates</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rows</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicates</span><span class="p">:</span>
+            <span class="n">note</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">duplicated</span><span class="p">)</span><span class="si">}</span><span class="s2"> IDs appear more than once — choose which row counts."</span>
+            <span class="k">if</span> <span class="n">order</span><span class="p">:</span>
+                <span class="n">ties</span> <span class="o">=</span> <span class="n">duplicate_report</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rows</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="n">descending</span><span class="p">)</span><span class="o">.</span><span class="n">ties</span>
+                <span class="k">if</span> <span class="n">ties</span><span class="p">:</span>
+                    <span class="n">note</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ties</span><span class="p">)</span><span class="si">}</span><span class="s2"> still tie on '</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">'; file order decides those."</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">order_rows</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rows</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="n">descending</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_duplicate_note</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">join_summary</span><span class="p">(</span>
+            <span class="n">keys</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_targets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_match</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">substring</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_substring</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">videos_matched</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">videos_total</span><span class="si">}</span><span class="s2"> videos matched · "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">keys_used</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">keys_total</span><span class="si">}</span><span class="s2"> IDs used"</span>
+        <span class="p">)</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span> <span class="k">if</span> <span class="n">summary</span><span class="o">.</span><span class="n">videos_matched</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span>
+        <span class="k">if</span> <span class="n">summary</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" · </span><span class="si">{</span><span class="n">summary</span><span class="o">.</span><span class="n">ambiguous</span><span class="si">}</span><span class="s2"> ambiguous (longest ID wins)"</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_summary</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_summary</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the label source, or return a message saying what is missing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path: The table file.</span>
+<span class="sd">            sheet: The worksheet, for a workbook.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The :class:`~annie.dataset.sources.DataSource`, or an error message.</span>
+<span class="sd">        """</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">box</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"select at least one feature column."</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicates</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_order</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"IDs repeat, so choose an 'Order by' column to decide which row counts."</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">}</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">DataSource</span><span class="p">(</span>
+            <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">,</span>
+            <span class="n">key_column</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">value_columns</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
+            <span class="n">column_types</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">},</span>
+            <span class="n">sheet</span><span class="o">=</span><span class="n">sheet</span><span class="p">,</span>
+            <span class="n">match_field</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">match</span> <span class="o">==</span> <span class="n">VIDEO_ID_TARGET</span> <span class="k">else</span> <span class="n">match</span><span class="p">,</span>
+            <span class="n">match_substring</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_substring</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+            <span class="n">column_names</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">name</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">col</span><span class="p">},</span>
+            <span class="n">order_column</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_order</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_duplicates</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">order_descending</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_descending</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_guess_column</span><span class="p">(</span><span class="n">header</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">needle</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -407,31 +605,134 @@
     <span class="k">return</span> <span class="n">_BandsEditor</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="configure_table">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.configure_table">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">configure_table</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Configure a CSV or an Excel workbook as one or more sources.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: The chosen file.</span>
+<span class="sd">        targets: What IDs can match: :data:`VIDEO_ID_TARGET` plus each path field, each</span>
+<span class="sd">            mapping video id to the value an ID must equal (or contain).</span>
+<span class="sd">        taken: Tag names already in use (see :func:`tag_clashes`).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The sources to add (one per included sheet for a workbook), or ``None`` if</span>
+<span class="sd">        cancelled.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">is_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">_configure_workbook</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="k">await</span> <span class="n">configure_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">source</span><span class="p">]</span> <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clash_message</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">],</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A notification for clashing tag names, or ``None`` when all are unique."""</span>
+    <span class="n">clashes</span> <span class="o">=</span> <span class="n">tag_clashes</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">taken</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">clashes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Tag name already used: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clashes</span><span class="p">)</span><span class="si">}</span><span class="s2"> — rename it in the tag name box."</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_configure_workbook</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Workbook dialog: one expandable section per sheet, each joined separately."""</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">sheet_names</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"That workbook could not be read."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">offered</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="p">{</span><span class="s2">""</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">editors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_JoinEditor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a sheet's controls the first time it is opened (sheets can be wide)."""</span>
+        <span class="k">if</span> <span class="n">sheet</span> <span class="ow">in</span> <span class="n">editors</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="n">body</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"This sheet has no table to read."</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">includes</span><span class="p">[</span><span class="n">sheet</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="s2">"Include this sheet"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">editors</span><span class="p">[</span><span class="n">sheet</span><span class="p">]</span> <span class="o">=</span> <span class="n">_JoinEditor</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[52rem] max-w-full gap-2"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Add workbook — </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
+            <span class="s2">"Open a sheet to include it, then choose its ID column and the feature columns "</span>
+            <span class="s2">"to show as tags. Each included sheet becomes its own label source."</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1 max-h-[65vh] overflow-auto"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sheet</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="n">header</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">read_sheet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)</span>
+                <span class="n">hint</span> <span class="o">=</span> <span class="n">suggest_join</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">offered</span><span class="p">)</span> <span class="k">if</span> <span class="n">header</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">caption</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows · </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span><span class="si">}</span><span class="s2"> columns"</span>
+                <span class="k">if</span> <span class="n">hint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">column</span> <span class="o">=</span> <span class="n">short_name</span><span class="p">(</span><span class="n">hint</span><span class="o">.</span><span class="n">column</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+                    <span class="n">caption</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" · '</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">' matches </span><span class="si">{</span><span class="n">hint</span><span class="o">.</span><span class="n">matched</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">hint</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2"> values"</span>
+                <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">expansion</span><span class="p">(</span><span class="n">sheet</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="n">caption</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span> <span class="k">as</span> <span class="n">section</span><span class="p">:</span>
+                    <span class="n">body</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">)</span>
+                <span class="n">section</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">e</span><span class="p">,</span> <span class="n">sh</span><span class="o">=</span><span class="n">sheet</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">header</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">rows</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">_build</span><span class="p">(</span><span class="n">sh</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_confirm</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chosen</span> <span class="o">=</span> <span class="p">[</span><span class="n">sheet</span> <span class="k">for</span> <span class="n">sheet</span><span class="p">,</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">includes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"Open a sheet and include it first."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">sheet</span> <span class="ow">in</span> <span class="n">chosen</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">editors</span><span class="p">[</span><span class="n">sheet</span><span class="p">]</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sheet</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">clash</span> <span class="o">=</span> <span class="n">_clash_message</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">taken</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">clash</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">clash</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end gap-2 mt-2"</span><span class="p">):</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Add sheets"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_confirm</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="k">await</span> <span class="n">dialog</span>
+
+
 <div class="viewcode-block" id="configure_csv">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.configure_csv">[docs]</a>
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">configure_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">video_stems</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">configure_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Open the CSV configuration modal and return the resulting source.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: The chosen CSV file.</span>
-<span class="sd">        video_stems: Known video stems, used to auto-suggest the key column.</span>
+<span class="sd">        targets: Match targets for label tables (see :func:`configure_table`).</span>
+<span class="sd">        taken: Tag names already in use.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.</span>
 <span class="sd">    """</span>
     <span class="n">csv_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
-    <span class="n">stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">video_stems</span><span class="p">)</span>
-    <span class="n">suggested</span> <span class="o">=</span> <span class="n">suggest_key_column</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">stems</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">header</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"That CSV has no header row."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="n">sample</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>
+    <span class="n">stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">targets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="n">suggested</span> <span class="o">=</span> <span class="n">suggest_key_column</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">stems</span><span class="p">)</span> <span class="ow">or</span> <span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span>
     <span class="n">detected</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">detect_type</span><span class="p">((</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">}</span>
 
-    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[34rem] max-w-full gap-2"</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[44rem] max-w-full gap-2"</span><span class="p">):</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Add CSV — </span><span class="si">{</span><span class="n">csv_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
 
         <span class="n">role</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
@@ -444,73 +745,67 @@
             <span class="n">label</span><span class="o">=</span><span class="s2">"Use as"</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
 
-        <span class="n">key</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">suggested</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Key column (joins to video id)"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
-            <span class="s2">"w-full"</span>
-        <span class="p">)</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">)</span> <span class="k">as</span> <span class="n">labels_box</span><span class="p">:</span>
+            <span class="n">editor</span> <span class="o">=</span> <span class="n">_JoinEditor</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
 
-        <span class="n">segment_col</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-                <span class="n">header</span><span class="p">,</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">_guess_column</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="s2">"segment"</span><span class="p">),</span>
-                <span class="n">label</span><span class="o">=</span><span class="s2">"Row id column (makes each clip's decision distinct)"</span><span class="p">,</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">)</span> <span class="k">as</span> <span class="n">other_box</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                <span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">suggested</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Key column (joins to video id)"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+            <span class="n">segment_col</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                    <span class="n">header</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">_guess_column</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="s2">"segment"</span><span class="p">),</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">"Row id column (makes each clip's decision distinct)"</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
+                    <span class="s2">"Several rows share one video id, so this is what tells them apart: each "</span>
+                    <span class="s2">"clip's accept/drop is saved under </span><span class="si">{video_id}</span><span class="s2">_{row id}. Pick the column "</span>
+                    <span class="s2">"that is unique within a video, e.g. segment_id."</span>
+                <span class="p">)</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
-                <span class="s2">"Several rows share one video id, so this is what tells them apart: each "</span>
-                <span class="s2">"clip's accept/drop is saved under </span><span class="si">{video_id}</span><span class="s2">_{row id}. Pick the column "</span>
-                <span class="s2">"that is unique within a video, e.g. segment_id."</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">bands</span> <span class="o">=</span> <span class="n">_bands_editor</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="n">_bands_editor</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+            <span class="n">track_col</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Track-id column"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
+            <span class="n">checks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-0 max-h-72 overflow-auto"</span><span class="p">)</span> <span class="k">as</span> <span class="n">checkbox_box</span><span class="p">:</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Value columns"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 no-wrap"</span><span class="p">):</span>
+                        <span class="n">checks</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
+                        <span class="n">types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">_TYPES</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">detected</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+                            <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense outlined"</span><span class="p">)</span>
+                            <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
+                        <span class="p">)</span>
 
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-between mt-1"</span><span class="p">):</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Value columns"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"gap-1"</span><span class="p">):</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Select all"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_set_all</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Clear"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_set_all</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_show_role</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">is_labels</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span>
+            <span class="n">labels_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">is_labels</span><span class="p">)</span>
+            <span class="n">other_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="ow">not</span> <span class="n">is_labels</span><span class="p">)</span>
+            <span class="n">track_col</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">)</span>
+            <span class="c1"># Segmentation value columns double as label tags.</span>
+            <span class="n">checkbox_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">)</span>
+            <span class="n">segment_col</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">)</span>
+            <span class="n">bands</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">)</span>
 
-        <span class="n">checks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">track_col</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Track-id column"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">_set_all</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">checks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-                <span class="n">box</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">_value_controls</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">is_protagonist</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span>
-            <span class="n">is_segmentation</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span>
-            <span class="n">track_col</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">is_protagonist</span><span class="p">)</span>
-            <span class="c1"># value columns double as label tags for both labels and segmentation.</span>
-            <span class="n">checkbox_box</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="ow">not</span> <span class="n">is_protagonist</span><span class="p">)</span>
-            <span class="n">segment_col</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">is_segmentation</span><span class="p">)</span>
-            <span class="n">bands</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">set_visibility</span><span class="p">(</span><span class="n">is_segmentation</span><span class="p">)</span>
-
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-0 max-h-72 overflow-auto"</span><span class="p">)</span> <span class="k">as</span> <span class="n">checkbox_box</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2 no-wrap"</span><span class="p">):</span>
-                    <span class="n">checks</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-grow"</span><span class="p">)</span>
-                    <span class="n">types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">_TYPES</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">detected</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
-                        <span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense outlined"</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-28"</span><span class="p">)</span>
-                    <span class="p">)</span>
-
-        <span class="n">role</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">_value_controls</span><span class="o">.</span><span class="n">refresh</span><span class="p">())</span>
-        <span class="n">_value_controls</span><span class="p">()</span>
+        <span class="n">role</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">_show_role</span><span class="p">())</span>
+        <span class="n">_show_role</span><span class="p">()</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_confirm</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">track_col</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
                     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"Pick the track-id column."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
                     <span class="k">return</span>
-                <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span>
-                    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
-                    <span class="n">csv_path</span><span class="p">,</span>
-                    <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">,</span>
-                    <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">value_columns</span><span class="o">=</span><span class="p">(</span><span class="n">track_col</span><span class="o">.</span><span class="n">value</span><span class="p">,),</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                    <span class="n">DataSource</span><span class="p">(</span>
+                        <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+                        <span class="n">csv_path</span><span class="p">,</span>
+                        <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">PROTAGONIST</span><span class="p">,</span>
+                        <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">value_columns</span><span class="o">=</span><span class="p">(</span><span class="n">track_col</span><span class="o">.</span><span class="n">value</span><span class="p">,),</span>
+                    <span class="p">)</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="n">role</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">segment_col</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
@@ -521,30 +816,28 @@
                     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"Add at least one start/end band."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
                     <span class="k">return</span>
                 <span class="n">selected</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">checks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-                <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span>
-                    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
-                    <span class="n">csv_path</span><span class="p">,</span>
-                    <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
-                    <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">segment_column</span><span class="o">=</span><span class="n">segment_col</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">bands</span><span class="o">=</span><span class="n">chosen_bands</span><span class="p">,</span>
-                    <span class="n">value_columns</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
-                    <span class="n">column_types</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">},</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                    <span class="n">DataSource</span><span class="p">(</span>
+                        <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+                        <span class="n">csv_path</span><span class="p">,</span>
+                        <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
+                        <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">segment_column</span><span class="o">=</span><span class="n">segment_col</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">bands</span><span class="o">=</span><span class="n">chosen_bands</span><span class="p">,</span>
+                        <span class="n">value_columns</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
+                        <span class="n">column_types</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">},</span>
+                    <span class="p">)</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">selected</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">checks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"Select at least one value column."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">editor</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
                     <span class="k">return</span>
-                <span class="n">source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span>
-                    <span class="n">SourceKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
-                    <span class="n">csv_path</span><span class="p">,</span>
-                    <span class="n">role</span><span class="o">=</span><span class="n">CsvRole</span><span class="o">.</span><span class="n">LABELS</span><span class="p">,</span>
-                    <span class="n">key_column</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">value_columns</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
-                    <span class="n">column_types</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">types</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">},</span>
-                <span class="p">)</span>
-            <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="n">clash</span> <span class="o">=</span> <span class="n">_clash_message</span><span class="p">([</span><span class="n">result</span><span class="p">],</span> <span class="n">taken</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">clash</span><span class="p">:</span>
+                    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">clash</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-end gap-2 mt-2"</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">dialog</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>

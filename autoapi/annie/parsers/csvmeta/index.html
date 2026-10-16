@@ -268,6 +268,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -314,33 +315,63 @@
         <article role="main" id="furo-main-content">
           <section id="module-annie.parsers.csvmeta">
 <span id="annie-parsers-csvmeta"></span><h1>annie.parsers.csvmeta<a class="headerlink" href="#module-annie.parsers.csvmeta" title="Link to this heading">¶</a></h1>
-<p>Generic CSV metadata parser for label / protagonist sources (domain).</p>
+<p>Generic table metadata parser for label / protagonist sources (domain).</p>
 <p>Unlike the fixed 17-column detection schema (<a class="reference internal" href="../base/index.html#module-annie.parsers.base" title="annie.parsers.base"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers.base</span></code></a>), a label
-CSV has an arbitrary shape: the user picks which column joins to the video id (the
+table has an arbitrary shape: the user picks which column joins to the video id (the
 <strong>key column</strong>) and which columns to surface as tags/filters (the <strong>value
 columns</strong>). This module reads headers, suggests a key column by matching values
-against the known video stems, and builds a <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">{column:</span> <span class="pre">value}</span></code> map.</p>
-<p>It is pure and dependency-light (stdlib <code class="xref py py-mod docutils literal notranslate"><span class="pre">csv</span></code> only), so it is unit-tested
-without any media backend.</p>
+against the known video stems, and builds a <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">{column:</span> <span class="pre">value}</span></code> map.</p>
+<p>A table is a CSV file or one worksheet of an Excel workbook: every reader takes an
+optional <code class="docutils literal notranslate"><span class="pre">sheet</span></code> and hands workbooks to <a class="reference internal" href="../workbook/index.html#module-annie.parsers.workbook" title="annie.parsers.workbook"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers.workbook</span></code></a>, so callers
+never care which format they read.</p>
+<p>When a key repeats, an explicit <strong>order column</strong> decides which row counts (e.g. the
+newest timestamp); see <a class="reference internal" href="#annie.parsers.csvmeta.order_rows" title="annie.parsers.csvmeta.order_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">order_rows()</span></code></a> and <a class="reference internal" href="#annie.parsers.csvmeta.duplicate_report" title="annie.parsers.csvmeta.duplicate_report"><code class="xref py py-func docutils literal notranslate"><span class="pre">duplicate_report()</span></code></a>.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.DuplicateReport" title="annie.parsers.csvmeta.DuplicateReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DuplicateReport</span></code></a></p></td>
+<td><p>How a table's key column repeats, for the Dataset tab's warning.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion" title="annie.parsers.csvmeta.JoinSuggestion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JoinSuggestion</span></code></a></p></td>
+<td><p>A proposed way to join a table to the videos.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.read_header" title="annie.parsers.csvmeta.read_header"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_header</span></code></a>(→ list[str])</p></td>
-<td><p>Return the column names of a CSV (its header row).</p></td>
+<td><p>Return the column names of a table (its header row).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.read_rows" title="annie.parsers.csvmeta.read_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_rows</span></code></a>(→ list[dict[str, str]])</p></td>
-<td><p>Read a CSV into column-keyed dict rows (BOM- and CRLF-tolerant).</p></td>
+<td><p>Read a table into column-keyed dict rows (CSV: BOM- and CRLF-tolerant).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.count_rows" title="annie.parsers.csvmeta.count_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count_rows</span></code></a>(→ int)</p></td>
-<td><p>Count data rows in a CSV (excludes the header), cheaply.</p></td>
+<td><p>Count data rows in a table (excludes the header), cheaply.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.suggest_key_column" title="annie.parsers.csvmeta.suggest_key_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suggest_key_column</span></code></a>(→ str | None)</p></td>
 <td><p>Guess which column joins the CSV to videos.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.load_value_map" title="annie.parsers.csvmeta.load_value_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_value_map</span></code></a>(→ dict[str, dict[str, str]])</p></td>
-<td><p>Build a <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">{value_column:</span> <span class="pre">value}</span></code> mapping from a CSV.</p></td>
+<td><p>Build a <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">{value_column:</span> <span class="pre">value}</span></code> mapping from a table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.order_rows" title="annie.parsers.csvmeta.order_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">order_rows</span></code></a>(→ list[dict[str, str]])</p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">rows</span></code> sorted by <code class="docutils literal notranslate"><span class="pre">column</span></code>, stably, with empty values always last.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.duplicate_report" title="annie.parsers.csvmeta.duplicate_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">duplicate_report</span></code></a>(→ DuplicateReport)</p></td>
+<td><p>Report the repeated keys of a table and which of them the order can't separate.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.suggest_join" title="annie.parsers.csvmeta.suggest_join"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suggest_join</span></code></a>(→ JoinSuggestion | None)</p></td>
+<td><p>Propose the (id column, target) pair whose values overlap the most.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.short_name" title="annie.parsers.csvmeta.short_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">short_name</span></code></a>(→ str)</p></td>
+<td><p>Prefill for a tag name: the header on one line, cut at a word within <code class="docutils literal notranslate"><span class="pre">limit</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.distinct_column_values" title="annie.parsers.csvmeta.distinct_column_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distinct_column_values</span></code></a>(→ list[str])</p></td>
 <td><p>Return the distinct non-empty values of one column, in first-seen order.</p></td>
@@ -356,11 +387,14 @@ without any media backend.</p>
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.parsers.csvmeta.read_header">
-<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">read_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#read_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.read_header" title="Link to this definition">¶</a></dt>
-<dd><p>Return the column names of a CSV (its header row).</p>
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">read_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#read_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.read_header" title="Link to this definition">¶</a></dt>
+<dd><p>Return the column names of a table (its header row).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> – Path to the CSV file.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – Path to the CSV file or workbook.</p></li>
+<li><p><strong>sheet</strong> – The worksheet of a workbook (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the first); ignored for a CSV.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The header column names in order, or an empty list if the file is empty
@@ -371,11 +405,14 @@ or missing.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.parsers.csvmeta.read_rows">
-<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">read_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#read_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.read_rows" title="Link to this definition">¶</a></dt>
-<dd><p>Read a CSV into column-keyed dict rows (BOM- and CRLF-tolerant).</p>
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">read_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#read_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.read_rows" title="Link to this definition">¶</a></dt>
+<dd><p>Read a table into column-keyed dict rows (CSV: BOM- and CRLF-tolerant).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> – Path to the CSV file.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – Path to the CSV file or workbook.</p></li>
+<li><p><strong>sheet</strong> – The worksheet of a workbook (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the first); ignored for a CSV.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>One dict per data row, keyed by column name. Empty if missing.</p>
@@ -385,11 +422,14 @@ or missing.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.parsers.csvmeta.count_rows">
-<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">count_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#count_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.count_rows" title="Link to this definition">¶</a></dt>
-<dd><p>Count data rows in a CSV (excludes the header), cheaply.</p>
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">count_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#count_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.count_rows" title="Link to this definition">¶</a></dt>
+<dd><p>Count data rows in a table (excludes the header), cheaply.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> – Path to the CSV file.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – Path to the CSV file or workbook.</p></li>
+<li><p><strong>sheet</strong> – The worksheet of a workbook (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the first); ignored for a CSV.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The number of data rows, or <code class="docutils literal notranslate"><span class="pre">0</span></code> if missing/empty.</p>
@@ -399,7 +439,7 @@ or missing.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.parsers.csvmeta.suggest_key_column">
-<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">suggest_key_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_stems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#suggest_key_column"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.suggest_key_column" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">suggest_key_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_stems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#suggest_key_column"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.suggest_key_column" title="Link to this definition">¶</a></dt>
 <dd><p>Guess which column joins the CSV to videos.</p>
 <p>Scores each column by the fraction of its sampled values found in
 <code class="docutils literal notranslate"><span class="pre">video_stems</span></code>; the best non-zero column wins. With no stems (or no match),
@@ -411,6 +451,7 @@ else the first column.</p>
 <li><p><strong>path</strong> – Path to the CSV file.</p></li>
 <li><p><strong>video_stems</strong> – Known video stems to match against, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>sample</strong> – Maximum number of rows to inspect.</p></li>
+<li><p><strong>sheet</strong> – The worksheet of a workbook (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the first); ignored for a CSV.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -421,19 +462,150 @@ else the first column.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.parsers.csvmeta.load_value_map">
-<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">load_value_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#load_value_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.load_value_map" title="Link to this definition">¶</a></dt>
-<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">{value_column:</span> <span class="pre">value}</span></code> mapping from a CSV.</p>
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">load_value_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descending</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#load_value_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.load_value_map" title="Link to this definition">¶</a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">{value_column:</span> <span class="pre">value}</span></code> mapping from a table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> – Path to the CSV file.</p></li>
+<li><p><strong>path</strong> – Path to the CSV file or workbook.</p></li>
 <li><p><strong>key_column</strong> – The column whose value identifies the video (the join key).</p></li>
 <li><p><strong>value_columns</strong> – The columns to carry into each entry.</p></li>
+<li><p><strong>sheet</strong> – The worksheet of a workbook (<code class="docutils literal notranslate"><span class="pre">None</span></code>: the first); ignored for a CSV.</p></li>
+<li><p><strong>order_column</strong> – Decides which row counts when a key repeats: rows are ordered by
+it (see <a class="reference internal" href="#annie.parsers.csvmeta.order_rows" title="annie.parsers.csvmeta.order_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">order_rows()</span></code></a>) and the first row per key wins.</p></li>
+<li><p><strong>descending</strong> – Order direction; <code class="docutils literal notranslate"><span class="pre">True</span></code> puts the largest / newest value first.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Mapping from the (stripped) key value to a dict of the selected column
-values. Rows with an empty key are skipped; later rows win on a key clash.</p>
+values, in winning-row order. Rows with an empty key are skipped. Without an
+<code class="docutils literal notranslate"><span class="pre">order_column</span></code> a repeated key keeps its last row (the historical rule; the
+Dataset tab requires an order column whenever a key repeats).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.order_rows">
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">order_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">descending</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#order_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.order_rows" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">rows</span></code> sorted by <code class="docutils literal notranslate"><span class="pre">column</span></code>, stably, with empty values always last.</p>
+<p>The column compares <strong>numerically</strong> when every non-empty value is a number
+(<code class="docutils literal notranslate"><span class="pre">9</span> <span class="pre">&lt;</span> <span class="pre">10</span></code>), otherwise as text — which also orders ISO dates and timestamps
+chronologically, the form <a class="reference internal" href="../workbook/index.html#module-annie.parsers.workbook" title="annie.parsers.workbook"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers.workbook</span></code></a> gives Excel dates. Rows with
+equal values keep their file order, so the result is always deterministic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rows</strong> – Dict rows as returned by <a class="reference internal" href="#annie.parsers.csvmeta.read_rows" title="annie.parsers.csvmeta.read_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_rows()</span></code></a>.</p></li>
+<li><p><strong>column</strong> – The column to order by.</p></li>
+<li><p><strong>descending</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> for largest / newest first.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new, ordered list (the input is not modified).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.DuplicateReport">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">DuplicateReport</span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#DuplicateReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.DuplicateReport" title="Link to this definition">¶</a></dt>
+<dd><p>How a table’s key column repeats, for the Dataset tab’s warning.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.DuplicateReport.duplicated">
+<span class="sig-name descname"><span class="pre">duplicated</span></span><a class="headerlink" href="#annie.parsers.csvmeta.DuplicateReport.duplicated" title="Link to this definition">¶</a></dt>
+<dd><p>Keys that appear on more than one row, in first-seen order.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.DuplicateReport.ties">
+<span class="sig-name descname"><span class="pre">ties</span></span><a class="headerlink" href="#annie.parsers.csvmeta.DuplicateReport.ties" title="Link to this definition">¶</a></dt>
+<dd><p>Duplicated keys whose two leading rows (after ordering) share the same
+order value, so only file order separates them. Every duplicated key is a
+tie when no order column is given.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.duplicate_report">
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">duplicate_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">descending</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.parsers.csvmeta.DuplicateReport" title="annie.parsers.csvmeta.DuplicateReport"><span class="pre">DuplicateReport</span></a></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#duplicate_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.duplicate_report" title="Link to this definition">¶</a></dt>
+<dd><p>Report the repeated keys of a table and which of them the order can’t separate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rows</strong> – Dict rows as returned by <a class="reference internal" href="#annie.parsers.csvmeta.read_rows" title="annie.parsers.csvmeta.read_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_rows()</span></code></a>.</p></li>
+<li><p><strong>key_column</strong> – The join-key column.</p></li>
+<li><p><strong>order_column</strong> – The column chosen to resolve repeats, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>descending</strong> – The chosen order direction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#annie.parsers.csvmeta.DuplicateReport" title="annie.parsers.csvmeta.DuplicateReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">DuplicateReport</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.JoinSuggestion">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">JoinSuggestion</span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#JoinSuggestion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.JoinSuggestion" title="Link to this definition">¶</a></dt>
+<dd><p>A proposed way to join a table to the videos.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.JoinSuggestion.column">
+<span class="sig-name descname"><span class="pre">column</span></span><a class="headerlink" href="#annie.parsers.csvmeta.JoinSuggestion.column" title="Link to this definition">¶</a></dt>
+<dd><p>The table column holding the ids.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.JoinSuggestion.target">
+<span class="sig-name descname"><span class="pre">target</span></span><a class="headerlink" href="#annie.parsers.csvmeta.JoinSuggestion.target" title="Link to this definition">¶</a></dt>
+<dd><p>What the ids match: a target name passed to <a class="reference internal" href="#annie.parsers.csvmeta.suggest_join" title="annie.parsers.csvmeta.suggest_join"><code class="xref py py-func docutils literal notranslate"><span class="pre">suggest_join()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.JoinSuggestion.matched">
+<span class="sig-name descname"><span class="pre">matched</span></span><a class="headerlink" href="#annie.parsers.csvmeta.JoinSuggestion.matched" title="Link to this definition">¶</a></dt>
+<dd><p>How many distinct ids of that column the target contains.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.suggest_join">
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">suggest_join</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion" title="annie.parsers.csvmeta.JoinSuggestion"><span class="pre">JoinSuggestion</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#suggest_join"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.suggest_join" title="Link to this definition">¶</a></dt>
+<dd><p>Propose the (id column, target) pair whose values overlap the most.</p>
+<p>A target is anything ids can match: all video ids, or the values of one nested-
+layout path field such as <code class="docutils literal notranslate"><span class="pre">{subject}</span></code>. Ties go to the earlier column, then the
+earlier target, so the first target (the video id) wins when both fit equally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rows</strong> – Dict rows as returned by <a class="reference internal" href="#annie.parsers.csvmeta.read_rows" title="annie.parsers.csvmeta.read_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_rows()</span></code></a>.</p></li>
+<li><p><strong>header</strong> – The table’s column names, in order.</p></li>
+<li><p><strong>targets</strong> – Target name to the set of values it offers.</p></li>
+<li><p><strong>sample</strong> – Maximum number of rows to inspect.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The best <a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion" title="annie.parsers.csvmeta.JoinSuggestion"><code class="xref py py-class docutils literal notranslate"><span class="pre">JoinSuggestion</span></code></a>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when no column matches anything.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.parsers.csvmeta.short_name">
+<span class="sig-prename descclassname"><span class="pre">annie.parsers.csvmeta.</span></span><span class="sig-name descname"><span class="pre">short_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">_SHORT_NAME_LIMIT</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/annie/parsers/csvmeta.html#short_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.parsers.csvmeta.short_name" title="Link to this definition">¶</a></dt>
+<dd><p>Prefill for a tag name: the header on one line, cut at a word within <code class="docutils literal notranslate"><span class="pre">limit</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>header</strong> – The column header (may be a long, multi-line question).</p></li>
+<li><p><strong>limit</strong> – Maximum length of the result.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The header with whitespace collapsed; when longer than <code class="docutils literal notranslate"><span class="pre">limit</span></code>, cut back to
+the last whole word and marked with <code class="docutils literal notranslate"><span class="pre">…</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -533,6 +705,7 @@ and the order is preserved so the preview shows them as the file lists them.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">annie.parsers.csvmeta</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
 <li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.parsers.csvmeta.read_header"><code class="docutils literal notranslate"><span class="pre">read_header()</span></code></a></li>
@@ -540,6 +713,21 @@ and the order is preserved so the preview shows them as the file lists them.</p>
 <li><a class="reference internal" href="#annie.parsers.csvmeta.count_rows"><code class="docutils literal notranslate"><span class="pre">count_rows()</span></code></a></li>
 <li><a class="reference internal" href="#annie.parsers.csvmeta.suggest_key_column"><code class="docutils literal notranslate"><span class="pre">suggest_key_column()</span></code></a></li>
 <li><a class="reference internal" href="#annie.parsers.csvmeta.load_value_map"><code class="docutils literal notranslate"><span class="pre">load_value_map()</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.order_rows"><code class="docutils literal notranslate"><span class="pre">order_rows()</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.DuplicateReport"><code class="docutils literal notranslate"><span class="pre">DuplicateReport</span></code></a><ul>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.DuplicateReport.duplicated"><code class="docutils literal notranslate"><span class="pre">DuplicateReport.duplicated</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.DuplicateReport.ties"><code class="docutils literal notranslate"><span class="pre">DuplicateReport.ties</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.duplicate_report"><code class="docutils literal notranslate"><span class="pre">duplicate_report()</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion"><code class="docutils literal notranslate"><span class="pre">JoinSuggestion</span></code></a><ul>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion.column"><code class="docutils literal notranslate"><span class="pre">JoinSuggestion.column</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion.target"><code class="docutils literal notranslate"><span class="pre">JoinSuggestion.target</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.JoinSuggestion.matched"><code class="docutils literal notranslate"><span class="pre">JoinSuggestion.matched</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.suggest_join"><code class="docutils literal notranslate"><span class="pre">suggest_join()</span></code></a></li>
+<li><a class="reference internal" href="#annie.parsers.csvmeta.short_name"><code class="docutils literal notranslate"><span class="pre">short_name()</span></code></a></li>
 <li><a class="reference internal" href="#annie.parsers.csvmeta.distinct_column_values"><code class="docutils literal notranslate"><span class="pre">distinct_column_values()</span></code></a></li>
 <li><a class="reference internal" href="#annie.parsers.csvmeta.distinct_values"><code class="docutils literal notranslate"><span class="pre">distinct_values()</span></code></a></li>
 </ul>

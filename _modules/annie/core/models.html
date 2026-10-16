@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -465,6 +466,9 @@
 <span class="sd">        labels: Per-video label values gathered from CSV label sources, keyed by</span>
 <span class="sd">            column name (e.g. ``{"Sentiment": "negative", "Angry": "0.33"}``).</span>
 <span class="sd">            Drives the Browse label tags and the label filters.</span>
+<span class="sd">        label_origins: Where each label value came from, keyed like ``labels`` — e.g.</span>
+<span class="sd">            ``"intake.xlsx › visits · subject = 4021"`` for a table row, or</span>
+<span class="sd">            ``"path field {part}"`` for a nested-layout field. Shown on hover in Browse.</span>
 <span class="sd">        row_id: The video's **1-based position in the whole scanned dataset**,</span>
 <span class="sd">            assigned once by :mod:`annie.dataset.scanning` over the full sorted</span>
 <span class="sd">            manifest. It identifies the sample, not its slot in whatever list is</span>
@@ -482,6 +486,7 @@
     <span class="n">active_track_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">NO_ACTIVE_TRACK</span>
     <span class="n">status</span><span class="p">:</span> <span class="n">RowStatus</span> <span class="o">=</span> <span class="s2">"linked"</span>
     <span class="n">labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">label_origins</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">row_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="nd">@property</span>

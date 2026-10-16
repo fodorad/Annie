@@ -5,17 +5,30 @@ annie.parsers.csvmeta
 
 .. autoapi-nested-parse::
 
-   Generic CSV metadata parser for label / protagonist sources (domain).
+   Generic table metadata parser for label / protagonist sources (domain).
 
    Unlike the fixed 17-column detection schema (:mod:`annie.parsers.base`), a label
-   CSV has an arbitrary shape: the user picks which column joins to the video id (the
+   table has an arbitrary shape: the user picks which column joins to the video id (the
    **key column**) and which columns to surface as tags/filters (the **value
    columns**). This module reads headers, suggests a key column by matching values
-   against the known video stems, and builds a ``video_id -> {column: value}`` map.
+   against the known video stems, and builds a ``key -> {column: value}`` map.
 
-   It is pure and dependency-light (stdlib :mod:`csv` only), so it is unit-tested
-   without any media backend.
+   A table is a CSV file or one worksheet of an Excel workbook: every reader takes an
+   optional ``sheet`` and hands workbooks to :mod:`annie.parsers.workbook`, so callers
+   never care which format they read.
 
+   When a key repeats, an explicit **order column** decides which row counts (e.g. the
+   newest timestamp); see :func:`order_rows` and :func:`duplicate_report`.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.parsers.csvmeta.DuplicateReport
+   annie.parsers.csvmeta.JoinSuggestion
 
 
 Functions
@@ -28,6 +41,10 @@ Functions
    annie.parsers.csvmeta.count_rows
    annie.parsers.csvmeta.suggest_key_column
    annie.parsers.csvmeta.load_value_map
+   annie.parsers.csvmeta.order_rows
+   annie.parsers.csvmeta.duplicate_report
+   annie.parsers.csvmeta.suggest_join
+   annie.parsers.csvmeta.short_name
    annie.parsers.csvmeta.distinct_column_values
    annie.parsers.csvmeta.distinct_values
 
@@ -35,35 +52,38 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: read_header(path: str | pathlib.Path) -> list[str]
+.. py:function:: read_header(path: str | pathlib.Path, sheet: str | None = None) -> list[str]
 
-   Return the column names of a CSV (its header row).
+   Return the column names of a table (its header row).
 
-   :param path: Path to the CSV file.
+   :param path: Path to the CSV file or workbook.
+   :param sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.
 
    :returns: The header column names in order, or an empty list if the file is empty
              or missing.
 
 
-.. py:function:: read_rows(path: str | pathlib.Path) -> list[dict[str, str]]
+.. py:function:: read_rows(path: str | pathlib.Path, sheet: str | None = None) -> list[dict[str, str]]
 
-   Read a CSV into column-keyed dict rows (BOM- and CRLF-tolerant).
+   Read a table into column-keyed dict rows (CSV: BOM- and CRLF-tolerant).
 
-   :param path: Path to the CSV file.
+   :param path: Path to the CSV file or workbook.
+   :param sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.
 
    :returns: One dict per data row, keyed by column name. Empty if missing.
 
 
-.. py:function:: count_rows(path: str | pathlib.Path) -> int
+.. py:function:: count_rows(path: str | pathlib.Path, sheet: str | None = None) -> int
 
-   Count data rows in a CSV (excludes the header), cheaply.
+   Count data rows in a table (excludes the header), cheaply.
 
-   :param path: Path to the CSV file.
+   :param path: Path to the CSV file or workbook.
+   :param sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.
 
    :returns: The number of data rows, or ``0`` if missing/empty.
 
 
-.. py:function:: suggest_key_column(path: str | pathlib.Path, video_stems: set[str] | None = None, *, sample: int = 500) -> str | None
+.. py:function:: suggest_key_column(path: str | pathlib.Path, video_stems: set[str] | None = None, *, sample: int = 500, sheet: str | None = None) -> str | None
 
    Guess which column joins the CSV to videos.
 
@@ -75,20 +95,114 @@ Module Contents
    :param path: Path to the CSV file.
    :param video_stems: Known video stems to match against, or ``None``.
    :param sample: Maximum number of rows to inspect.
+   :param sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.
 
    :returns: The suggested key-column name, or ``None`` if the file has no header.
 
 
-.. py:function:: load_value_map(path: str | pathlib.Path, key_column: str, value_columns: tuple[str, ...] | list[str]) -> dict[str, dict[str, str]]
+.. py:function:: load_value_map(path: str | pathlib.Path, key_column: str, value_columns: tuple[str, ...] | list[str], *, sheet: str | None = None, order_column: str | None = None, descending: bool = True) -> dict[str, dict[str, str]]
 
-   Build a ``key -> {value_column: value}`` mapping from a CSV.
+   Build a ``key -> {value_column: value}`` mapping from a table.
 
-   :param path: Path to the CSV file.
+   :param path: Path to the CSV file or workbook.
    :param key_column: The column whose value identifies the video (the join key).
    :param value_columns: The columns to carry into each entry.
+   :param sheet: The worksheet of a workbook (``None``: the first); ignored for a CSV.
+   :param order_column: Decides which row counts when a key repeats: rows are ordered by
+                        it (see :func:`order_rows`) and the first row per key wins.
+   :param descending: Order direction; ``True`` puts the largest / newest value first.
 
    :returns: Mapping from the (stripped) key value to a dict of the selected column
-             values. Rows with an empty key are skipped; later rows win on a key clash.
+             values, in winning-row order. Rows with an empty key are skipped. Without an
+             ``order_column`` a repeated key keeps its last row (the historical rule; the
+             Dataset tab requires an order column whenever a key repeats).
+
+
+.. py:function:: order_rows(rows: list[dict[str, str]], column: str, *, descending: bool) -> list[dict[str, str]]
+
+   Return ``rows`` sorted by ``column``, stably, with empty values always last.
+
+   The column compares **numerically** when every non-empty value is a number
+   (``9 < 10``), otherwise as text — which also orders ISO dates and timestamps
+   chronologically, the form :mod:`annie.parsers.workbook` gives Excel dates. Rows with
+   equal values keep their file order, so the result is always deterministic.
+
+   :param rows: Dict rows as returned by :func:`read_rows`.
+   :param column: The column to order by.
+   :param descending: ``True`` for largest / newest first.
+
+   :returns: A new, ordered list (the input is not modified).
+
+
+.. py:class:: DuplicateReport
+
+   How a table's key column repeats, for the Dataset tab's warning.
+
+   .. attribute:: duplicated
+
+      Keys that appear on more than one row, in first-seen order.
+
+   .. attribute:: ties
+
+      Duplicated keys whose two leading rows (after ordering) share the same
+      order value, so only file order separates them. Every duplicated key is a
+      tie when no order column is given.
+
+
+.. py:function:: duplicate_report(rows: list[dict[str, str]], key_column: str, order_column: str | None = None, *, descending: bool = True) -> DuplicateReport
+
+   Report the repeated keys of a table and which of them the order can't separate.
+
+   :param rows: Dict rows as returned by :func:`read_rows`.
+   :param key_column: The join-key column.
+   :param order_column: The column chosen to resolve repeats, or ``None``.
+   :param descending: The chosen order direction.
+
+   :returns: A :class:`DuplicateReport`.
+
+
+.. py:class:: JoinSuggestion
+
+   A proposed way to join a table to the videos.
+
+   .. attribute:: column
+
+      The table column holding the ids.
+
+   .. attribute:: target
+
+      What the ids match: a target name passed to :func:`suggest_join`.
+
+   .. attribute:: matched
+
+      How many distinct ids of that column the target contains.
+
+
+.. py:function:: suggest_join(rows: list[dict[str, str]], header: list[str], targets: dict[str, set[str]], *, sample: int = 500) -> JoinSuggestion | None
+
+   Propose the (id column, target) pair whose values overlap the most.
+
+   A target is anything ids can match: all video ids, or the values of one nested-
+   layout path field such as ``{subject}``. Ties go to the earlier column, then the
+   earlier target, so the first target (the video id) wins when both fit equally.
+
+   :param rows: Dict rows as returned by :func:`read_rows`.
+   :param header: The table's column names, in order.
+   :param targets: Target name to the set of values it offers.
+   :param sample: Maximum number of rows to inspect.
+
+   :returns: The best :class:`JoinSuggestion`, or ``None`` when no column matches anything.
+
+
+.. py:function:: short_name(header: str, limit: int = _SHORT_NAME_LIMIT) -> str
+
+   Prefill for a tag name: the header on one line, cut at a word within ``limit``.
+
+   :param header: The column header (may be a long, multi-line question).
+   :param limit: Maximum length of the result.
+
+   :returns: The header with whitespace collapsed; when longer than ``limit``, cut back to
+             the last whole word and marked with ``…``.
 
 
 .. py:function:: distinct_column_values(rows: list[dict[str, str]], column: str) -> list[str]

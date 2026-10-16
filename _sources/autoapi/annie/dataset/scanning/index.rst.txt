@@ -20,7 +20,9 @@ annie.dataset.scanning
    * A ``.vdet`` matches by exact stem; a ``__track{N}.csv`` matches by the part
      before ``__track``. Both fall back to a longest-stem-first prefix scan only on
      a miss.
-   * A label/protagonist CSV row matches a video by exact key-column value.
+   * A label/protagonist table row matches a video by exact key-column value — or, for a
+     label table, by a nested-layout path field (``match_field``) and optionally by
+     substring (``match_substring``, see :func:`match_keys`).
 
 
 
@@ -30,6 +32,7 @@ Classes
 .. autoapisummary::
 
    annie.dataset.scanning.ScanResult
+   annie.dataset.scanning.JoinSummary
 
 
 Functions
@@ -38,6 +41,8 @@ Functions
 .. autoapisummary::
 
    annie.dataset.scanning.resolve_video_stem
+   annie.dataset.scanning.match_keys
+   annie.dataset.scanning.join_summary
    annie.dataset.scanning.build_manifest
    annie.dataset.scanning.scan_dataset
 
@@ -127,6 +132,61 @@ Module Contents
    :param video_stems_longest_first: Known video stems, pre-sorted longest-first.
 
    :returns: The matching video stem, or ``None`` if no video matches.
+
+
+.. py:function:: match_keys(keys: collections.abc.Iterable[str], targets: collections.abc.Iterable[str], *, substring: bool) -> tuple[dict[str, str], set[str]]
+
+   Link table keys to match targets (video ids or path-field values).
+
+   Exact matching (the default) is a set lookup. With ``substring`` a target links to
+   a key it *contains*: keys are grouped by length and each target is slid over once
+   per distinct key length, so the cost stays near-linear rather than keys × targets.
+   When a target contains several keys the **longest** wins; an equal-length tie goes
+   to the key that comes first in ``keys`` (the table's winning-row order). Such
+   targets are reported as ambiguous.
+
+   :param keys: The table's keys, in priority order.
+   :param targets: The strings to link.
+   :param substring: Match keys contained in a target instead of equal to it.
+
+   :returns: ``(target -> key, ambiguous targets)``; unmatched targets are absent.
+
+
+.. py:class:: JoinSummary
+
+   How well a table's keys link to the videos (shown while configuring a table).
+
+   .. attribute:: videos_matched
+
+      Videos that get a row.
+
+   .. attribute:: videos_total
+
+      All videos considered.
+
+   .. attribute:: keys_used
+
+      Distinct keys that link to at least one video.
+
+   .. attribute:: keys_total
+
+      Distinct non-empty keys in the table.
+
+   .. attribute:: ambiguous
+
+      Matched videos whose target contained more than one key.
+
+
+.. py:function:: join_summary(keys: collections.abc.Iterable[str], video_targets: dict[str, str], *, substring: bool) -> JoinSummary
+
+   Summarise a prospective join for the table dialog.
+
+   :param keys: The table's keys in priority order (see :func:`match_keys`).
+   :param video_targets: Video id to the string its key must match (the id itself or a
+                         path-field value); an empty string means the video has no target.
+   :param substring: Whether keys match by substring.
+
+   :returns: A :class:`JoinSummary`.
 
 
 .. py:function:: build_manifest(registry: annie.dataset.sources.SourceRegistry) -> ScanResult

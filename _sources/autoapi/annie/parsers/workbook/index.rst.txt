@@ -1,0 +1,85 @@
+annie.parsers.workbook
+======================
+
+.. py:module:: annie.parsers.workbook
+
+.. autoapi-nested-parse::
+
+   Excel workbooks as label tables (domain).
+
+   A label source may be an ``.xlsx`` workbook instead of a CSV. Each worksheet is read as
+   one table — the same ``header`` + ``rows`` shape :mod:`annie.parsers.csvmeta` produces for
+   a CSV — so everything downstream (key columns, value columns, joining) is format-agnostic.
+
+   Real workbooks are messier than CSVs, so reading is forgiving:
+
+   * the header is the **first non-empty row** (a sheet may start below or right of ``A1``);
+   * blank header cells are named after their column letter (``Column B``) and repeated
+     names get a suffix (``id (2)``), so every column can be addressed;
+   * every cell becomes text with :func:`cell_text` — notably ``4021.0`` becomes ``"4021"``,
+     because Excel stores ids as floats and they must still join to a video id.
+
+   Parsing is cached per file version, because the Dataset tab re-reads its sources often.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.parsers.workbook.WORKBOOK_SUFFIXES
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.parsers.workbook.is_workbook
+   annie.parsers.workbook.cell_text
+   annie.parsers.workbook.sheet_names
+   annie.parsers.workbook.read_sheet
+
+
+Module Contents
+---------------
+
+.. py:data:: WORKBOOK_SUFFIXES
+   :value: ('.xlsx', '.xlsm')
+
+
+   File suffixes read as Excel workbooks (``.xls`` is a different, legacy format).
+
+.. py:function:: is_workbook(path: str | pathlib.Path) -> bool
+
+   Return whether ``path`` names an Excel workbook (by suffix).
+
+
+.. py:function:: cell_text(value: object) -> str
+
+   Return a cell value as the text Annie joins, tags and filters on.
+
+   :param value: A cell value as openpyxl returns it.
+
+   :returns: ``""`` for an empty cell; integral numbers without a ``.0``; dates and times in
+             ISO form (a date without a time part loses the ``00:00:00``); ``true``/``false``
+             for booleans; anything else as stripped text.
+
+
+.. py:function:: sheet_names(path: str | pathlib.Path) -> list[str]
+
+   Return a workbook's sheet names in tab order, or ``[]`` if it can't be read.
+
+
+.. py:function:: read_sheet(path: str | pathlib.Path, sheet: str | None) -> _Table
+
+   Read one worksheet as ``(header, rows)``, every value as text.
+
+   :param path: The workbook.
+   :param sheet: The worksheet name; ``None`` reads the first sheet.
+
+   :returns: The header (unique names) and one dict per non-empty data row, keyed by header.
+             ``([], [])`` if the file or sheet is missing or unreadable.
+
+

@@ -267,6 +267,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/participants/index.html">annie.parsers.participants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
 </ul>
 </li>
 </ul>
@@ -349,6 +350,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">report_decode_failure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">download</span><span class="p">,</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.timeline_view</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimelineView</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">short_name</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
@@ -640,8 +642,13 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"video </span><span class="si">{</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">state_</span><span class="o">.</span><span class="n">video_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span>
             <span class="s2">"text-sm font-medium"</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_layout_badges</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="p">]):</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">entries</span><span class="p">[</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_layout_badges</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"outline"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">hint</span> <span class="ow">in</span> <span class="n">_label_badges</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
+            <span class="n">badge</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">LABEL_COLOR</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hint</span><span class="p">:</span>
+                <span class="n">badge</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">icon</span><span class="o">=</span><span class="s2">"chevron_right"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_step_video</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
             <span class="s2">"flat round"</span>
         <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Next video"</span><span class="p">)</span>
@@ -1970,6 +1977,27 @@
     <span class="k">if</span> <span class="n">video</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">video</span><span class="o">.</span><span class="n">layout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">video</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">field_names</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">labels</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_label_badges</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The loaded label tags of ``entry`` as ``(text, tooltip)``, like Browse shows.</span>
+
+<span class="sd">    Path fields are left out (they are the outline badges) and empty values skipped. A long</span>
+<span class="sd">    value is shortened in the badge; the tooltip then carries it in full, followed by the</span>
+<span class="sd">    origin (which file, sheet and row it came from).</span>
+<span class="sd">    """</span>
+    <span class="n">scan</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span>
+    <span class="n">video</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">video</span>
+    <span class="n">path_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">video</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">field_names</span><span class="p">())</span> <span class="k">if</span> <span class="n">video</span> <span class="ow">and</span> <span class="n">video</span><span class="o">.</span><span class="n">layout</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">badges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">scan</span><span class="o">.</span><span class="n">label_columns</span> <span class="k">if</span> <span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">path_fields</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">shown</span> <span class="o">=</span> <span class="n">short_name</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">hints</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="k">if</span> <span class="n">shown</span> <span class="o">!=</span> <span class="n">value</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">label_origins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="s2">""</span><span class="p">)]</span>
+        <span class="n">badges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">shown</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" · "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hints</span> <span class="k">if</span> <span class="n">h</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">badges</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_meta_by_video</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EventRecord</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
