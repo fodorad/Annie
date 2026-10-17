@@ -329,16 +329,18 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.manipulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">detect_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.scanning</span><span class="w"> </span><span class="kn">import</span> <span class="n">join_summary</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvRole</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">,</span> <span class="n">SegmentationBand</span><span class="p">,</span> <span class="n">SourceKind</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">JoinSuggestion</span><span class="p">,</span>
     <span class="n">distinct_column_values</span><span class="p">,</span>
     <span class="n">duplicate_report</span><span class="p">,</span>
     <span class="n">order_rows</span><span class="p">,</span>
@@ -351,7 +353,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.workbook</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_workbook</span><span class="p">,</span> <span class="n">read_sheet</span><span class="p">,</span> <span class="n">sheet_names</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
 
 <span class="c1">#: Column value types offered in the CSV configuration dialog.</span>
 <span class="n">_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="s2">"int"</span><span class="p">,</span> <span class="s2">"float"</span><span class="p">)</span>
@@ -639,15 +641,62 @@
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"Tag name already used: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clashes</span><span class="p">)</span><span class="si">}</span><span class="s2"> — rename it in the tag name box."</span>
 
 
+<div class="viewcode-block" id="reading">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.reading">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reading</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">read</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run ``read`` off the event loop while a small dialog says the file is being read.</span>
+
+<span class="sd">    Large tables and many-sheet workbooks take seconds to parse; the spinner shows the</span>
+<span class="sd">    click was taken, and the UI stays responsive meanwhile.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: The file being read (named in the dialog).</span>
+<span class="sd">        read: The blocking read to run on a worker thread.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Whatever ``read`` returned; ``None`` if the app is shutting down.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"persistent"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-3"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reading </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">…"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+    <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">read</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">dialog</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">dialog</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
+
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SheetPreview</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One worksheet as the workbook dialog shows it: its table and the best join hint."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">header</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+    <span class="n">hint</span><span class="p">:</span> <span class="n">JoinSuggestion</span> <span class="o">|</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">offered</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_SheetPreview</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Read every sheet of ``path`` and suggest its join (blocking; run off the loop)."""</span>
+    <span class="n">previews</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sheet_names</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">header</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">read_sheet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">hint</span> <span class="o">=</span> <span class="n">suggest_join</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">offered</span><span class="p">)</span> <span class="k">if</span> <span class="n">header</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">previews</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_SheetPreview</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">hint</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">previews</span>
+
+
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_configure_workbook</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DataSource</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Workbook dialog: one expandable section per sheet, each joined separately."""</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="n">sheet_names</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+    <span class="n">offered</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="p">{</span><span class="s2">""</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">sheets</span> <span class="o">=</span> <span class="k">await</span> <span class="n">reading</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_read_workbook</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">offered</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sheets</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"That workbook could not be read."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">offered</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="p">{</span><span class="s2">""</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="n">editors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_JoinEditor</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">includes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">checkbox</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -669,9 +718,13 @@
             <span class="s2">"to show as tags. Each included sheet becomes its own label source."</span>
         <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1 max-h-[65vh] overflow-auto"</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">sheet</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-                <span class="n">header</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">read_sheet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet</span><span class="p">)</span>
-                <span class="n">hint</span> <span class="o">=</span> <span class="n">suggest_join</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">offered</span><span class="p">)</span> <span class="k">if</span> <span class="n">header</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">preview</span> <span class="ow">in</span> <span class="n">sheets</span><span class="p">:</span>
+                <span class="n">sheet</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">hint</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">preview</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">preview</span><span class="o">.</span><span class="n">header</span><span class="p">,</span>
+                    <span class="n">preview</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span>
+                    <span class="n">preview</span><span class="o">.</span><span class="n">hint</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="n">caption</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows · </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span><span class="si">}</span><span class="s2"> columns"</span>
                 <span class="k">if</span> <span class="n">hint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">column</span> <span class="o">=</span> <span class="n">short_name</span><span class="p">(</span><span class="n">hint</span><span class="o">.</span><span class="n">column</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
@@ -709,6 +762,18 @@
     <span class="k">return</span> <span class="k">await</span> <span class="n">dialog</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">stems</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Read a CSV's header and rows and suggest its key column (blocking; run off the loop).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(header, rows, suggested_key)``; an empty header means the file has none.</span>
+<span class="sd">    """</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[],</span> <span class="p">[],</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="n">header</span><span class="p">,</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">suggest_key_column</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">stems</span><span class="p">)</span> <span class="ow">or</span> <span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="configure_csv">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/csv_dialog/index.html#annie.pages.csv_dialog.configure_csv">[docs]</a>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">configure_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -723,14 +788,12 @@
 <span class="sd">        A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.</span>
 <span class="sd">    """</span>
     <span class="n">csv_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+    <span class="n">stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">targets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="k">await</span> <span class="n">reading</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_read_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">stems</span><span class="p">))</span>
+    <span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">suggested</span> <span class="o">=</span> <span class="n">table</span> <span class="k">if</span> <span class="n">table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">([],</span> <span class="p">[],</span> <span class="s2">""</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"That CSV has no header row."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="n">stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">targets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">suggested</span> <span class="o">=</span> <span class="n">suggest_key_column</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">stems</span><span class="p">)</span> <span class="ow">or</span> <span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
     <span class="n">sample</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span>
     <span class="n">detected</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">detect_type</span><span class="p">((</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">header</span><span class="p">}</span>
 
@@ -870,14 +933,12 @@
 <span class="sd">        if cancelled or if the CSV has no header.</span>
 <span class="sd">    """</span>
     <span class="n">csv_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+    <span class="n">stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">video_stems</span><span class="p">)</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="k">await</span> <span class="n">reading</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_read_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">stems</span><span class="p">))</span>
+    <span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">suggested</span> <span class="o">=</span> <span class="n">table</span> <span class="k">if</span> <span class="n">table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">([],</span> <span class="p">[],</span> <span class="s2">""</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"That CSV has no header row."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="n">rows</span> <span class="o">=</span> <span class="n">read_rows</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
-    <span class="n">stems</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">video_stems</span><span class="p">)</span>
-    <span class="n">suggested</span> <span class="o">=</span> <span class="n">suggest_key_column</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">stems</span><span class="p">)</span> <span class="ow">or</span> <span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-[30rem] max-w-full gap-2"</span><span class="p">):</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Filter by ids — </span><span class="si">{</span><span class="n">csv_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>

@@ -55,7 +55,9 @@ Module Contents
 
    A missing file resolves to an empty mapping (treated as "no corrections /
    no source yet") rather than raising, so resolution degrades cleanly. Rows
-   whose track-id value is blank or non-integer are skipped.
+   whose track-id value is blank or non-integer are skipped. The parsed file is
+   cached until it changes on disk (size or modification time), so a page rebuild
+   does not re-read it.
 
    :param path: Path to the protagonist CSV.
    :param key_column: The column holding the video id.

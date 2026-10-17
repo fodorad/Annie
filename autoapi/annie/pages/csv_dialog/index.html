@@ -358,10 +358,13 @@ restrict the Browse list to.</p></li>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_table" title="annie.pages.csv_dialog.configure_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_table</span></code></a>(...)</p></td>
 <td><p>Configure a CSV or an Excel workbook as one or more sources.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv" title="annie.pages.csv_dialog.configure_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_csv</span></code></a>(→ annie.dataset.sources.DataSource | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.reading" title="annie.pages.csv_dialog.reading"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reading</span></code></a>(→ T | None)</p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">read</span></code> off the event loop while a small dialog says the file is being read.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv" title="annie.pages.csv_dialog.configure_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_csv</span></code></a>(→ annie.dataset.sources.DataSource | None)</p></td>
 <td><p>Open the CSV configuration modal and return the resulting source.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column" title="annie.pages.csv_dialog.select_id_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_id_column</span></code></a>(→ tuple[str, list[str]] | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column" title="annie.pages.csv_dialog.select_id_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_id_column</span></code></a>(→ tuple[str, list[str]] | None)</p></td>
 <td><p>Open the id-column modal for a CSV that supplies a Browse id filter.</p></td>
 </tr>
 </tbody>
@@ -417,6 +420,25 @@ mapping video id to the value an ID must equal (or contain).</p></li>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The sources to add (one per included sheet for a workbook), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if
 cancelled.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.csv_dialog.reading">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.csv_dialog.</span></span><span class="sig-name descname"><span class="pre">reading</span></span><span class="sig-paren">[</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">]</span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/csv_dialog.html#reading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.csv_dialog.reading" title="Link to this definition">¶</a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">read</span></code> off the event loop while a small dialog says the file is being read.</p>
+<p>Large tables and many-sheet workbooks take seconds to parse; the spinner shows the
+click was taken, and the UI stays responsive meanwhile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – The file being read (named in the dialog).</p></li>
+<li><p><strong>read</strong> – The blocking read to run on a worker thread.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whatever <code class="docutils literal notranslate"><span class="pre">read</span></code> returned; <code class="docutils literal notranslate"><span class="pre">None</span></code> if the app is shutting down.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -527,6 +549,7 @@ if cancelled or if the CSV has no header.</p>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.Targets"><code class="docutils literal notranslate"><span class="pre">Targets</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.tag_clashes"><code class="docutils literal notranslate"><span class="pre">tag_clashes()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.configure_table"><code class="docutils literal notranslate"><span class="pre">configure_table()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.csv_dialog.reading"><code class="docutils literal notranslate"><span class="pre">reading()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv"><code class="docutils literal notranslate"><span class="pre">configure_csv()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column"><code class="docutils literal notranslate"><span class="pre">select_id_column()</span></code></a></li>
 </ul>

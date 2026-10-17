@@ -67,6 +67,7 @@ Functions
    annie.pages.annotator.set_tab
    annie.pages.annotator.sync_tab
    annie.pages.annotator.update_availability
+   annie.pages.annotator.load_segment_clips_async
    annie.pages.annotator.render
    annie.pages.annotator.refresh
 
@@ -92,6 +93,15 @@ Module Contents
 .. py:function:: update_availability() -> None
 
    Sync the tab state and rebuild the body (runtime; needs the event loop).
+
+
+.. py:function:: load_segment_clips_async(state_: _SegmentState) -> bool
+   :async:
+
+
+   Read the segmentation source's clips off the event loop, if it changed.
+
+   :returns: ``True`` if new clips were loaded (the work area should be rebuilt).
 
 
 .. py:function:: render() -> None

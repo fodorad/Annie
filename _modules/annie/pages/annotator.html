@@ -365,6 +365,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
@@ -399,6 +400,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">KeyEventArguments</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoEntry</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSource</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decision</span><span class="p">,</span> <span class="n">Verdict</span>
 
 <span class="c1">#: Every open page's Annotator tab element, by client id, so a change made in one page</span>
@@ -424,6 +426,7 @@
 
     <span class="n">source_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">loaded_from</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">loading_from</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">clips</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
@@ -1035,20 +1038,56 @@
     <span class="k">return</span> <span class="n">_segment_states</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">_SegmentState</span><span class="p">())</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_load_segment_clips_if_needed</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_SegmentState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""(Re)load clips from the segmentation source when it changed since last time."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_segment_source_to_load</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_SegmentState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSource</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The segmentation source whose clips still have to be read, if any.</span>
+
+<span class="sd">    Clears the clips when no segmentation source is configured any more.</span>
+<span class="sd">    """</span>
     <span class="n">source</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">segmentation_sources</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">state_</span><span class="o">.</span><span class="n">source_path</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">state_</span><span class="o">.</span><span class="n">loaded_from</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">state_</span><span class="o">.</span><span class="n">clips</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">return</span>
+        <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">loaded_from</span> <span class="o">==</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
-        <span class="k">return</span>  <span class="c1"># already loaded from this source (even if it yielded zero clips)</span>
+        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># already loaded from this source (even if it yielded zero clips)</span>
+    <span class="k">return</span> <span class="n">source</span>
+
+
+<div class="viewcode-block" id="load_segment_clips_async">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/annotator/index.html#annie.pages.annotator.load_segment_clips_async">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">load_segment_clips_async</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_SegmentState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the segmentation source's clips off the event loop, if it changed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if new clips were loaded (the work area should be rebuilt).</span>
+<span class="sd">    """</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">_segment_source_to_load</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">state_</span><span class="o">.</span><span class="n">loading_from</span> <span class="o">==</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">loading_from</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">clips</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">load_segment_clips</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad CSV must not break the tab</span>
+        <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not read the segmentation CSV </span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">clips</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">loading_from</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">clips</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># the app is shutting down</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">source_path</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span>
-    <span class="n">state_</span><span class="o">.</span><span class="n">clips</span> <span class="o">=</span> <span class="n">load_segment_clips</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">clips</span> <span class="o">=</span> <span class="n">clips</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">loaded_from</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_load_segments_then_rebuild</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_SegmentState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the clips, then rebuild the Segment-review work area around them."""</span>
+    <span class="k">if</span> <span class="k">await</span> <span class="n">load_segment_clips_async</span><span class="p">(</span><span class="n">state_</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the tab was closed meanwhile</span>
+            <span class="n">_segment_review_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_segment_export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1120,7 +1159,13 @@
 <span class="sd">    (drop).</span>
 <span class="sd">    """</span>
     <span class="n">state_</span> <span class="o">=</span> <span class="n">_segment_state</span><span class="p">()</span>
-    <span class="n">_load_segment_clips_if_needed</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">_segment_source_to_load</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-2"</span><span class="p">)</span> <span class="k">as</span> <span class="n">note</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"1.5em"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reading </span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">…"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">schedule</span><span class="p">(</span><span class="n">note</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_load_segments_then_rebuild</span><span class="p">(</span><span class="n">state_</span><span class="p">))</span>
+        <span class="k">return</span>
     <span class="n">clips</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">clips</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">clips</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>

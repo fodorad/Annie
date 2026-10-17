@@ -40,6 +40,7 @@ Functions
 
    annie.pages.csv_dialog.tag_clashes
    annie.pages.csv_dialog.configure_table
+   annie.pages.csv_dialog.reading
    annie.pages.csv_dialog.configure_csv
    annie.pages.csv_dialog.select_id_column
 
@@ -82,6 +83,21 @@ Module Contents
 
    :returns: The sources to add (one per included sheet for a workbook), or ``None`` if
              cancelled.
+
+
+.. py:function:: reading[T](path: pathlib.Path, read: collections.abc.Callable[[], T]) -> T | None
+   :async:
+
+
+   Run ``read`` off the event loop while a small dialog says the file is being read.
+
+   Large tables and many-sheet workbooks take seconds to parse; the spinner shows the
+   click was taken, and the UI stays responsive meanwhile.
+
+   :param path: The file being read (named in the dialog).
+   :param read: The blocking read to run on a worker thread.
+
+   :returns: Whatever ``read`` returned; ``None`` if the app is shutting down.
 
 
 .. py:function:: configure_csv(path: str | pathlib.Path, targets: Targets, taken: set[str]) -> annie.dataset.sources.DataSource | None

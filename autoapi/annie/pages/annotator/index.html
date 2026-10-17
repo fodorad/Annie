@@ -380,10 +380,13 @@ corrections to the <code class="docutils literal notranslate"><span class="pre">
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.annotator.update_availability" title="annie.pages.annotator.update_availability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_availability</span></code></a>(→ None)</p></td>
 <td><p>Sync the tab state and rebuild the body (runtime; needs the event loop).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.annotator.render" title="annie.pages.annotator.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.annotator.load_segment_clips_async" title="annie.pages.annotator.load_segment_clips_async"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_segment_clips_async</span></code></a>(→ bool)</p></td>
+<td><p>Read the segmentation source's clips off the event loop, if it changed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.annotator.render" title="annie.pages.annotator.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(→ None)</p></td>
 <td><p>Build the Annotator tab body; register per-client timer host.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.annotator.refresh" title="annie.pages.annotator.refresh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refresh</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.annotator.refresh" title="annie.pages.annotator.refresh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refresh</span></code></a>(→ None)</p></td>
 <td><p>Rebuild the Annotator body (after queueing changes or a tab open).</p></td>
 </tr>
 </tbody>
@@ -411,6 +414,17 @@ which the same page reconnects).</p>
 <dt class="sig sig-object py" id="annie.pages.annotator.update_availability">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.annotator.</span></span><span class="sig-name descname"><span class="pre">update_availability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/annotator.html#update_availability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.annotator.update_availability" title="Link to this definition">¶</a></dt>
 <dd><p>Sync the tab state and rebuild the body (runtime; needs the event loop).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.annotator.load_segment_clips_async">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.annotator.</span></span><span class="sig-name descname"><span class="pre">load_segment_clips_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_SegmentState</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/annotator.html#load_segment_clips_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.annotator.load_segment_clips_async" title="Link to this definition">¶</a></dt>
+<dd><p>Read the segmentation source’s clips off the event loop, if it changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if new clips were loaded (the work area should be rebuilt).</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -489,6 +503,7 @@ which the same page reconnects).</p>
 <li><a class="reference internal" href="#annie.pages.annotator.set_tab"><code class="docutils literal notranslate"><span class="pre">set_tab()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.annotator.sync_tab"><code class="docutils literal notranslate"><span class="pre">sync_tab()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.annotator.update_availability"><code class="docutils literal notranslate"><span class="pre">update_availability()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.annotator.load_segment_clips_async"><code class="docutils literal notranslate"><span class="pre">load_segment_clips_async()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.annotator.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.annotator.refresh"><code class="docutils literal notranslate"><span class="pre">refresh()</span></code></a></li>
 </ul>

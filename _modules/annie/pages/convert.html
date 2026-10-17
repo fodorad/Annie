@@ -326,17 +326,24 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">background_tasks</span><span class="p">,</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">background_tasks</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClickEventArguments</span>
 
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -506,6 +513,27 @@
         <span class="n">_watching</span> <span class="o">=</span> <span class="kc">False</span>
 
 
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_planning</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">event</span><span class="p">:</span> <span class="n">ClickEventArguments</span><span class="p">,</span> <span class="n">plan</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Plan a batch off the event loop while the clicked button shows it is busy.</span>
+
+<span class="sd">    Planning lists (and for video, pairs) every input file, which takes a while on a</span>
+<span class="sd">    large folder or a slow drive.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        event: The click on the Convert button (its sender gets the loading state).</span>
+<span class="sd">        plan: The blocking planning call.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The planned items; ``None`` if the app is shutting down.</span>
+<span class="sd">    """</span>
+    <span class="n">event</span><span class="o">.</span><span class="n">sender</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"loading"</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the page was closed meanwhile</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">sender</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">remove</span><span class="o">=</span><span class="s2">"loading"</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_start</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ANN001 - work is a closure</span>
 <span class="w">    </span><span class="sd">"""Begin a batch (guarding empties / a running job) and launch the watcher."""</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">running</span><span class="p">():</span>
@@ -538,14 +566,17 @@
             <span class="n">sr</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">number</span><span class="p">(</span><span class="s2">"Sample rate (Hz)"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-40"</span><span class="p">)</span>
             <span class="n">ch</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">({</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"mono"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"stereo"</span><span class="p">},</span> <span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Channels"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-32"</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">ClickEventArguments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">opts</span> <span class="o">=</span> <span class="n">convert</span><span class="o">.</span><span class="n">AudioOptions</span><span class="p">(</span>
                 <span class="n">out_format</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
                 <span class="n">sample_rate</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">16000</span><span class="p">),</span>
                 <span class="n">channels</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="n">items</span> <span class="o">=</span> <span class="n">convert</span><span class="o">.</span><span class="n">plan_audio</span><span class="p">(</span><span class="n">in_dir</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">opts</span><span class="p">)</span>
-            <span class="n">_start</span><span class="p">(</span><span class="s2">"Audio"</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">convert_audio_file</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_planning</span><span class="p">(</span>
+                <span class="n">event</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">plan_audio</span><span class="p">(</span><span class="n">in_dir</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">opts</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">items</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_start</span><span class="p">(</span><span class="s2">"Audio"</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">convert_audio_file</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
 
         <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Convert audio"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"graphic_eq"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out_dir</span>
@@ -596,7 +627,7 @@
                 <span class="s2">"requires at least one decodable frame."</span>
             <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"delay=600"</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">ClickEventArguments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">keep_w</span> <span class="o">=</span> <span class="n">keep_res</span><span class="o">.</span><span class="n">value</span>
             <span class="n">opts</span> <span class="o">=</span> <span class="n">convert</span><span class="o">.</span><span class="n">VideoOptions</span><span class="p">(</span>
                 <span class="n">width</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">keep_w</span> <span class="k">else</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">width</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">width</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
@@ -608,8 +639,12 @@
                 <span class="n">min_frames</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">min_frames</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="mi">2</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="n">audio_dir</span> <span class="o">=</span> <span class="p">(</span><span class="n">audio_src</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="n">audio_out</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
-            <span class="n">items</span> <span class="o">=</span> <span class="n">convert</span><span class="o">.</span><span class="n">plan_video</span><span class="p">(</span><span class="n">in_dir</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">opts</span><span class="p">,</span> <span class="n">audio_dir</span><span class="p">)</span>
-            <span class="n">_start</span><span class="p">(</span><span class="s2">"Video"</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">convert_video_file</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_planning</span><span class="p">(</span>
+                <span class="n">event</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">plan_video</span><span class="p">(</span><span class="n">in_dir</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">opts</span><span class="p">,</span> <span class="n">audio_dir</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">items</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_start</span><span class="p">(</span><span class="s2">"Video"</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">convert_video_file</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">opts</span><span class="p">))</span>
 
         <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Convert video"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"movie"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"unelevated"</span><span class="p">)</span>
 

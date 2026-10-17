@@ -319,15 +319,18 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">download</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
@@ -419,20 +422,76 @@
 <span class="c1"># ── UI ────────────────────────────────────────────────────────────────────────</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_maintenance_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Maintenance card: space summary + targeted cleanup buttons."""</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Space</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What the Maintenance card can reclaim, measured off the event loop.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        old_logs: Log files other than the current one.</span>
+<span class="sd">        old_dbs: Session databases other than the active one.</span>
+<span class="sd">        log_size: Their total size in bytes.</span>
+<span class="sd">        db_size: Their total size in bytes.</span>
+<span class="sd">        render_size: Bytes held by rendered clips in the temp dir.</span>
+<span class="sd">    """</span>
+
+    <span class="n">old_logs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+    <span class="n">old_dbs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+    <span class="n">log_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">db_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">render_size</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_measure_space</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">_Space</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""List and size what can be reclaimed (blocking: walks folders; run off the loop)."""</span>
     <span class="n">old_logs</span> <span class="o">=</span> <span class="n">_old_logs</span><span class="p">()</span>
     <span class="n">old_dbs</span> <span class="o">=</span> <span class="n">_old_session_dbs</span><span class="p">()</span>
-    <span class="n">log_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">old_logs</span><span class="p">)</span>
-    <span class="n">db_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">old_dbs</span><span class="p">)</span>
-    <span class="n">render_size</span> <span class="o">=</span> <span class="n">_dir_size</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_Space</span><span class="p">(</span>
+        <span class="n">old_logs</span><span class="p">,</span>
+        <span class="n">old_dbs</span><span class="p">,</span>
+        <span class="nb">sum</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">old_logs</span><span class="p">),</span>
+        <span class="nb">sum</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">old_dbs</span><span class="p">),</span>
+        <span class="n">_dir_size</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">temp_dir</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_measure_then_show</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Measure the reclaimable space off the loop, then fill the Maintenance card."""</span>
+    <span class="n">space</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">_measure_space</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">space</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the tab was closed meanwhile</span>
+            <span class="n">_maintenance_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_maintenance_header</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The Maintenance card's title row."""</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-2"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"build"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Maintenance"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"font-medium"</span><span class="p">)</span>
+
+
+<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_maintenance_section</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="n">_Space</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Maintenance card: space summary + targeted cleanup buttons.</span>
+
+<span class="sd">    Built first with a spinner while the folders are measured off the event loop</span>
+<span class="sd">    (``space`` ``None``), then rebuilt with the measured :class:`_Space`.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">space</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">),</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">)</span> <span class="k">as</span> <span class="n">body</span><span class="p">:</span>
+            <span class="n">_maintenance_header</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-2"</span><span class="p">):</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"1.5em"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Measuring reclaimable space…"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="n">schedule</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">_measure_then_show</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">old_logs</span><span class="p">,</span> <span class="n">old_dbs</span> <span class="o">=</span> <span class="n">space</span><span class="o">.</span><span class="n">old_logs</span><span class="p">,</span> <span class="n">space</span><span class="o">.</span><span class="n">old_dbs</span>
+    <span class="n">log_size</span><span class="p">,</span> <span class="n">db_size</span><span class="p">,</span> <span class="n">render_size</span> <span class="o">=</span> <span class="n">space</span><span class="o">.</span><span class="n">log_size</span><span class="p">,</span> <span class="n">space</span><span class="o">.</span><span class="n">db_size</span><span class="p">,</span> <span class="n">space</span><span class="o">.</span><span class="n">render_size</span>
 
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-2"</span><span class="p">):</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"build"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Maintenance"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"font-medium"</span><span class="p">)</span>
+            <span class="n">_maintenance_header</span><span class="p">()</span>
 
             <span class="c1"># ── space summary ─────────────────────────────────────────────</span>
             <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-1"</span><span class="p">):</span>
