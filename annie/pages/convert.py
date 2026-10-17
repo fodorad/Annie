@@ -95,7 +95,7 @@ async def _export_succeeded() -> None:
     chosen = await pick_directory()
     if not chosen:
         return
-    out = convert.export_ids(Path(chosen) / "reencoded_ids.csv", succeeded)
+    out = await run.io_bound(convert.export_ids, Path(chosen) / "reencoded_ids.csv", succeeded)
     ui.notify(f"Exported {len(succeeded)} id(s) to {out}", color=theme.PRIMARY)
 
 
@@ -108,7 +108,7 @@ async def _export_failed() -> None:
     chosen = await pick_directory()
     if not chosen:
         return
-    out = convert.export_failures(Path(chosen) / "failed_ids.csv", failed)
+    out = await run.io_bound(convert.export_failures, Path(chosen) / "failed_ids.csv", failed)
     ui.notify(f"Exported {len(failed)} failed id(s) to {out}", color=theme.PRIMARY)
 
 

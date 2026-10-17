@@ -47,8 +47,9 @@ lint:
 type-check:
 	uv tool run ty check annie --python "$(PYTHON)"
 
+# Tests run against a throwaway Annie home, never the user's ~/.annie.
 test:
-	uv run coverage run -m unittest discover -s tests
+	ANNIE_HOME="$$(mktemp -d)" uv run coverage run -m unittest discover -s tests
 	uv run coverage report
 	uv run coverage html
 	uv run coverage xml -o coverage.xml

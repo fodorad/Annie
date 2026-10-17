@@ -285,7 +285,7 @@ def _protagonist_source() -> tuple[Path, str, str] | None:
     return source.path, source.key_column, source.value_columns[0]
 
 
-def _export() -> None:
+async def _export() -> None:
     """Export this session's protagonist corrections as the ``_manual`` CSV.
 
     Corrections live in the session database; this writes them to the manual CSV
@@ -301,7 +301,7 @@ def _export() -> None:
         ui.notify("No protagonist corrections to export yet.", color=theme.WARNING)
         return
     out = corrections.manual_sibling(path)
-    corrections.export_active_tracks(out, overrides, key_column, value_column)
+    await run.io_bound(corrections.export_active_tracks, out, overrides, key_column, value_column)
     ui.notify(f"Exported {len(overrides)} correction(s) to {out}", color=theme.PRIMARY)
 
 
@@ -477,8 +477,7 @@ async def _clear_all() -> None:
 
     # Captured before the rebuild below deletes the slot this handler is running in.
     client = context.client
-    for entry in entries:
-        state.store.set_annotate(entry.key, entry.video_id, None, value=False)
+    state.store.set_annotate_many(((e.key, e.video_id) for e in entries), value=False)
     update_availability(rebuild=True)
     notify_detached(client, f"Cleared {len(entries)} rows from the queue", color=theme.PRIMARY)
 
@@ -774,7 +773,7 @@ async def _load_segments_then_rebuild(state_: _SegmentState) -> None:
             _segment_review_task.refresh()
 
 
-def _segment_export() -> None:
+async def _segment_export() -> None:
     """Write the accepted and dropped clips to two CSVs beside the segmentation source."""
     state_ = _segment_state()
     if not state_.clips or state_.source_path is None:
@@ -787,7 +786,12 @@ def _segment_export() -> None:
     stem = state_.source_path.stem
     accepted_path = state_.source_path.with_name(f"{stem}_accepted.csv")
     dropped_path = state_.source_path.with_name(f"{stem}_dropped.csv")
-    accepted, dropped = export_decision_sets(state_.clips, decisions, accepted_path, dropped_path)
+    written = await run.io_bound(
+        export_decision_sets, state_.clips, decisions, accepted_path, dropped_path
+    )
+    if written is None:
+        return  # the app is shutting down
+    accepted, dropped = written
     n_acc = sum(1 for c in state_.clips if decisions.get(c.key) == "accept")
     n_drop = sum(1 for c in state_.clips if decisions.get(c.key) == "drop")
     ui.notify(

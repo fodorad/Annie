@@ -108,7 +108,7 @@ class TestSegmentReviewFlow(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(st.index, 1)
 
             # export writes the two files beside the source
-            annotator._segment_export()  # noqa: SLF001
+            await annotator._segment_export()  # noqa: SLF001
         accepted = self.root / "review_band_accepted.csv"
         dropped = self.root / "review_band_dropped.csv"
         self.assertIn(first.key, accepted.read_text(encoding="utf-8"))

@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from functools import lru_cache
 from pathlib import Path
 
 from annie.core.config import settings
@@ -99,6 +100,17 @@ def config_name(path: str | Path) -> str:
     Returns:
         The configured name, or the filename stem on any read/parse error.
     """
+    file = Path(path)
+    try:
+        stat = file.stat()
+    except OSError:
+        return file.stem
+    return _config_name(str(file), stat.st_mtime_ns, stat.st_size)
+
+
+@lru_cache(maxsize=128)
+def _config_name(path: str, _mtime_ns: int, _size: int) -> str:
+    """Parse a config's name once per version of the file (see :func:`config_name`)."""
     file = Path(path)
     try:
         data = json.loads(file.read_text(encoding="utf-8"))
@@ -315,6 +327,7 @@ def save_config(
         ),
         encoding="utf-8",
     )
+    _config_name.cache_clear()  # the name may have changed without the size changing
     return out
 
 
