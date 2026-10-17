@@ -32,7 +32,6 @@ per-client :class:`_BrowseState` keyed by :attr:`nicegui.Client.id`.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -53,7 +52,7 @@ from annie.media.preview import (
     to_data_uri,
 )
 from annie.media.rendering import JobStatus
-from annie.pages import annotator
+from annie.pages import annotator, pending
 from annie.pages.csv_dialog import select_id_column
 from annie.pages.folder_picker import pick_file
 from annie.pages.lazy import schedule
@@ -67,8 +66,6 @@ if TYPE_CHECKING:
 
     from annie.core.models import VideoEntry
 
-#: Shared CSS for the grey, centred media placeholder boxes (ORIGINAL / render slots).
-_BOX = "border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center"
 #: Whether Annie runs inside Docker. Evaluated once at import — the container
 #: boundary is fixed for the process lifetime — so Browse rows don't stat
 #: ``/.dockerenv`` on every render.
@@ -200,36 +197,46 @@ def _grid_dims() -> tuple[int, int]:
 class _RowBadges:
     """Lazily-filled badges a row's decode/probe update."""
 
-    frames: ui.badge | None = None
+    frames: ui.element | None = None
     audio_slot: ui.element | None = None
 
 
-def _audio_badge(present: bool) -> None:
-    """Draw a coloured ``audio`` / ``no audio`` chip in the current slot."""
-    if present:
-        ui.badge("audio", color=theme.AUDIO_TAG_COLOR)
+def _settle_audio(slot: ui.element, present: bool | None) -> None:
+    """Settle the audio badge: ``audio`` / ``no audio``, or ``audio: ?`` if unknown."""
+    if present is None:
+        pending.settle_badge(slot, "audio: ?")
+    elif present:
+        pending.settle_badge(slot, "audio", theme.AUDIO_TAG_COLOR)
     else:
-        ui.badge("no audio", color=theme.NEUTRAL)
+        pending.settle_badge(slot, "no audio")
+
+
+def _settle_unknown(badges: _RowBadges) -> None:
+    """Settle both lazy badges as unknown (``?``): nothing will fill them."""
+    if badges.frames is not None:
+        pending.settle_badge(badges.frames, "#frames: ?")
+    if badges.audio_slot is not None:
+        _settle_audio(badges.audio_slot, None)
 
 
 def _tags(entry: VideoEntry) -> _RowBadges:
     """Draw the media/annotation/label chips; return the lazily-filled badges.
 
-    ``video`` is known from the scan; ``#frames`` fills after decode; the ``audio``
-    chip fills after the audio probe (see :func:`_populate`), shown immediately when
-    already cached.
+    ``video`` is known from the scan; ``#frames`` fills after decode and the ``audio``
+    chip after the audio probe (see :func:`_populate`). Until then each spins (see
+    :mod:`annie.pages.pending`); a value already cached shows immediately.
     """
     badges = _RowBadges()
     if entry.has_video:
-        badges.audio_slot = ui.element("span")
-        with badges.audio_slot:
-            cached = state.audio_cache.get(entry.key)
-            if cached is None:
-                ui.badge("audio: …", color=theme.NEUTRAL)
-            else:
-                _audio_badge(cached)
+        badges.audio_slot = pending.pending_badge("audio")
+        cached = state.audio_cache.get(entry.key)
+        if cached is not None:
+            _settle_audio(badges.audio_slot, cached)
         ui.badge("video", color=theme.VIDEO_TAG_COLOR)
-        badges.frames = ui.badge("#frames: …", color=theme.NEUTRAL)
+        badges.frames = pending.pending_badge("#frames")
+        frames = state.frames_cache.get(entry.key)
+        if frames is not None:
+            pending.settle_badge(badges.frames, f"#frames: {frames}")
     if entry.has_vdet:
         ui.badge("vdet", color=theme.VDET_COLOR)
     if entry.has_track:
@@ -345,7 +352,7 @@ def _original_box(entry: VideoEntry) -> None:
     box = (
         ui.column()
         .classes("items-center justify-center")
-        .style(f"width:{width}px;height:{height}px;{_BOX}")
+        .style(f"width:{width}px;height:{height}px;{pending.MEDIA_BOX}")
     )
     if entry.video_path is None:
         with box:
@@ -378,7 +385,7 @@ def _strip() -> list[ui.element]:
     slots: list[ui.element] = []
     with ui.row().classes("gap-1 no-wrap"):
         for _ in range(5):
-            slots.append(ui.element("div").style(f"width:{width}px;height:{height}px;{_BOX}"))
+            slots.append(pending.media_box(width, height))
     return slots
 
 
@@ -388,7 +395,7 @@ def _render_box(entry: VideoEntry) -> None:
     box = (
         ui.column()
         .classes("items-center justify-center")
-        .style(f"width:{width}px;height:{height}px;{_BOX}")
+        .style(f"width:{width}px;height:{height}px;{pending.MEDIA_BOX}")
     )
 
     def reset() -> None:
@@ -401,9 +408,7 @@ def _render_box(entry: VideoEntry) -> None:
                 ui.icon("movie_filter", color=theme.NEUTRAL).tooltip("no video to render")
 
     def start_render() -> None:
-        box.clear()
-        with box:
-            ui.spinner(size="lg")
+        pending.pending(box, size="lg")
         job_id = state.renderer.submit(entry)
         background_tasks.create(
             _watch_render(job_id, box, width, height, reset), name="annie-render"
@@ -429,17 +434,17 @@ async def _watch_render(
             return  # page reloaded/closed; stop watching
         try:
             if job.status is JobStatus.DONE and job.output_path is not None:
-                box.clear()
-                with box:
-                    ui.video(job.output_path, autoplay=True).style(
+                output = job.output_path
+                pending.ready(
+                    box,
+                    lambda: ui.video(output, autoplay=True).style(
                         f"width:{width}px;height:{height}px"
-                    )
+                    ),
+                )
                 unembed_after_idle(box, restore, ttl=render_embed_ttl())
                 return
             if job.status is JobStatus.FAILED:
-                box.clear()
-                with box:
-                    ui.icon("error", color=theme.DANGER).tooltip(job.error or "render failed")
+                pending.failed(box, job.error or "render failed")
                 return
         except RuntimeError:
             return  # the row was refreshed away; stop watching
@@ -461,35 +466,29 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
             return
 
     sw, sh = _media_dims()
+    for slot in strip:
+        pending.pending(slot)
     try:
         result = await run.io_bound(build_preview, entry)
     except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
         reason = report_decode_failure(entry.video_path, exc)
-        if anchor is not None and not _alive(anchor):
-            return
-        with contextlib.suppress(RuntimeError):
-            if badges.frames is not None:
-                badges.frames.set_text("#frames: ?")
-            for slot in strip:
-                slot.clear()
-                with slot:
-                    ui.icon("broken_image", color=theme.DANGER).tooltip(reason)
+        if badges.frames is not None:
+            pending.settle_badge(badges.frames, "#frames: ?")
+        for slot in strip:
+            pending.failed(slot, reason)
+        await _probe_audio(entry, badges)
         return
     if result is None:
         return  # NiceGUI's io_bound yields None while the app is shutting down
     _thumbnail, frames, num_frames = result
     state.frames_cache[entry.key] = num_frames
     if anchor is not None and not _alive(anchor):
-        return  # the page was reloaded/closed during the decode; don't touch a dead client
-    try:
-        if badges.frames is not None:
-            badges.frames.set_text(f"#frames: {num_frames}")
-        for slot, frame in zip(strip, frames, strict=False):
-            slot.clear()
-            with slot:
-                ui.image(to_data_uri(frame, (sw, sh))).style(f"width:{sw}px;height:{sh}px")
-    except RuntimeError:
-        return  # the row was refreshed away mid-decode
+        return  # the page was reloaded/closed during the decode; skip the encoding
+    if badges.frames is not None:
+        pending.settle_badge(badges.frames, f"#frames: {num_frames}")
+    for slot, frame in zip(strip, frames, strict=False):
+        uri = to_data_uri(frame, (sw, sh))
+        pending.ready(slot, lambda u=uri: ui.image(u).style(f"width:{sw}px;height:{sh}px"))
 
     await _probe_audio(entry, badges)
 
@@ -503,18 +502,11 @@ async def _probe_audio(entry: VideoEntry, badges: _RowBadges) -> None:
         try:
             present = await run.io_bound(probe.has_audio, entry.video_path)
         except Exception:  # noqa: BLE001 - probe failure must not break the row
-            return
-        if present is None:
-            return  # NiceGUI's io_bound yields None while the app is shutting down
-        state.audio_cache[entry.key] = present
-    if badges.audio_slot is None or not _alive(badges.audio_slot):
-        return
-    try:
-        badges.audio_slot.clear()
-        with badges.audio_slot:
-            _audio_badge(present)
-    except RuntimeError:
-        return
+            present = None
+        if present is not None:
+            state.audio_cache[entry.key] = present
+    if badges.audio_slot is not None:
+        _settle_audio(badges.audio_slot, present)
 
 
 def _row_card(entry: VideoEntry, *, can_decode: bool) -> None:
@@ -559,6 +551,8 @@ def _row_card(entry: VideoEntry, *, can_decode: bool) -> None:
 
     if can_decode and entry.has_video:
         schedule(_host(), lambda: _populate(entry, strip, badges))
+    else:
+        _settle_unknown(badges)
 
 
 def _clear_strip(strip: list[ui.element]) -> None:
@@ -593,9 +587,7 @@ def _grid_box(entry: VideoEntry, *, can_decode: bool) -> None:
     box = (
         ui.element("div")
         .classes("relative cursor-pointer")
-        .style(
-            f"width:{width}px;height:{height}px;border-radius:8px;background:#e5e7eb;overflow:hidden"
-        )
+        .style(f"width:{width}px;height:{height}px;{pending.MEDIA_BOX}")
     )
     with box:
         slot = ui.element("div").style(
@@ -660,31 +652,18 @@ async def _populate_grid(entry: VideoEntry, slot: ui.element) -> None:
         return
 
     width, height = _grid_dims()
+    pending.pending(slot)
     try:
         result = await run.io_bound(build_grid_preview, entry)
     except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the box
-        reason = report_decode_failure(entry.video_path, exc)
-        if not _alive(slot):
-            return
-        with contextlib.suppress(RuntimeError):  # the box was refreshed away mid-decode
-            slot.clear()
-            with slot, ui.row().classes("w-full h-full items-center justify-center"):
-                ui.icon("broken_image", color=theme.DANGER, size="md").tooltip(reason)
+        pending.failed(slot, report_decode_failure(entry.video_path, exc))
         return
     if result is None:
         return  # NiceGUI's io_bound yields None while the app is shutting down
     image, num_frames = result
     state.frames_cache[entry.key] = num_frames
-    if not _alive(slot):
-        return  # the page was reloaded/closed during the decode
-    try:
-        slot.clear()
-        with slot:
-            ui.image(to_data_uri(image, (width, height))).style(
-                f"width:{width}px;height:{height}px"
-            )
-    except RuntimeError:
-        return  # the box was refreshed away mid-decode
+    uri = to_data_uri(image, (width, height))
+    pending.ready(slot, lambda: ui.image(uri).style(f"width:{width}px;height:{height}px"))
 
 
 def _clear_grid(slot: ui.element) -> None:
