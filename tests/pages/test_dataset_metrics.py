@@ -6,7 +6,9 @@ import unittest
 from pathlib import Path
 
 from annie.dataset.sources import DataSource, SourceKind, SourceRegistry
-from annie.pages.dataset import metric_rows
+from annie.pages import dataset
+from annie.pages.dataset import MetricCard, metric_rows
+from tests.pages._nicegui import ui_client
 
 
 def _keys(registry: SourceRegistry) -> list[list[str]]:
@@ -47,6 +49,23 @@ class TestMetricRows(unittest.TestCase):
                 ["videos_vdet_and_track", "videos_with_vdet", "videos_with_track"],
             ],
         )
+
+
+class TestMetricCard(unittest.TestCase):
+    def _tags(self, value: int | None) -> list[str]:
+        with ui_client() as client:
+            dataset._metric_card(MetricCard("# videos", "num_videos", "#000"), value)  # noqa: SLF001
+            return [el.tag for el in client.layout.descendants()]
+
+    def test_scanning_card_spins(self) -> None:
+        self.assertIn("q-spinner", self._tags(None))
+
+    def test_scanned_card_shows_its_value(self) -> None:
+        with ui_client() as client:
+            dataset._metric_card(MetricCard("# videos", "num_videos", "#000"), 12)  # noqa: SLF001
+            texts = [getattr(el, "text", "") for el in client.layout.descendants()]
+        self.assertIn("12", texts)
+        self.assertNotIn("q-spinner", self._tags(12))
 
 
 if __name__ == "__main__":

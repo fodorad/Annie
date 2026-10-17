@@ -125,6 +125,8 @@ class AppState:
             env-seeded / blank dataset. Lets the Dataset tab show it as selected.
         scanned_tracks: Each video's protagonist as scanned (the heuristic CSV), before
             the review DB's corrections are layered over it; lets a DB switch start over.
+        scanning: Whether a scan is running right now (start-up scan included), so every
+            page can show it as busy.
     """
 
     registry: SourceRegistry = field(default_factory=_seed_registry)
@@ -137,6 +139,7 @@ class AppState:
     ui: UiSettings = field(default_factory=UiSettings)
     active_config: Path | None = None
     scanned_tracks: dict[str, int] = field(default_factory=dict)
+    scanning: bool = False
 
     def restore_last_config(self) -> Path | None:
         """Reopen the config remembered from the previous run, with its review database.
@@ -171,7 +174,11 @@ class AppState:
         """
         self.audio_cache.clear()
         self.frames_cache.clear()
-        self.scan = build_manifest(self.registry)
+        self.scanning = True
+        try:
+            self.scan = build_manifest(self.registry)
+        finally:
+            self.scanning = False
         self.scanned_tracks = {e.key: e.active_track_id for e in self.scan.entries}
         self._apply_active_track_overrides()
 

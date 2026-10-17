@@ -278,6 +278,16 @@ class TestNestedLayout(unittest.TestCase):
         self.assertEqual(result.layout_collisions, ["a"])  # s1/a and s2/a both map to "a"
         self.assertEqual(sorted(e.video_id for e in result.entries), ["a", "b"])
 
+    def test_flat_folder_with_only_nested_videos_raises_the_hint(self) -> None:
+        result = self._scan(None)
+        self.assertEqual(result.entries, [])
+        self.assertTrue(result.nested_videos_hint)
+
+    def test_no_hint_with_a_layout_or_with_direct_videos(self) -> None:
+        self.assertFalse(self._scan(VideoLayout("{grp}/{sub}/clip_{part}.mp4")).nested_videos_hint)
+        (self.root / "direct.mp4").write_bytes(b"")
+        self.assertFalse(self._scan(None).nested_videos_hint)
+
     def test_invalid_saved_layout_does_not_break_the_scan(self) -> None:
         result = self._scan(VideoLayout("no_fields.mp4"))
         self.assertEqual(result.entries, [])
