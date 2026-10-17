@@ -144,3 +144,17 @@ class TestScanningFlag(unittest.TestCase):
         app.rescan()
         self.assertEqual(seen[:1], [True])
         self.assertFalse(app.scanning)
+
+
+class TestReviewLookup(unittest.TestCase):
+    """One query serves a whole filter pass, with the same answers as per-row reads."""
+
+    def test_batched_lookup_matches_per_row_reads(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        app = AppState(registry=SourceRegistry(), store=ReviewStore(tmp / "r.db"))
+        app.store.set_verdict("bad", "bad", None, "bad")
+        app.store.set_note("noted", "noted", None, "check audio")
+        app.store.set_annotate("queued", "queued", None, True)
+        lookup = app.review_lookup()
+        for key in ("bad", "noted", "queued", "never-touched"):
+            self.assertEqual(lookup(key), app.review_state(key), key)
