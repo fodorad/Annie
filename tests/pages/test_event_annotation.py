@@ -423,18 +423,14 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("＋ Add event category", texts)
 
     async def test_each_half_opens_its_own_dialog(self) -> None:
-        with mock.patch.object(event_task.ui, "timer") as timer:
+        body = event_task._manager_body  # noqa: SLF001
+        self.assertIs(body("participants"), event_task._participant_manager)  # noqa: SLF001
+        self.assertIs(body("event_types"), event_task._event_type_manager)  # noqa: SLF001
+        with ui_client() as client:
             event_task._open_participants(self.state)  # noqa: SLF001
             event_task._open_event_types(self.state)  # noqa: SLF001
-            builders = [call.args[1] for call in timer.call_args_list]
-        with mock.patch.object(event_task, "_manager_dialog") as dialog:
-            for build in builders:
-                build()
-        bodies = [call.args[1] for call in dialog.call_args_list]
-        self.assertEqual(
-            bodies,
-            [event_task._participant_manager, event_task._event_type_manager],  # noqa: SLF001
-        )
+            timers = [el for el in client.layout.descendants() if isinstance(el, ui.timer)]
+        self.assertEqual(len(timers), 2)  # each opens its dialog on the next loop turn
 
     async def test_manager_rows_pick_colours(self) -> None:
         state.store.add_category("Mother")

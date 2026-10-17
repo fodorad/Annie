@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from nicegui import Client
 from nicegui.page import page as _Page
+from starlette.requests import Request
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -35,9 +36,18 @@ def quiet_slow_callback_warnings(seconds: float = 2.0) -> None:
     asyncio.get_running_loop().slow_callback_duration = seconds
 
 
+def _request() -> Request:
+    """A minimal real HTTP request, as a browser's page load would give the client.
+
+    NiceGUI reads the request's headers while waiting for the browser to connect; with no
+    request at all that wait fails half-built and leaves a never-awaited coroutine behind.
+    """
+    return Request({"type": "http", "method": "GET", "path": "/", "headers": []})
+
+
 @contextmanager
 def ui_client() -> Iterator[Client]:
     """Yield a NiceGUI client whose slot is active, so UI can be built inside it."""
-    client = Client(_Page("/"), request=None)
+    client = Client(_Page("/"), request=_request())
     with client:
         yield client
