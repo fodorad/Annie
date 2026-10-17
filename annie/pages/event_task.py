@@ -19,11 +19,12 @@ their own modules.
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from fastapi import Response
-from nicegui import app, context, ui
+from nicegui import app, context, run, ui
 
 from annie.core import theme
 from annie.core.state import state
@@ -39,7 +40,8 @@ from annie.dataset.events import (
 )
 from annie.media.decode import media_available, video_metadata
 from annie.media.preview import report_decode_failure
-from annie.pages import download, timeline, videoclock
+from annie.pages import download, pending, timeline, videoclock
+from annie.pages.lazy import schedule
 from annie.pages.timeline_view import TimelineView
 from annie.parsers.csvmeta import short_name
 
@@ -169,6 +171,10 @@ class _EventState:
             the first category; ``None`` when the dataset has no categories yet.
         active_event_type: The event category a newly-captured event is made with (its name,
             colour and default attributes), or ``None`` for a plain event.
+        meta_key: The video whose metadata read has finished (successfully or not), so it
+            is not read again; ``None`` until the first read completes.
+        meta_loading: The video whose metadata is being read right now, so a rebuild
+            during the read does not start a second one.
     """
 
     row_key: str | None = None
@@ -187,6 +193,8 @@ class _EventState:
     active_category: str | None = field(default=None)
     active_event_type: str | None = field(default=None)
     position: _PositionFields | None = field(default=None, repr=False)
+    meta_key: str | None = None
+    meta_loading: str | None = None
 
     def __post_init__(self) -> None:
         self.reset_view()
@@ -224,7 +232,10 @@ def _queued_entries() -> list[VideoEntry]:
 
 
 def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> VideoEntry | None:
-    """Ensure ``state_`` points at a valid queued video and its metadata is loaded.
+    """Ensure ``state_`` points at a valid queued video (its metadata loads separately).
+
+    Opening the video file to read its metadata is slow, so it is not done here: see
+    :func:`needs_metadata` and :func:`load_metadata`, which run it off the event loop.
 
     Returns the current entry, or ``None`` when the queue is empty.
     """
@@ -233,8 +244,8 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
         return None
     state_.index = max(0, min(state_.index, len(entries) - 1))
     entry = entries[state_.index]
-    if state_.row_key == entry.key and state_.num_frames:
-        return entry  # already loaded
+    if state_.row_key == entry.key:
+        return entry  # already selected
     state_.row_key = entry.key
     state_.video_id = entry.video_id
     state_.selected_event = None
@@ -242,14 +253,6 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
     state_.fps = 0.0
     state_.num_frames = 0
     state_.duration = 0.0
-    if entry.video_path is not None and media_available():
-        try:
-            meta = video_metadata(entry.video_path)
-            state_.fps = meta.fps
-            state_.num_frames = meta.num_frames
-            state_.duration = frames_to_seconds(meta.num_frames, meta.fps)
-        except Exception as exc:  # noqa: BLE001 - a bad file must not break the tab
-            report_decode_failure(entry.video_path, exc)  # once per problem, not per video
     state_.reset_view()
     # Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed
     # them from any pre-existing event track names (back-compat for the old single-lane model);
@@ -262,6 +265,64 @@ def _load_video_if_needed(state_: _EventState, entries: list[VideoEntry]) -> Vid
     _ensure_active_category(state_)
     _ensure_active_event_type(state_)
     return entry
+
+
+def needs_metadata(state_: _EventState, entry: VideoEntry) -> bool:
+    """Whether ``entry``'s metadata still has to be read before its work area can be built."""
+    return entry.video_path is not None and media_available() and state_.meta_key != entry.key
+
+
+async def load_metadata(state_: _EventState, entry: VideoEntry) -> bool:
+    """Read ``entry``'s frame rate and length off the event loop and apply them.
+
+    A result that arrives after the reviewer moved on to another video is dropped, so
+    stepping quickly always ends on the video asked for last.
+
+    Args:
+        state_: The client's Event-annotation state.
+        entry: The video whose metadata to read.
+
+    Returns:
+        ``True`` if ``state_`` now holds this video's metadata (or its read failed, which
+        is reported once), ``False`` if the read was stale, duplicate or not needed.
+    """
+    path = entry.video_path
+    if path is None or not needs_metadata(state_, entry) or state_.meta_loading == entry.key:
+        return False
+    state_.meta_loading = entry.key
+    try:
+        meta = await run.io_bound(video_metadata, path)
+    except Exception as exc:  # noqa: BLE001 - a bad file must not break the tab
+        report_decode_failure(path, exc)  # once per problem, not per video
+        meta = None
+    finally:
+        if state_.meta_loading == entry.key:
+            state_.meta_loading = None
+    if state_.row_key != entry.key:
+        return False  # the reviewer moved on while this read ran
+    if meta is not None:
+        state_.fps = meta.fps
+        state_.num_frames = meta.num_frames
+        state_.duration = frames_to_seconds(meta.num_frames, meta.fps)
+    state_.meta_key = entry.key
+    state_.reset_view()
+    return True
+
+
+async def _load_then_rebuild(state_: _EventState, entry: VideoEntry) -> None:
+    """Read the open video's metadata, then rebuild the work area around it."""
+    if await load_metadata(state_, entry):
+        with contextlib.suppress(RuntimeError):  # the tab was closed meanwhile
+            event_annotation_task.refresh()
+
+
+def _video_pending(state_: _EventState) -> ui.element:
+    """A spinner where the video goes, while its metadata is read; returns the box."""
+    height = state_.video_height
+    with ui.row().classes("w-full justify-center"):
+        box = pending.media_box(round(height * 16 / 9), height).style("max-width:100%")
+        pending.pending(box, size="xl")
+    return box
 
 
 def _ensure_active_category(state_: _EventState) -> None:
@@ -303,6 +364,10 @@ def event_annotation_task() -> None:
         return
 
     _toolbar(state_, entries)
+    if needs_metadata(state_, entry):
+        box = _video_pending(state_)
+        schedule(box, lambda: _load_then_rebuild(state_, entry))
+        return
     _keyboard(state_)
 
     # A single layout: the top row splits into the video (with its transport) and the editor
