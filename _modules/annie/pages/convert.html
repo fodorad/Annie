@@ -345,6 +345,8 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">nicegui.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClickEventArguments</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.convert</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvertProgress</span>
+
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_Panel</span><span class="p">:</span>
@@ -439,25 +441,28 @@
     <span class="n">panel</span> <span class="o">=</span> <span class="n">_Panel</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">bar</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">cancel</span><span class="p">)</span>
     <span class="n">_panels</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">panel</span>
     <span class="n">client</span><span class="o">.</span><span class="n">on_delete</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_panels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-    <span class="n">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">)</span>
+    <span class="n">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">progress</span><span class="p">())</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_render_progress</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Update every open page's progress panel from the converter's current snapshot."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_progress</span><span class="p">(</span><span class="n">progress</span><span class="p">:</span> <span class="n">ConvertProgress</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Update every open page's progress panel from one snapshot of the converter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        progress: The snapshot to show (default: the converter's current one).</span>
+<span class="sd">    """</span>
+    <span class="n">snapshot</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">progress</span><span class="p">()</span> <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">progress</span>
     <span class="k">for</span> <span class="n">client_id</span><span class="p">,</span> <span class="n">panel</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">_panels</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">panel</span><span class="o">.</span><span class="n">title</span><span class="p">):</span>
             <span class="n">_panels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">continue</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">)</span>
+            <span class="n">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>  <span class="c1"># the panel was rebuilt/refreshed away mid-update</span>
             <span class="n">_panels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">:</span> <span class="n">_Panel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Render the converter's current snapshot into one page's progress panel."""</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">converter</span><span class="o">.</span><span class="n">progress</span><span class="p">()</span>
-
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_panel</span><span class="p">(</span><span class="n">panel</span><span class="p">:</span> <span class="n">_Panel</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">ConvertProgress</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render one converter snapshot into one page's progress panel."""</span>
     <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"idle"</span><span class="p">:</span>
         <span class="n">panel</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">"No conversion running."</span><span class="p">)</span>
         <span class="n">panel</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>

@@ -76,14 +76,17 @@ Module Contents
 
    How many reports one Annie process sends per hour at most.
 
-.. py:function:: access_key() -> str
+.. py:function:: access_key(environ: collections.abc.Mapping[str, str] | None = None, built_in: str | None = None) -> str
 
-   The access key in use: ``ANNIE_REPORT_KEY`` if set, else :data:`ACCESS_KEY`.
+   The access key in use: ``ANNIE_REPORT_KEY`` if set, else the built-in key.
+
+   :param environ: The environment to read (default: the process environment).
+   :param built_in: The key shipped with this release (default :data:`ACCESS_KEY`).
 
 
-.. py:function:: reporting_available() -> bool
+.. py:function:: reporting_available(environ: collections.abc.Mapping[str, str] | None = None, built_in: str | None = None) -> bool
 
-   Whether reports can be sent (an access key is configured).
+   Whether reports can be sent (an access key is configured); see :func:`access_key`.
 
 
 .. py:function:: build_report(event: annie.core.logbook.LogEvent, note: str, *, version: str) -> str
@@ -99,9 +102,9 @@ Module Contents
    :rtype: The report
 
 
-.. py:function:: payload(text: str) -> dict[str, str]
+.. py:function:: payload(text: str, key: str | None = None) -> dict[str, str]
 
-   The JSON body the form-to-email service expects.
+   The JSON body the form-to-email service expects (``key`` defaults to the key in use).
 
 
 .. py:function:: already_sent(seq: int) -> bool

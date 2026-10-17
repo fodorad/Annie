@@ -330,9 +330,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">decoder_problem</span><span class="p">,</span> <span class="n">ensure_windows_ffmpeg_dlls</span>
 
@@ -355,10 +358,44 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">media_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return whether the optional torchcodec backend can be imported.</span>
 
+<span class="sd">    A ``None`` entry in :data:`sys.modules` is Python's own "this import is blocked"</span>
+<span class="sd">    marker; it counts as not installed.</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        ``True`` if ``torchcodec`` is importable, ``False`` otherwise.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="s2">"torchcodec"</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s2">"torchcodec"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="s2">"torchcodec"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+
+<span class="n">DecoderBackend</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">]</span>
+<span class="sd">"""Loads the video-decoder class (default: torchcodec's ``VideoDecoder``)."""</span>
+
+<span class="n">_backend</span><span class="p">:</span> <span class="n">DecoderBackend</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="sd">"""The decoder backend in use; ``None`` means torchcodec (see :func:`use_decoder_backend`)."""</span>
+
+
+<div class="viewcode-block" id="use_decoder_backend">
+<a class="viewcode-back" href="../../../autoapi/annie/media/decode/index.html#annie.media.decode.use_decoder_backend">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">use_decoder_backend</span><span class="p">(</span><span class="n">load</span><span class="p">:</span> <span class="n">DecoderBackend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Decode with another backend while the block runs (e.g. a fake decoder in tests).</span>
+
+<span class="sd">    The backend replaces torchcodec entirely, including the "is the extra installed"</span>
+<span class="sd">    check; whatever it raises is handled exactly like a torchcodec load failure.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        load: Returns the decoder class, or raises ``ImportError``/``OSError`` when the</span>
+<span class="sd">            backend cannot load.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_backend</span>
+    <span class="n">previous</span><span class="p">,</span> <span class="n">_backend</span> <span class="o">=</span> <span class="n">_backend</span><span class="p">,</span> <span class="n">load</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_backend</span> <span class="o">=</span> <span class="n">previous</span></div>
 
 
 
@@ -382,9 +419,12 @@
 <span class="sd">    the Visual C++ runtime on Windows. That surfaces as an ``OSError`` deep inside</span>
 <span class="sd">    ``import torch``; callers get a :class:`MediaUnavailableError` saying what to do.</span>
 <span class="sd">    """</span>
-    <span class="n">_require_media</span><span class="p">()</span>
-    <span class="n">ensure_windows_ffmpeg_dlls</span><span class="p">()</span>  <span class="c1"># Windows: FFmpeg's DLLs must be registered before import</span>
+    <span class="k">if</span> <span class="n">_backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_require_media</span><span class="p">()</span>
+        <span class="n">ensure_windows_ffmpeg_dlls</span><span class="p">()</span>  <span class="c1"># Windows: FFmpeg's DLLs must be registered before import</span>
     <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_backend</span><span class="p">()</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">torchcodec.decoders</span><span class="w"> </span><span class="kn">import</span> <span class="n">VideoDecoder</span>  <span class="c1"># local import: optional dependency</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">MediaUnavailableError</span><span class="p">(</span><span class="n">decoder_problem</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
@@ -401,7 +441,7 @@
 <span class="sd">        or the ``media`` extra is not installed (which is reported separately).</span>
 <span class="sd">    """</span>
     <span class="k">global</span> <span class="n">_decoder_error</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">_backend</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">media_available</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># torchcodec loads FFmpeg (its core library) only when a decoder is created, and</span>

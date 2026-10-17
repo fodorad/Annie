@@ -30,6 +30,7 @@ Attributes
 .. autoapisummary::
 
    annie.media.decode.SeekMode
+   annie.media.decode.DecoderBackend
 
 
 Exceptions
@@ -54,6 +55,7 @@ Functions
 .. autoapisummary::
 
    annie.media.decode.media_available
+   annie.media.decode.use_decoder_backend
    annie.media.decode.check_decoder
    annie.media.decode.decoder_problem_found
    annie.media.decode.read_frame
@@ -87,7 +89,27 @@ Module Contents
 
    Return whether the optional torchcodec backend can be imported.
 
+   A ``None`` entry in :data:`sys.modules` is Python's own "this import is blocked"
+   marker; it counts as not installed.
+
    :returns: ``True`` if ``torchcodec`` is importable, ``False`` otherwise.
+
+
+.. py:data:: DecoderBackend
+
+   torchcodec's ``VideoDecoder``).
+
+   :type: Loads the video-decoder class (default
+
+.. py:function:: use_decoder_backend(load: DecoderBackend) -> collections.abc.Generator[None]
+
+   Decode with another backend while the block runs (e.g. a fake decoder in tests).
+
+   The backend replaces torchcodec entirely, including the "is the extra installed"
+   check; whatever it raises is handled exactly like a torchcodec load failure.
+
+   :param load: Returns the decoder class, or raises ``ImportError``/``OSError`` when the
+                backend cannot load.
 
 
 .. py:function:: check_decoder() -> MediaUnavailableError | None
