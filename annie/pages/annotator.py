@@ -54,7 +54,6 @@ corrections to the ``_manual`` CSV beside the heuristic source (see
 from __future__ import annotations
 
 import asyncio
-import contextlib
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING
 
@@ -79,7 +78,7 @@ from annie.media.preview import (
     to_data_uri,
 )
 from annie.media.rendering import JobStatus
-from annie.pages import event_task
+from annie.pages import event_task, pending
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.utils import _alive, notify_detached, render_embed_ttl, unembed_after_idle
@@ -98,8 +97,6 @@ if TYPE_CHECKING:
 #: Every open page's Annotator tab element, by client id, so a change made in one page
 #: (queueing a video in Browse) enables or disables the tab in all of them.
 _tabs: dict[str, ui.tab] = {}
-#: Shared CSS for the grey, centred media placeholder box on each Annotator row.
-_BOX = "border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center"
 
 #: Per-client timer hosts, keyed by client id; cleaned up on disconnect in :func:`render`.
 _timer_hosts: dict[str, ui.element] = {}
@@ -236,7 +233,7 @@ def _box_style(scale: float = 1.0) -> str:
         scale: Fraction of the configured row height to cap the box at.
     """
     cap = round(state.ui.annotator_row_height * scale)
-    return f"flex:1 1 0;min-width:0;aspect-ratio:16/9;max-height:{cap}px;{_BOX}"
+    return f"flex:1 1 0;min-width:0;aspect-ratio:16/9;max-height:{cap}px;{pending.MEDIA_BOX}"
 
 
 def _original_placeholder(entry: VideoEntry, scale: float = 1.0) -> None:
@@ -317,7 +314,9 @@ def _media_box(scale: float = 1.0) -> tuple[int, int]:
     return round(height * 16 / 9), height
 
 
-async def _populate_strip(entry: VideoEntry, strip: list[ui.element], scale: float = 1.0) -> None:
+async def _populate_strip(
+    entry: VideoEntry, strip: list[ui.element], scale: float = 1.0, *, keep: bool = False
+) -> None:
     """Decode and draw the five annotated strip frames for ``entry`` (no thumbnail).
 
     The ORIGINAL box is a separate lazy-embed placeholder now, so the strip only fills
@@ -327,38 +326,44 @@ async def _populate_strip(entry: VideoEntry, strip: list[ui.element], scale: flo
         entry: The video to preview (its ``active_track_id`` drives the green overlay).
         strip: The five frame slots to fill.
         scale: Row-height fraction for sizing the embedded frames.
+        keep: Keep the current frames visible, dimmed under the spinner, while the new
+            ones decode (a track change redraws the same video).
     """
     if not strip:
         return
+    for slot in strip:
+        pending.pending(slot, keep=keep)
     try:
         await strip[0].client.connected()
     except Exception:  # noqa: BLE001 - client never connected / already gone
         return
+    await _decode_strip(entry, strip, scale)
+
+
+async def _decode_strip(entry: VideoEntry, strip: list[ui.element], scale: float) -> None:
+    """Decode ``entry``'s five strip frames off the loop and swap them into ``strip``.
+
+    Args:
+        entry: The video to preview.
+        strip: The five (pending) frame slots.
+        scale: Row-height fraction for sizing the embedded frames.
+    """
     try:
         result = await run.io_bound(build_preview, entry)
     except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
         reason = report_decode_failure(entry.video_path, exc)
         for slot in strip:
-            if not _alive(slot):
-                continue
-            with contextlib.suppress(RuntimeError):  # the row was refreshed away
-                slot.clear()
-                with slot:
-                    ui.icon("broken_image", color=theme.DANGER).tooltip(reason)
+            pending.failed(slot, reason)
         return
     if result is None:
         return  # NiceGUI's io_bound yields None while the app is shutting down
+    if not _alive(strip[0]):
+        return  # the row was refreshed away mid-decode; skip the encoding
     _thumbnail, frames, _ = result
     box = _media_box(scale)
     for slot, frame in zip(strip, frames, strict=False):
-        if not _alive(slot):
-            continue
-        try:
-            slot.clear()
-            with slot:
-                ui.image(to_data_uri(frame, box)).style(_IMG)
-        except RuntimeError:
-            return  # the row was refreshed away mid-decode
+        uri = to_data_uri(frame, box)
+        pending.ready(slot, lambda u=uri: ui.image(u).style(_IMG))
 
 
 async def _watch_render(job_id: str, box: ui.element, restore: Callable[[], None]) -> None:
@@ -375,15 +380,12 @@ async def _watch_render(job_id: str, box: ui.element, restore: Callable[[], None
             return  # page reloaded/closed; stop watching
         try:
             if job.status is JobStatus.DONE and job.output_path is not None:
-                box.clear()
-                with box:
-                    ui.video(job.output_path, autoplay=True).style(_IMG)
+                output = job.output_path
+                pending.ready(box, lambda: ui.video(output, autoplay=True).style(_IMG))
                 unembed_after_idle(box, restore, ttl=render_embed_ttl())
                 return
             if job.status is JobStatus.FAILED:
-                box.clear()
-                with box:
-                    ui.icon("error", color=theme.DANGER).tooltip(job.error or "render failed")
+                pending.failed(box, job.error or "render failed")
                 return
         except RuntimeError:
             return
@@ -505,9 +507,9 @@ def _row_card(entry: VideoEntry, *, can_decode: bool, default_tid: int) -> None:
             strip: list[ui.element] = [ui.element("div").style(_box_style()) for _ in range(5)]
             render_box = ui.column().classes("items-center justify-center").style(_box_style())
 
-        def repopulate() -> None:
+        def repopulate(*, keep: bool = False) -> None:
             preview_entry = replace(entry, active_track_id=selected["track"])
-            schedule(_host(), lambda: _populate_strip(preview_entry, strip))
+            schedule(_host(), lambda: _populate_strip(preview_entry, strip, keep=keep))
 
         def unload_media() -> None:
             """Drop the decoded frames, restoring the placeholders the row started as."""
@@ -516,9 +518,7 @@ def _row_card(entry: VideoEntry, *, can_decode: bool, default_tid: int) -> None:
                     slot.clear()
 
         def do_render() -> None:
-            render_box.clear()
-            with render_box:
-                ui.spinner(size="lg")
+            pending.pending(render_box, size="lg")
             preview_entry = replace(entry, active_track_id=selected["track"])
             job_id = state.renderer.submit(preview_entry)
             background_tasks.create(
@@ -547,7 +547,7 @@ def _row_card(entry: VideoEntry, *, can_decode: bool, default_tid: int) -> None:
                 selected["track"] = value
                 entry.active_track_id = value
                 _persist(entry, value)  # save to the session DB; Export writes the CSV
-                repopulate()  # redraw the strip with the new green track
+                repopulate(keep=True)  # redraw with the new green track; old frames dim
                 reset_render()  # the rendered clip is now stale
 
             picker.on_value_change(lambda e: on_pick(e.value))
@@ -609,6 +609,9 @@ _BAND_MEDIA_STYLE = (
 #: size, which only the browser knows — so a frame is never upscaled, just letterboxed
 #: down by ``object-fit`` when the row is narrower.
 _BAND_MEDIA_BOX = (round(_BAND_MEDIA_MAX_HEIGHT * 16 / 9), _BAND_MEDIA_MAX_HEIGHT)
+
+#: A decoded band frame fills its (already sized) placeholder box, letterboxed.
+_BAND_FRAME_STYLE = "width:100%;height:100%;object-fit:contain"
 
 
 def _curation_row(entry: VideoEntry) -> None:
@@ -687,9 +690,7 @@ def _curation_render_box(entry: VideoEntry, can_decode: bool) -> None:
                 ui.icon("movie_filter", color=theme.NEUTRAL).tooltip("no video to render")
 
     def do_render() -> None:
-        box.clear()
-        with box:
-            ui.spinner(size="lg")
+        pending.pending(box, size="lg")
         job_id = state.renderer.submit(entry)
         background_tasks.create(_watch_render(job_id, box, reset), name="annie-curation-render")
 
@@ -1020,7 +1021,9 @@ def _segment_original(clip) -> None:  # noqa: ANN001 - SegmentClip
         box = (
             ui.column()
             .classes("items-center justify-center")
-            .style(f"height:{_SEGMENT_ORIGINAL_HEIGHT}px;aspect-ratio:16/9;max-width:100%;{_BOX}")
+            .style(
+                f"height:{_SEGMENT_ORIGINAL_HEIGHT}px;aspect-ratio:16/9;max-width:100%;{pending.MEDIA_BOX}"
+            )
         )
     if video_path is None:
         with box:
@@ -1117,19 +1120,32 @@ def _band_strip(video_path: Path, band) -> None:  # noqa: ANN001 - ClipBand, see
         .style(f"flex:{_BAND_STRIP_COUNT} {_BAND_STRIP_COUNT} 0")
     )
 
+    with row:
+        slots = [
+            ui.element("div").style(f"{_BAND_MEDIA_STYLE};{pending.MEDIA_BOX}")
+            for _ in range(_BAND_STRIP_COUNT)
+        ]
+    for slot in slots:
+        pending.pending(slot, size="sm")
+
     async def draw() -> None:
         try:
             frames = await run.io_bound(
                 build_band_strip, video_path, band.start, band.end, _BAND_STRIP_COUNT
             )
         except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
-            report_decode_failure(video_path, exc)
+            reason = report_decode_failure(video_path, exc)
+            for slot in slots:
+                pending.failed(slot, reason)
             return
-        if not frames or not _alive(row):
+        if frames is None or not _alive(row):
             return
-        with row:
-            for frame in frames:
-                ui.image(to_data_uri(frame, _BAND_MEDIA_BOX)).style(_BAND_MEDIA_STYLE)
+        for i, slot in enumerate(slots):
+            if i < len(frames):
+                uri = to_data_uri(frames[i], _BAND_MEDIA_BOX)
+                pending.ready(slot, lambda u=uri: ui.image(u).style(_BAND_FRAME_STYLE))
+            else:
+                pending.ready(slot, lambda: None)
 
     schedule(_host(), draw)
 
@@ -1142,7 +1158,11 @@ def _band_clip_box(video_path: Path, band) -> None:  # noqa: ANN001 - ClipBand, 
     band replays instantly. It takes one of the row's :data:`_BAND_MEDIA_COUNT` width
     shares — the same as a single span frame — so the six read as one filmstrip.
     """
-    box = ui.column().classes("items-center justify-center").style(f"{_BAND_MEDIA_STYLE};{_BOX}")
+    box = (
+        ui.column()
+        .classes("items-center justify-center")
+        .style(f"{_BAND_MEDIA_STYLE};{pending.MEDIA_BOX}")
+    )
 
     def reset() -> None:
         box.clear()
@@ -1150,23 +1170,16 @@ def _band_clip_box(video_path: Path, band) -> None:  # noqa: ANN001 - ClipBand, 
             ui.button("clip", icon="content_cut", on_click=play).props("flat dense")
 
     async def play() -> None:
-        box.clear()
-        with box:
-            ui.spinner(size="sm")
+        pending.pending(box, size="sm")
         try:
             path = await run.io_bound(cut_clip, video_path, band.start, band.end)
         except Exception as exc:  # noqa: BLE001 - a bad span/file must not break the row
             logbook.report(f"Could not cut clip for {video_path} [{band.start},{band.end}]: {exc}")
-            if _alive(box):
-                box.clear()
-                with box:
-                    ui.icon("error", color=theme.DANGER).tooltip("could not cut this span")
+            pending.failed(box, "could not cut this span")
             return
         if path is None or not _alive(box):
             return
-        box.clear()
-        with box:
-            ui.video(path, autoplay=True).style("width:100%;height:100%;object-fit:contain")
+        pending.ready(box, lambda: ui.video(path, autoplay=True).style(_BAND_FRAME_STYLE))
         unembed_after_idle(box, reset)
 
     reset()
