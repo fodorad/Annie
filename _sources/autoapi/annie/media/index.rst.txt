@@ -16,6 +16,7 @@ Submodules
    /autoapi/annie/media/convert/index
    /autoapi/annie/media/decode/index
    /autoapi/annie/media/preview/index
+   /autoapi/annie/media/previews/index
    /autoapi/annie/media/probe/index
    /autoapi/annie/media/rendering/index
 

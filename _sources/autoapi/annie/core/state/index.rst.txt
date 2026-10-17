@@ -133,6 +133,10 @@ Module Contents
       Each video's protagonist as scanned (the heuristic CSV), before
       the review DB's corrections are layered over it; lets a DB switch start over.
 
+   .. attribute:: previews
+
+      The shared preview loader (bounded, newest-first, cached decoding).
+
    .. attribute:: scanning
 
       Whether a scan is running right now (start-up scan included), so every

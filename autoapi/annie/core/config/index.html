@@ -235,6 +235,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../media/convert/index.html">annie.media.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/decode/index.html">annie.media.decode</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../media/previews/index.html">annie.media.previews</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/probe/index.html">annie.media.probe</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/rendering/index.html">annie.media.rendering</a></li>
 </ul>
@@ -516,6 +517,13 @@ by walking up from <code class="docutils literal notranslate"><span class="pre">
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.config.Settings.preview_max_workers">
+<span class="sig-name descname"><span class="pre">preview_max_workers</span></span><a class="headerlink" href="#annie.core.config.Settings.preview_max_workers" title="Link to this definition">¶</a></dt>
+<dd><p>Maximum concurrent preview decodes (env
+<code class="docutils literal notranslate"><span class="pre">ANNIE_PREVIEW_WORKERS</span></code>; default: CPU count minus two, at least two).</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.config.Settings.temp_ttl_seconds">
 <span class="sig-name descname"><span class="pre">temp_ttl_seconds</span></span><a class="headerlink" href="#annie.core.config.Settings.temp_ttl_seconds" title="Link to this definition">¶</a></dt>
 <dd><p>Age after which a rendered clip is swept (default 3 minutes).</p>
@@ -637,6 +645,7 @@ without re-importing.</p>
 <li><a class="reference internal" href="#annie.core.config.Settings.vdet_extension"><code class="docutils literal notranslate"><span class="pre">Settings.vdet_extension</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.track_glob"><code class="docutils literal notranslate"><span class="pre">Settings.track_glob</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.render_max_workers"><code class="docutils literal notranslate"><span class="pre">Settings.render_max_workers</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.config.Settings.preview_max_workers"><code class="docutils literal notranslate"><span class="pre">Settings.preview_max_workers</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.temp_ttl_seconds"><code class="docutils literal notranslate"><span class="pre">Settings.temp_ttl_seconds</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.host"><code class="docutils literal notranslate"><span class="pre">Settings.host</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.config.Settings.port"><code class="docutils literal notranslate"><span class="pre">Settings.port</span></code></a></li>

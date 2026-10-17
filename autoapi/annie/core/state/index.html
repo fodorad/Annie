@@ -235,6 +235,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../media/convert/index.html">annie.media.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/decode/index.html">annie.media.decode</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../media/previews/index.html">annie.media.previews</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/probe/index.html">annie.media.probe</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../media/rendering/index.html">annie.media.rendering</a></li>
 </ul>
@@ -488,6 +489,12 @@ the review DB’s corrections are layered over it; lets a DB switch start over.<
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="annie.core.state.AppState.previews">
+<span class="sig-name descname"><span class="pre">previews</span></span><a class="headerlink" href="#annie.core.state.AppState.previews" title="Link to this definition">¶</a></dt>
+<dd><p>The shared preview loader (bounded, newest-first, cached decoding).</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="annie.core.state.AppState.scanning">
 <span class="sig-name descname"><span class="pre">scanning</span></span><a class="headerlink" href="#annie.core.state.AppState.scanning" title="Link to this definition">¶</a></dt>
 <dd><p>Whether a scan is running right now (start-up scan included), so every
@@ -644,6 +651,7 @@ stay fast.</p>
 <li><a class="reference internal" href="#annie.core.state.AppState.ui"><code class="docutils literal notranslate"><span class="pre">AppState.ui</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.active_config"><code class="docutils literal notranslate"><span class="pre">AppState.active_config</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.scanned_tracks"><code class="docutils literal notranslate"><span class="pre">AppState.scanned_tracks</span></code></a></li>
+<li><a class="reference internal" href="#annie.core.state.AppState.previews"><code class="docutils literal notranslate"><span class="pre">AppState.previews</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.scanning"><code class="docutils literal notranslate"><span class="pre">AppState.scanning</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.restore_last_config"><code class="docutils literal notranslate"><span class="pre">AppState.restore_last_config()</span></code></a></li>
 <li><a class="reference internal" href="#annie.core.state.AppState.rescan"><code class="docutils literal notranslate"><span class="pre">AppState.rescan()</span></code></a></li>

@@ -234,6 +234,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/convert/index.html">annie.media.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/decode/index.html">annie.media.decode</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/previews/index.html">annie.media.previews</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/probe/index.html">annie.media.probe</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/rendering/index.html">annie.media.rendering</a></li>
 </ul>
@@ -335,6 +336,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">CsvRole</span><span class="p">,</span> <span class="n">DataSource</span><span class="p">,</span> <span class="n">SourceKind</span><span class="p">,</span> <span class="n">SourceRegistry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReviewStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.convert</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConversionRunner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.previews</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreviewLoader</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.rendering</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderService</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_header</span><span class="p">,</span> <span class="n">read_rows</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span> <span class="n">DEFAULT_VALUE_COLUMN</span>
@@ -440,6 +442,7 @@
 <span class="sd">            env-seeded / blank dataset. Lets the Dataset tab show it as selected.</span>
 <span class="sd">        scanned_tracks: Each video's protagonist as scanned (the heuristic CSV), before</span>
 <span class="sd">            the review DB's corrections are layered over it; lets a DB switch start over.</span>
+<span class="sd">        previews: The shared preview loader (bounded, newest-first, cached decoding).</span>
 <span class="sd">        scanning: Whether a scan is running right now (start-up scan included), so every</span>
 <span class="sd">            page can show it as busy.</span>
 <span class="sd">    """</span>
@@ -455,6 +458,9 @@
     <span class="n">active_config</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">scanned_tracks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">scanning</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">previews</span><span class="p">:</span> <span class="n">PreviewLoader</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">PreviewLoader</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">preview_max_workers</span><span class="p">)</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="AppState.restore_last_config">
 <a class="viewcode-back" href="../../../autoapi/annie/core/state/index.html#annie.core.state.AppState.restore_last_config">[docs]</a>
@@ -494,6 +500,7 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previews</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scanning</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">scan</span> <span class="o">=</span> <span class="n">build_manifest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">registry</span><span class="p">)</span>

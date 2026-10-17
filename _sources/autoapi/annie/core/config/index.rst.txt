@@ -161,6 +161,11 @@ Module Contents
 
       Maximum concurrent render jobs.
 
+   .. attribute:: preview_max_workers
+
+      Maximum concurrent preview decodes (env
+      ``ANNIE_PREVIEW_WORKERS``; default: CPU count minus two, at least two).
+
    .. attribute:: temp_ttl_seconds
 
       Age after which a rendered clip is swept (default 3 minutes).

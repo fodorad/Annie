@@ -234,6 +234,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/convert/index.html">annie.media.convert</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/decode/index.html">annie.media.decode</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/previews/index.html">annie.media.previews</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/probe/index.html">annie.media.probe</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/media/rendering/index.html">annie.media.rendering</a></li>
 </ul>
@@ -438,6 +439,8 @@
 <span class="sd">        vdet_extension: Suffix identifying a raw-detection file.</span>
 <span class="sd">        track_glob: Glob identifying derived single-track files.</span>
 <span class="sd">        render_max_workers: Maximum concurrent render jobs.</span>
+<span class="sd">        preview_max_workers: Maximum concurrent preview decodes (env</span>
+<span class="sd">            ``ANNIE_PREVIEW_WORKERS``; default: CPU count minus two, at least two).</span>
 <span class="sd">        temp_ttl_seconds: Age after which a rendered clip is swept (default 3 minutes).</span>
 <span class="sd">        host: Interface the NiceGUI server binds to.</span>
 <span class="sd">        port: Port the NiceGUI server listens on.</span>
@@ -474,6 +477,9 @@
     <span class="n">vdet_extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">".vdet"</span>
     <span class="n">track_glob</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"*__track*.csv"</span>
     <span class="n">render_max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"ANNIE_RENDER_WORKERS"</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">preview_max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"ANNIE_PREVIEW_WORKERS"</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="p">)</span>
     <span class="n">temp_ttl_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"ANNIE_TEMP_TTL"</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ANNIE_HOST"</span><span class="p">,</span> <span class="s2">"127.0.0.1"</span><span class="p">))</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"ANNIE_PORT"</span><span class="p">,</span> <span class="mi">8080</span><span class="p">))</span>

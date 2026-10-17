@@ -1,0 +1,178 @@
+annie.media.previews
+====================
+
+.. py:module:: annie.media.previews
+
+.. autoapi-nested-parse::
+
+   The preview loader: decodes and encodes preview frames off the event loop (service).
+
+   Browse and the Annotator show decoded frames for every visible row. Each row used to
+   start its own decode the moment it was built, with no limit, and encode the frames on the
+   event loop. This module puts all of that behind one small interface:
+
+   - **Bounded:** at most ``max_workers`` decodes run at once, on the loader's own threads.
+   - **Newest batch first:** requests that arrive together (one page of rows being built)
+     form a batch and start in order, top row first; a newer batch (rows just scrolled
+     into view) goes ahead of older ones, so what is on screen fills first.
+   - **Skips the unwanted:** each request carries a ``wanted`` check, asked just before its
+     decode starts. A row that was refreshed or closed while it waited is skipped and
+     gets :data:`SKIPPED`, without decoding anything.
+   - **Encoded in the worker:** results are WebP data URIs sized for their box, ready to
+     show, so the event loop only assigns them.
+   - **Cached:** a bounded LRU keeps recent results, so a row scrolled back into view shows
+     at once. :meth:`PreviewLoader.clear` empties it (e.g. on rescan). Errors are never
+     cached.
+
+   The decoders are injected (defaulting to :mod:`annie.media.preview` and
+   :func:`annie.media.probe.has_audio`), so tests drive the loader with plain fakes.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.media.previews.Box
+   annie.media.previews.BATCH_WINDOW
+   annie.media.previews.SKIPPED
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.media.previews.Strip
+   annie.media.previews.Tile
+   annie.media.previews.PreviewLoader
+
+
+Module Contents
+---------------
+
+.. py:data:: Box
+
+   A display box ``(width, height)`` in CSS px; frames are encoded to fit it.
+
+.. py:data:: BATCH_WINDOW
+   :value: 0.05
+
+
+   Seconds within which consecutive requests count as one batch (one page being built).
+
+.. py:data:: SKIPPED
+   :type:  Final
+
+   Returned instead of a result when the request was no longer wanted when its turn came.
+
+.. py:class:: Strip
+
+   A row's frame strip, ready to show.
+
+   .. attribute:: uris
+
+      One WebP data URI per strip frame, sized for the requested box.
+
+   .. attribute:: num_frames
+
+      The video's total frame count.
+
+
+.. py:class:: Tile
+
+   A grid tile's single frame, ready to show.
+
+   .. attribute:: uri
+
+      The WebP data URI of the annotated middle frame.
+
+   .. attribute:: num_frames
+
+      The video's total frame count.
+
+
+.. py:class:: PreviewLoader(max_workers: int, *, cache_size: int = 300, strip_fn: collections.abc.Callable[[annie.core.models.VideoEntry], tuple[PIL.Image.Image, list[PIL.Image.Image], int]] = build_preview, tile_fn: collections.abc.Callable[[annie.core.models.VideoEntry], tuple[PIL.Image.Image, int]] = build_grid_preview, band_fn: collections.abc.Callable[[pathlib.Path, float, float, int], list[PIL.Image.Image]] = build_band_strip, audio_fn: collections.abc.Callable[[pathlib.Path], bool] = has_audio)
+
+   Bounded, newest-batch-first, cached decoding of preview frames (see the module docs).
+
+   Every public method must be awaited on the event loop that serves the UI.
+
+   :param max_workers: How many decodes may run at once.
+   :param cache_size: How many results the LRU keeps.
+   :param strip_fn: Decodes a video's annotated strip (default
+                    :func:`~annie.media.preview.build_preview`).
+   :param tile_fn: Decodes a video's annotated middle frame (default
+                   :func:`~annie.media.preview.build_grid_preview`).
+   :param band_fn: Decodes frames across a time span (default
+                   :func:`~annie.media.preview.build_band_strip`).
+   :param audio_fn: Probes for an audio stream (default :func:`~annie.media.probe.has_audio`).
+
+
+   .. py:method:: strip(entry: annie.core.models.VideoEntry, box: Box, *, wanted: collections.abc.Callable[[], bool]) -> Strip | _Skipped
+      :async:
+
+
+      Decode ``entry``'s annotated strip, encoded for ``box``.
+
+      :param entry: The video; its ``active_track_id`` is part of the cache key.
+      :param box: The display box of one strip frame.
+      :param wanted: Asked just before decoding; ``False`` skips the request.
+
+      :returns: The :class:`Strip`, or :data:`SKIPPED`.
+
+      :raises Exception: Whatever the decoder raised (e.g. an unreadable file).
+
+
+
+   .. py:method:: tile(entry: annie.core.models.VideoEntry, box: Box, *, wanted: collections.abc.Callable[[], bool]) -> Tile | _Skipped
+      :async:
+
+
+      Decode ``entry``'s annotated middle frame for a grid tile, encoded for ``box``.
+
+      :param entry: The video.
+      :param box: The tile's display box.
+      :param wanted: Asked just before decoding; ``False`` skips the request.
+
+      :returns: The :class:`Tile`, or :data:`SKIPPED`.
+
+
+
+   .. py:method:: band(video_path: pathlib.Path, start: float, end: float, count: int, box: Box, *, wanted: collections.abc.Callable[[], bool]) -> list[str] | _Skipped
+      :async:
+
+
+      Decode ``count`` frames spread over ``[start, end)`` seconds, encoded for ``box``.
+
+      :param video_path: The video file.
+      :param start: Span start in seconds.
+      :param end: Span end in seconds.
+      :param count: How many frames to sample.
+      :param box: The display box of one frame.
+      :param wanted: Asked just before decoding; ``False`` skips the request.
+
+      :returns: One data URI per decoded frame, or :data:`SKIPPED`.
+
+
+
+   .. py:method:: audio(video_path: pathlib.Path, *, wanted: collections.abc.Callable[[], bool]) -> bool | _Skipped
+      :async:
+
+
+      Probe whether ``video_path`` has an audio stream (bounded like a decode, not cached).
+
+      :param video_path: The video file.
+      :param wanted: Asked just before probing; ``False`` skips the request.
+
+      :returns: Whether an audio stream exists, or :data:`SKIPPED`.
+
+
+
+   .. py:method:: clear() -> None
+
+      Forget every cached result (call when the files may have changed).
+
+
+
