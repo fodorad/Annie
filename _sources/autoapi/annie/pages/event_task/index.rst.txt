@@ -35,6 +35,7 @@ Functions
    annie.pages.event_task.needs_metadata
    annie.pages.event_task.load_metadata
    annie.pages.event_task.event_annotation_task
+   annie.pages.event_task.changed_fields
 
 
 Module Contents
@@ -83,5 +84,10 @@ Module Contents
 .. py:function:: event_annotation_task() -> None
 
    Build the Event-annotation work area for the current queued video.
+
+
+.. py:function:: changed_fields(event: annie.dataset.storage.EventRecord, fields: dict[str, object]) -> dict[str, object]
+
+   The subset of ``fields`` whose value differs from what ``event`` stores.
 
 

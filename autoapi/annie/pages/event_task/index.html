@@ -353,6 +353,9 @@ their own modules.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.event_annotation_task" title="annie.pages.event_task.event_annotation_task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">event_annotation_task</span></code></a>(→ None)</p></td>
 <td><p>Build the Event-annotation work area for the current queued video.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.changed_fields" title="annie.pages.event_task.changed_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">changed_fields</span></code></a>(→ dict[str, object])</p></td>
+<td><p>The subset of <code class="docutils literal notranslate"><span class="pre">fields</span></code> whose value differs from what <code class="docutils literal notranslate"><span class="pre">event</span></code> stores.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -415,6 +418,12 @@ is reported once), <code class="docutils literal notranslate"><span class="pre">
 <dt class="sig sig-object py" id="annie.pages.event_task.event_annotation_task">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">event_annotation_task</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#annie.pages.event_task.event_annotation_task" title="Link to this definition">¶</a></dt>
 <dd><p>Build the Event-annotation work area for the current queued video.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.event_task.changed_fields">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">changed_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../dataset/storage/index.html#annie.dataset.storage.EventRecord" title="annie.dataset.storage.EventRecord"><span class="pre">annie.dataset.storage.EventRecord</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/event_task.html#changed_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.event_task.changed_fields" title="Link to this definition">¶</a></dt>
+<dd><p>The subset of <code class="docutils literal notranslate"><span class="pre">fields</span></code> whose value differs from what <code class="docutils literal notranslate"><span class="pre">event</span></code> stores.</p>
 </dd></dl>
 
 </section>
@@ -483,6 +492,7 @@ is reported once), <code class="docutils literal notranslate"><span class="pre">
 <li><a class="reference internal" href="#annie.pages.event_task.needs_metadata"><code class="docutils literal notranslate"><span class="pre">needs_metadata()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.event_task.load_metadata"><code class="docutils literal notranslate"><span class="pre">load_metadata()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.event_task.event_annotation_task"><code class="docutils literal notranslate"><span class="pre">event_annotation_task()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.event_task.changed_fields"><code class="docutils literal notranslate"><span class="pre">changed_fields()</span></code></a></li>
 </ul>
 </li>
 </ul>

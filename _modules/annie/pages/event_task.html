@@ -922,6 +922,7 @@
     <span class="k">return</span> <span class="n">override</span> <span class="ow">or</span> <span class="n">theme</span><span class="o">.</span><span class="n">event_track_color</span><span class="p">(</span><span class="n">ordinal</span><span class="p">)</span>
 
 
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_category_bar</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The Category block: participants on the left half, event categories on the right.</span>
 
@@ -1022,7 +1023,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Make a category active (where the next captured event lands) and refresh the bar."""</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">active_category</span> <span class="o">=</span> <span class="n">name</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_category_bar</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_active_by_ordinal</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1035,7 +1036,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Choose the event category new events are made with (``None`` = plain events)."""</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">active_event_type</span> <span class="o">=</span> <span class="n">name</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_category_bar</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_event_type_by_ordinal</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">ordinal</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1099,7 +1100,7 @@
     <span class="c1"># Reflect any changes (names, order, colours, active) on the main surface.</span>
     <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="n">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_refresh_work_area</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_participant_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1624,6 +1625,7 @@
     <span class="n">_refresh_timeline</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The selected event's editor: participant, category, start/end, colour + note, attributes.</span>
 
@@ -1738,11 +1740,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_color</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Set (or clear) the selected event's colour override and rebuild."""</span>
-    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">"""Set (or clear) the selected event's colour override and redraw the work area."""</span>
+    <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_attribute_editor</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1823,12 +1822,41 @@
     <span class="n">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attrs</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="changed_fields">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.changed_fields">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">changed_fields</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">EventRecord</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The subset of ``fields`` whose value differs from what ``event`` stores."""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">!=</span> <span class="n">value</span><span class="p">}</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_update</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Persist a change to the selected event and rebuild."""</span>
+<span class="w">    </span><span class="sd">"""Persist a change to the selected event and redraw the work area (not the video).</span>
+
+<span class="sd">    Fields equal to the stored values are dropped; when nothing changes (e.g. a field left</span>
+<span class="sd">    as it was), nothing is written and nothing is redrawn.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>
-    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">changes</span> <span class="o">=</span> <span class="n">changed_fields</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">changes</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">)</span>
+    <span class="n">_refresh_work_area</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_refresh_work_area</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Redraw the editor, the category bar and the timeline, keeping the ``&lt;video&gt;``.</span>
+
+<span class="sd">    Rebuilding the whole task would recreate the video element, which the browser resets</span>
+<span class="sd">    to frame 0; these parts are everything an event edit can change.</span>
+<span class="sd">    """</span>
+    <span class="n">_editor</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_category_bar</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_refresh_timeline</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">rebuild_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1854,7 +1882,7 @@
         <span class="k">return</span>
     <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_refresh_work_area</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_step_video</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1942,10 +1970,8 @@
     <span class="p">)</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">pending_start</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">event_id</span>
-    <span class="c1"># A full rebuild is needed so the new event box appears on the timeline; that recreates the</span>
-    <span class="c1"># &lt;video&gt;, which the browser resets to frame 0, so restore it to where the reviewer was.</span>
-    <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="o">=</span> <span class="n">frame</span>
-    <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_capture_controls</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_refresh_work_area</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_cancel_pending</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1993,11 +2019,7 @@
         <span class="n">selected</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">get_event</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span><span class="p">)</span> <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_seek</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">start_frame</span><span class="p">)</span>
-        <span class="c1"># Reveal an off-screen event, then rebuild so the editor and highlight update (the full</span>
-        <span class="c1"># rebuild recreates the &lt;video&gt;, so restore it to the event's start).</span>
-        <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">start_frame</span>
-        <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="n">_refresh_work_area</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>  <span class="c1"># the editor and highlight follow; the video keeps playing</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"pan"</span><span class="p">,</span> <span class="s2">"wheel"</span><span class="p">):</span>
         <span class="n">_pan</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span>
