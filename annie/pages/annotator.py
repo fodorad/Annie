@@ -477,9 +477,14 @@ async def _clear_all() -> None:
 
     # Captured before the rebuild below deletes the slot this handler is running in.
     client = context.client
+    _clear_queue(entries)
+    notify_detached(client, f"Cleared {len(entries)} rows from the queue", color=theme.PRIMARY)
+
+
+def _clear_queue(entries: list[VideoEntry]) -> None:
+    """Dequeue ``entries`` in one write and rebuild the (emptied) Annotator."""
     state.store.set_annotate_many(((e.key, e.video_id) for e in entries), value=False)
     update_availability(rebuild=True)
-    notify_detached(client, f"Cleared {len(entries)} rows from the queue", color=theme.PRIMARY)
 
 
 def _clear_all_button() -> None:

@@ -116,6 +116,18 @@ def _clean_up(actions: list[Callable[[], str]]) -> str:
     return " · ".join(parts) if parts else "Nothing to clean up."
 
 
+def cleanup_actions(space: _Space) -> list[Callable[[], str]]:
+    """The clean-ups "Clean up all" runs: only those with something to remove."""
+    actions: list[Callable[[], str]] = []
+    if space.old_logs:
+        actions.append(_clear_logs)
+    if space.old_dbs:
+        actions.append(_clear_session_dbs)
+    if space.render_size > 0:
+        actions.append(_clear_render_cache)
+    return actions
+
+
 async def _run_cleanup(actions: list[Callable[[], str]]) -> None:
     """Run clean-ups off the event loop, report them, and re-measure the card."""
     msg = await run.io_bound(_clean_up, actions)
@@ -280,14 +292,7 @@ def _maintenance_section(space: _Space | None = None) -> None:
             total = log_size + db_size + render_size
 
             async def _clean_all() -> None:
-                actions: list[Callable[[], str]] = []
-                if old_logs:
-                    actions.append(_clear_logs)
-                if old_dbs:
-                    actions.append(_clear_session_dbs)
-                if render_size > 0:
-                    actions.append(_clear_render_cache)
-                await _run_cleanup(actions)
+                await _run_cleanup(cleanup_actions(space))
 
             ui.button(
                 f"Clean up all  ({_human_size(total)})",
