@@ -10,6 +10,7 @@ from annie.parsers.participants import (
     NO_ACTIVE_TRACK,
     export_resolved,
     load_participants,
+    load_source_participants,
     manual_path_for,
     resolve_active_track,
     resolved_mapping,
@@ -32,13 +33,20 @@ class TestLoadParticipants(unittest.TestCase):
         path = write_participants(self.tmp / "p.csv", {"a_1": 0, "b_2": -1, "c_3": 5})
         self.assertEqual(load_participants(path), {"a_1": 0, "b_2": -1, "c_3": 5})
 
-    def test_a_changed_file_is_read_again(self) -> None:
+    def test_source_reads_are_cached_until_the_file_changes(self) -> None:
         path = write_participants(self.tmp / "p.csv", {"a": 1})
-        first = load_participants(path)
+        first = load_source_participants(path)
         first["mutated"] = 9  # callers get a copy: the cache stays clean
-        self.assertEqual(load_participants(path), {"a": 1})
+        self.assertEqual(load_source_participants(path), {"a": 1})
         write_participants(path, {"a": 1, "b": 2})  # different size → new cache key
-        self.assertEqual(load_participants(path), {"a": 1, "b": 2})
+        self.assertEqual(load_source_participants(path), {"a": 1, "b": 2})
+        self.assertEqual(load_source_participants(self.tmp / "missing.csv"), {})
+
+    def test_plain_reads_always_see_the_latest_write(self) -> None:
+        path = write_participants(self.tmp / "q.csv", {"vid": 1})
+        self.assertEqual(load_participants(path), {"vid": 1})
+        write_participants(path, {"vid": 2})  # same size, possibly the same mtime tick
+        self.assertEqual(load_participants(path), {"vid": 2})
 
 
 class TestManualPathFor(unittest.TestCase):

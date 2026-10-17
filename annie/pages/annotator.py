@@ -80,7 +80,7 @@ from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.utils import _alive, notify_detached, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
-from annie.parsers.participants import load_participants
+from annie.parsers.participants import load_source_participants
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -1276,7 +1276,7 @@ def _protagonist_task() -> None:
 
     # The source-file (pre-manual) value per video, to mark the "(default)" option.
     resolved = _protagonist_source()
-    defaults = load_participants(*resolved) if resolved is not None else {}
+    defaults = load_source_participants(*resolved) if resolved is not None else {}
 
     can_decode = media_available()
     paged(
