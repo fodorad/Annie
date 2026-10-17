@@ -54,6 +54,7 @@ corrections to the ``_manual`` CSV beside the heuristic source (see
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING
 
@@ -88,6 +89,7 @@ if TYPE_CHECKING:
     from nicegui.events import KeyEventArguments
 
     from annie.core.models import VideoEntry
+    from annie.dataset.sources import DataSource
     from annie.dataset.storage import Decision, Verdict
 
 #: Every open page's Annotator tab element, by client id, so a change made in one page
@@ -113,6 +115,7 @@ class _SegmentState:
 
     source_path: Path | None = None
     loaded_from: Path | None = None
+    loading_from: Path | None = None
     clips: list = field(default_factory=list)
     index: int = 0
 
@@ -715,20 +718,53 @@ def _segment_state() -> _SegmentState:
     return _segment_states.setdefault(context.client.id, _SegmentState())
 
 
-def _load_segment_clips_if_needed(state_: _SegmentState) -> None:
-    """(Re)load clips from the segmentation source when it changed since last time."""
+def _segment_source_to_load(state_: _SegmentState) -> DataSource | None:
+    """The segmentation source whose clips still have to be read, if any.
+
+    Clears the clips when no segmentation source is configured any more.
+    """
     source = next(iter(state.registry.segmentation_sources), None)
     if source is None:
         state_.source_path = None
         state_.loaded_from = None
         state_.clips = []
-        return
+        return None
     if state_.loaded_from == source.path:
-        return  # already loaded from this source (even if it yielded zero clips)
+        return None  # already loaded from this source (even if it yielded zero clips)
+    return source
+
+
+async def load_segment_clips_async(state_: _SegmentState) -> bool:
+    """Read the segmentation source's clips off the event loop, if it changed.
+
+    Returns:
+        ``True`` if new clips were loaded (the work area should be rebuilt).
+    """
+    source = _segment_source_to_load(state_)
+    if source is None or state_.loading_from == source.path:
+        return False
+    state_.loading_from = source.path
+    try:
+        clips = await run.io_bound(load_segment_clips, source)
+    except Exception as exc:  # noqa: BLE001 - a bad CSV must not break the tab
+        logbook.report(f"Could not read the segmentation CSV {source.path}: {exc}")
+        clips = []
+    finally:
+        state_.loading_from = None
+    if clips is None:
+        return False  # the app is shutting down
     state_.source_path = source.path
-    state_.clips = load_segment_clips(source)
+    state_.clips = clips
     state_.loaded_from = source.path
     state_.index = 0
+    return True
+
+
+async def _load_segments_then_rebuild(state_: _SegmentState) -> None:
+    """Read the clips, then rebuild the Segment-review work area around them."""
+    if await load_segment_clips_async(state_):
+        with contextlib.suppress(RuntimeError):  # the tab was closed meanwhile
+            _segment_review_task.refresh()
 
 
 def _segment_export() -> None:
@@ -800,7 +836,13 @@ def _segment_review_task() -> None:
     (drop).
     """
     state_ = _segment_state()
-    _load_segment_clips_if_needed(state_)
+    source = _segment_source_to_load(state_)
+    if source is not None:
+        with ui.row().classes("items-center gap-2") as note:
+            ui.spinner(size="1.5em", color=theme.PRIMARY)
+            ui.label(f"Reading {source.path.name}…").style(f"color:{theme.NEUTRAL}")
+        schedule(note, lambda: _load_segments_then_rebuild(state_))
+        return
     clips = state_.clips
     if not clips:
         ui.label(

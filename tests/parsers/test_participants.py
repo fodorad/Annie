@@ -32,6 +32,14 @@ class TestLoadParticipants(unittest.TestCase):
         path = write_participants(self.tmp / "p.csv", {"a_1": 0, "b_2": -1, "c_3": 5})
         self.assertEqual(load_participants(path), {"a_1": 0, "b_2": -1, "c_3": 5})
 
+    def test_a_changed_file_is_read_again(self) -> None:
+        path = write_participants(self.tmp / "p.csv", {"a": 1})
+        first = load_participants(path)
+        first["mutated"] = 9  # callers get a copy: the cache stays clean
+        self.assertEqual(load_participants(path), {"a": 1})
+        write_participants(path, {"a": 1, "b": 2})  # different size → new cache key
+        self.assertEqual(load_participants(path), {"a": 1, "b": 2})
+
 
 class TestManualPathFor(unittest.TestCase):
     def test_derives_manual_sibling(self) -> None:
