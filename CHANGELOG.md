@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.17.1](https://github.com/fodorad/Annie/compare/v1.17.0...v1.17.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **ui:** require NiceGUI 3.16+ so rebuilt views do not crash their timers ([#83](https://github.com/fodorad/Annie/issues/83)) ([d4878e5](https://github.com/fodorad/Annie/commit/d4878e5c2b65dd2cb6e861da0716db3ecfd88f7e))
+
 ## [1.17.0](https://github.com/fodorad/Annie/compare/v1.16.0...v1.17.0) (2026-10-16)
 
 
