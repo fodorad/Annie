@@ -17,11 +17,20 @@ annie.pages.logs
 
 
 
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.logs.LogFilter
+
+
 Functions
 ---------
 
 .. autoapisummary::
 
+   annie.pages.logs.filtered
    annie.pages.logs.render
    annie.pages.logs.refresh
    annie.pages.logs.start_toasts
@@ -29,6 +38,27 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:class:: LogFilter
+
+   One browser tab's Log filter.
+
+   .. attribute:: level
+
+      ``"all"`` or a level name.
+
+   .. attribute:: text
+
+      Free-text substring (matched against time, message and details).
+
+
+.. py:function:: filtered(spec: LogFilter) -> list[annie.core.logbook.LogEvent]
+
+   Return the events passing ``spec``, newest first, capped.
+
+   The text filter matches the timestamp, message, and details — so a query like
+   ``14:30`` or ``2026-06-26`` narrows by time as well as content.
+
 
 .. py:function:: render() -> None
 

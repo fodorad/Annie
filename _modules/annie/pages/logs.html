@@ -325,13 +325,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">context</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">bugreport</span><span class="p">,</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEBOUNCE</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">Callable</span>
@@ -341,8 +343,35 @@
 <span class="c1">#: How many (filtered) events the table shows at once, newest first.</span>
 <span class="n">_MAX_ROWS</span> <span class="o">=</span> <span class="mi">300</span>
 
-<span class="n">_level_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="s2">"all"</span><span class="p">}</span>  <span class="c1">#: active level filter (``"all"`` or a level name)</span>
-<span class="n">_text_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="s2">""</span><span class="p">}</span>  <span class="c1">#: active free-text substring filter</span>
+
+<div class="viewcode-block" id="LogFilter">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/logs/index.html#annie.pages.logs.LogFilter">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogFilter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One browser tab's Log filter.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        level: ``"all"`` or a level name.</span>
+<span class="sd">        text: Free-text substring (matched against time, message and details).</span>
+<span class="sd">    """</span>
+
+    <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"all"</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
+
+
+
+<span class="c1">#: Each browser tab's own filter, keyed by client id (dropped when the tab closes).</span>
+<span class="n">_filters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">LogFilter</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LogFilter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""This tab's Log filter, created on first use and forgotten when the tab closes."""</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span>
+    <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_filters</span><span class="p">:</span>
+        <span class="n">_filters</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">LogFilter</span><span class="p">()</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">on_delete</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_filters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">_filters</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+
 
 <span class="c1">#: Log level → chip colour, mirroring the semantic palette in :mod:`annie.core.theme`.</span>
 <span class="n">_LEVEL_COLOR</span> <span class="o">=</span> <span class="p">{</span>
@@ -357,14 +386,16 @@
     <span class="k">return</span> <span class="n">_LEVEL_COLOR</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_filtered</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LogEvent</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Return the events passing the current filters, newest first, capped.</span>
+<div class="viewcode-block" id="filtered">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/logs/index.html#annie.pages.logs.filtered">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filtered</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">LogFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LogEvent</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the events passing ``spec``, newest first, capped.</span>
 
 <span class="sd">    The text filter matches the timestamp, message, and details — so a query like</span>
 <span class="sd">    ``14:30`` or ``2026-06-26`` narrows by time as well as content.</span>
 <span class="sd">    """</span>
-    <span class="n">level</span> <span class="o">=</span> <span class="n">_level_filter</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="n">_text_filter</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">level</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LogEvent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">events</span><span class="p">()):</span>
         <span class="k">if</span> <span class="n">level</span> <span class="o">!=</span> <span class="s2">"all"</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">level</span> <span class="o">!=</span> <span class="n">level</span><span class="p">:</span>
@@ -377,7 +408,8 @@
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">_MAX_ROWS</span><span class="p">:</span>
             <span class="k">break</span>
-    <span class="k">return</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_copy</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">LogEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -541,7 +573,7 @@
 <span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_table</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the filtered event list."""</span>
-    <span class="n">events</span> <span class="o">=</span> <span class="n">_filtered</span><span class="p">()</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="n">filtered</span><span class="p">(</span><span class="n">_filter</span><span class="p">())</span>
     <span class="n">total</span> <span class="o">=</span> <span class="n">logbook</span><span class="o">.</span><span class="n">LOG</span><span class="o">.</span><span class="n">latest_seq</span><span class="p">()</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> shown · </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> recorded"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="si">}</span><span class="s2">"</span>
@@ -562,18 +594,26 @@
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center justify-end"</span><span class="p">):</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Refresh"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"refresh"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_table</span><span class="o">.</span><span class="n">refresh</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
 
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">_filter</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">set_level</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">level</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">_table</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">set_text</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="n">_table</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-3 wrap"</span><span class="p">):</span>
             <span class="n">level</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">"all"</span><span class="p">:</span> <span class="s2">"all levels"</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"errors"</span><span class="p">,</span> <span class="s2">"warning"</span><span class="p">:</span> <span class="s2">"warnings"</span><span class="p">,</span> <span class="s2">"info"</span><span class="p">:</span> <span class="s2">"info"</span><span class="p">},</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">_level_filter</span><span class="p">[</span><span class="s2">"value"</span><span class="p">],</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">level</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"dense outlined"</span><span class="p">)</span>
-            <span class="n">level</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_level_filter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">_table</span><span class="o">.</span><span class="n">refresh</span><span class="p">()))</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"filter text"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">_text_filter</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
-                <span class="s2">"dense outlined clearable"</span>
+            <span class="n">level</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">set_level</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="s2">"filter text"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"dense outlined clearable </span><span class="si">{</span><span class="n">DEBOUNCE</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-            <span class="n">text</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">_text_filter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span> <span class="n">_table</span><span class="o">.</span><span class="n">refresh</span><span class="p">())</span>
-            <span class="p">)</span>
+            <span class="n">text</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">set_text</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"Clear log"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"delete_sweep"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">_clear</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span>
 
         <span class="n">_table</span><span class="p">()</span></div>

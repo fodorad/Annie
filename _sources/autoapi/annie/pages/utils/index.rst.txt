@@ -9,6 +9,14 @@ annie.pages.utils
 
 
 
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.pages.utils.DEBOUNCE
+
+
 Functions
 ---------
 
@@ -21,6 +29,14 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:data:: DEBOUNCE
+   :value: 'debounce=300'
+
+
+   apply the value 300 ms after the last keystroke.
+
+   :type: Quasar prop for typed filter inputs
 
 .. py:function:: render_embed_ttl() -> float
 
