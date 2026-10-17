@@ -93,10 +93,8 @@ async def _export_succeeded() -> None:
         ui.notify("No converted files to export yet.", color=theme.WARNING)
         return
     chosen = await pick_directory()
-    if not chosen:
-        return
-    out = convert.export_ids(Path(chosen) / "reencoded_ids.csv", succeeded)
-    ui.notify(f"Exported {len(succeeded)} id(s) to {out}", color=theme.PRIMARY)
+    if chosen:
+        await _write_export(Path(chosen), succeeded, [])
 
 
 async def _export_failed() -> None:
@@ -106,10 +104,27 @@ async def _export_failed() -> None:
         ui.notify("No failed files to export.", color=theme.WARNING)
         return
     chosen = await pick_directory()
-    if not chosen:
-        return
-    out = convert.export_failures(Path(chosen) / "failed_ids.csv", failed)
-    ui.notify(f"Exported {len(failed)} failed id(s) to {out}", color=theme.PRIMARY)
+    if chosen:
+        await _write_export(Path(chosen), [], failed)
+
+
+async def _write_export(
+    folder: Path, succeeded: list[str], failed: list[tuple[str, str]]
+) -> Path | None:
+    """Write the converted ids or the failures (off the event loop) into ``folder``.
+
+    Returns:
+        The written file, or ``None`` when there was nothing to write.
+    """
+    if succeeded:
+        out = await run.io_bound(convert.export_ids, folder / "reencoded_ids.csv", succeeded)
+        ui.notify(f"Exported {len(succeeded)} id(s) to {out}", color=theme.PRIMARY)
+        return out
+    if failed:
+        out = await run.io_bound(convert.export_failures, folder / "failed_ids.csv", failed)
+        ui.notify(f"Exported {len(failed)} failed id(s) to {out}", color=theme.PRIMARY)
+        return out
+    return None
 
 
 def _build_progress() -> None:

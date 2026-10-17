@@ -229,11 +229,15 @@ async def _load_config_path(path: str | Path) -> None:
     """Load a config file by path, surfacing any error to the log + a toast."""
     config_path = Path(path)
     try:
-        name, registry, config_db = datasets.load_config(config_path)
+        # Off the loop: type detection reads the label tables (CSV or Excel).
+        loaded = await run.io_bound(datasets.load_config, config_path)
     except Exception as exc:  # noqa: BLE001 - surface a bad config to the user
         logbook.report_exception(f"Failed to load config: {path}", exc)
         ui.notify(f"Could not load config: {exc}", color=theme.DANGER)
         return
+    if loaded is None:
+        return  # the app is shutting down
+    name, registry, config_db = loaded
     await _apply_registry(name, registry, config_db=config_db)
     state.active_config = config_path.resolve()
     datasets.remember_last_config(config_path)
@@ -341,9 +345,8 @@ async def _save_current() -> None:
     if keep_current:
         # Carry everything reviewed so far into the config's DB, so saving never looks
         # like it wiped the user's progress. Older progress in that DB is set aside, not lost.
-        if db_to_save.is_file():
-            _set_aside(db_to_save)
-        state.store.copy_to(db_to_save)
+        # Off the loop: a database copy takes as long as the database is big.
+        await run.io_bound(_carry_progress, state.store, db_to_save)
     _switch_review_db(db_to_save)
     state.active_config = out.resolve()
     datasets.remember_last_config(out)
@@ -376,6 +379,13 @@ def _carry_action(current: ReviewStore, target: Path) -> CarryAction:
     if target.is_file() and ReviewStore(target).has_data():
         return "ask"
     return "copy"
+
+
+def _carry_progress(store: ReviewStore, target: Path) -> None:
+    """Copy ``store`` into ``target``, setting any database already there aside first."""
+    if target.is_file():
+        _set_aside(target)
+    store.copy_to(target)
 
 
 def _set_aside(db_path: Path) -> Path:

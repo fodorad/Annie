@@ -123,9 +123,9 @@ class TestAnnotatorTabFollowsTheReviewDb(_AnnotatorTabCase, unittest.IsolatedAsy
         saved_loop = core.loop
         core.loop = asyncio.get_running_loop()
         self.addCleanup(setattr, core, "loop", saved_loop)
-        saved_home = settings.annie_home
-        settings.annie_home = self.tmp / "home"  # new session DBs land here
-        self.addCleanup(setattr, settings, "annie_home", saved_home)
+        saved_sessions = settings.sessions_dir
+        settings.sessions_dir = self.tmp / "sessions"  # never the user's real sessions folder
+        self.addCleanup(setattr, settings, "sessions_dir", saved_sessions)
 
     def _db_with_the_video_queued(self) -> Path:
         path = self.tmp / "queued.db"

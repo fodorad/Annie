@@ -102,11 +102,43 @@ def _clear_session_dbs() -> str:
 
 
 def _clear_render_cache() -> str:
-    """Delete all render clips, reset UI render boxes, return summary."""
+    """Delete all render clips (blocking; run off the loop) and return a summary.
+
+    The Browse and Annotator render boxes are reset by :func:`_after_cleanup`.
+    """
     _jobs, files = state.renderer.clear_all()
-    browse.refresh()
-    annotator.refresh()
     return f"Cleared {files} rendered clip(s) — render boxes reset to default"
+
+
+def _clean_up(actions: list[Callable[[], str]]) -> str:
+    """Run the chosen clean-ups (blocking file deletes) and join their summaries."""
+    parts = [action() for action in actions]
+    return " · ".join(parts) if parts else "Nothing to clean up."
+
+
+def cleanup_actions(space: _Space) -> list[Callable[[], str]]:
+    """The clean-ups "Clean up all" runs: only those with something to remove."""
+    actions: list[Callable[[], str]] = []
+    if space.old_logs:
+        actions.append(_clear_logs)
+    if space.old_dbs:
+        actions.append(_clear_session_dbs)
+    if space.render_size > 0:
+        actions.append(_clear_render_cache)
+    return actions
+
+
+async def _run_cleanup(actions: list[Callable[[], str]]) -> None:
+    """Run clean-ups off the event loop, report them, and re-measure the card."""
+    msg = await run.io_bound(_clean_up, actions)
+    if msg is None:
+        return  # the app is shutting down
+    logbook.report(msg, level="info")
+    ui.notify(msg, color=theme.PRIMARY)
+    if _clear_render_cache in actions:
+        browse.refresh()
+        annotator.refresh()
+    _maintenance_section.refresh(None)  # None: measure again (not the old sizes)
 
 
 # ── UI ────────────────────────────────────────────────────────────────────────
@@ -229,17 +261,12 @@ def _maintenance_section(space: _Space | None = None) -> None:
             ui.separator()
 
             # ── individual actions ────────────────────────────────────────
-            def _run(action_fn: Callable[[], str], label: str = "") -> None:  # noqa: ARG001
-                msg = action_fn()
-                logbook.report(msg, level="info")
-                ui.notify(msg, color=theme.PRIMARY)
-                _maintenance_section.refresh()
 
             with ui.row().classes("items-center gap-2 flex-wrap"):
                 ui.button(
                     "Delete old logs",
                     icon="receipt_long",
-                    on_click=lambda: _run(_clear_logs, "logs"),
+                    on_click=lambda: _run_cleanup([_clear_logs]),
                 ).props("flat").tooltip(
                     f"Remove {len(old_logs)} log file(s) from {settings.logs_dir}"
                 ).set_enabled(bool(old_logs))
@@ -247,7 +274,7 @@ def _maintenance_section(space: _Space | None = None) -> None:
                 ui.button(
                     "Delete old session DBs",
                     icon="storage",
-                    on_click=lambda: _run(_clear_session_dbs, "dbs"),
+                    on_click=lambda: _run_cleanup([_clear_session_dbs]),
                 ).props("flat").tooltip(
                     f"Remove {len(old_dbs)} session database(s) from {settings.sessions_dir}"
                 ).set_enabled(bool(old_dbs))
@@ -255,7 +282,7 @@ def _maintenance_section(space: _Space | None = None) -> None:
                 ui.button(
                     "Clear render cache",
                     icon="movie",
-                    on_click=lambda: _run(_clear_render_cache, "renders"),
+                    on_click=lambda: _run_cleanup([_clear_render_cache]),
                 ).props("flat").tooltip(
                     "Delete all rendered clips and reset Browse/Annotator render boxes"
                 ).set_enabled(render_size > 0)
@@ -264,18 +291,8 @@ def _maintenance_section(space: _Space | None = None) -> None:
 
             total = log_size + db_size + render_size
 
-            def _clean_all() -> None:
-                parts = []
-                if old_logs:
-                    parts.append(_clear_logs())
-                if old_dbs:
-                    parts.append(_clear_session_dbs())
-                if render_size > 0:
-                    parts.append(_clear_render_cache())
-                msg = " · ".join(parts) if parts else "Nothing to clean up."
-                logbook.report(msg, level="info")
-                ui.notify(msg, color=theme.PRIMARY)
-                _maintenance_section.refresh()
+            async def _clean_all() -> None:
+                await _run_cleanup(cleanup_actions(space))
 
             ui.button(
                 f"Clean up all  ({_human_size(total)})",
