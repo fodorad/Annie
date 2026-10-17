@@ -14,6 +14,7 @@ selection via a per-client :class:`_DatasetState` keyed by
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import shutil
@@ -32,14 +33,12 @@ from annie.dataset.layout import (
     DiscoveredVideo,
     DiscoveryReport,
     VideoLayout,
-    contains_nested_videos,
 )
 from annie.dataset.manipulate import detect_type
 from annie.dataset.sources import (
     KIND_ICONS,
     KIND_LABELS,
     TASK_LABELS,
-    VIDEO_SUFFIXES,
     CsvRole,
     DataSource,
     SourceKind,
@@ -118,10 +117,6 @@ def _switch_review_db(path: Path) -> None:
     annotator.update_availability()
 
 
-#: Overview metric key → its live :class:`nicegui.ui.label`, updated after each scan.
-_METRICS: dict[str, ui.label] = {}
-
-
 def _match_targets() -> Targets:
     """What a label table's IDs can match, per video: the video id and each path field.
 
@@ -151,6 +146,7 @@ async def _apply_changes() -> None:
         return
     ds.scanning = True
     _source_list.refresh()  # redraw button in loading state
+    _metric_cards.refresh()  # values spin until the scan is done
     try:
         await run.io_bound(state.rescan)
     finally:
@@ -687,25 +683,33 @@ def metric_rows(registry: SourceRegistry) -> list[list[MetricCard]]:
     return [row for row in (counts, coverage) if row]
 
 
-def _metric_card(card: MetricCard) -> None:
-    """Build one overview metric card and register its value label under its key."""
+def _scanning() -> bool:
+    """Whether a scan is running: the start-up scan or this tab's own rescan."""
+    return state.scanning or _ds().scanning
+
+
+def _metric_card(card: MetricCard, value: int | None) -> None:
+    """Build one overview metric card; ``value`` ``None`` shows a spinner (still scanning)."""
     with ui.card().classes("flex-1 min-w-[8rem]"):
         ui.label(card.title).style(f"color:{card.color}").classes("text-sm")
-        _METRICS[card.key] = ui.label("—").classes("text-2xl font-medium")
+        if value is None:
+            ui.spinner(size="2em", color=theme.PRIMARY)
+        else:
+            ui.label(str(value)).classes("text-2xl font-medium")
 
 
 @ui.refreshable
 def _metric_cards() -> None:
-    """Build the overview metric cards for the configured sources and fill them from the scan."""
-    _METRICS.clear()
+    """Build the overview metric cards for the configured sources, filled from the scan.
+
+    While a scan runs (or before the first one finished) each value is a spinner.
+    """
+    busy = _scanning() or state.scan is None
+    counts = state.scan.counts if state.scan is not None else {}
     for row in metric_rows(state.registry):
         with ui.row().classes("w-full gap-3"):
             for card in row:
-                _metric_card(card)
-
-    counts = state.scan.counts if state.scan is not None else {}
-    for key, label in _METRICS.items():
-        label.set_text(str(counts.get(key, 0)))
+                _metric_card(card, None if busy else counts.get(card.key, 0))
 
 
 # ── source list + add box ────────────────────────────────────────────────────
@@ -853,11 +857,7 @@ def _layout_notice(source: DataSource) -> None:
                 f"(only the first was kept): {', '.join(scan.layout_collisions[:5])}. "
                 "Make the video id unique."
             ).classes("text-xs").style(f"color:{theme.WARNING}")
-    elif (
-        source.available
-        and source.count() == 0
-        and contains_nested_videos(source.path, VIDEO_SUFFIXES)
-    ):
+    elif scan is not None and scan.nested_videos_hint:
         ui.label(
             "No videos directly in this folder, but it contains nested videos. "
             "Turn on Videos in subfolders to describe where they are."
@@ -898,7 +898,6 @@ def _source_card(source: DataSource) -> None:
 @ui.refreshable
 def _source_list() -> None:
     """Build the list of configured sources plus the add box."""
-    ds = _ds()
     with ui.column().classes("w-full gap-2"):
         ui.label("Sources").classes("text-lg font-medium")
         if not state.registry.sources:
@@ -920,7 +919,7 @@ def _source_list() -> None:
                     "(e.g. while a conversion is running)"
                 )
             )
-            if ds.scanning:
+            if _scanning():
                 rescan_btn.props(add="loading")
 
 
@@ -1180,20 +1179,18 @@ def render() -> None:
         _task_sections()
         _persistence_section()
 
-    # When the app starts, the initial scan runs in the background (see annie.app).
-    # Poll until it finishes, then refresh only the metric cards — the source list
-    # is intentionally skipped here because rebuilding it calls source.count() for
-    # every directory source, which blocks the event loop for ~1.5 s on large datasets.
-    # Sources haven't changed, so only aggregate metrics need updating.
-    if state.scan is None:
+    # The start-up scan runs in the background (see annie.app); until it is done the
+    # metric cards spin and Rescan is busy. Redraw once it finishes. Every redraw reads
+    # the scan result only, so it is cheap.
+    if state.scan is None or state.scanning:
 
-        def _poll_startup_scan() -> None:
-            try:
-                if state.scan is not None and not _ds().scanning:
-                    _metric_cards.refresh()
-                    _poll_timer.active = False
-            except RuntimeError:
-                # Client disconnected before the scan finished; stop quietly.
-                _poll_timer.active = False
+        def _when_scanned() -> None:
+            if state.scan is None or state.scanning:
+                return
+            _poll_timer.active = False
+            with contextlib.suppress(RuntimeError):  # the tab was closed meanwhile
+                _metric_cards.refresh()
+                _source_list.refresh()
+                _task_sections.refresh()
 
-        _poll_timer = ui.timer(0.5, _poll_startup_scan)
+        _poll_timer = ui.timer(0.5, _when_scanned)

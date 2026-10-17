@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from annie.core.models import NO_ACTIVE_TRACK, RowStatus, VideoEntry
+from annie.dataset.layout import contains_nested_videos
 from annie.dataset.sources import (
     TRACK_GLOB,
     VDET_SUFFIXES,
@@ -96,6 +97,9 @@ class ScanResult:
         layout_collisions: Video ids that more than one file produced under a nested
             layout (only the first file of each was kept).
         layout_error: Why a configured nested layout could not be used, else ``None``.
+        nested_videos_hint: The flat video folder holds no videos itself but has some in
+            sub-folders, so a nested layout is probably needed. Found during the scan so
+            the Dataset tab never walks the folder while it redraws.
     """
 
     entries: list[VideoEntry] = field(default_factory=list)
@@ -106,6 +110,7 @@ class ScanResult:
     label_column_types: dict[str, str] = field(default_factory=dict)
     layout_collisions: list[str] = field(default_factory=list)
     layout_error: str | None = None
+    nested_videos_hint: bool = False
     #: Lazily-built ``video_id -> entry`` index; see :attr:`by_video_id`.
     _by_video_id: dict[str, VideoEntry] | None = field(default=None, repr=False, compare=False)
 
@@ -414,6 +419,13 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
             layout_collisions = report.collisions
     else:
         videos = {p.stem: p for p in _iter_files(videos_path, suffixes=VIDEO_SUFFIXES, glob=None)}
+    nested_videos_hint = (
+        video_src is not None
+        and video_src.layout is None
+        and videos_path is not None
+        and not videos
+        and contains_nested_videos(videos_path, VIDEO_SUFFIXES)
+    )
     video_stems = set(videos)
     longest_first = sorted(videos, key=len, reverse=True)
 
@@ -497,6 +509,7 @@ def build_manifest(registry: SourceRegistry) -> ScanResult:
         label_column_types=label_column_types,
         layout_collisions=layout_collisions,
         layout_error=layout_error,
+        nested_videos_hint=nested_videos_hint,
     )
 
 

@@ -123,3 +123,24 @@ class TestProtagonistCorrectionsFollowTheDb(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestScanningFlag(unittest.TestCase):
+    """Every scan, the start-up one included, is visible as ``state.scanning``."""
+
+    def test_flag_is_up_during_a_scan_and_down_after(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        seen: list[bool] = []
+        app = AppState(registry=SourceRegistry(), store=ReviewStore(tmp / "a.db"))
+
+        class _Spy(SourceRegistry):
+            @property
+            def video(self):  # noqa: ANN202 - read during the scan
+                seen.append(app.scanning)
+                return None
+
+        app.registry = _Spy()
+        self.assertFalse(app.scanning)
+        app.rescan()
+        self.assertEqual(seen[:1], [True])
+        self.assertFalse(app.scanning)
