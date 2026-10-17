@@ -42,5 +42,6 @@ Submodules
    /autoapi/annie/pages/utils/index
    /autoapi/annie/pages/videoclock/index
    /autoapi/annie/pages/viewport/index
+   /autoapi/annie/pages/visibility/index
 
 

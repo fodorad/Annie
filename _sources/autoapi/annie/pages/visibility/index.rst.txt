@@ -1,0 +1,53 @@
+annie.pages.visibility
+======================
+
+.. py:module:: annie.pages.visibility
+
+.. autoapi-nested-parse::
+
+   Which tab a browser shows, so key handlers and pollers run only while theirs is visible.
+
+   NiceGUI keeps every tab panel alive once built, and a ``ui.keyboard`` listens on the whole
+   document. Without this, the Annotator's keys (Space, the arrows, digits) still acted while
+   the reviewer typed or scrolled on Browse, and the 10 Hz playhead poll kept talking to the
+   browser from a hidden tab.
+
+   Elements with an ``active`` flag (``ui.keyboard``, ``ui.timer``) are registered with
+   :func:`only_while_shown`; :func:`show` (called on every tab switch) turns them on for the
+   visible tab and off for the others.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.visibility.shown_tab
+   annie.pages.visibility.show
+   annie.pages.visibility.only_while_shown
+
+
+Module Contents
+---------------
+
+.. py:function:: shown_tab() -> str | None
+
+   The tab the current browser tab shows (``None`` before the first :func:`show`).
+
+
+.. py:function:: show(tab: str) -> None
+
+   Record that the current browser tab now shows ``tab``; switch members on or off.
+
+
+.. py:function:: only_while_shown[T: _Switchable](element: T, tab: str) -> T
+
+   Keep ``element`` active only while ``tab`` is the shown tab of its browser tab.
+
+   :param element: A ``ui.keyboard`` or ``ui.timer`` built inside ``tab``.
+   :param tab: The tab name it belongs to (e.g. ``"annotator"``).
+
+   :returns: The element, already switched to match the tab shown now.
+
+
