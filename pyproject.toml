@@ -119,18 +119,13 @@ source = ["annie"]
 omit = [
   "*/tests/*",
   "*/__init__.py",
-  # UI assembly + frame decode need a browser / torchcodec + FFmpeg + real
-  # video files; exercised manually and in integration, not unit-covered here.
-  "annie/app.py",
+  # The Windows tray wrapper: pystray + a real desktop session; it only starts and
+  # stops annie.app (which is measured).
   "annie/desktop.py",
-  "annie/pages/*",
-  "annie/core/state.py",
-  "annie/media/decode.py",
-  "annie/media/preview.py",
 ]
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 69  # the floor measured in CI (fewer media tools than a dev machine); only ever raise it
 show_missing = true
 skip_covered = false
 

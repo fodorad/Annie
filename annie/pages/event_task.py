@@ -733,14 +733,24 @@ def _types_by_name() -> dict[str, EventType]:
     return {kind.name: kind for kind in state.store.event_types()}
 
 
+def _manager_body(kind: str) -> Callable[[_EventState], None]:
+    """The dialog body for a manager: ``"participants"`` or ``"event_types"``."""
+    return _participant_manager if kind == "participants" else _event_type_manager
+
+
+def _open_manager(state_: _EventState, kind: str) -> None:
+    """Open a manager dialog on the next loop turn (outside the click's slot)."""
+    ui.timer(0.0, lambda: _manager_dialog(state_, _manager_body(kind)), once=True)
+
+
 def _open_participants(state_: _EventState) -> None:
     """Open the participants dialog (add / rename / delete / reorder / colour)."""
-    ui.timer(0.0, lambda: _manager_dialog(state_, _participant_manager), once=True)
+    _open_manager(state_, "participants")
 
 
 def _open_event_types(state_: _EventState) -> None:
     """Open the event categories dialog (add / rename / attributes / reorder / colour)."""
-    ui.timer(0.0, lambda: _manager_dialog(state_, _event_type_manager), once=True)
+    _open_manager(state_, "event_types")
 
 
 async def _manager_dialog(state_: _EventState, body: Callable[[_EventState], None]) -> None:
