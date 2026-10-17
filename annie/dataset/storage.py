@@ -345,6 +345,19 @@ class ReviewStore:
             rows = conn.execute("SELECT * FROM review ORDER BY row_key").fetchall()
         return [_record_from_row(row) for row in rows]
 
+    def records_by_key(self) -> dict[str, ReviewRecord]:
+        """Return every stored review record keyed by row key, in one query.
+
+        A filter pass over the whole manifest needs each video's review state; reading
+        them all at once replaces one connection per video with a single one.
+
+        Returns:
+            ``row_key -> ReviewRecord`` for every touched video (unreviewed ones are absent).
+        """
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM review").fetchall()
+        return {row["row_key"]: _record_from_row(row) for row in rows}
+
     def list_by_verdict(self, verdict: Verdict) -> list[ReviewRecord]:
         """Return all records with the given verdict (the good or bad list).
 

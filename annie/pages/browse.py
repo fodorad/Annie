@@ -1000,7 +1000,7 @@ def _filtered_entries() -> list[VideoEntry]:
     return apply_filters(
         state.scan.entries,
         _state().spec,
-        state.review_state,
+        state.review_lookup(),  # one query for the whole pass, not one per video
         state.audio_cache.get,
         state.frames_cache.get,
         _effective_label,

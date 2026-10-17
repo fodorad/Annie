@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from annie.core import logbook
 from annie.core.config import settings
@@ -23,12 +24,15 @@ from annie.dataset.filtering import ReviewState
 from annie.dataset.manipulate import detect_type
 from annie.dataset.scanning import ScanResult, build_manifest
 from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry
-from annie.dataset.storage import ReviewStore
+from annie.dataset.storage import ReviewRecord, ReviewStore
 from annie.media.convert import ConversionRunner
 from annie.media.previews import PreviewLoader
 from annie.media.rendering import RenderService
 from annie.parsers.csvmeta import read_header, read_rows
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @dataclass(slots=True)
@@ -63,6 +67,15 @@ class UiSettings:
     grid_thumb_height: int = 90
     grid_page_size: int = 60
     grid_unload_after_seconds: float = 5.0
+
+
+def _review_state(record: ReviewRecord) -> ReviewState:
+    """The filter-facing state of a stored review record (no verdict reads as liked)."""
+    return ReviewState(
+        verdict=record.verdict or "good",
+        note=record.note,
+        in_annotator=record.annotate,
+    )
 
 
 def _seed_registry() -> SourceRegistry:
@@ -224,6 +237,26 @@ class AppState:
         logbook.LOG.retarget(db_path)
         self._apply_active_track_overrides()
 
+    def review_lookup(self) -> Callable[[str], ReviewState]:
+        """Read every review state in one query and return a per-key lookup.
+
+        For a pass over many videos (e.g. the Browse filter); the lookup answers exactly
+        like :meth:`review_state` but from a snapshot taken now.
+
+        Returns:
+            A function mapping a video key to its :class:`~annie.filtering.ReviewState`.
+        """
+        records = self.store.records_by_key()
+        default = ReviewState()
+
+        def lookup(key: str) -> ReviewState:
+            record = records.get(key)
+            if record is None:
+                return default
+            return _review_state(record)
+
+        return lookup
+
     def review_state(self, key: str) -> ReviewState:
         """Return the filtering-facing review state for a video (default liked).
 
@@ -237,11 +270,7 @@ class AppState:
         record = self.store.get(key)
         if record is None:
             return ReviewState()
-        return ReviewState(
-            verdict=record.verdict or "good",
-            note=record.note,
-            in_annotator=record.annotate,
-        )
+        return _review_state(record)
 
 
 state = AppState()

@@ -305,6 +305,18 @@ class TestReviewStore(unittest.TestCase):
         self.assertEqual(store.active_tracks(), {"v::": 4})
 
 
+class TestRecordsByKey(unittest.TestCase):
+    def test_every_stored_row_keyed_by_row_key(self) -> None:
+        store = ReviewStore(Path(tempfile.mkdtemp()) / "r.db")
+        self.assertEqual(store.records_by_key(), {})
+        store.set_verdict("a", "a", None, "bad")
+        store.set_annotate("b", "b", None, True)
+        records = store.records_by_key()
+        self.assertEqual(set(records), {"a", "b"})
+        self.assertEqual(records["a"].verdict, "bad")
+        self.assertTrue(records["b"].annotate)
+
+
 class TestEventStore(unittest.TestCase):
     """Event-annotation table: CRUD, tracks, attributes, and pre-events migration."""
 
