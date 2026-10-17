@@ -597,6 +597,7 @@ def _category_color(ordinal: int, override: str | None) -> str:
     return override or theme.event_track_color(ordinal)
 
 
+@client_refreshable
 def _category_bar(state_: _EventState) -> None:
     """The Category block: participants on the left half, event categories on the right.
 
@@ -697,7 +698,7 @@ def _event_type_chips(state_: _EventState) -> None:
 def _set_active_category(state_: _EventState, name: str) -> None:
     """Make a category active (where the next captured event lands) and refresh the bar."""
     state_.active_category = name
-    event_annotation_task.refresh()
+    _category_bar.refresh()
 
 
 def _set_active_by_ordinal(state_: _EventState, ordinal: int) -> None:
@@ -710,7 +711,7 @@ def _set_active_by_ordinal(state_: _EventState, ordinal: int) -> None:
 def _set_active_event_type(state_: _EventState, name: str | None) -> None:
     """Choose the event category new events are made with (``None`` = plain events)."""
     state_.active_event_type = name
-    event_annotation_task.refresh()
+    _category_bar.refresh()
 
 
 def _set_event_type_by_ordinal(state_: _EventState, ordinal: int) -> None:
@@ -774,7 +775,7 @@ async def _manager_dialog(state_: _EventState, body: Callable[[_EventState], Non
     # Reflect any changes (names, order, colours, active) on the main surface.
     _ensure_active_category(state_)
     _ensure_active_event_type(state_)
-    event_annotation_task.refresh()
+    _refresh_work_area(state_)
 
 
 def _participant_manager(state_: _EventState) -> None:
@@ -1299,6 +1300,7 @@ def _set_follow(state_: _EventState, on: bool) -> None:
     _refresh_timeline(state_)
 
 
+@client_refreshable
 def _editor(state_: _EventState) -> None:
     """The selected event's editor: participant, category, start/end, colour + note, attributes.
 
@@ -1413,11 +1415,8 @@ def _bound_row(
 
 
 def _set_color(state_: _EventState, color: str | None) -> None:
-    """Set (or clear) the selected event's colour override and rebuild."""
-    if state_.selected_event is None:
-        return
-    state.store.update_event(state_.selected_event, color=color)
-    event_annotation_task.refresh()
+    """Set (or clear) the selected event's colour override and redraw the work area."""
+    _update(state_, color=color)
 
 
 def _attribute_editor(state_: _EventState, event: EventRecord, defaults: dict[str, str]) -> None:
@@ -1498,12 +1497,38 @@ def _add_attribute(state_: _EventState) -> None:
     _update(state_, attributes=attrs)
 
 
+def changed_fields(event: EventRecord, fields: dict[str, object]) -> dict[str, object]:
+    """The subset of ``fields`` whose value differs from what ``event`` stores."""
+    return {name: value for name, value in fields.items() if getattr(event, name) != value}
+
+
 def _update(state_: _EventState, **fields: object) -> None:
-    """Persist a change to the selected event and rebuild."""
+    """Persist a change to the selected event and redraw the work area (not the video).
+
+    Fields equal to the stored values are dropped; when nothing changes (e.g. a field left
+    as it was), nothing is written and nothing is redrawn.
+    """
     if state_.selected_event is None:
         return
-    state.store.update_event(state_.selected_event, **fields)
-    event_annotation_task.refresh()
+    event = state.store.get_event(state_.selected_event)
+    if event is None:
+        return
+    changes = changed_fields(event, fields)
+    if not changes:
+        return
+    state.store.update_event(state_.selected_event, **changes)
+    _refresh_work_area(state_)
+
+
+def _refresh_work_area(state_: _EventState) -> None:
+    """Redraw the editor, the category bar and the timeline, keeping the ``<video>``.
+
+    Rebuilding the whole task would recreate the video element, which the browser resets
+    to frame 0; these parts are everything an event edit can change.
+    """
+    _editor.refresh()
+    _category_bar.refresh()
+    _refresh_timeline(state_, rebuild_scrollbar=True)
 
 
 def _set_event_type(state_: _EventState, name: str | None) -> None:
@@ -1529,7 +1554,7 @@ def _delete_event(state_: _EventState) -> None:
         return
     state.store.delete_event(state_.selected_event)
     state_.selected_event = None
-    event_annotation_task.refresh()
+    _refresh_work_area(state_)
 
 
 def _step_video(state_: _EventState, delta: int) -> None:
@@ -1617,10 +1642,8 @@ def _finalise_at(state_: _EventState, category: str, seconds: float | None) -> N
     )
     state_.pending_start = None
     state_.selected_event = record.event_id
-    # A full rebuild is needed so the new event box appears on the timeline; that recreates the
-    # <video>, which the browser resets to frame 0, so restore it to where the reviewer was.
-    state_.restore_frame = frame
-    event_annotation_task.refresh()
+    _capture_controls.refresh()
+    _refresh_work_area(state_)
 
 
 def _cancel_pending(state_: _EventState) -> None:
@@ -1668,11 +1691,7 @@ def _on_gesture(state_: _EventState, event: GenericEventArguments) -> None:
         selected = state.store.get_event(state_.selected_event) if state_.selected_event else None
         if selected is not None:
             _seek(state_, vid_id, selected.start_frame)
-        # Reveal an off-screen event, then rebuild so the editor and highlight update (the full
-        # rebuild recreates the <video>, so restore it to the event's start).
-        if selected is not None:
-            state_.restore_frame = selected.start_frame
-        event_annotation_task.refresh()
+        _refresh_work_area(state_)  # the editor and highlight follow; the video keeps playing
         return
     if kind in ("pan", "wheel"):
         _pan(state_, detail)
