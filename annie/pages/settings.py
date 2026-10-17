@@ -8,15 +8,18 @@ rendered clips.
 
 from __future__ import annotations
 
+import contextlib
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from fastapi import Response
-from nicegui import app, ui
+from nicegui import app, run, ui
 
 from annie.core import logbook, theme
 from annie.core.config import settings
 from annie.core.state import state
 from annie.pages import annotator, browse, download
+from annie.pages.lazy import schedule
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -108,20 +111,76 @@ def _clear_render_cache() -> str:
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 
-@ui.refreshable
-def _maintenance_section() -> None:
-    """Maintenance card: space summary + targeted cleanup buttons."""
+@dataclass(frozen=True, slots=True)
+class _Space:
+    """What the Maintenance card can reclaim, measured off the event loop.
+
+    Attributes:
+        old_logs: Log files other than the current one.
+        old_dbs: Session databases other than the active one.
+        log_size: Their total size in bytes.
+        db_size: Their total size in bytes.
+        render_size: Bytes held by rendered clips in the temp dir.
+    """
+
+    old_logs: list[Path]
+    old_dbs: list[Path]
+    log_size: int
+    db_size: int
+    render_size: int
+
+
+def _measure_space() -> _Space:
+    """List and size what can be reclaimed (blocking: walks folders; run off the loop)."""
     old_logs = _old_logs()
     old_dbs = _old_session_dbs()
-    log_size = sum(f.stat().st_size for f in old_logs)
-    db_size = sum(f.stat().st_size for f in old_dbs)
-    render_size = _dir_size(settings.temp_dir)
+    return _Space(
+        old_logs,
+        old_dbs,
+        sum(f.stat().st_size for f in old_logs),
+        sum(f.stat().st_size for f in old_dbs),
+        _dir_size(settings.temp_dir),
+    )
+
+
+async def _measure_then_show() -> None:
+    """Measure the reclaimable space off the loop, then fill the Maintenance card."""
+    space = await run.io_bound(_measure_space)
+    if space is not None:
+        with contextlib.suppress(RuntimeError):  # the tab was closed meanwhile
+            _maintenance_section.refresh(space)
+
+
+def _maintenance_header() -> None:
+    """The Maintenance card's title row."""
+    with ui.row().classes("items-center gap-2"):
+        ui.icon("build", color=theme.PRIMARY)
+        ui.label("Maintenance").classes("font-medium")
+
+
+@ui.refreshable
+def _maintenance_section(space: _Space | None = None) -> None:
+    """Maintenance card: space summary + targeted cleanup buttons.
+
+    Built first with a spinner while the folders are measured off the event loop
+    (``space`` ``None``), then rebuilt with the measured :class:`_Space`.
+    """
+    if space is None:
+        with ui.card().classes("w-full"), ui.column().classes("w-full gap-3") as body:
+            _maintenance_header()
+            with ui.row().classes("items-center gap-2"):
+                ui.spinner(size="1.5em", color=theme.PRIMARY)
+                ui.label("Measuring reclaimable space…").classes("text-sm").style(
+                    f"color:{theme.NEUTRAL}"
+                )
+        schedule(body, _measure_then_show)
+        return
+    old_logs, old_dbs = space.old_logs, space.old_dbs
+    log_size, db_size, render_size = space.log_size, space.db_size, space.render_size
 
     with ui.card().classes("w-full"):
         with ui.column().classes("w-full gap-3"):
-            with ui.row().classes("items-center gap-2"):
-                ui.icon("build", color=theme.PRIMARY)
-                ui.label("Maintenance").classes("font-medium")
+            _maintenance_header()
 
             # ── space summary ─────────────────────────────────────────────
             with ui.column().classes("w-full gap-1"):

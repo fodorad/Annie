@@ -85,7 +85,8 @@ class TestSegmentReviewFlow(unittest.IsolatedAsyncioTestCase):
 
     async def test_decide_persists_and_jump_then_export(self) -> None:
         with ui_client(), ui.column():
-            annotator._segment_review_task()  # noqa: SLF001 - builds + loads clips
+            await annotator.load_segment_clips_async(annotator._segment_state())  # noqa: SLF001
+            annotator._segment_review_task()  # noqa: SLF001 - builds over the loaded clips
             st = annotator._segment_state()  # noqa: SLF001
             self.assertEqual(len(st.clips), 2)
             self.assertEqual(st.index, 0)
@@ -115,6 +116,7 @@ class TestSegmentReviewFlow(unittest.IsolatedAsyncioTestCase):
 
     async def test_undecide_clears_the_verdict_and_reopens_the_jump(self) -> None:
         with ui_client(), ui.column():
+            await annotator.load_segment_clips_async(annotator._segment_state())  # noqa: SLF001
             annotator._segment_review_task()  # noqa: SLF001
             st = annotator._segment_state()  # noqa: SLF001
             first, second = st.clips[0], st.clips[1]
@@ -138,6 +140,7 @@ class TestSegmentReviewFlow(unittest.IsolatedAsyncioTestCase):
         # Pre-seed a decision as though a prior pass saved it.
         state.store.set_decision("v_0", "v", "accept")
         with ui_client(), ui.column():
+            await annotator.load_segment_clips_async(annotator._segment_state())  # noqa: SLF001
             annotator._segment_review_task()  # noqa: SLF001
             decisions = state.store.decisions()
             self.assertEqual(decisions.get("v_0"), "accept")  # survives a fresh build

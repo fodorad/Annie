@@ -18,16 +18,18 @@ All return ``None`` if cancelled.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nicegui import ui
+from nicegui import run, ui
 
 from annie.core import theme
 from annie.dataset.manipulate import detect_type
 from annie.dataset.scanning import join_summary
 from annie.dataset.sources import CsvRole, DataSource, SegmentationBand, SourceKind
 from annie.parsers.csvmeta import (
+    JoinSuggestion,
     distinct_column_values,
     duplicate_report,
     order_rows,
@@ -40,7 +42,7 @@ from annie.parsers.csvmeta import (
 from annie.parsers.workbook import is_workbook, read_sheet, sheet_names
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 #: Column value types offered in the CSV configuration dialog.
 _TYPES = ("str", "int", "float")
@@ -322,15 +324,59 @@ def _clash_message(sources: list[DataSource], taken: set[str]) -> str | None:
     return f"Tag name already used: {', '.join(clashes)} — rename it in the tag name box."
 
 
+async def reading[T](path: Path, read: Callable[[], T]) -> T | None:
+    """Run ``read`` off the event loop while a small dialog says the file is being read.
+
+    Large tables and many-sheet workbooks take seconds to parse; the spinner shows the
+    click was taken, and the UI stays responsive meanwhile.
+
+    Args:
+        path: The file being read (named in the dialog).
+        read: The blocking read to run on a worker thread.
+
+    Returns:
+        Whatever ``read`` returned; ``None`` if the app is shutting down.
+    """
+    with ui.dialog().props("persistent") as dialog, ui.card().classes("items-center gap-3"):
+        ui.spinner(size="lg", color=theme.PRIMARY)
+        ui.label(f"Reading {path.name}…").classes("text-sm")
+    dialog.open()
+    try:
+        return await run.io_bound(read)
+    finally:
+        dialog.close()
+        dialog.delete()
+
+
+@dataclass(frozen=True, slots=True)
+class _SheetPreview:
+    """One worksheet as the workbook dialog shows it: its table and the best join hint."""
+
+    name: str
+    header: list[str]
+    rows: list[dict[str, str]]
+    hint: JoinSuggestion | None
+
+
+def _read_workbook(path: Path, offered: dict[str, set[str]]) -> list[_SheetPreview]:
+    """Read every sheet of ``path`` and suggest its join (blocking; run off the loop)."""
+    previews = []
+    for name in sheet_names(path):
+        header, rows = read_sheet(path, name)
+        hint = suggest_join(rows, header, offered) if header else None
+        previews.append(_SheetPreview(name, header, rows, hint))
+    return previews
+
+
 async def _configure_workbook(
     path: Path, targets: Targets, taken: set[str]
 ) -> list[DataSource] | None:
     """Workbook dialog: one expandable section per sheet, each joined separately."""
-    names = sheet_names(path)
-    if not names:
+    offered = {name: set(values.values()) - {""} for name, values in targets.items()}
+    sheets = await reading(path, lambda: _read_workbook(path, offered))
+    if not sheets:
         ui.notify("That workbook could not be read.", color=theme.DANGER)
         return None
-    offered = {name: set(values.values()) - {""} for name, values in targets.items()}
     editors: dict[str, _JoinEditor] = {}
     includes: dict[str, ui.checkbox] = {}
 
@@ -352,9 +398,13 @@ async def _configure_workbook(
             "to show as tags. Each included sheet becomes its own label source."
         ).classes("text-sm").style(f"color:{theme.NEUTRAL}")
         with ui.column().classes("w-full gap-1 max-h-[65vh] overflow-auto"):
-            for sheet in names:
-                header, rows = read_sheet(path, sheet)
-                hint = suggest_join(rows, header, offered) if header else None
+            for preview in sheets:
+                sheet, header, rows, hint = (
+                    preview.name,
+                    preview.header,
+                    preview.rows,
+                    preview.hint,
+                )
                 caption = f"{len(rows)} rows · {len(header)} columns"
                 if hint is not None:
                     column = short_name(hint.column, 30)
@@ -392,6 +442,18 @@ async def _configure_workbook(
     return await dialog
 
 
+def _read_csv(path: Path, stems: set[str]) -> tuple[list[str], list[dict[str, str]], str]:
+    """Read a CSV's header and rows and suggest its key column (blocking; run off the loop).
+
+    Returns:
+        ``(header, rows, suggested_key)``; an empty header means the file has none.
+    """
+    header = read_header(path)
+    if not header:
+        return [], [], ""
+    return header, read_rows(path), suggest_key_column(path, stems) or header[0]
+
+
 async def configure_csv(path: str | Path, targets: Targets, taken: set[str]) -> DataSource | None:
     """Open the CSV configuration modal and return the resulting source.
 
@@ -404,14 +466,12 @@ async def configure_csv(path: str | Path, targets: Targets, taken: set[str]) -> 
         A configured :class:`~annie.sources.DataSource`, or ``None`` if cancelled.
     """
     csv_path = Path(path)
-    header = read_header(csv_path)
+    stems = set(targets.get(VIDEO_ID_TARGET, {}))
+    table = await reading(csv_path, lambda: _read_csv(csv_path, stems))
+    header, rows, suggested = table if table is not None else ([], [], "")
     if not header:
         ui.notify("That CSV has no header row.", color=theme.DANGER)
         return None
-
-    stems = set(targets.get(VIDEO_ID_TARGET, {}))
-    suggested = suggest_key_column(csv_path, stems) or header[0]
-    rows = read_rows(csv_path)
     sample = rows[:500]
     detected = {col: detect_type((row.get(col) or "") for row in sample) for col in header}
 
@@ -548,14 +608,12 @@ async def select_id_column(
         if cancelled or if the CSV has no header.
     """
     csv_path = Path(path)
-    header = read_header(csv_path)
+    stems = set(video_stems)
+    table = await reading(csv_path, lambda: _read_csv(csv_path, stems))
+    header, rows, suggested = table if table is not None else ([], [], "")
     if not header:
         ui.notify("That CSV has no header row.", color=theme.DANGER)
         return None
-
-    rows = read_rows(csv_path)
-    stems = set(video_stems)
-    suggested = suggest_key_column(csv_path, stems) or header[0]
 
     with ui.dialog() as dialog, ui.card().classes("w-[30rem] max-w-full gap-2"):
         ui.label(f"Filter by ids — {csv_path.name}").classes("text-lg font-medium")

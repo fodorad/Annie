@@ -15,17 +15,24 @@ runs.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from nicegui import background_tasks, ui
+from nicegui import background_tasks, run, ui
 
 from annie.core import theme
 from annie.core.state import state
 from annie.media import convert
 from annie.pages.folder_picker import pick_directory
 from annie.pages.utils import _alive
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nicegui.events import ClickEventArguments
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,6 +202,27 @@ async def _watch() -> None:
         _watching = False
 
 
+async def _planning[T](event: ClickEventArguments, plan: Callable[[], T]) -> T | None:
+    """Plan a batch off the event loop while the clicked button shows it is busy.
+
+    Planning lists (and for video, pairs) every input file, which takes a while on a
+    large folder or a slow drive.
+
+    Args:
+        event: The click on the Convert button (its sender gets the loading state).
+        plan: The blocking planning call.
+
+    Returns:
+        The planned items; ``None`` if the app is shutting down.
+    """
+    event.sender.props(add="loading")
+    try:
+        return await run.io_bound(plan)
+    finally:
+        with contextlib.suppress(RuntimeError):  # the page was closed meanwhile
+            event.sender.props(remove="loading")
+
+
 def _start(title: str, items: list, work) -> None:  # noqa: ANN001 - work is a closure
     """Begin a batch (guarding empties / a running job) and launch the watcher."""
     if state.converter.running():
@@ -227,14 +255,17 @@ def _audio_section() -> ui.input:
             sr = ui.number("Sample rate (Hz)", value=16000, min=1000, step=1000).classes("w-40")
             ch = ui.select({1: "mono", 2: "stereo"}, value=1, label="Channels").classes("w-32")
 
-        def start() -> None:
+        async def start(event: ClickEventArguments) -> None:
             opts = convert.AudioOptions(
                 out_format=str(fmt.value),
                 sample_rate=int(sr.value or 16000),
                 channels=int(ch.value),
             )
-            items = convert.plan_audio(in_dir.value or None, out_dir.value, opts)
-            _start("Audio", items, lambda item: convert.convert_audio_file(item, opts))
+            items = await _planning(
+                event, lambda: convert.plan_audio(in_dir.value or None, out_dir.value, opts)
+            )
+            if items is not None:
+                _start("Audio", items, lambda item: convert.convert_audio_file(item, opts))
 
         ui.button("Convert audio", icon="graphic_eq", on_click=start).props("unelevated")
     return out_dir
@@ -285,7 +316,7 @@ def _video_section(audio_out: ui.input) -> None:
                 "requires at least one decodable frame."
             ).props("delay=600")
 
-        def start() -> None:
+        async def start(event: ClickEventArguments) -> None:
             keep_w = keep_res.value
             opts = convert.VideoOptions(
                 width=None if keep_w else (int(width.value) if width.value else None),
@@ -297,8 +328,12 @@ def _video_section(audio_out: ui.input) -> None:
                 min_frames=int(min_frames.value or 2),
             )
             audio_dir = (audio_src.value or audio_out.value) or None
-            items = convert.plan_video(in_dir.value or None, out_dir.value, opts, audio_dir)
-            _start("Video", items, lambda item: convert.convert_video_file(item, opts))
+            items = await _planning(
+                event,
+                lambda: convert.plan_video(in_dir.value or None, out_dir.value, opts, audio_dir),
+            )
+            if items is not None:
+                _start("Video", items, lambda item: convert.convert_video_file(item, opts))
 
         ui.button("Convert video", icon="movie", on_click=start).props("unelevated")
 
