@@ -42,6 +42,7 @@ from annie.media.decode import media_available, video_metadata
 from annie.media.preview import report_decode_failure
 from annie.pages import download, pending, timeline, videoclock
 from annie.pages.lazy import schedule
+from annie.pages.refresh import client_refreshable
 from annie.pages.timeline_view import TimelineView
 from annie.parsers.csvmeta import short_name
 
@@ -343,7 +344,7 @@ def _events_by_track(row_key: str) -> dict[str, list[EventRecord]]:
 # ── build ────────────────────────────────────────────────────────────────────
 
 
-@ui.refreshable
+@client_refreshable
 def event_annotation_task() -> None:
     """Build the Event-annotation work area for the current queued video."""
     entries = _queued_entries()
@@ -468,7 +469,7 @@ def _video_and_transport(state_: _EventState, entry: VideoEntry) -> None:
     _start_playhead_poll(state_, vid_id)
 
 
-@ui.refreshable
+@client_refreshable
 def _capture_controls(state_: _EventState) -> None:
     """The single dynamic capture button, plus Cancel while a start is armed.
 
@@ -1172,7 +1173,7 @@ def _timeline_block(state_: _EventState) -> None:
     _timeline_scrollbar(state_)
 
 
-@ui.refreshable
+@client_refreshable
 def _timeline_controls(state_: _EventState) -> None:
     """Zoom buttons, the Follow toggle, and the window's range readout."""
     with ui.row().classes("w-full items-center gap-2"):
@@ -1202,7 +1203,7 @@ def _range_label(state_: _EventState) -> str:
     )
 
 
-@ui.refreshable
+@client_refreshable
 def _timeline_surface(state_: _EventState) -> None:
     """The SVG timeline for the current window."""
     # Lanes come from the DB-scoped categories (one per participant), not per-video tracks, so
@@ -1254,7 +1255,7 @@ def _timeline_surface(state_: _EventState) -> None:
     _sync_playhead(state_, svg_id)
 
 
-@ui.refreshable
+@client_refreshable
 def _timeline_scrollbar(state_: _EventState) -> None:
     """The pan scrollbar, present only while zoomed in.
 

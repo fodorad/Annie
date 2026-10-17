@@ -49,6 +49,7 @@ from annie.dataset.storage import ReviewStore
 from annie.pages import annotator, browse
 from annie.pages.csv_dialog import VIDEO_ID_TARGET, Targets, configure_table
 from annie.pages.folder_picker import pick_directory, pick_file
+from annie.pages.refresh import client_refreshable
 from annie.pages.utils import notify_detached
 from annie.parsers.csvmeta import read_header, read_rows, short_name
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
@@ -151,11 +152,13 @@ async def _apply_changes() -> None:
         await run.io_bound(state.rescan)
     finally:
         ds.scanning = False
-    _metric_cards.refresh()
-    _source_list.refresh()
-    _task_sections.refresh()
-    browse.refresh()
-    annotator.update_availability()
+    # The dataset itself changed: every open tab must show it, not just this one.
+    _metric_cards.refresh_everywhere()
+    _source_list.refresh_everywhere()
+    _task_sections.refresh_everywhere()
+    browse.refresh(everywhere=True)
+    annotator.refresh(everywhere=True)
+    annotator.sync_tab()
 
 
 async def _rescan() -> None:
@@ -411,7 +414,7 @@ async def _confirm_carry(config_name: str, target: Path) -> bool | None:
     return await dialog
 
 
-@ui.refreshable
+@client_refreshable
 def _config_section() -> None:
     """Build the config selector: sentinel options + predefined configs, auto-loads on change."""
     configs = datasets.discover_configs()
@@ -698,7 +701,7 @@ def _metric_card(card: MetricCard, value: int | None) -> None:
             ui.label(str(value)).classes("text-2xl font-medium")
 
 
-@ui.refreshable
+@client_refreshable
 def _metric_cards() -> None:
     """Build the overview metric cards for the configured sources, filled from the scan.
 
@@ -895,7 +898,7 @@ def _source_card(source: DataSource) -> None:
         ).tooltip("Remove source")
 
 
-@ui.refreshable
+@client_refreshable
 def _source_list() -> None:
     """Build the list of configured sources plus the add box."""
     with ui.column().classes("w-full gap-2"):
@@ -923,7 +926,7 @@ def _source_list() -> None:
                 rescan_btn.props(add="loading")
 
 
-@ui.refreshable
+@client_refreshable
 def _task_sections() -> None:
     """Show, per supervision task, which sources it needs and whether they're present.
 
@@ -1079,7 +1082,7 @@ async def _pick_db_file() -> None:
         _select_existing_db(Path(chosen))
 
 
-@ui.refreshable
+@client_refreshable
 def _persistence_section() -> None:
     """Persistence block: the active review-DB path, plus browse / new-DB actions.
 

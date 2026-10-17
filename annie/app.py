@@ -36,6 +36,7 @@ from annie.media.preview import report_decode_failure
 from annie.pages import annotator, browse, convert, dataset, home, pending
 from annie.pages import logs as logs_page
 from annie.pages import settings as settings_page
+from annie.pages.tabs import LazyTabs
 
 #: The tab bar, in display order: ``(page id, Tabler icon, label, overview)`` per tab.
 #: The overview is shown as a hover tooltip on the tab button (so each page body no
@@ -115,25 +116,25 @@ def build() -> None:
     def navigate(name: str) -> None:
         tabs.set_value(name)
 
+    # Each tab is built the first time it is opened; Browse, the Annotator and the Log are
+    # rebuilt on every later open, so they reflect changes made on other tabs.
     with ui.tab_panels(tabs, value="home").classes("w-full"):
-        with ui.tab_panel("home"):
-            home.render(navigate)
-        with ui.tab_panel("convert"):
-            convert.render()
-        with ui.tab_panel("dataset"):
-            dataset.render()
-        with ui.tab_panel("browse"):
-            browse.render()
-        with ui.tab_panel("annotator"):
-            annotator.render()
-        with ui.tab_panel("logs"):
-            logs_page.render()
-        with ui.tab_panel("settings"):
-            settings_page.render()
+        lazy = LazyTabs(
+            {
+                "home": lambda: home.render(navigate),
+                "convert": convert.render,
+                "dataset": dataset.render,
+                "browse": browse.render,
+                "annotator": annotator.render,
+                "logs": logs_page.render,
+                "settings": settings_page.render,
+            }
+        )
+    lazy.open("home")
 
-    # Browse and Annotator are consumers of the cached scan; rebuild them whenever
-    # opened so they reflect source changes made on the Dataset tab.
     def _on_tab_change(event) -> None:  # noqa: ANN001 - NiceGUI event args
+        if lazy.open(event.value):
+            return  # just built: already current
         if event.value == "browse":
             browse.refresh()
         elif event.value == "annotator":
