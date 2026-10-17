@@ -71,12 +71,8 @@ from annie.dataset.segments import (
 from annie.dataset.sources import TASK_LABELS, TaskKind, task_readiness
 from annie.media.clipping import cut_clip
 from annie.media.decode import media_available
-from annie.media.preview import (
-    build_band_strip,
-    build_preview,
-    report_decode_failure,
-    to_data_uri,
-)
+from annie.media.preview import report_decode_failure
+from annie.media.previews import Strip
 from annie.media.rendering import JobStatus
 from annie.pages import event_task, pending
 from annie.pages.lazy import schedule
@@ -341,28 +337,28 @@ async def _populate_strip(
 
 
 async def _decode_strip(entry: VideoEntry, strip: list[ui.element], scale: float) -> None:
-    """Decode ``entry``'s five strip frames off the loop and swap them into ``strip``.
+    """Load ``entry``'s five strip frames through the preview loader into ``strip``.
+
+    Decoding and encoding run on the loader's threads (bounded, newest batch first,
+    cached per track); a row refreshed away before its turn is skipped.
 
     Args:
-        entry: The video to preview.
+        entry: The video to preview (its ``active_track_id`` is part of the cache key).
         strip: The five (pending) frame slots.
         scale: Row-height fraction for sizing the embedded frames.
     """
     try:
-        result = await run.io_bound(build_preview, entry)
+        result = await state.previews.strip(
+            entry, _media_box(scale), wanted=lambda: _alive(strip[0])
+        )
     except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
         reason = report_decode_failure(entry.video_path, exc)
         for slot in strip:
             pending.failed(slot, reason)
         return
-    if result is None:
-        return  # NiceGUI's io_bound yields None while the app is shutting down
-    if not _alive(strip[0]):
-        return  # the row was refreshed away mid-decode; skip the encoding
-    _thumbnail, frames, _ = result
-    box = _media_box(scale)
-    for slot, frame in zip(strip, frames, strict=False):
-        uri = to_data_uri(frame, box)
+    if not isinstance(result, Strip):
+        return  # the row was refreshed away before its turn
+    for slot, uri in zip(strip, result.uris, strict=False):
         pending.ready(slot, lambda u=uri: ui.image(u).style(_IMG))
 
 
@@ -1130,20 +1126,24 @@ def _band_strip(video_path: Path, band) -> None:  # noqa: ANN001 - ClipBand, see
 
     async def draw() -> None:
         try:
-            frames = await run.io_bound(
-                build_band_strip, video_path, band.start, band.end, _BAND_STRIP_COUNT
+            uris = await state.previews.band(
+                video_path,
+                band.start,
+                band.end,
+                _BAND_STRIP_COUNT,
+                _BAND_MEDIA_BOX,
+                wanted=lambda: _alive(row),
             )
         except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
             reason = report_decode_failure(video_path, exc)
             for slot in slots:
                 pending.failed(slot, reason)
             return
-        if frames is None or not _alive(row):
-            return
+        if not isinstance(uris, list):
+            return  # the row was refreshed away before its turn
         for i, slot in enumerate(slots):
-            if i < len(frames):
-                uri = to_data_uri(frames[i], _BAND_MEDIA_BOX)
-                pending.ready(slot, lambda u=uri: ui.image(u).style(_BAND_FRAME_STYLE))
+            if i < len(uris):
+                pending.ready(slot, lambda u=uris[i]: ui.image(u).style(_BAND_FRAME_STYLE))
             else:
                 pending.ready(slot, lambda: None)
 
