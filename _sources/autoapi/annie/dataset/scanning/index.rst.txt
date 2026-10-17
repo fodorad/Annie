@@ -83,6 +83,12 @@ Module Contents
 
       Why a configured nested layout could not be used, else ``None``.
 
+   .. attribute:: nested_videos_hint
+
+      The flat video folder holds no videos itself but has some in
+      sub-folders, so a nested layout is probably needed. Found during the scan so
+      the Dataset tab never walks the folder while it redraws.
+
 
    .. py:property:: by_video_id
       :type: dict[str, annie.core.models.VideoEntry]

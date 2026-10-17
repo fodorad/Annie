@@ -324,6 +324,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
@@ -342,14 +343,12 @@
     <span class="n">DiscoveredVideo</span><span class="p">,</span>
     <span class="n">DiscoveryReport</span><span class="p">,</span>
     <span class="n">VideoLayout</span><span class="p">,</span>
-    <span class="n">contains_nested_videos</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.manipulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">detect_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.sources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">KIND_ICONS</span><span class="p">,</span>
     <span class="n">KIND_LABELS</span><span class="p">,</span>
     <span class="n">TASK_LABELS</span><span class="p">,</span>
-    <span class="n">VIDEO_SUFFIXES</span><span class="p">,</span>
     <span class="n">CsvRole</span><span class="p">,</span>
     <span class="n">DataSource</span><span class="p">,</span>
     <span class="n">SourceKind</span><span class="p">,</span>
@@ -428,10 +427,6 @@
     <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
 
 
-<span class="c1">#: Overview metric key → its live :class:`nicegui.ui.label`, updated after each scan.</span>
-<span class="n">_METRICS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_match_targets</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Targets</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What a label table's IDs can match, per video: the video id and each path field.</span>
 
@@ -461,6 +456,7 @@
         <span class="k">return</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_source_list</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>  <span class="c1"># redraw button in loading state</span>
+    <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>  <span class="c1"># values spin until the scan is done</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
@@ -1003,25 +999,33 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_metric_card</span><span class="p">(</span><span class="n">card</span><span class="p">:</span> <span class="n">MetricCard</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build one overview metric card and register its value label under its key."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_scanning</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a scan is running: the start-up scan or this tab's own rescan."""</span>
+    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">scanning</span> <span class="ow">or</span> <span class="n">_ds</span><span class="p">()</span><span class="o">.</span><span class="n">scanning</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_card</span><span class="p">(</span><span class="n">card</span><span class="p">:</span> <span class="n">MetricCard</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build one overview metric card; ``value`` ``None`` shows a spinner (still scanning)."""</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-1 min-w-[8rem]"</span><span class="p">):</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">title</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">color</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
-        <span class="n">_METRICS</span><span class="p">[</span><span class="n">card</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"—"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-2xl font-medium"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"2em"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-2xl font-medium"</span><span class="p">)</span>
 
 
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_metric_cards</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build the overview metric cards for the configured sources and fill them from the scan."""</span>
-    <span class="n">_METRICS</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">"""Build the overview metric cards for the configured sources, filled from the scan.</span>
+
+<span class="sd">    While a scan runs (or before the first one finished) each value is a spinner.</span>
+<span class="sd">    """</span>
+    <span class="n">busy</span> <span class="o">=</span> <span class="n">_scanning</span><span class="p">()</span> <span class="ow">or</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">metric_rows</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">card</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
-                <span class="n">_metric_card</span><span class="p">(</span><span class="n">card</span><span class="p">)</span>
-
-    <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_METRICS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">label</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+                <span class="n">_metric_card</span><span class="p">(</span><span class="n">card</span><span class="p">,</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">busy</span> <span class="k">else</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
 
 <span class="c1"># ── source list + add box ────────────────────────────────────────────────────</span>
@@ -1181,11 +1185,7 @@
                 <span class="sa">f</span><span class="s2">"(only the first was kept): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">scan</span><span class="o">.</span><span class="n">layout_collisions</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span><span class="si">}</span><span class="s2">. "</span>
                 <span class="s2">"Make the video id unique."</span>
             <span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-xs"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"color:</span><span class="si">{</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="p">(</span>
-        <span class="n">source</span><span class="o">.</span><span class="n">available</span>
-        <span class="ow">and</span> <span class="n">source</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
-        <span class="ow">and</span> <span class="n">contains_nested_videos</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">VIDEO_SUFFIXES</span><span class="p">)</span>
-    <span class="p">):</span>
+    <span class="k">elif</span> <span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">scan</span><span class="o">.</span><span class="n">nested_videos_hint</span><span class="p">:</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span>
             <span class="s2">"No videos directly in this folder, but it contains nested videos. "</span>
             <span class="s2">"Turn on Videos in subfolders to describe where they are."</span>
@@ -1226,7 +1226,6 @@
 <span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_source_list</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the list of configured sources plus the add box."""</span>
-    <span class="n">ds</span> <span class="o">=</span> <span class="n">_ds</span><span class="p">()</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">):</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Sources"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-lg font-medium"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
@@ -1248,7 +1247,7 @@
                     <span class="s2">"(e.g. while a conversion is running)"</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_scanning</span><span class="p">():</span>
                 <span class="n">rescan_btn</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"loading"</span><span class="p">)</span>
 
 
@@ -1510,23 +1509,21 @@
         <span class="n">_task_sections</span><span class="p">()</span>
         <span class="n">_persistence_section</span><span class="p">()</span>
 
-    <span class="c1"># When the app starts, the initial scan runs in the background (see annie.app).</span>
-    <span class="c1"># Poll until it finishes, then refresh only the metric cards — the source list</span>
-    <span class="c1"># is intentionally skipped here because rebuilding it calls source.count() for</span>
-    <span class="c1"># every directory source, which blocks the event loop for ~1.5 s on large datasets.</span>
-    <span class="c1"># Sources haven't changed, so only aggregate metrics need updating.</span>
-    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># The start-up scan runs in the background (see annie.app); until it is done the</span>
+    <span class="c1"># metric cards spin and Rescan is busy. Redraw once it finishes. Every redraw reads</span>
+    <span class="c1"># the scan result only, so it is cheap.</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">state</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">_poll_startup_scan</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_ds</span><span class="p">()</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
-                    <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-                    <span class="n">_poll_timer</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-                <span class="c1"># Client disconnected before the scan finished; stop quietly.</span>
-                <span class="n">_poll_timer</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_when_scanned</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">state</span><span class="o">.</span><span class="n">scanning</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">_poll_timer</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the tab was closed meanwhile</span>
+                <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+                <span class="n">_source_list</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+                <span class="n">_task_sections</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
-        <span class="n">_poll_timer</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">_poll_startup_scan</span><span class="p">)</span></div>
+        <span class="n">_poll_timer</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">_when_scanned</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

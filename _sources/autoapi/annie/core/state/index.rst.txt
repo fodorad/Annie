@@ -133,6 +133,11 @@ Module Contents
       Each video's protagonist as scanned (the heuristic CSV), before
       the review DB's corrections are layered over it; lets a DB switch start over.
 
+   .. attribute:: scanning
+
+      Whether a scan is running right now (start-up scan included), so every
+      page can show it as busy.
+
 
    .. py:method:: restore_last_config() -> pathlib.Path | None
 
