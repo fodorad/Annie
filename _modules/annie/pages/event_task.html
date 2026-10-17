@@ -1056,14 +1056,24 @@
     <span class="k">return</span> <span class="p">{</span><span class="n">kind</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">kind</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">event_types</span><span class="p">()}</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_manager_body</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_EventState</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The dialog body for a manager: ``"participants"`` or ``"event_types"``."""</span>
+    <span class="k">return</span> <span class="n">_participant_manager</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"participants"</span> <span class="k">else</span> <span class="n">_event_type_manager</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open a manager dialog on the next loop turn (outside the click's slot)."""</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">_manager_body</span><span class="p">(</span><span class="n">kind</span><span class="p">)),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_open_participants</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Open the participants dialog (add / rename / delete / reorder / colour)."""</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">_participant_manager</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="s2">"participants"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_open_event_types</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Open the event categories dialog (add / rename / attributes / reorder / colour)."""</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">_event_type_manager</span><span class="p">),</span> <span class="n">once</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_open_manager</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="s2">"event_types"</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_manager_dialog</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_EventState</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
