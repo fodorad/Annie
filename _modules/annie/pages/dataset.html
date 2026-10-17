@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -360,6 +362,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">configure_table</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">notify_detached</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_header</span><span class="p">,</span> <span class="n">read_rows</span><span class="p">,</span> <span class="n">short_name</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span> <span class="n">DEFAULT_VALUE_COLUMN</span>
@@ -462,11 +465,13 @@
         <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">rescan</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">ds</span><span class="o">.</span><span class="n">scanning</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">_source_list</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">_task_sections</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
+    <span class="c1"># The dataset itself changed: every open tab must show it, not just this one.</span>
+    <span class="n">_metric_cards</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="n">_source_list</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="n">_task_sections</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">everywhere</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">everywhere</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">sync_tab</span><span class="p">()</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_rescan</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -722,7 +727,7 @@
     <span class="k">return</span> <span class="k">await</span> <span class="n">dialog</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_config_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the config selector: sentinel options + predefined configs, auto-loads on change."""</span>
     <span class="n">configs</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">discover_configs</span><span class="p">()</span>
@@ -1015,7 +1020,7 @@
             <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-2xl font-medium"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_metric_cards</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the overview metric cards for the configured sources, filled from the scan.</span>
 
@@ -1224,7 +1229,7 @@
         <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Remove source"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_source_list</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the list of configured sources plus the add box."""</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-2"</span><span class="p">):</span>
@@ -1252,7 +1257,7 @@
                 <span class="n">rescan_btn</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">"loading"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_task_sections</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Show, per supervision task, which sources it needs and whether they're present.</span>
 
@@ -1408,7 +1413,7 @@
         <span class="n">_select_existing_db</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">))</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_persistence_section</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Persistence block: the active review-DB path, plus browse / new-DB actions.</span>
 

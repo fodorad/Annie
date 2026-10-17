@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -353,6 +355,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">report_decode_failure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">download</span><span class="p">,</span> <span class="n">pending</span><span class="p">,</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.timeline_view</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimelineView</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">short_name</span>
 
@@ -666,7 +669,7 @@
 <span class="c1"># ── build ────────────────────────────────────────────────────────────────────</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">event_annotation_task</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the Event-annotation work area for the current queued video."""</span>
     <span class="n">entries</span> <span class="o">=</span> <span class="n">_queued_entries</span><span class="p">()</span>
@@ -791,7 +794,7 @@
     <span class="n">_start_playhead_poll</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">vid_id</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_capture_controls</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The single dynamic capture button, plus Cancel while a start is armed.</span>
 
@@ -1495,7 +1498,7 @@
     <span class="n">_timeline_scrollbar</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_timeline_controls</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Zoom buttons, the Follow toggle, and the window's range readout."""</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-center gap-2"</span><span class="p">):</span>
@@ -1525,7 +1528,7 @@
     <span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_timeline_surface</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The SVG timeline for the current window."""</span>
     <span class="c1"># Lanes come from the DB-scoped categories (one per participant), not per-video tracks, so</span>
@@ -1577,7 +1580,7 @@
     <span class="n">_sync_playhead</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">svg_id</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_timeline_scrollbar</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The pan scrollbar, present only while zoomed in.</span>
 

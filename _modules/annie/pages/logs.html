@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -329,6 +331,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">bugreport</span><span class="p">,</span> <span class="n">logbook</span><span class="p">,</span> <span class="n">theme</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">Callable</span>
@@ -535,7 +538,7 @@
             <span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Details"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_table</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the filtered event list."""</span>
     <span class="n">events</span> <span class="o">=</span> <span class="n">_filtered</span><span class="p">()</span>

@@ -1,0 +1,66 @@
+annie.pages.refresh
+===================
+
+.. py:module:: annie.pages.refresh
+
+.. autoapi-nested-parse::
+
+   Client-scoped refreshables: a refresh redraws only the browser tab that acted (UI helper).
+
+   NiceGUI's ``@ui.refreshable`` keeps one target per browser tab that built the view, and
+   ``refresh()`` rebuilds **all** of them. Annie's views are module-level functions, so every
+   keystroke, click or tab switch in one tab used to rebuild that view in every open tab, all
+   on the one event loop.
+
+   :class:`client_refreshable` is a drop-in replacement:
+
+   - ``refresh()`` called while handling a tab (a NiceGUI page context is active) rebuilds only
+     that tab's target. Other tabs catch up when they next build or open the view.
+   - ``refresh()`` called with no page context (start-up, a background service) rebuilds every
+     tab, as before.
+   - :meth:`client_refreshable.refresh_everywhere` rebuilds every tab on purpose, for data that
+     every open tab must show at once.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.refresh.client_refreshable
+
+
+Module Contents
+---------------
+
+.. py:class:: client_refreshable(func: collections.abc.Callable[_P, _T])
+
+   Bases: :py:obj:`nicegui.functions.refreshable.refreshable`
+
+
+   ``@ui.refreshable`` whose ``refresh()`` rebuilds only the acting tab (see module docs).
+
+   Refreshable UI functions
+
+   The ``@ui.refreshable`` decorator allows you to create functions that have a ``refresh`` method.
+   This method will automatically delete all elements created by the function and recreate them.
+
+   For decorating refreshable methods in classes, there is a ``@ui.refreshable_method`` decorator,
+   which is equivalent but prevents static type checking errors.
+
+
+   .. py:method:: refresh(*args: Any, **kwargs: Any) -> nicegui.awaitable_response.AwaitableResponse
+
+      Rebuild the acting tab's view, or every tab when no tab is acting.
+
+      Accepts the same arguments as the view function (or a subset), like NiceGUI's.
+
+
+
+   .. py:method:: refresh_everywhere(*args: Any, **kwargs: Any) -> nicegui.awaitable_response.AwaitableResponse
+
+      Rebuild this view in every open tab (for data all tabs must show at once).
+
+
+

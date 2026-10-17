@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -363,6 +365,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_file</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.paging</span><span class="w"> </span><span class="kn">import</span> <span class="n">paged</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.reveal</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_docker</span><span class="p">,</span> <span class="n">reveal</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">render_embed_ttl</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.viewport</span><span class="w"> </span><span class="kn">import</span> <span class="n">observe_row</span>
@@ -1126,7 +1129,7 @@
     <span class="k">return</span> <span class="n">source_facets</span><span class="p">(</span><span class="n">has_vdet</span><span class="o">=</span><span class="n">registry</span><span class="o">.</span><span class="n">vdet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">has_track</span><span class="o">=</span><span class="n">registry</span><span class="o">.</span><span class="n">track</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_filters</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the filter controls (rebuilt when a transform changes the facets)."""</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span>
@@ -1358,7 +1361,7 @@
             <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"outline dense"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Queue every video matching the current filter"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the filtered, paged rows (detailed) or boxes (grid)."""</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1402,7 +1405,7 @@
         <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"fab-mini color=primary"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"Back to top"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the Browse body: gate, Manipulate, Filter, rows, and jump-to-top."""</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full gap-3"</span><span class="p">):</span>
@@ -1446,9 +1449,16 @@
 
 <div class="viewcode-block" id="refresh">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/browse/index.html#annie.pages.browse.refresh">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Rebuild the Browse body (after a scan, source change, or tab open)."""</span>
-    <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">everywhere</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rebuild the Browse body (after a scan, source change, or tab open).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        everywhere: Rebuild it in every open tab (the dataset itself changed).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">everywhere</span><span class="p">:</span>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
 
 </pre></div>
         </article>

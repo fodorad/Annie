@@ -255,8 +255,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/index.html">annie.pages.utils</a></li>
@@ -368,8 +370,13 @@ per-client <code class="xref py py-class docutils literal notranslate"><span cla
 
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.browse.refresh">
-<span class="sig-prename descclassname"><span class="pre">annie.pages.browse.</span></span><span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/browse.html#refresh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.browse.refresh" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">annie.pages.browse.</span></span><span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">everywhere</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/browse.html#refresh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.browse.refresh" title="Link to this definition">¶</a></dt>
 <dd><p>Rebuild the Browse body (after a scan, source change, or tab open).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>everywhere</strong> – Rebuild it in every open tab (the dataset itself changed).</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

@@ -1,0 +1,51 @@
+annie.pages.tabs
+================
+
+.. py:module:: annie.pages.tabs
+
+.. autoapi-nested-parse::
+
+   Lazily built tab panels: a tab's content is built the first time it is opened (UI helper).
+
+   Building every tab on each page load used to cost the full Browse first page, the Annotator
+   task, the Dataset config scan and more, before the user had even looked. :class:`LazyTabs`
+   creates the empty panels up front and fills each one on its first visit.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   annie.pages.tabs.LazyTabs
+
+
+Module Contents
+---------------
+
+.. py:class:: LazyTabs(builders: collections.abc.Mapping[str, collections.abc.Callable[[], None]])
+
+   Tab panels whose content is built on first open.
+
+   Must be created inside the page (a NiceGUI client context), under ``ui.tab_panels``.
+
+   :param builders: Tab name → function that builds the tab's content (called once, inside
+                    its panel), in display order.
+
+
+   .. py:method:: open(name: str) -> bool
+
+      Make sure tab ``name`` is built.
+
+      :returns: ``True`` if it was built just now (its content is fresh), ``False`` if it had
+                been built before (or ``name`` is not a lazy tab).
+
+
+
+   .. py:method:: is_built(name: str) -> bool
+
+      Whether tab ``name`` has been built in this page.
+
+
+

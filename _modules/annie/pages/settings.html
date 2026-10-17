@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -331,6 +333,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">download</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
@@ -469,7 +472,7 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">"Maintenance"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"font-medium"</span><span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_maintenance_section</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="n">_Space</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Maintenance card: space summary + targeted cleanup buttons.</span>
 

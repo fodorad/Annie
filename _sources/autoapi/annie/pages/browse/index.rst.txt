@@ -54,8 +54,10 @@ Module Contents
    Build the Browse tab body; initialise and register per-client state.
 
 
-.. py:function:: refresh() -> None
+.. py:function:: refresh(*, everywhere: bool = False) -> None
 
    Rebuild the Browse body (after a scan, source change, or tab open).
+
+   :param everywhere: Rebuild it in every open tab (the dataset itself changed).
 
 

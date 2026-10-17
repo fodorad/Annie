@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -347,6 +349,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">home</span><span class="p">,</span> <span class="n">pending</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">logs</span> <span class="k">as</span> <span class="n">logs_page</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">settings_page</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.tabs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LazyTabs</span>
 
 <span class="c1">#: The tab bar, in display order: ``(page id, Tabler icon, label, overview)`` per tab.</span>
 <span class="c1">#: The overview is shown as a hover tooltip on the tab button (so each page body no</span>
@@ -428,25 +431,25 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">navigate</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tabs</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
+    <span class="c1"># Each tab is built the first time it is opened; Browse, the Annotator and the Log are</span>
+    <span class="c1"># rebuilt on every later open, so they reflect changes made on other tabs.</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panels</span><span class="p">(</span><span class="n">tabs</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"home"</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full"</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"home"</span><span class="p">):</span>
-            <span class="n">home</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">navigate</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"convert"</span><span class="p">):</span>
-            <span class="n">convert</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"dataset"</span><span class="p">):</span>
-            <span class="n">dataset</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"browse"</span><span class="p">):</span>
-            <span class="n">browse</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"annotator"</span><span class="p">):</span>
-            <span class="n">annotator</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"logs"</span><span class="p">):</span>
-            <span class="n">logs_page</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab_panel</span><span class="p">(</span><span class="s2">"settings"</span><span class="p">):</span>
-            <span class="n">settings_page</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+        <span class="n">lazy</span> <span class="o">=</span> <span class="n">LazyTabs</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"home"</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">home</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">navigate</span><span class="p">),</span>
+                <span class="s2">"convert"</span><span class="p">:</span> <span class="n">convert</span><span class="o">.</span><span class="n">render</span><span class="p">,</span>
+                <span class="s2">"dataset"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">render</span><span class="p">,</span>
+                <span class="s2">"browse"</span><span class="p">:</span> <span class="n">browse</span><span class="o">.</span><span class="n">render</span><span class="p">,</span>
+                <span class="s2">"annotator"</span><span class="p">:</span> <span class="n">annotator</span><span class="o">.</span><span class="n">render</span><span class="p">,</span>
+                <span class="s2">"logs"</span><span class="p">:</span> <span class="n">logs_page</span><span class="o">.</span><span class="n">render</span><span class="p">,</span>
+                <span class="s2">"settings"</span><span class="p">:</span> <span class="n">settings_page</span><span class="o">.</span><span class="n">render</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="n">lazy</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"home"</span><span class="p">)</span>
 
-    <span class="c1"># Browse and Annotator are consumers of the cached scan; rebuild them whenever</span>
-    <span class="c1"># opened so they reflect source changes made on the Dataset tab.</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_on_tab_change</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ANN001 - NiceGUI event args</span>
+        <span class="k">if</span> <span class="n">lazy</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span>  <span class="c1"># just built: already current</span>
         <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">"browse"</span><span class="p">:</span>
             <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">"annotator"</span><span class="p">:</span>

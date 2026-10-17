@@ -90,9 +90,12 @@ Module Contents
    The queue lives in the shared review database, so every page shows the same state.
 
 
-.. py:function:: update_availability() -> None
+.. py:function:: update_availability(*, rebuild: bool = False) -> None
 
-   Sync the tab state and rebuild the body (runtime; needs the event loop).
+   Sync the Annotator tab's enabled state after the queue changed.
+
+   The body is rebuilt only with ``rebuild`` (a change made inside the Annotator, which
+   is on screen); elsewhere it is rebuilt when its tab is next opened.
 
 
 .. py:function:: load_segment_clips_async(state_: _SegmentState) -> bool
@@ -109,8 +112,10 @@ Module Contents
    Build the Annotator tab body; register per-client timer host.
 
 
-.. py:function:: refresh() -> None
+.. py:function:: refresh(*, everywhere: bool = False) -> None
 
    Rebuild the Annotator body (after queueing changes or a tab open).
+
+   :param everywhere: Rebuild it in every open tab (the dataset itself changed).
 
 

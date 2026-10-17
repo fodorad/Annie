@@ -33,8 +33,10 @@ Submodules
    /autoapi/annie/pages/logs/index
    /autoapi/annie/pages/paging/index
    /autoapi/annie/pages/pending/index
+   /autoapi/annie/pages/refresh/index
    /autoapi/annie/pages/reveal/index
    /autoapi/annie/pages/settings/index
+   /autoapi/annie/pages/tabs/index
    /autoapi/annie/pages/timeline/index
    /autoapi/annie/pages/timeline_view/index
    /autoapi/annie/pages/utils/index

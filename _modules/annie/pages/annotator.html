@@ -254,8 +254,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/utils/index.html">annie.pages.utils</a></li>
@@ -389,6 +391,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">event_task</span><span class="p">,</span> <span class="n">pending</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.paging</span><span class="w"> </span><span class="kn">import</span> <span class="n">paged</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">notify_detached</span><span class="p">,</span> <span class="n">render_embed_ttl</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.viewport</span><span class="w"> </span><span class="kn">import</span> <span class="n">observe_row</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_source_participants</span>
@@ -533,10 +536,15 @@
 
 <div class="viewcode-block" id="update_availability">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/annotator/index.html#annie.pages.annotator.update_availability">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">update_availability</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Sync the tab state and rebuild the body (runtime; needs the event loop)."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_availability</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sync the Annotator tab's enabled state after the queue changed.</span>
+
+<span class="sd">    The body is rebuilt only with ``rebuild`` (a change made inside the Annotator, which</span>
+<span class="sd">    is on screen); elsewhere it is rebuilt when its tab is next opened.</span>
+<span class="sd">    """</span>
     <span class="n">sync_tab</span><span class="p">()</span>
-    <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+    <span class="k">if</span> <span class="n">rebuild</span><span class="p">:</span>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
 
 
 
@@ -759,7 +767,7 @@
         <span class="n">card</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
         <span class="n">sync_tab</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>  <span class="c1"># the queue just emptied — rebuild into the empty state and grey the tab</span>
-        <span class="n">update_availability</span><span class="p">()</span>
+        <span class="n">update_availability</span><span class="p">(</span><span class="n">rebuild</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_clear_all</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -792,7 +800,7 @@
     <span class="n">client</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
         <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_annotate</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">update_availability</span><span class="p">()</span>
+    <span class="n">update_availability</span><span class="p">(</span><span class="n">rebuild</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">notify_detached</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Cleared </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows from the queue"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
@@ -1145,7 +1153,7 @@
         <span class="n">_segment_review_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_segment_review_task</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The accept/drop Segment-review work area: one clip at a time, resumable.</span>
 
@@ -1615,7 +1623,7 @@
     <span class="p">)</span>
 
 
-<span class="nd">@ui</span><span class="o">.</span><span class="n">refreshable</span>
+<span class="nd">@client_refreshable</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the Annotator body: a task switch over the ready tasks, then the work area.</span>
 
@@ -1663,9 +1671,16 @@
 
 <div class="viewcode-block" id="refresh">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/annotator/index.html#annie.pages.annotator.refresh">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Rebuild the Annotator body (after queueing changes or a tab open)."""</span>
-    <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">everywhere</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rebuild the Annotator body (after queueing changes or a tab open).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        everywhere: Rebuild it in every open tab (the dataset itself changed).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">everywhere</span><span class="p">:</span>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
 
 </pre></div>
         </article>
