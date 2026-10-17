@@ -25,6 +25,7 @@ from annie.dataset.scanning import ScanResult, build_manifest
 from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry
 from annie.dataset.storage import ReviewStore
 from annie.media.convert import ConversionRunner
+from annie.media.previews import PreviewLoader
 from annie.media.rendering import RenderService
 from annie.parsers.csvmeta import read_header, read_rows
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
@@ -125,6 +126,7 @@ class AppState:
             env-seeded / blank dataset. Lets the Dataset tab show it as selected.
         scanned_tracks: Each video's protagonist as scanned (the heuristic CSV), before
             the review DB's corrections are layered over it; lets a DB switch start over.
+        previews: The shared preview loader (bounded, newest-first, cached decoding).
         scanning: Whether a scan is running right now (start-up scan included), so every
             page can show it as busy.
     """
@@ -140,6 +142,9 @@ class AppState:
     active_config: Path | None = None
     scanned_tracks: dict[str, int] = field(default_factory=dict)
     scanning: bool = False
+    previews: PreviewLoader = field(
+        default_factory=lambda: PreviewLoader(settings.preview_max_workers)
+    )
 
     def restore_last_config(self) -> Path | None:
         """Reopen the config remembered from the previous run, with its review database.
@@ -174,6 +179,7 @@ class AppState:
         """
         self.audio_cache.clear()
         self.frames_cache.clear()
+        self.previews.clear()
         self.scanning = True
         try:
             self.scan = build_manifest(self.registry)

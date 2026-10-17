@@ -37,20 +37,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nicegui import background_tasks, context, run, ui
+from nicegui import background_tasks, context, ui
 
 from annie.core import logbook, theme
 from annie.core.state import state
 from annie.dataset import manipulate
 from annie.dataset.filtering import FilterSpec, apply_filters, drop_facets, source_facets
-from annie.media import probe
 from annie.media.decode import media_available
-from annie.media.preview import (
-    build_grid_preview,
-    build_preview,
-    report_decode_failure,
-    to_data_uri,
-)
+from annie.media.preview import report_decode_failure
+from annie.media.previews import SKIPPED, Strip, Tile
 from annie.media.rendering import JobStatus
 from annie.pages import annotator, pending
 from annie.pages.csv_dialog import select_id_column
@@ -469,7 +464,9 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
     for slot in strip:
         pending.pending(slot)
     try:
-        result = await run.io_bound(build_preview, entry)
+        result = await state.previews.strip(
+            entry, (sw, sh), wanted=lambda: anchor is None or _alive(anchor)
+        )
     except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the row
         reason = report_decode_failure(entry.video_path, exc)
         if badges.frames is not None:
@@ -478,16 +475,12 @@ async def _populate(entry: VideoEntry, strip: list[ui.element], badges: _RowBadg
             pending.failed(slot, reason)
         await _probe_audio(entry, badges)
         return
-    if result is None:
-        return  # NiceGUI's io_bound yields None while the app is shutting down
-    _thumbnail, frames, num_frames = result
-    state.frames_cache[entry.key] = num_frames
-    if anchor is not None and not _alive(anchor):
-        return  # the page was reloaded/closed during the decode; skip the encoding
+    if not isinstance(result, Strip):
+        return  # the row was refreshed away before its turn
+    state.frames_cache[entry.key] = result.num_frames
     if badges.frames is not None:
-        pending.settle_badge(badges.frames, f"#frames: {num_frames}")
-    for slot, frame in zip(strip, frames, strict=False):
-        uri = to_data_uri(frame, (sw, sh))
+        pending.settle_badge(badges.frames, f"#frames: {result.num_frames}")
+    for slot, uri in zip(strip, result.uris, strict=False):
         pending.ready(slot, lambda u=uri: ui.image(u).style(f"width:{sw}px;height:{sh}px"))
 
     await _probe_audio(entry, badges)
@@ -499,10 +492,16 @@ async def _probe_audio(entry: VideoEntry, badges: _RowBadges) -> None:
         return
     present = state.audio_cache.get(entry.key)
     if present is None:
+        slot = badges.audio_slot
         try:
-            present = await run.io_bound(probe.has_audio, entry.video_path)
+            probed = await state.previews.audio(
+                entry.video_path, wanted=lambda: slot is None or _alive(slot)
+            )
         except Exception:  # noqa: BLE001 - probe failure must not break the row
-            present = None
+            probed = None
+        if probed is SKIPPED:
+            return
+        present = probed if isinstance(probed, bool) else None
         if present is not None:
             state.audio_cache[entry.key] = present
     if badges.audio_slot is not None:
@@ -654,16 +653,14 @@ async def _populate_grid(entry: VideoEntry, slot: ui.element) -> None:
     width, height = _grid_dims()
     pending.pending(slot)
     try:
-        result = await run.io_bound(build_grid_preview, entry)
+        result = await state.previews.tile(entry, (width, height), wanted=lambda: _alive(slot))
     except Exception as exc:  # noqa: BLE001 - a bad/missing file must not break the box
         pending.failed(slot, report_decode_failure(entry.video_path, exc))
         return
-    if result is None:
-        return  # NiceGUI's io_bound yields None while the app is shutting down
-    image, num_frames = result
-    state.frames_cache[entry.key] = num_frames
-    uri = to_data_uri(image, (width, height))
-    pending.ready(slot, lambda: ui.image(uri).style(f"width:{width}px;height:{height}px"))
+    if not isinstance(result, Tile):
+        return  # the box was refreshed away before its turn
+    state.frames_cache[entry.key] = result.num_frames
+    pending.ready(slot, lambda: ui.image(result.uri).style(f"width:{width}px;height:{height}px"))
 
 
 def _clear_grid(slot: ui.element) -> None:
