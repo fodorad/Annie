@@ -1311,7 +1311,7 @@
     <span class="k">return</span> <span class="n">apply_filters</span><span class="p">(</span>
         <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span>
         <span class="n">_state</span><span class="p">()</span><span class="o">.</span><span class="n">spec</span><span class="p">,</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">review_state</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">review_lookup</span><span class="p">(),</span>  <span class="c1"># one query for the whole pass, not one per video</span>
         <span class="n">state</span><span class="o">.</span><span class="n">audio_cache</span><span class="o">.</span><span class="n">get</span><span class="p">,</span>
         <span class="n">state</span><span class="o">.</span><span class="n">frames_cache</span><span class="o">.</span><span class="n">get</span><span class="p">,</span>
         <span class="n">_effective_label</span><span class="p">,</span>

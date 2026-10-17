@@ -658,6 +658,19 @@ untouched.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.records_by_key">
+<span class="sig-name descname"><span class="pre">records_by_key</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.records_by_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.records_by_key" title="Link to this definition">¶</a></dt>
+<dd><p>Return every stored review record keyed by row key, in one query.</p>
+<p>A filter pass over the whole manifest needs each video’s review state; reading
+them all at once replaces one connection per video with a single one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">row_key</span> <span class="pre">-&gt;</span> <span class="pre">ReviewRecord</span></code> for every touched video (unreviewed ones are absent).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="annie.dataset.storage.ReviewStore.list_by_verdict">
 <span class="sig-name descname"><span class="pre">list_by_verdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verdict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#annie.dataset.storage.Verdict" title="annie.dataset.storage.Verdict"><span class="pre">Verdict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#annie.dataset.storage.ReviewRecord" title="annie.dataset.storage.ReviewRecord"><span class="pre">ReviewRecord</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/annie/dataset/storage.html#ReviewStore.list_by_verdict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.dataset.storage.ReviewStore.list_by_verdict" title="Link to this definition">¶</a></dt>
 <dd><p>Return all records with the given verdict (the good or bad list).</p>
@@ -1455,6 +1468,7 @@ the link is cleared, so the events stay as they were, just no longer linked.</p>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.copy_to"><code class="docutils literal notranslate"><span class="pre">ReviewStore.copy_to()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.get"><code class="docutils literal notranslate"><span class="pre">ReviewStore.get()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.all"><code class="docutils literal notranslate"><span class="pre">ReviewStore.all()</span></code></a></li>
+<li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.records_by_key"><code class="docutils literal notranslate"><span class="pre">ReviewStore.records_by_key()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.list_by_verdict"><code class="docutils literal notranslate"><span class="pre">ReviewStore.list_by_verdict()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.upsert"><code class="docutils literal notranslate"><span class="pre">ReviewStore.upsert()</span></code></a></li>
 <li><a class="reference internal" href="#annie.dataset.storage.ReviewStore.set_verdict"><code class="docutils literal notranslate"><span class="pre">ReviewStore.set_verdict()</span></code></a></li>

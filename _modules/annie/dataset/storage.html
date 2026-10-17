@@ -682,6 +682,22 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
 
 
+<div class="viewcode-block" id="ReviewStore.records_by_key">
+<a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.records_by_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">records_by_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReviewRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return every stored review record keyed by row key, in one query.</span>
+
+<span class="sd">        A filter pass over the whole manifest needs each video's review state; reading</span>
+<span class="sd">        them all at once replaces one connection per video with a single one.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``row_key -&gt; ReviewRecord`` for every touched video (unreviewed ones are absent).</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"SELECT * FROM review"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="s2">"row_key"</span><span class="p">]:</span> <span class="n">_record_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
+
+
 <div class="viewcode-block" id="ReviewStore.list_by_verdict">
 <a class="viewcode-back" href="../../../autoapi/annie/dataset/storage/index.html#annie.dataset.storage.ReviewStore.list_by_verdict">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_by_verdict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verdict</span><span class="p">:</span> <span class="n">Verdict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReviewRecord</span><span class="p">]:</span>

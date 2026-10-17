@@ -258,6 +258,17 @@ Module Contents
 
 
 
+   .. py:method:: records_by_key() -> dict[str, ReviewRecord]
+
+      Return every stored review record keyed by row key, in one query.
+
+      A filter pass over the whole manifest needs each video's review state; reading
+      them all at once replaces one connection per video with a single one.
+
+      :returns: ``row_key -> ReviewRecord`` for every touched video (unreviewed ones are absent).
+
+
+
    .. py:method:: list_by_verdict(verdict: Verdict) -> list[ReviewRecord]
 
       Return all records with the given verdict (the good or bad list).

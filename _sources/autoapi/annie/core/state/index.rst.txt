@@ -181,6 +181,17 @@ Module Contents
 
 
 
+   .. py:method:: review_lookup() -> collections.abc.Callable[[str], annie.dataset.filtering.ReviewState]
+
+      Read every review state in one query and return a per-key lookup.
+
+      For a pass over many videos (e.g. the Browse filter); the lookup answers exactly
+      like :meth:`review_state` but from a snapshot taken now.
+
+      :returns: A function mapping a video key to its :class:`~annie.filtering.ReviewState`.
+
+
+
    .. py:method:: review_state(key: str) -> annie.dataset.filtering.ReviewState
 
       Return the filtering-facing review state for a video (default liked).
