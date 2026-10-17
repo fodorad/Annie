@@ -608,7 +608,7 @@
     <span class="k">return</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">key_column</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">value_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Export this session's protagonist corrections as the ``_manual`` CSV.</span>
 
 <span class="sd">    Corrections live in the session database; this writes them to the manual CSV</span>
@@ -624,7 +624,7 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"No protagonist corrections to export yet."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">corrections</span><span class="o">.</span><span class="n">manual_sibling</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">corrections</span><span class="o">.</span><span class="n">export_active_tracks</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">overrides</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">corrections</span><span class="o">.</span><span class="n">export_active_tracks</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">overrides</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span><span class="si">}</span><span class="s2"> correction(s) to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
@@ -800,10 +800,14 @@
 
     <span class="c1"># Captured before the rebuild below deletes the slot this handler is running in.</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">client</span>
-    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_annotate</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">update_availability</span><span class="p">(</span><span class="n">rebuild</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_clear_queue</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span>
     <span class="n">notify_detached</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Cleared </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows from the queue"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clear_queue</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Dequeue ``entries`` in one write and rebuild the (emptied) Annotator."""</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">set_annotate_many</span><span class="p">(((</span><span class="n">e</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">update_availability</span><span class="p">(</span><span class="n">rebuild</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clear_all_button</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1100,7 +1104,7 @@
             <span class="n">_segment_review_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_segment_export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_segment_export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write the accepted and dropped clips to two CSVs beside the segmentation source."""</span>
     <span class="n">state_</span> <span class="o">=</span> <span class="n">_segment_state</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">state_</span><span class="o">.</span><span class="n">clips</span> <span class="ow">or</span> <span class="n">state_</span><span class="o">.</span><span class="n">source_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1113,7 +1117,12 @@
     <span class="n">stem</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">source_path</span><span class="o">.</span><span class="n">stem</span>
     <span class="n">accepted_path</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">source_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">_accepted.csv"</span><span class="p">)</span>
     <span class="n">dropped_path</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">source_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">_dropped.csv"</span><span class="p">)</span>
-    <span class="n">accepted</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="n">export_decision_sets</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">clips</span><span class="p">,</span> <span class="n">decisions</span><span class="p">,</span> <span class="n">accepted_path</span><span class="p">,</span> <span class="n">dropped_path</span><span class="p">)</span>
+    <span class="n">written</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span>
+        <span class="n">export_decision_sets</span><span class="p">,</span> <span class="n">state_</span><span class="o">.</span><span class="n">clips</span><span class="p">,</span> <span class="n">decisions</span><span class="p">,</span> <span class="n">accepted_path</span><span class="p">,</span> <span class="n">dropped_path</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">written</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># the app is shutting down</span>
+    <span class="n">accepted</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="n">written</span>
     <span class="n">n_acc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state_</span><span class="o">.</span><span class="n">clips</span> <span class="k">if</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"accept"</span><span class="p">)</span>
     <span class="n">n_drop</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">state_</span><span class="o">.</span><span class="n">clips</span> <span class="k">if</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"drop"</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span>

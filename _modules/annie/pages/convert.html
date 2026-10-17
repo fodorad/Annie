@@ -407,10 +407,8 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"No converted files to export yet."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_directory</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">convert</span><span class="o">.</span><span class="n">export_ids</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"reencoded_ids.csv"</span><span class="p">,</span> <span class="n">succeeded</span><span class="p">)</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">succeeded</span><span class="p">)</span><span class="si">}</span><span class="s2"> id(s) to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">_write_export</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">),</span> <span class="n">succeeded</span><span class="p">,</span> <span class="p">[])</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_export_failed</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -420,10 +418,27 @@
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"No failed files to export."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">chosen</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pick_directory</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">chosen</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">convert</span><span class="o">.</span><span class="n">export_failures</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"failed_ids.csv"</span><span class="p">,</span> <span class="n">failed</span><span class="p">)</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="s2"> failed id(s) to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">_write_export</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">chosen</span><span class="p">),</span> <span class="p">[],</span> <span class="n">failed</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_write_export</span><span class="p">(</span>
+    <span class="n">folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">succeeded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">failed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write the converted ids or the failures (off the event loop) into ``folder``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The written file, or ``None`` when there was nothing to write.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">succeeded</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">convert</span><span class="o">.</span><span class="n">export_ids</span><span class="p">,</span> <span class="n">folder</span> <span class="o">/</span> <span class="s2">"reencoded_ids.csv"</span><span class="p">,</span> <span class="n">succeeded</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">succeeded</span><span class="p">)</span><span class="si">}</span><span class="s2"> id(s) to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">convert</span><span class="o">.</span><span class="n">export_failures</span><span class="p">,</span> <span class="n">folder</span> <span class="o">/</span> <span class="s2">"failed_ids.csv"</span><span class="p">,</span> <span class="n">failed</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="s2"> failed id(s) to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_progress</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

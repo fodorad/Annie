@@ -543,11 +543,15 @@
 <span class="w">    </span><span class="sd">"""Load a config file by path, surfacing any error to the log + a toast."""</span>
     <span class="n">config_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">config_db</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+        <span class="c1"># Off the loop: type detection reads the label tables (CSV or Excel).</span>
+        <span class="n">loaded</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">datasets</span><span class="o">.</span><span class="n">load_config</span><span class="p">,</span> <span class="n">config_path</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - surface a bad config to the user</span>
         <span class="n">logbook</span><span class="o">.</span><span class="n">report_exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to load config: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
         <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not load config: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span>
         <span class="k">return</span>
+    <span class="k">if</span> <span class="n">loaded</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># the app is shutting down</span>
+    <span class="n">name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">config_db</span> <span class="o">=</span> <span class="n">loaded</span>
     <span class="k">await</span> <span class="n">_apply_registry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">registry</span><span class="p">,</span> <span class="n">config_db</span><span class="o">=</span><span class="n">config_db</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">config_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">datasets</span><span class="o">.</span><span class="n">remember_last_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
@@ -655,9 +659,8 @@
     <span class="k">if</span> <span class="n">keep_current</span><span class="p">:</span>
         <span class="c1"># Carry everything reviewed so far into the config's DB, so saving never looks</span>
         <span class="c1"># like it wiped the user's progress. Older progress in that DB is set aside, not lost.</span>
-        <span class="k">if</span> <span class="n">db_to_save</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-            <span class="n">_set_aside</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">copy_to</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
+        <span class="c1"># Off the loop: a database copy takes as long as the database is big.</span>
+        <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">_carry_progress</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="p">,</span> <span class="n">db_to_save</span><span class="p">)</span>
     <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">datasets</span><span class="o">.</span><span class="n">remember_last_config</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
@@ -690,6 +693,13 @@
     <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">ReviewStore</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">has_data</span><span class="p">():</span>
         <span class="k">return</span> <span class="s2">"ask"</span>
     <span class="k">return</span> <span class="s2">"copy"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_carry_progress</span><span class="p">(</span><span class="n">store</span><span class="p">:</span> <span class="n">ReviewStore</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Copy ``store`` into ``target``, setting any database already there aside first."""</span>
+    <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="n">_set_aside</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">copy_to</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_set_aside</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>

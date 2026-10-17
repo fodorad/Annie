@@ -416,11 +416,46 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clear_render_cache</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Delete all render clips, reset UI render boxes, return summary."""</span>
+<span class="w">    </span><span class="sd">"""Delete all render clips (blocking; run off the loop) and return a summary.</span>
+
+<span class="sd">    The Browse and Annotator render boxes are reset by :func:`_after_cleanup`.</span>
+<span class="sd">    """</span>
     <span class="n">_jobs</span><span class="p">,</span> <span class="n">files</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">clear_all</span><span class="p">()</span>
-    <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">annotator</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"Cleared </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s2"> rendered clip(s) — render boxes reset to default"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clean_up</span><span class="p">(</span><span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run the chosen clean-ups (blocking file deletes) and join their summaries."""</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">action</span><span class="p">()</span> <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">" · "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">"Nothing to clean up."</span>
+
+
+<div class="viewcode-block" id="cleanup_actions">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/settings/index.html#annie.pages.settings.cleanup_actions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cleanup_actions</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="n">_Space</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The clean-ups "Clean up all" runs: only those with something to remove."""</span>
+    <span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">space</span><span class="o">.</span><span class="n">old_logs</span><span class="p">:</span>
+        <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_clear_logs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">space</span><span class="o">.</span><span class="n">old_dbs</span><span class="p">:</span>
+        <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_clear_session_dbs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">space</span><span class="o">.</span><span class="n">render_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_clear_render_cache</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">actions</span></div>
+
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_cleanup</span><span class="p">(</span><span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run clean-ups off the event loop, report them, and re-measure the card."""</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">_clean_up</span><span class="p">,</span> <span class="n">actions</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># the app is shutting down</span>
+    <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">"info"</span><span class="p">)</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_clear_render_cache</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
+        <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="n">annotator</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_maintenance_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># None: measure again (not the old sizes)</span>
 
 
 <span class="c1"># ── UI ────────────────────────────────────────────────────────────────────────</span>
@@ -543,17 +578,12 @@
             <span class="n">ui</span><span class="o">.</span><span class="n">separator</span><span class="p">()</span>
 
             <span class="c1"># ── individual actions ────────────────────────────────────────</span>
-            <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span><span class="n">action_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ARG001</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">action_fn</span><span class="p">()</span>
-                <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">"info"</span><span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-                <span class="n">_maintenance_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
             <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-2 flex-wrap"</span><span class="p">):</span>
                 <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
                     <span class="s2">"Delete old logs"</span><span class="p">,</span>
                     <span class="n">icon</span><span class="o">=</span><span class="s2">"receipt_long"</span><span class="p">,</span>
-                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_run</span><span class="p">(</span><span class="n">_clear_logs</span><span class="p">,</span> <span class="s2">"logs"</span><span class="p">),</span>
+                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_run_cleanup</span><span class="p">([</span><span class="n">_clear_logs</span><span class="p">]),</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Remove </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">old_logs</span><span class="p">)</span><span class="si">}</span><span class="s2"> log file(s) from </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">logs_dir</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">set_enabled</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">old_logs</span><span class="p">))</span>
@@ -561,7 +591,7 @@
                 <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
                     <span class="s2">"Delete old session DBs"</span><span class="p">,</span>
                     <span class="n">icon</span><span class="o">=</span><span class="s2">"storage"</span><span class="p">,</span>
-                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_run</span><span class="p">(</span><span class="n">_clear_session_dbs</span><span class="p">,</span> <span class="s2">"dbs"</span><span class="p">),</span>
+                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_run_cleanup</span><span class="p">([</span><span class="n">_clear_session_dbs</span><span class="p">]),</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Remove </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">old_dbs</span><span class="p">)</span><span class="si">}</span><span class="s2"> session database(s) from </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">sessions_dir</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">set_enabled</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">old_dbs</span><span class="p">))</span>
@@ -569,7 +599,7 @@
                 <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
                     <span class="s2">"Clear render cache"</span><span class="p">,</span>
                     <span class="n">icon</span><span class="o">=</span><span class="s2">"movie"</span><span class="p">,</span>
-                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_run</span><span class="p">(</span><span class="n">_clear_render_cache</span><span class="p">,</span> <span class="s2">"renders"</span><span class="p">),</span>
+                    <span class="n">on_click</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">_run_cleanup</span><span class="p">([</span><span class="n">_clear_render_cache</span><span class="p">]),</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat"</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span>
                     <span class="s2">"Delete all rendered clips and reset Browse/Annotator render boxes"</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">set_enabled</span><span class="p">(</span><span class="n">render_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
@@ -578,18 +608,8 @@
 
             <span class="n">total</span> <span class="o">=</span> <span class="n">log_size</span> <span class="o">+</span> <span class="n">db_size</span> <span class="o">+</span> <span class="n">render_size</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">_clean_all</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">if</span> <span class="n">old_logs</span><span class="p">:</span>
-                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_clear_logs</span><span class="p">())</span>
-                <span class="k">if</span> <span class="n">old_dbs</span><span class="p">:</span>
-                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_clear_session_dbs</span><span class="p">())</span>
-                <span class="k">if</span> <span class="n">render_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_clear_render_cache</span><span class="p">())</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">" · "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">"Nothing to clean up."</span>
-                <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">"info"</span><span class="p">)</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-                <span class="n">_maintenance_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+            <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_clean_all</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">await</span> <span class="n">_run_cleanup</span><span class="p">(</span><span class="n">cleanup_actions</span><span class="p">(</span><span class="n">space</span><span class="p">))</span>
 
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Clean up all  (</span><span class="si">{</span><span class="n">_human_size</span><span class="p">(</span><span class="n">total</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>

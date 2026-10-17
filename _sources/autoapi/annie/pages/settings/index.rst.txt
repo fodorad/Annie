@@ -19,11 +19,17 @@ Functions
 
 .. autoapisummary::
 
+   annie.pages.settings.cleanup_actions
    annie.pages.settings.render
 
 
 Module Contents
 ---------------
+
+.. py:function:: cleanup_actions(space: _Space) -> list[collections.abc.Callable[[], str]]
+
+   The clean-ups "Clean up all" runs: only those with something to remove.
+
 
 .. py:function:: render() -> None
 
