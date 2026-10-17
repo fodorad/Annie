@@ -140,7 +140,8 @@ jobs:
         if (Test-Path "$desktop\Annie.lnk") { throw 'desktop shortcut created although unticked' }
         if (Test-Path $env:APP_ID_KEY) { throw 'Settings > Apps registry entry created' }
         $regAfter = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
-        $added = @($regAfter | Where-Object { $regBefore -notcontains $_ })
+        # Firefox on the runner (opened when Annie starts) writes its own key; never Annie's.
+        $added = @($regAfter | Where-Object { $regBefore -notcontains $_ -and $_ -notlike '*\Software\Mozilla*' })
         if ($added) { throw "setup added registry keys: $($added -join ', ')" }
         # The example datasets are ticked by default and go to the data folder.
         foreach ($f in 'config\mosei_mini.json', 'config\fi_mini.json', 'example\mosei_mini\label.csv') {
@@ -212,7 +213,7 @@ jobs:
         }
         if (Test-Path $env:APP_ID_KEY) { throw 'registry key left behind' }
         $regAfter = @(Get-ChildItem HKCU:\Software, 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | ForEach-Object Name)
-        $added = @($regAfter | Where-Object { $regBefore -notcontains $_ })
+        $added = @($regAfter | Where-Object { $regBefore -notcontains $_ -and $_ -notlike '*\Software\Mozilla*' })
         if ($added) { throw "registry keys left behind: $($added -join ', ')" }
         if (Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'annie\.desktop' }) { throw 'Annie still running' }
         if (-not (Test-Path $env:DATA)) { throw "silent uninstall must keep the user's work" }
