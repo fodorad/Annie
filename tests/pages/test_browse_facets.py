@@ -12,7 +12,7 @@ import unittest
 
 from nicegui import ui
 
-from annie.core.state import state
+from annie.app_state import state
 from annie.dataset.scanning import ScanResult
 from annie.pages import browse
 from tests.pages._nicegui import ui_client

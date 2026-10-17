@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from annie.core.config import settings
-from annie.media.color import hit_test
+from annie.core.models import hit_test
 from annie.parsers.participants import DEFAULT_KEY_COLUMN, DEFAULT_VALUE_COLUMN
 from annie.parsers.participants import (
     export_resolved as _export_resolved,

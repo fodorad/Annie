@@ -3,7 +3,7 @@
 Annie runs locally, so the browser and the filesystem are the same machine: the
 user can navigate the real directory tree and pick a folder (or a file) instead
 of typing its path. Thin NiceGUI views over the pure helpers in
-:mod:`annie.fsbrowse`.
+:mod:`annie.system.fsbrowse`.
 """
 
 from __future__ import annotations
@@ -14,14 +14,14 @@ from typing import TYPE_CHECKING
 from nicegui import background_tasks, run, ui
 
 from annie.core import theme
-from annie.pages.fsbrowse import (
+from annie.pages.utils import _alive
+from annie.system.fsbrowse import (
     drive_roots,
     other_drives,
     parent_of,
     resolve_start_dir,
     scan_entries,
 )
-from annie.pages.utils import _alive
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -84,7 +84,7 @@ async def _pick(start: str | Path | None, *, files: bool) -> str | None:
     The dialog opens immediately with a spinner; the directory listing — and even
     resolving the start directory — is read on a worker thread, so a slow or busy
     drive never blocks the dialog from appearing (see
-    :func:`annie.pages.fsbrowse.scan_entries`).
+    :func:`annie.system.fsbrowse.scan_entries`).
     """
     state: dict[str, Path | None] = {"path": None}
 

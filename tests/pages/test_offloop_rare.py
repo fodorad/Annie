@@ -9,9 +9,9 @@ from pathlib import Path
 
 from nicegui import core
 
+from annie.app_state import state
 from annie.core.config import settings
 from annie.core.models import VideoEntry
-from annie.core.state import state
 from annie.dataset import corrections, datasets
 from annie.dataset.scanning import ScanResult
 from annie.dataset.sources import CsvRole, DataSource, SourceKind, SourceRegistry

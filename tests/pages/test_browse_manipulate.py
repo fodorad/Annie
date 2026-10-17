@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import unittest
 
+from annie.app_state import state
 from annie.core.models import VideoEntry
-from annie.core.state import state
 from annie.dataset.manipulate import Transform
 from annie.dataset.scanning import ScanResult
 from annie.pages import browse

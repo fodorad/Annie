@@ -39,8 +39,8 @@ from typing import TYPE_CHECKING
 
 from nicegui import background_tasks, context, ui
 
+from annie.app_state import state
 from annie.core import logbook, theme
-from annie.core.state import state
 from annie.dataset import manipulate
 from annie.dataset.filtering import FilterSpec, apply_filters, drop_facets, source_facets
 from annie.media.decode import media_available
@@ -53,9 +53,9 @@ from annie.pages.folder_picker import pick_file
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.refresh import client_refreshable
-from annie.pages.reveal import is_docker, reveal
 from annie.pages.utils import DEBOUNCE, _alive, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
+from annie.system.reveal import is_docker, reveal
 
 if TYPE_CHECKING:
     from collections.abc import Callable

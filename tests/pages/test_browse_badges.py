@@ -7,8 +7,8 @@ from pathlib import Path
 
 from nicegui import ui
 
+from annie.app_state import state
 from annie.core.models import VideoEntry
-from annie.core.state import state
 from annie.pages import browse
 from tests.pages._nicegui import ui_client
 

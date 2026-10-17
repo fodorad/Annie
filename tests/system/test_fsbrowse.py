@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path, PureWindowsPath
 
-from annie.pages.fsbrowse import (
+from annie.system.fsbrowse import (
     drive_roots,
     list_files,
     list_subdirectories,

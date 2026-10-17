@@ -23,8 +23,8 @@ from typing import TYPE_CHECKING
 
 from nicegui import background_tasks, run, ui
 
+from annie.app_state import state
 from annie.core import theme
-from annie.core.state import state
 from annie.media import convert
 from annie.pages.folder_picker import pick_directory
 from annie.pages.utils import _alive

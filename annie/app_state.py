@@ -1,4 +1,9 @@
-"""Process-wide UI state shared across the NiceGUI tabs (service-facing glue).
+"""The composition root: the one place that wires the backend together for the UI.
+
+It sits above every package: it builds the source registry, the scan, the review store
+and the background services (rendering, conversion, previews) from :mod:`annie.dataset`,
+:mod:`annie.media` and :mod:`annie.parsers`, and the UI (:mod:`annie.pages`, ``app.py``)
+reaches them through :data:`state`. Nothing below it imports it.
 
 Holds the configured :class:`~annie.sources.SourceRegistry`, the cached scan
 manifest (Browse/Annotator are pure consumers of it), the review store, the render
@@ -78,7 +83,7 @@ def _review_state(record: ReviewRecord) -> ReviewState:
     )
 
 
-def _seed_registry() -> SourceRegistry:
+def seed_registry() -> SourceRegistry:
     """Build the initial registry from the ``ANNIE_*`` environment variables."""
     registry = SourceRegistry()
     if settings.videos_dir is not None:
@@ -144,7 +149,7 @@ class AppState:
             page can show it as busy.
     """
 
-    registry: SourceRegistry = field(default_factory=_seed_registry)
+    registry: SourceRegistry = field(default_factory=seed_registry)
     scan: ScanResult | None = None
     store: ReviewStore = field(default_factory=lambda: ReviewStore(settings.db_path))
     renderer: RenderService = field(default_factory=RenderService)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from annie.pages.reveal import is_docker, reveal_command
+from annie.system.reveal import is_docker, reveal_command
 
 
 class TestRevealCommand(unittest.TestCase):

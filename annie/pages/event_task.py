@@ -26,8 +26,8 @@ from typing import TYPE_CHECKING, Any
 from fastapi import Response
 from nicegui import app, context, run, ui
 
+from annie.app_state import state
 from annie.core import theme
-from annie.core.state import state
 from annie.dataset.events import (
     clamp_event,
     effective_attributes,

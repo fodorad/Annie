@@ -1,7 +1,7 @@
 """Incremental row paging shared by the Browse and Annotator tabs (UI helper).
 
 Both tabs render long lists of expensive rows — every row schedules a lazy frame
-decode — so they reveal only :attr:`annie.core.state.UiSettings.page_size` rows at a
+decode — so they reveal only :attr:`annie.app_state.UiSettings.page_size` rows at a
 time. This module owns that behaviour once:
 
 * :class:`Pager` is the pure, side-effect-free cursor: how many rows are shown, how
@@ -36,8 +36,8 @@ from typing import TYPE_CHECKING
 
 from nicegui import ui
 
+from annie.app_state import state
 from annie.core import theme
-from annie.core.state import state
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -145,7 +145,7 @@ def paged[T](
             Defaults to a vertical column; the Browse grid view passes a wrapping
             row so its boxes flow into a grid.
         page_size: Rows revealed per page. Defaults to
-            :attr:`annie.core.state.UiSettings.page_size`; the grid view reveals more.
+            :attr:`annie.app_state.UiSettings.page_size`; the grid view reveals more.
         jump_slot: Where to build the "Jump to row" card. When given, it is rendered
             into that (pre-existing, persistent) element — e.g. the Browse View
             panel — instead of inline above the rows. The slot is cleared first, so a

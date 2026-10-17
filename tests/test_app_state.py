@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from annie.app_state import AppState, UiSettings
 from annie.core.config import settings
-from annie.core.state import AppState, UiSettings
 from annie.dataset import datasets
 from annie.dataset.sources import DataSource, SourceKind, SourceRegistry
 from annie.dataset.storage import ReviewStore
