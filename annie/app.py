@@ -33,7 +33,7 @@ from annie.core.state import state
 from annie.media import decode
 from annie.media.decode import media_available
 from annie.media.preview import report_decode_failure
-from annie.pages import annotator, browse, convert, dataset, home, pending
+from annie.pages import annotator, browse, convert, dataset, home, pending, visibility
 from annie.pages import logs as logs_page
 from annie.pages import settings as settings_page
 from annie.pages.tabs import LazyTabs
@@ -131,8 +131,10 @@ def build() -> None:
             }
         )
     lazy.open("home")
+    visibility.show("home")
 
     def _on_tab_change(event) -> None:  # noqa: ANN001 - NiceGUI event args
+        visibility.show(event.value)  # key handlers and pollers run only on the shown tab
         if lazy.open(event.value):
             return  # just built: already current
         if event.value == "browse":
