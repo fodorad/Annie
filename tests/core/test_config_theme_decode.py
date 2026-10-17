@@ -2,55 +2,48 @@
 
 from __future__ import annotations
 
-import os
-import sys
 import unittest
 from pathlib import Path
-from unittest import mock
 
 from annie.core import theme
 from annie.core.config import Settings, _env_bool, _env_int, _env_path
 from annie.media import decode
 from annie.media.decode import media_available, strip_indices
+from tests.fixtures import env_vars, unimportable
 
 
 class TestConfig(unittest.TestCase):
     def test_env_path_expands_user_and_handles_empty(self) -> None:
-        with mock.patch.dict(os.environ, {"X_PATH": "~/data"}):
+        with env_vars(X_PATH="~/data"):
             self.assertEqual(_env_path("X_PATH"), Path.home() / "data")
-        with mock.patch.dict(os.environ, {"X_PATH": "  "}):
+        with env_vars(X_PATH="  "):
             self.assertIsNone(_env_path("X_PATH"))
 
     def test_env_int_falls_back_on_garbage(self) -> None:
-        with mock.patch.dict(os.environ, {"X_INT": "not-a-number"}):
+        with env_vars(X_INT="not-a-number"):
             self.assertEqual(_env_int("X_INT", 42), 42)
-        with mock.patch.dict(os.environ, {"X_INT": "7"}):
+        with env_vars(X_INT="7"):
             self.assertEqual(_env_int("X_INT", 42), 7)
 
     def test_env_bool_truthy_and_default(self) -> None:
         for truthy in ("1", "true", "TRUE", "yes", "on"):
-            with mock.patch.dict(os.environ, {"X_BOOL": truthy}):
+            with env_vars(X_BOOL=truthy):
                 self.assertTrue(_env_bool("X_BOOL"))
         for falsy in ("0", "false", "no", "off", "nonsense"):
-            with mock.patch.dict(os.environ, {"X_BOOL": falsy}):
+            with env_vars(X_BOOL=falsy):
                 self.assertFalse(_env_bool("X_BOOL"))
-        with mock.patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("X_BOOL", None)
+        with env_vars(X_BOOL=None):
             self.assertFalse(_env_bool("X_BOOL"))
             self.assertTrue(_env_bool("X_BOOL", default=True))
 
     def test_open_browser_defaults_off_and_reads_env(self) -> None:
-        with mock.patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("ANNIE_OPEN_BROWSER", None)
+        with env_vars(ANNIE_OPEN_BROWSER=None):
             self.assertFalse(Settings().open_browser)
-        with mock.patch.dict(os.environ, {"ANNIE_OPEN_BROWSER": "1"}):
+        with env_vars(ANNIE_OPEN_BROWSER="1"):
             self.assertTrue(Settings().open_browser)
 
     def test_settings_reads_env_overrides(self) -> None:
-        with mock.patch.dict(
-            os.environ,
-            {"ANNIE_VIDEO_DIR": "/tmp/vids", "ANNIE_PORT": "9999"},
-        ):
+        with env_vars(ANNIE_VIDEO_DIR="/tmp/vids", ANNIE_PORT="9999"):
             settings = Settings()
         self.assertEqual(settings.videos_dir, Path("/tmp/vids"))
         self.assertEqual(settings.port, 9999)
@@ -59,11 +52,7 @@ class TestConfig(unittest.TestCase):
         self.assertIn(".mp4", Settings().video_extensions)
 
     def test_db_defaults_to_annie_env_db_under_home(self) -> None:
-        with (
-            mock.patch.dict(os.environ, {"ANNIE_HOME": "/tmp/annie_home"}, clear=False),
-            mock.patch.dict(os.environ, {}, clear=False),
-        ):
-            os.environ.pop("ANNIE_DB_PATH", None)
+        with env_vars(ANNIE_HOME="/tmp/annie_home", ANNIE_DB_PATH=None):
             settings = Settings()
         # ANNIE_HOME is resolved, so the expectation is too: on macOS /tmp is itself a
         # symlink to /private/tmp. That resolution is deliberate — config-pinned DB paths
@@ -72,7 +61,7 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(settings.db_path_is_explicit)
 
     def test_annie_home_is_resolved(self) -> None:
-        with mock.patch.dict(os.environ, {"ANNIE_HOME": "/tmp/annie_home"}, clear=False):
+        with env_vars(ANNIE_HOME="/tmp/annie_home"):
             settings = Settings()
         self.assertEqual(settings.annie_home, Path("/tmp/annie_home").resolve())
         # logs/sessions/tmp all hang off the same resolved home.
@@ -80,7 +69,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(settings.sessions_dir.parent, settings.annie_home)
 
     def test_explicit_db_path_wins(self) -> None:
-        with mock.patch.dict(os.environ, {"ANNIE_DB_PATH": "/tmp/pinned.db"}):
+        with env_vars(ANNIE_DB_PATH="/tmp/pinned.db"):
             settings = Settings()
         self.assertEqual(settings.db_path, Path("/tmp/pinned.db"))
         self.assertTrue(settings.db_path_is_explicit)
@@ -131,15 +120,10 @@ class TestDecoderThatCannotLoad(unittest.TestCase):
     def setUp(self) -> None:
         decode._decoder_error = None
         self.addCleanup(setattr, decode, "_decoder_error", None)
-        # Pretend the extra is installed, and make importing its decoder fail.
-        patches = (
-            mock.patch.object(decode, "media_available", return_value=True),
-            mock.patch.object(decode, "ensure_windows_ffmpeg_dlls"),
-            mock.patch.dict(sys.modules, {"torchcodec": None, "torchcodec.decoders": None}),
-        )
-        for patch in patches:
-            patch.start()
-            self.addCleanup(patch.stop)
+        # A decoder backend that is installed but whose import fails.
+        backend = decode.use_decoder_backend(_failing_import)
+        backend.__enter__()
+        self.addCleanup(backend.__exit__, None, None, None)
 
     def test_decoding_raises_a_clear_error(self) -> None:
         with self.assertRaises(decode.MediaUnavailableError) as ctx:
@@ -153,10 +137,19 @@ class TestDecoderThatCannotLoad(unittest.TestCase):
         self.assertIsInstance(error, decode.MediaUnavailableError)
         self.assertEqual(decode.decoder_problem_found(), str(error))
 
+
+class TestMissingExtra(unittest.TestCase):
     def test_check_skips_a_missing_extra(self) -> None:
-        with mock.patch.object(decode, "media_available", return_value=False):
+        decode._decoder_error = None
+        with unimportable("torchcodec", "torchcodec.decoders"):
+            self.assertFalse(decode.media_available())
             self.assertIsNone(decode.check_decoder())
         self.assertIsNone(decode.decoder_problem_found())
+
+
+def _failing_import() -> type:
+    """A decoder backend whose import fails, as torchcodec's does without its DLLs."""
+    raise ImportError("DLL load failed while importing _core")
 
 
 class _FakeDecoder:
@@ -175,12 +168,9 @@ class TestDecoderWithoutFfmpeg(unittest.TestCase):
         decode._decoder_error = None
         self.addCleanup(setattr, decode, "_decoder_error", None)
         self.addCleanup(setattr, _FakeDecoder, "error", _FakeDecoder.error)
-        for patch in (
-            mock.patch.object(decode, "media_available", return_value=True),
-            mock.patch.object(decode, "_video_decoder_class", return_value=_FakeDecoder),
-        ):
-            patch.start()
-            self.addCleanup(patch.stop)
+        backend = decode.use_decoder_backend(lambda: _FakeDecoder)
+        backend.__enter__()
+        self.addCleanup(backend.__exit__, None, None, None)
 
     def test_opening_a_video_raises_one_decoder_wide_error(self) -> None:
         with self.assertRaises(decode.MediaUnavailableError) as ctx:

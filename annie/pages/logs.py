@@ -20,9 +20,8 @@ from annie import __version__
 from annie.core import bugreport, logbook, theme
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable
 
-if TYPE_CHECKING:
     from annie.core.logbook import LogEvent
 
 #: How many (filtered) events the table shows at once, newest first.
@@ -136,8 +135,17 @@ def _report(event: LogEvent, on_sent: Callable[[], None]) -> None:
     dialog.open()
 
 
-async def _send(event: LogEvent, note: str) -> tuple[bool, str]:
+async def _send(
+    event: LogEvent,
+    note: str,
+    post: Callable[[str], Awaitable[tuple[bool, str]]] | None = None,
+) -> tuple[bool, str]:
     """Send the report for ``event`` once, within the hourly limit.
+
+    Args:
+        event: The logged error.
+        note: What the user was doing.
+        post: Sends the report text (default: from the user's browser).
 
     Returns:
         Whether it is sent (also when it was already), and the message to show.
@@ -146,7 +154,8 @@ async def _send(event: LogEvent, note: str) -> tuple[bool, str]:
         return True, "This error was already reported."
     if not bugreport.can_send():
         return False, "Too many reports this hour — please try again later."
-    ok, reason = await _post_report(bugreport.build_report(event, note, version=__version__))
+    sender = _post_report if post is None else post
+    ok, reason = await sender(bugreport.build_report(event, note, version=__version__))
     if not ok:
         return False, f"The report could not be sent: {reason}"
     bugreport.mark_sent(event.seq)

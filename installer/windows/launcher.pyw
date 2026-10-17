@@ -739,11 +739,16 @@ def run_headless(work: Callable[[Reporter], object]) -> bool:
     return "fail" not in events
 
 
-def run_streaming(plan: Plan, work: Callable[[Reporter], object]) -> bool:
-    """Run ``work`` reporting to setup's window through stdout; return whether it worked."""
+def run_streaming(
+    plan: Plan, work: Callable[[Reporter], object], ui: StreamReporter | None = None
+) -> bool:
+    """Run ``work`` reporting to setup's window through stdout; return whether it worked.
+
+    ``ui`` defaults to a reporter writing to stdout (another one can collect the lines).
+    """
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(line_buffering=True)  # type: ignore[union-attr]
-    ui = StreamReporter(plan)
+    ui = StreamReporter(plan) if ui is None else ui
     ui.run_heartbeat()
     try:
         ok = work(ui) is not False

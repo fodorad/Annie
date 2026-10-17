@@ -34,6 +34,8 @@ if TYPE_CHECKING:
 
     from nicegui.events import ClickEventArguments
 
+    from annie.media.convert import ConvertProgress
+
 
 @dataclass(frozen=True, slots=True)
 class _Panel:
@@ -128,25 +130,28 @@ def _build_progress() -> None:
     panel = _Panel(title, bar, counts, times, failed, cancel)
     _panels[client.id] = panel
     client.on_delete(lambda: _panels.pop(client.id, None))
-    _render_panel(panel)
+    _render_panel(panel, state.converter.progress())
 
 
-def _render_progress() -> None:
-    """Update every open page's progress panel from the converter's current snapshot."""
+def _render_progress(progress: ConvertProgress | None = None) -> None:
+    """Update every open page's progress panel from one snapshot of the converter.
+
+    Args:
+        progress: The snapshot to show (default: the converter's current one).
+    """
+    snapshot = state.converter.progress() if progress is None else progress
     for client_id, panel in list(_panels.items()):
         if not _alive(panel.title):
             _panels.pop(client_id, None)
             continue
         try:
-            _render_panel(panel)
+            _render_panel(panel, snapshot)
         except RuntimeError:  # the panel was rebuilt/refreshed away mid-update
             _panels.pop(client_id, None)
 
 
-def _render_panel(panel: _Panel) -> None:
-    """Render the converter's current snapshot into one page's progress panel."""
-    p = state.converter.progress()
-
+def _render_panel(panel: _Panel, p: ConvertProgress) -> None:
+    """Render one converter snapshot into one page's progress panel."""
     if p.status == "idle":
         panel.title.set_text("No conversion running.")
         panel.bar.set_value(0.0)

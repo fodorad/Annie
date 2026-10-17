@@ -22,6 +22,8 @@ from collections import deque
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from annie.core.logbook import LogEvent
 
 REPORT_SUBJECT = "Annie bug report"
@@ -46,14 +48,22 @@ _sent: set[int] = set()  #: log event ``seq`` numbers reported in this process
 _recent: deque[float] = deque()  #: when the reports of the last hour were sent
 
 
-def access_key() -> str:
-    """The access key in use: ``ANNIE_REPORT_KEY`` if set, else :data:`ACCESS_KEY`."""
-    return os.environ.get("ANNIE_REPORT_KEY", "").strip() or ACCESS_KEY
+def access_key(environ: Mapping[str, str] | None = None, built_in: str | None = None) -> str:
+    """The access key in use: ``ANNIE_REPORT_KEY`` if set, else the built-in key.
+
+    Args:
+        environ: The environment to read (default: the process environment).
+        built_in: The key shipped with this release (default :data:`ACCESS_KEY`).
+    """
+    env = os.environ if environ is None else environ
+    return env.get("ANNIE_REPORT_KEY", "").strip() or (ACCESS_KEY if built_in is None else built_in)
 
 
-def reporting_available() -> bool:
-    """Whether reports can be sent (an access key is configured)."""
-    return bool(access_key())
+def reporting_available(
+    environ: Mapping[str, str] | None = None, built_in: str | None = None
+) -> bool:
+    """Whether reports can be sent (an access key is configured); see :func:`access_key`."""
+    return bool(access_key(environ, built_in))
 
 
 def build_report(event: LogEvent, note: str, *, version: str) -> str:
@@ -84,10 +94,10 @@ def build_report(event: LogEvent, note: str, *, version: str) -> str:
     return "\n".join(lines)
 
 
-def payload(text: str) -> dict[str, str]:
-    """The JSON body the form-to-email service expects."""
+def payload(text: str, key: str | None = None) -> dict[str, str]:
+    """The JSON body the form-to-email service expects (``key`` defaults to the key in use)."""
     return {
-        "access_key": access_key(),
+        "access_key": access_key() if key is None else key,
         "subject": REPORT_SUBJECT,
         "from_name": "Annie",
         "message": text,

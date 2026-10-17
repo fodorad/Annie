@@ -19,9 +19,12 @@ the Pillow-based overlay renderer in :mod:`annie.color` consumes.
 from __future__ import annotations
 
 import importlib.util
+import sys
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from annie.core.runtime import decoder_problem, ensure_windows_ffmpeg_dlls
 
@@ -39,10 +42,41 @@ class MediaUnavailableError(RuntimeError):
 def media_available() -> bool:
     """Return whether the optional torchcodec backend can be imported.
 
+    A ``None`` entry in :data:`sys.modules` is Python's own "this import is blocked"
+    marker; it counts as not installed.
+
     Returns:
         ``True`` if ``torchcodec`` is importable, ``False`` otherwise.
     """
+    if "torchcodec" in sys.modules and sys.modules["torchcodec"] is None:
+        return False
     return importlib.util.find_spec("torchcodec") is not None
+
+
+DecoderBackend = Callable[[], Any]
+"""Loads the video-decoder class (default: torchcodec's ``VideoDecoder``)."""
+
+_backend: DecoderBackend | None = None
+"""The decoder backend in use; ``None`` means torchcodec (see :func:`use_decoder_backend`)."""
+
+
+@contextmanager
+def use_decoder_backend(load: DecoderBackend) -> Generator[None]:
+    """Decode with another backend while the block runs (e.g. a fake decoder in tests).
+
+    The backend replaces torchcodec entirely, including the "is the extra installed"
+    check; whatever it raises is handled exactly like a torchcodec load failure.
+
+    Args:
+        load: Returns the decoder class, or raises ``ImportError``/``OSError`` when the
+            backend cannot load.
+    """
+    global _backend
+    previous, _backend = _backend, load
+    try:
+        yield
+    finally:
+        _backend = previous
 
 
 def _require_media() -> None:
@@ -65,9 +99,12 @@ def _video_decoder_class():  # noqa: ANN202 - external type
     the Visual C++ runtime on Windows. That surfaces as an ``OSError`` deep inside
     ``import torch``; callers get a :class:`MediaUnavailableError` saying what to do.
     """
-    _require_media()
-    ensure_windows_ffmpeg_dlls()  # Windows: FFmpeg's DLLs must be registered before import
+    if _backend is None:
+        _require_media()
+        ensure_windows_ffmpeg_dlls()  # Windows: FFmpeg's DLLs must be registered before import
     try:
+        if _backend is not None:
+            return _backend()
         from torchcodec.decoders import VideoDecoder  # local import: optional dependency
     except (ImportError, OSError) as exc:
         raise MediaUnavailableError(decoder_problem(exc)) from exc
@@ -82,7 +119,7 @@ def check_decoder() -> MediaUnavailableError | None:
         or the ``media`` extra is not installed (which is reported separately).
     """
     global _decoder_error
-    if not media_available():
+    if _backend is None and not media_available():
         return None
     try:
         # torchcodec loads FFmpeg (its core library) only when a decoder is created, and

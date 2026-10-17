@@ -1593,7 +1593,11 @@ async def _finalise(state_: _EventState) -> None:
         _capture_controls.refresh()
         return
     vid_id = videoclock.element_id(context.client.id)
-    seconds = await videoclock.current_time(vid_id)
+    _finalise_at(state_, category, await videoclock.current_time(vid_id))
+
+
+def _finalise_at(state_: _EventState, category: str, seconds: float | None) -> None:
+    """Close the armed event at ``seconds`` (the browser's video time) on ``category``."""
     frame = seconds_to_frame(float(seconds or 0.0), state_.fps)
     state_.playhead_frame = frame
     start = state_.pending_start if state_.pending_start is not None else frame
@@ -1870,37 +1874,38 @@ def _parse_timecode(text: str) -> float:
 def _keyboard(state_: _EventState) -> None:
     """Bind transport + marking keys; a fresh handler each rebuild (like segment review)."""
     vid_id = videoclock.element_id(context.client.id)
+    ui.keyboard(on_key=lambda event: _on_key(state_, vid_id, event))
 
-    def on_key(event: KeyEventArguments) -> None:
-        if not event.action.keydown or event.action.repeat:
-            return
-        key = event.key
-        if event.modifiers.shift and key.code.startswith("Digit"):
-            # Shift+1..9 choose an event category, Shift+0 none. Matched on the physical key,
-            # since Shift+1 types "!" on a US keyboard and something else on other layouts.
-            _set_event_type_by_ordinal(state_, int(key.code.removeprefix("Digit")) - 1)
-        elif key == " ":
-            videoclock.toggle(vid_id)
-        elif key.arrow_left and event.modifiers.shift:
-            videoclock.nudge_seconds(vid_id, -5)
-        elif key.arrow_right and event.modifiers.shift:
-            videoclock.nudge_seconds(vid_id, 5)
-        elif key.arrow_left or key == ",":
-            videoclock.step_frames(vid_id, -1, state_.fps)
-        elif key.arrow_right or key == ".":
-            videoclock.step_frames(vid_id, 1, state_.fps)
-        elif key == "i":
-            ui.timer(0.0, lambda: _arm_start(state_), once=True)
-        elif key == "o":
-            ui.timer(0.0, lambda: _finalise(state_), once=True)
-        elif key == "Escape":
-            if state_.pending_start is not None:
-                _cancel_pending(state_)
-        elif key == "Delete" or key == "Backspace":
-            _delete_event(state_)
-        elif str(key) in "123456789":
-            # Choose the active participant by lane position (1 = top). Ignored while a text
-            # field is focused, since the input consumes the keydown before it reaches here.
-            _set_active_by_ordinal(state_, int(str(key)) - 1)
 
-    ui.keyboard(on_key=on_key)
+def _on_key(state_: _EventState, vid_id: str, event: KeyEventArguments) -> None:
+    """Handle one key of the Event-annotation work area (transport, marking, choosing)."""
+    if not event.action.keydown or event.action.repeat:
+        return
+    key = event.key
+    if event.modifiers.shift and key.code.startswith("Digit"):
+        # Shift+1..9 choose an event category, Shift+0 none. Matched on the physical key,
+        # since Shift+1 types "!" on a US keyboard and something else on other layouts.
+        _set_event_type_by_ordinal(state_, int(key.code.removeprefix("Digit")) - 1)
+    elif key == " ":
+        videoclock.toggle(vid_id)
+    elif key.arrow_left and event.modifiers.shift:
+        videoclock.nudge_seconds(vid_id, -5)
+    elif key.arrow_right and event.modifiers.shift:
+        videoclock.nudge_seconds(vid_id, 5)
+    elif key.arrow_left or key == ",":
+        videoclock.step_frames(vid_id, -1, state_.fps)
+    elif key.arrow_right or key == ".":
+        videoclock.step_frames(vid_id, 1, state_.fps)
+    elif key == "i":
+        ui.timer(0.0, lambda: _arm_start(state_), once=True)
+    elif key == "o":
+        ui.timer(0.0, lambda: _finalise(state_), once=True)
+    elif key == "Escape":
+        if state_.pending_start is not None:
+            _cancel_pending(state_)
+    elif key == "Delete" or key == "Backspace":
+        _delete_event(state_)
+    elif str(key) in "123456789":
+        # Choose the active participant by lane position (1 = top). Ignored while a text
+        # field is focused, since the input consumes the keydown before it reaches here.
+        _set_active_by_ordinal(state_, int(str(key)) - 1)
