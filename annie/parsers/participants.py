@@ -62,9 +62,8 @@ def load_participants(
 
     A missing file resolves to an empty mapping (treated as "no corrections /
     no source yet") rather than raising, so resolution degrades cleanly. Rows
-    whose track-id value is blank or non-integer are skipped. The parsed file is
-    cached until it changes on disk (size or modification time), so a page rebuild
-    does not re-read it.
+    whose track-id value is blank or non-integer are skipped. Always reads the file
+    afresh: it backs read-modify-write updates (see :func:`set_active_track`).
 
     Args:
         path: Path to the protagonist CSV.
@@ -78,19 +77,8 @@ def load_participants(
     file = Path(path)
     if not file.is_file():
         return {}
-    stat = file.stat()
-    return dict(
-        _parse(str(file.resolve()), key_column, value_column, stat.st_mtime_ns, stat.st_size)
-    )
-
-
-@lru_cache(maxsize=16)
-def _parse(
-    path: str, key_column: str, value_column: str, _mtime_ns: int, _size: int
-) -> dict[str, int]:
-    """Parse a protagonist CSV; the stat fields only key the cache (see load_participants)."""
     mapping: dict[str, int] = {}
-    with Path(path).open(newline="", encoding="utf-8-sig") as handle:
+    with file.open(newline="", encoding="utf-8-sig") as handle:
         for row in csv.DictReader(handle):
             key = (row.get(key_column) or "").strip()
             raw = (row.get(value_column) or "").strip()
@@ -101,6 +89,37 @@ def _parse(
             except ValueError:
                 continue
     return mapping
+
+
+def load_source_participants(
+    path: str | Path,
+    key_column: str = DEFAULT_KEY_COLUMN,
+    value_column: str = DEFAULT_VALUE_COLUMN,
+) -> dict[str, int]:
+    """Like :func:`load_participants`, cached until the file changes on disk.
+
+    For the protagonist **source** file only, which Annie reads on every Protagonist
+    rebuild but never writes (corrections go to its ``_manual`` sibling). The cache is
+    keyed on size and modification time, which is not fine-grained enough for a file
+    rewritten in quick succession, so never use it for a file Annie updates.
+
+    Returns:
+        A fresh copy of the mapping (callers may change it).
+    """
+    file = Path(path)
+    if not file.is_file():
+        return {}
+    stat = file.stat()
+    key = (str(file.resolve()), key_column, value_column, stat.st_mtime_ns, stat.st_size)
+    return dict(_cached_source(*key))
+
+
+@lru_cache(maxsize=8)
+def _cached_source(
+    path: str, key_column: str, value_column: str, _mtime_ns: int, _size: int
+) -> dict[str, int]:
+    """Parse a source file once per (size, mtime); see :func:`load_source_participants`."""
+    return load_participants(path, key_column, value_column)
 
 
 def resolved_mapping(
