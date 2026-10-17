@@ -378,9 +378,8 @@
 
 <span class="sd">    A missing file resolves to an empty mapping (treated as "no corrections /</span>
 <span class="sd">    no source yet") rather than raising, so resolution degrades cleanly. Rows</span>
-<span class="sd">    whose track-id value is blank or non-integer are skipped. The parsed file is</span>
-<span class="sd">    cached until it changes on disk (size or modification time), so a page rebuild</span>
-<span class="sd">    does not re-read it.</span>
+<span class="sd">    whose track-id value is blank or non-integer are skipped. Always reads the file</span>
+<span class="sd">    afresh: it backs read-modify-write updates (see :func:`set_active_track`).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Path to the protagonist CSV.</span>
@@ -394,20 +393,8 @@
     <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">{}</span>
-    <span class="n">stat</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
-        <span class="n">_parse</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_mtime_ns</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span>
-    <span class="p">)</span></div>
-
-
-
-<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_parse</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_mtime_ns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">_size</span><span class="p">:</span> <span class="nb">int</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Parse a protagonist CSV; the stat fields only key the cache (see load_participants)."""</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8-sig"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8-sig"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">handle</span><span class="p">):</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="n">raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value_column</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -417,7 +404,39 @@
                 <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                 <span class="k">continue</span>
-    <span class="k">return</span> <span class="n">mapping</span>
+    <span class="k">return</span> <span class="n">mapping</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_source_participants</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_KEY_COLUMN</span><span class="p">,</span>
+    <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_VALUE_COLUMN</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Like :func:`load_participants`, cached until the file changes on disk.</span>
+
+<span class="sd">    For the protagonist **source** file only, which Annie reads on every Protagonist</span>
+<span class="sd">    rebuild but never writes (corrections go to its ``_manual`` sibling). The cache is</span>
+<span class="sd">    keyed on size and modification time, which is not fine-grained enough for a file</span>
+<span class="sd">    rewritten in quick succession, so never use it for a file Annie updates.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A fresh copy of the mapping (callers may change it).</span>
+<span class="sd">    """</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_mtime_ns</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_cached_source</span><span class="p">(</span><span class="o">*</span><span class="n">key</span><span class="p">))</span>
+
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_cached_source</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_mtime_ns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">_size</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse a source file once per (size, mtime); see :func:`load_source_participants`."""</span>
+    <span class="k">return</span> <span class="n">load_participants</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key_column</span><span class="p">,</span> <span class="n">value_column</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="resolved_mapping">

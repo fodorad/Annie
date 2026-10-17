@@ -391,7 +391,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.paging</span><span class="w"> </span><span class="kn">import</span> <span class="n">paged</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">notify_detached</span><span class="p">,</span> <span class="n">render_embed_ttl</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.viewport</span><span class="w"> </span><span class="kn">import</span> <span class="n">observe_row</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_participants</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.participants</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_source_participants</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
@@ -1599,7 +1599,7 @@
 
     <span class="c1"># The source-file (pre-manual) value per video, to mark the "(default)" option.</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">_protagonist_source</span><span class="p">()</span>
-    <span class="n">defaults</span> <span class="o">=</span> <span class="n">load_participants</span><span class="p">(</span><span class="o">*</span><span class="n">resolved</span><span class="p">)</span> <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="n">load_source_participants</span><span class="p">(</span><span class="o">*</span><span class="n">resolved</span><span class="p">)</span> <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
 
     <span class="n">can_decode</span> <span class="o">=</span> <span class="n">media_available</span><span class="p">()</span>
     <span class="n">paged</span><span class="p">(</span>

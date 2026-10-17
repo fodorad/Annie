@@ -379,9 +379,8 @@ the video id, written with the same two columns. Resolution order is
 <dd><p>Load a protagonist CSV into a <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">track_id</span></code> mapping.</p>
 <p>A missing file resolves to an empty mapping (treated as “no corrections /
 no source yet”) rather than raising, so resolution degrades cleanly. Rows
-whose track-id value is blank or non-integer are skipped. The parsed file is
-cached until it changes on disk (size or modification time), so a page rebuild
-does not re-read it.</p>
+whose track-id value is blank or non-integer are skipped. Always reads the file
+afresh: it backs read-modify-write updates (see <a class="reference internal" href="#annie.parsers.participants.set_active_track" title="annie.parsers.participants.set_active_track"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_active_track()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
