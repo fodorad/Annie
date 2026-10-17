@@ -33,7 +33,7 @@ from annie.core.state import state
 from annie.media import decode
 from annie.media.decode import media_available
 from annie.media.preview import report_decode_failure
-from annie.pages import annotator, browse, convert, dataset, home
+from annie.pages import annotator, browse, convert, dataset, home, pending
 from annie.pages import logs as logs_page
 from annie.pages import settings as settings_page
 
@@ -82,6 +82,8 @@ _TABS = (
 # by the scrollbar's width and visibly squeezes/shifts the header. Reserving the
 # gutter unconditionally keeps the header's width constant across every tab.
 ui.add_css("html { overflow-y: scroll; scrollbar-gutter: stable; }", shared=True)
+# The spinner overlay every still-loading pane shows (see annie.pages.pending).
+ui.add_css(pending.CSS, shared=True)
 
 
 def build() -> None:
