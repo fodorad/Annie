@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
@@ -342,7 +343,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">report_decode_failure</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">home</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">home</span><span class="p">,</span> <span class="n">pending</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">logs</span> <span class="k">as</span> <span class="n">logs_page</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">settings_page</span>
 
@@ -391,6 +392,8 @@
 <span class="c1"># by the scrollbar's width and visibly squeezes/shifts the header. Reserving the</span>
 <span class="c1"># gutter unconditionally keeps the header's width constant across every tab.</span>
 <span class="n">ui</span><span class="o">.</span><span class="n">add_css</span><span class="p">(</span><span class="s2">"html { overflow-y: scroll; scrollbar-gutter: stable; }"</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># The spinner overlay every still-loading pane shows (see annie.pages.pending).</span>
+<span class="n">ui</span><span class="o">.</span><span class="n">add_css</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">CSS</span><span class="p">,</span> <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="build">

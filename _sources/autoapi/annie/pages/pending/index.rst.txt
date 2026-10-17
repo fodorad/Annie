@@ -1,0 +1,125 @@
+annie.pages.pending
+===================
+
+.. py:module:: annie.pages.pending
+
+.. autoapi-nested-parse::
+
+   The pending slot: a box that shows a spinner until its content arrives (UI helper).
+
+   Every pane whose content Annie is still producing in the background — a decoding frame,
+   a rendering clip, a video being opened — shows a spinner in its box, so the page never
+   looks idle while work is under way. This module owns that look and its life cycle:
+
+   - :func:`pending` puts a centred spinner in a box. With ``keep=True`` the current
+     content stays visible, dimmed under the spinner (e.g. frames being redrawn for another
+     track).
+   - :func:`ready` swaps in the finished content; :func:`failed` shows an error icon whose
+     tooltip carries the reason.
+   - :func:`pending_badge` / :func:`settle_badge` do the same for a small tag such as
+     ``#frames``.
+
+   Each call is a no-op once the box (or its browser tab) is gone, so a background task that
+   finishes after a refresh or reload never has to guard the UI itself.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   annie.pages.pending.MEDIA_BOX
+   annie.pages.pending.CSS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.pages.pending.media_box
+   annie.pages.pending.is_pending
+   annie.pages.pending.pending
+   annie.pages.pending.ready
+   annie.pages.pending.failed
+   annie.pages.pending.pending_badge
+   annie.pages.pending.settle_badge
+
+
+Module Contents
+---------------
+
+.. py:data:: MEDIA_BOX
+   :value: 'position:relative;border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-c...
+
+
+   Style of the grey, centred media placeholder box (frames, ORIGINAL, render slots).
+
+.. py:data:: CSS
+   :value: '.annie-pending{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;...
+
+
+   Global CSS for the spinner overlay; registered once by the app at start-up.
+
+.. py:function:: media_box(width: int, height: int) -> nicegui.ui.element
+
+   Create an empty grey media box of a fixed CSS size.
+
+   :param width: Width in px.
+   :param height: Height in px.
+
+   :returns: The box, ready for :func:`pending` / :func:`ready`.
+
+
+.. py:function:: is_pending(box: nicegui.ui.element) -> bool
+
+   Whether ``box`` currently shows a pending spinner (``False`` once it is gone).
+
+
+.. py:function:: pending(box: nicegui.ui.element, *, keep: bool = False, size: str = 'md') -> None
+
+   Show a centred spinner in ``box`` until :func:`ready` or :func:`failed`.
+
+   Calling it again on a pending box changes nothing (no second spinner).
+
+   :param box: The box whose content is being produced.
+   :param keep: Keep the current content visible, dimmed under the spinner, instead of
+                emptying the box first.
+   :param size: Quasar spinner size (``"xs"`` … ``"xl"`` or a CSS length).
+
+
+.. py:function:: ready(box: nicegui.ui.element, build: collections.abc.Callable[[], object]) -> None
+
+   Replace the spinner (and any old content) with the finished content.
+
+   :param box: The pending box.
+   :param build: Builds the new content; called inside ``box``.
+
+
+.. py:function:: failed(box: nicegui.ui.element, reason: str) -> None
+
+   Replace the spinner with an error icon whose tooltip explains why.
+
+   :param box: The pending box.
+   :param reason: A short, user-readable cause (shown on hover).
+
+
+.. py:function:: pending_badge(text: str) -> nicegui.ui.element
+
+   Create a badge slot showing ``text`` with a small spinner, for a value not known yet.
+
+   :param text: The badge text while pending, e.g. ``"#frames"``.
+
+   :returns: The slot to pass to :func:`settle_badge` once the value is known.
+
+
+.. py:function:: settle_badge(slot: nicegui.ui.element, text: str, color: str = theme.NEUTRAL) -> None
+
+   Replace a pending badge with its final ``text`` (no spinner).
+
+   :param slot: The slot returned by :func:`pending_badge`.
+   :param text: The final text, e.g. ``"#frames: 120"`` or ``"audio: ?"``.
+   :param color: The badge colour.
+
+
