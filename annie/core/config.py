@@ -123,6 +123,8 @@ class Settings:
         vdet_extension: Suffix identifying a raw-detection file.
         track_glob: Glob identifying derived single-track files.
         render_max_workers: Maximum concurrent render jobs.
+        preview_max_workers: Maximum concurrent preview decodes (env
+            ``ANNIE_PREVIEW_WORKERS``; default: CPU count minus two, at least two).
         temp_ttl_seconds: Age after which a rendered clip is swept (default 3 minutes).
         host: Interface the NiceGUI server binds to.
         port: Port the NiceGUI server listens on.
@@ -159,6 +161,9 @@ class Settings:
     vdet_extension: str = ".vdet"
     track_glob: str = "*__track*.csv"
     render_max_workers: int = field(default_factory=lambda: _env_int("ANNIE_RENDER_WORKERS", 2))
+    preview_max_workers: int = field(
+        default_factory=lambda: _env_int("ANNIE_PREVIEW_WORKERS", max(2, (os.cpu_count() or 2) - 2))
+    )
     temp_ttl_seconds: int = field(default_factory=lambda: _env_int("ANNIE_TEMP_TTL", 180))
     host: str = field(default_factory=lambda: os.environ.get("ANNIE_HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: _env_int("ANNIE_PORT", 8080))
