@@ -78,6 +78,7 @@ from annie.media.rendering import JobStatus
 from annie.pages import event_task, pending
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
+from annie.pages.refresh import client_refreshable
 from annie.pages.utils import _alive, notify_detached, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
 from annie.parsers.participants import load_source_participants
@@ -214,10 +215,15 @@ def sync_tab() -> None:
             tab.props(add="disable")
 
 
-def update_availability() -> None:
-    """Sync the tab state and rebuild the body (runtime; needs the event loop)."""
+def update_availability(*, rebuild: bool = False) -> None:
+    """Sync the Annotator tab's enabled state after the queue changed.
+
+    The body is rebuilt only with ``rebuild`` (a change made inside the Annotator, which
+    is on screen); elsewhere it is rebuilt when its tab is next opened.
+    """
     sync_tab()
-    _content.refresh()
+    if rebuild:
+        _content.refresh()
 
 
 def _box_style(scale: float = 1.0) -> str:
@@ -439,7 +445,7 @@ def _dequeue(entry: VideoEntry, card: ui.card) -> None:
         card.delete()
         sync_tab()
     else:  # the queue just emptied — rebuild into the empty state and grey the tab
-        update_availability()
+        update_availability(rebuild=True)
 
 
 async def _clear_all() -> None:
@@ -472,7 +478,7 @@ async def _clear_all() -> None:
     client = context.client
     for entry in entries:
         state.store.set_annotate(entry.key, entry.video_id, None, value=False)
-    update_availability()
+    update_availability(rebuild=True)
     notify_detached(client, f"Cleared {len(entries)} rows from the queue", color=theme.PRIMARY)
 
 
@@ -822,7 +828,7 @@ def _jump_to_undecided(state_: _SegmentState) -> None:
         _segment_review_task.refresh()
 
 
-@ui.refreshable
+@client_refreshable
 def _segment_review_task() -> None:
     """The accept/drop Segment-review work area: one clip at a time, resumable.
 
@@ -1292,7 +1298,7 @@ def _protagonist_task() -> None:
     )
 
 
-@ui.refreshable
+@client_refreshable
 def _content() -> None:
     """Build the Annotator body: a task switch over the ready tasks, then the work area.
 
@@ -1335,6 +1341,13 @@ def render() -> None:
     _content()
 
 
-def refresh() -> None:
-    """Rebuild the Annotator body (after queueing changes or a tab open)."""
-    _content.refresh()
+def refresh(*, everywhere: bool = False) -> None:
+    """Rebuild the Annotator body (after queueing changes or a tab open).
+
+    Args:
+        everywhere: Rebuild it in every open tab (the dataset itself changed).
+    """
+    if everywhere:
+        _content.refresh_everywhere()
+    else:
+        _content.refresh()

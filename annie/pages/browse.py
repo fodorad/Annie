@@ -52,6 +52,7 @@ from annie.pages.csv_dialog import select_id_column
 from annie.pages.folder_picker import pick_file
 from annie.pages.lazy import schedule
 from annie.pages.paging import paged
+from annie.pages.refresh import client_refreshable
 from annie.pages.reveal import is_docker, reveal
 from annie.pages.utils import _alive, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
@@ -815,7 +816,7 @@ def _source_facets() -> set[str]:
     return source_facets(has_vdet=registry.vdet is not None, has_track=registry.track is not None)
 
 
-@ui.refreshable
+@client_refreshable
 def _filters() -> None:
     """Build the filter controls (rebuilt when a transform changes the facets)."""
     spec = _state().spec
@@ -1047,7 +1048,7 @@ def _view() -> None:
             ).props("outline dense").tooltip("Queue every video matching the current filter")
 
 
-@ui.refreshable
+@client_refreshable
 def _rows() -> None:
     """Build the filtered, paged rows (detailed) or boxes (grid)."""
     if state.scan is None:
@@ -1091,7 +1092,7 @@ def _jump_to_top() -> None:
         ).props("fab-mini color=primary").tooltip("Back to top")
 
 
-@ui.refreshable
+@client_refreshable
 def _content() -> None:
     """Build the Browse body: gate, Manipulate, Filter, rows, and jump-to-top."""
     with ui.column().classes("w-full gap-3"):
@@ -1130,6 +1131,13 @@ def render() -> None:
     _content()
 
 
-def refresh() -> None:
-    """Rebuild the Browse body (after a scan, source change, or tab open)."""
-    _content.refresh()
+def refresh(*, everywhere: bool = False) -> None:
+    """Rebuild the Browse body (after a scan, source change, or tab open).
+
+    Args:
+        everywhere: Rebuild it in every open tab (the dataset itself changed).
+    """
+    if everywhere:
+        _content.refresh_everywhere()
+    else:
+        _content.refresh()

@@ -18,6 +18,7 @@ from nicegui import ui
 
 from annie import __version__
 from annie.core import bugreport, logbook, theme
+from annie.pages.refresh import client_refreshable
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -224,7 +225,7 @@ def _row(event: LogEvent) -> None:
             ).tooltip("Details")
 
 
-@ui.refreshable
+@client_refreshable
 def _table() -> None:
     """Build the filtered event list."""
     events = _filtered()

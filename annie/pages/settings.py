@@ -20,6 +20,7 @@ from annie.core.config import settings
 from annie.core.state import state
 from annie.pages import annotator, browse, download
 from annie.pages.lazy import schedule
+from annie.pages.refresh import client_refreshable
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -158,7 +159,7 @@ def _maintenance_header() -> None:
         ui.label("Maintenance").classes("font-medium")
 
 
-@ui.refreshable
+@client_refreshable
 def _maintenance_section(space: _Space | None = None) -> None:
     """Maintenance card: space summary + targeted cleanup buttons.
 
