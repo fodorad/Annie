@@ -364,7 +364,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
@@ -389,7 +388,7 @@
     <span class="n">to_data_uri</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.rendering</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">event_task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">event_task</span><span class="p">,</span> <span class="n">pending</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.paging</span><span class="w"> </span><span class="kn">import</span> <span class="n">paged</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span><span class="p">,</span> <span class="n">notify_detached</span><span class="p">,</span> <span class="n">render_embed_ttl</span><span class="p">,</span> <span class="n">unembed_after_idle</span>
@@ -408,8 +407,6 @@
 <span class="c1">#: Every open page's Annotator tab element, by client id, so a change made in one page</span>
 <span class="c1">#: (queueing a video in Browse) enables or disables the tab in all of them.</span>
 <span class="n">_tabs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">tab</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="c1">#: Shared CSS for the grey, centred media placeholder box on each Annotator row.</span>
-<span class="n">_BOX</span> <span class="o">=</span> <span class="s2">"border-radius:8px;background:#e5e7eb;display:flex;align-items:center;justify-content:center"</span>
 
 <span class="c1">#: Per-client timer hosts, keyed by client id; cleaned up on disconnect in :func:`render`.</span>
 <span class="n">_timer_hosts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -555,7 +552,7 @@
 <span class="sd">        scale: Fraction of the configured row height to cap the box at.</span>
 <span class="sd">    """</span>
     <span class="n">cap</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">annotator_row_height</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"flex:1 1 0;min-width:0;aspect-ratio:16/9;max-height:</span><span class="si">{</span><span class="n">cap</span><span class="si">}</span><span class="s2">px;</span><span class="si">{</span><span class="n">_BOX</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"flex:1 1 0;min-width:0;aspect-ratio:16/9;max-height:</span><span class="si">{</span><span class="n">cap</span><span class="si">}</span><span class="s2">px;</span><span class="si">{</span><span class="n">pending</span><span class="o">.</span><span class="n">MEDIA_BOX</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_original_placeholder</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -636,7 +633,9 @@
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">/</span> <span class="mi">9</span><span class="p">),</span> <span class="n">height</span>
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_populate_strip</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">strip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">],</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_populate_strip</span><span class="p">(</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">strip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">],</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">keep</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Decode and draw the five annotated strip frames for ``entry`` (no thumbnail).</span>
 
 <span class="sd">    The ORIGINAL box is a separate lazy-embed placeholder now, so the strip only fills</span>
@@ -646,38 +645,44 @@
 <span class="sd">        entry: The video to preview (its ``active_track_id`` drives the green overlay).</span>
 <span class="sd">        strip: The five frame slots to fill.</span>
 <span class="sd">        scale: Row-height fraction for sizing the embedded frames.</span>
+<span class="sd">        keep: Keep the current frames visible, dimmed under the spinner, while the new</span>
+<span class="sd">            ones decode (a track change redraws the same video).</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">strip</span><span class="p">:</span>
         <span class="k">return</span>
+    <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">strip</span><span class="p">:</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">pending</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">await</span> <span class="n">strip</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">connected</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - client never connected / already gone</span>
         <span class="k">return</span>
+    <span class="k">await</span> <span class="n">_decode_strip</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_decode_strip</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">,</span> <span class="n">strip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">],</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Decode ``entry``'s five strip frames off the loop and swap them into ``strip``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        entry: The video to preview.</span>
+<span class="sd">        strip: The five (pending) frame slots.</span>
+<span class="sd">        scale: Row-height fraction for sizing the embedded frames.</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">build_preview</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the row</span>
         <span class="n">reason</span> <span class="o">=</span> <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">strip</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
-                <span class="k">continue</span>
-            <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the row was refreshed away</span>
-                <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"broken_image"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
+            <span class="n">pending</span><span class="o">.</span><span class="n">failed</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>  <span class="c1"># NiceGUI's io_bound yields None while the app is shutting down</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">strip</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">return</span>  <span class="c1"># the row was refreshed away mid-decode; skip the encoding</span>
     <span class="n">_thumbnail</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">result</span>
     <span class="n">box</span> <span class="o">=</span> <span class="n">_media_box</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">slot</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">strip</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="k">with</span> <span class="n">slot</span><span class="p">:</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">to_data_uri</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">box</span><span class="p">))</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_IMG</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-            <span class="k">return</span>  <span class="c1"># the row was refreshed away mid-decode</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">to_data_uri</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">box</span><span class="p">)</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">ready</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">u</span><span class="o">=</span><span class="n">uri</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_IMG</span><span class="p">))</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_watch_render</span><span class="p">(</span><span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">box</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">restore</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -694,15 +699,12 @@
             <span class="k">return</span>  <span class="c1"># page reloaded/closed; stop watching</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">output_path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_IMG</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">output_path</span>
+                <span class="n">pending</span><span class="o">.</span><span class="n">ready</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_IMG</span><span class="p">))</span>
                 <span class="n">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">restore</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="n">render_embed_ttl</span><span class="p">())</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">:</span>
-                <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"error"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">error</span> <span class="ow">or</span> <span class="s2">"render failed"</span><span class="p">)</span>
+                <span class="n">pending</span><span class="o">.</span><span class="n">failed</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">error</span> <span class="ow">or</span> <span class="s2">"render failed"</span><span class="p">)</span>
                 <span class="k">return</span>
         <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
             <span class="k">return</span>
@@ -824,9 +826,9 @@
             <span class="n">strip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_box_style</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
             <span class="n">render_box</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center justify-center"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_box_style</span><span class="p">())</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">repopulate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">repopulate</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">keep</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">preview_entry</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">active_track_id</span><span class="o">=</span><span class="n">selected</span><span class="p">[</span><span class="s2">"track"</span><span class="p">])</span>
-            <span class="n">schedule</span><span class="p">(</span><span class="n">_host</span><span class="p">(),</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_populate_strip</span><span class="p">(</span><span class="n">preview_entry</span><span class="p">,</span> <span class="n">strip</span><span class="p">))</span>
+            <span class="n">schedule</span><span class="p">(</span><span class="n">_host</span><span class="p">(),</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_populate_strip</span><span class="p">(</span><span class="n">preview_entry</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">))</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">unload_media</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Drop the decoded frames, restoring the placeholders the row started as."""</span>
@@ -835,9 +837,7 @@
                     <span class="n">slot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">do_render</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">render_box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="k">with</span> <span class="n">render_box</span><span class="p">:</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">)</span>
+            <span class="n">pending</span><span class="o">.</span><span class="n">pending</span><span class="p">(</span><span class="n">render_box</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">)</span>
             <span class="n">preview_entry</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">active_track_id</span><span class="o">=</span><span class="n">selected</span><span class="p">[</span><span class="s2">"track"</span><span class="p">])</span>
             <span class="n">job_id</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">preview_entry</span><span class="p">)</span>
             <span class="n">background_tasks</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
@@ -866,7 +866,7 @@
                 <span class="n">selected</span><span class="p">[</span><span class="s2">"track"</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                 <span class="n">entry</span><span class="o">.</span><span class="n">active_track_id</span> <span class="o">=</span> <span class="n">value</span>
                 <span class="n">_persist</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>  <span class="c1"># save to the session DB; Export writes the CSV</span>
-                <span class="n">repopulate</span><span class="p">()</span>  <span class="c1"># redraw the strip with the new green track</span>
+                <span class="n">repopulate</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># redraw with the new green track; old frames dim</span>
                 <span class="n">reset_render</span><span class="p">()</span>  <span class="c1"># the rendered clip is now stale</span>
 
             <span class="n">picker</span><span class="o">.</span><span class="n">on_value_change</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">on_pick</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
@@ -928,6 +928,9 @@
 <span class="c1">#: size, which only the browser knows — so a frame is never upscaled, just letterboxed</span>
 <span class="c1">#: down by ``object-fit`` when the row is narrower.</span>
 <span class="n">_BAND_MEDIA_BOX</span> <span class="o">=</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">_BAND_MEDIA_MAX_HEIGHT</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">/</span> <span class="mi">9</span><span class="p">),</span> <span class="n">_BAND_MEDIA_MAX_HEIGHT</span><span class="p">)</span>
+
+<span class="c1">#: A decoded band frame fills its (already sized) placeholder box, letterboxed.</span>
+<span class="n">_BAND_FRAME_STYLE</span> <span class="o">=</span> <span class="s2">"width:100%;height:100%;object-fit:contain"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_curation_row</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1006,9 +1009,7 @@
                 <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"movie_filter"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">NEUTRAL</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"no video to render"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">do_render</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">)</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">pending</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">)</span>
         <span class="n">job_id</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
         <span class="n">background_tasks</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">_watch_render</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">box</span><span class="p">,</span> <span class="n">reset</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"annie-curation-render"</span><span class="p">)</span>
 
@@ -1339,7 +1340,9 @@
         <span class="n">box</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span>
             <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center justify-center"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"height:</span><span class="si">{</span><span class="n">_SEGMENT_ORIGINAL_HEIGHT</span><span class="si">}</span><span class="s2">px;aspect-ratio:16/9;max-width:100%;</span><span class="si">{</span><span class="n">_BOX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">style</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"height:</span><span class="si">{</span><span class="n">_SEGMENT_ORIGINAL_HEIGHT</span><span class="si">}</span><span class="s2">px;aspect-ratio:16/9;max-width:100%;</span><span class="si">{</span><span class="n">pending</span><span class="o">.</span><span class="n">MEDIA_BOX</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
@@ -1436,19 +1439,32 @@
         <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"flex:</span><span class="si">{</span><span class="n">_BAND_STRIP_COUNT</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">_BAND_STRIP_COUNT</span><span class="si">}</span><span class="s2"> 0"</span><span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="k">with</span> <span class="n">row</span><span class="p">:</span>
+        <span class="n">slots</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"div"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_BAND_MEDIA_STYLE</span><span class="si">}</span><span class="s2">;</span><span class="si">{</span><span class="n">pending</span><span class="o">.</span><span class="n">MEDIA_BOX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_BAND_STRIP_COUNT</span><span class="p">)</span>
+        <span class="p">]</span>
+    <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">pending</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"sm"</span><span class="p">)</span>
+
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">frames</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span>
                 <span class="n">build_band_strip</span><span class="p">,</span> <span class="n">video_path</span><span class="p">,</span> <span class="n">band</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">band</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">_BAND_STRIP_COUNT</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad/missing file must not break the row</span>
-            <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">video_path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+                <span class="n">pending</span><span class="o">.</span><span class="n">failed</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
             <span class="k">return</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">frames</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">frames</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
             <span class="k">return</span>
-        <span class="k">with</span> <span class="n">row</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
-                <span class="n">ui</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">to_data_uri</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">_BAND_MEDIA_BOX</span><span class="p">))</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_BAND_MEDIA_STYLE</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">slot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slots</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">):</span>
+                <span class="n">uri</span> <span class="o">=</span> <span class="n">to_data_uri</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">_BAND_MEDIA_BOX</span><span class="p">)</span>
+                <span class="n">pending</span><span class="o">.</span><span class="n">ready</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">u</span><span class="o">=</span><span class="n">uri</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_BAND_FRAME_STYLE</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pending</span><span class="o">.</span><span class="n">ready</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="n">schedule</span><span class="p">(</span><span class="n">_host</span><span class="p">(),</span> <span class="n">draw</span><span class="p">)</span>
 
@@ -1461,7 +1477,11 @@
 <span class="sd">    band replays instantly. It takes one of the row's :data:`_BAND_MEDIA_COUNT` width</span>
 <span class="sd">    shares — the same as a single span frame — so the six read as one filmstrip.</span>
 <span class="sd">    """</span>
-    <span class="n">box</span> <span class="o">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center justify-center"</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_BAND_MEDIA_STYLE</span><span class="si">}</span><span class="s2">;</span><span class="si">{</span><span class="n">_BOX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">column</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center justify-center"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_BAND_MEDIA_STYLE</span><span class="si">}</span><span class="s2">;</span><span class="si">{</span><span class="n">pending</span><span class="o">.</span><span class="n">MEDIA_BOX</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -1469,23 +1489,16 @@
             <span class="n">ui</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">"clip"</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">"content_cut"</span><span class="p">,</span> <span class="n">on_click</span><span class="o">=</span><span class="n">play</span><span class="p">)</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"flat dense"</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">play</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"sm"</span><span class="p">)</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">pending</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"sm"</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">cut_clip</span><span class="p">,</span> <span class="n">video_path</span><span class="p">,</span> <span class="n">band</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">band</span><span class="o">.</span><span class="n">end</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad span/file must not break the row</span>
             <span class="n">logbook</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not cut clip for </span><span class="si">{</span><span class="n">video_path</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">band</span><span class="o">.</span><span class="n">start</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">band</span><span class="o">.</span><span class="n">end</span><span class="si">}</span><span class="s2">]: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">_alive</span><span class="p">(</span><span class="n">box</span><span class="p">):</span>
-                <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-                    <span class="n">ui</span><span class="o">.</span><span class="n">icon</span><span class="p">(</span><span class="s2">"error"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">DANGER</span><span class="p">)</span><span class="o">.</span><span class="n">tooltip</span><span class="p">(</span><span class="s2">"could not cut this span"</span><span class="p">)</span>
+            <span class="n">pending</span><span class="o">.</span><span class="n">failed</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="s2">"could not cut this span"</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_alive</span><span class="p">(</span><span class="n">box</span><span class="p">):</span>
             <span class="k">return</span>
-        <span class="n">box</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">box</span><span class="p">:</span>
-            <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">"width:100%;height:100%;object-fit:contain"</span><span class="p">)</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">ready</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">video</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">autoplay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">_BAND_FRAME_STYLE</span><span class="p">))</span>
         <span class="n">unembed_after_idle</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">reset</span><span class="p">)</span>
 
     <span class="n">reset</span><span class="p">()</span>
