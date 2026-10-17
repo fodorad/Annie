@@ -54,7 +54,7 @@ from annie.pages.lazy import schedule
 from annie.pages.paging import paged
 from annie.pages.refresh import client_refreshable
 from annie.pages.reveal import is_docker, reveal
-from annie.pages.utils import _alive, render_embed_ttl, unembed_after_idle
+from annie.pages.utils import DEBOUNCE, _alive, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
 
 if TYPE_CHECKING:
@@ -701,7 +701,11 @@ def _frames_filter(on_change: Callable[[], None]) -> None:
         .props("dense outlined")
         .classes("min-w-[9rem]")
     )
-    x_box = ui.number("X", value=spec.frames_threshold or 100, min=0, step=1).classes("w-24")
+    x_box = (
+        ui.number("X", value=spec.frames_threshold or 100, min=0, step=1)
+        .props(DEBOUNCE)
+        .classes("w-24")
+    )
 
     def apply() -> None:
         mode = preset.value
@@ -828,7 +832,7 @@ def _filters() -> None:
 
         name = (
             ui.input("name starts with", value=spec.name_prefix)
-            .props("dense outlined clearable")
+            .props(f"dense outlined clearable {DEBOUNCE}")
             .classes("min-w-[12rem]")
         )
         name.on_value_change(lambda e: (_set("name_prefix", e.value or ""), on_change()))
@@ -930,10 +934,12 @@ def _manip_row(column: str) -> None:
         kind_sel = ui.select(
             {k: manipulate.TRANSFORM_LABELS[k] for k in kinds}, value=current.kind
         ).props("dense outlined")
-        x_box = ui.number("X", value=current.threshold, step=0.5).classes("w-24")
+        x_box = ui.number("X", value=current.threshold, step=0.5).props(DEBOUNCE).classes("w-24")
         x_box.set_visibility(current.kind == "threshold")
-        digits_box = ui.number("Digits", value=current.digits, min=0, max=10, step=1).classes(
-            "w-24"
+        digits_box = (
+            ui.number("Digits", value=current.digits, min=0, max=10, step=1)
+            .props(DEBOUNCE)
+            .classes("w-24")
         )
         digits_box.set_visibility(current.kind == "round")
         original_box = (
