@@ -18,6 +18,10 @@ if TYPE_CHECKING:
     from nicegui import Client
 
 
+DEBOUNCE = "debounce=300"
+"""Quasar prop for typed filter inputs: apply the value 300 ms after the last keystroke."""
+
+
 def render_embed_ttl() -> float:
     """Idle-revert delay for an embedded *rendered* clip.
 

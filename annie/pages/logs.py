@@ -12,13 +12,15 @@ auto-dismissing toasts so a background failure is visible without watching the t
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from nicegui import ui
+from nicegui import context, ui
 
 from annie import __version__
 from annie.core import bugreport, logbook, theme
 from annie.pages.refresh import client_refreshable
+from annie.pages.utils import DEBOUNCE
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -28,8 +30,32 @@ if TYPE_CHECKING:
 #: How many (filtered) events the table shows at once, newest first.
 _MAX_ROWS = 300
 
-_level_filter = {"value": "all"}  #: active level filter (``"all"`` or a level name)
-_text_filter = {"value": ""}  #: active free-text substring filter
+
+@dataclass(slots=True)
+class LogFilter:
+    """One browser tab's Log filter.
+
+    Attributes:
+        level: ``"all"`` or a level name.
+        text: Free-text substring (matched against time, message and details).
+    """
+
+    level: str = "all"
+    text: str = ""
+
+
+#: Each browser tab's own filter, keyed by client id (dropped when the tab closes).
+_filters: dict[str, LogFilter] = {}
+
+
+def _filter() -> LogFilter:
+    """This tab's Log filter, created on first use and forgotten when the tab closes."""
+    client = context.client
+    if client.id not in _filters:
+        _filters[client.id] = LogFilter()
+        client.on_delete(lambda: _filters.pop(client.id, None))
+    return _filters[client.id]
+
 
 #: Log level → chip colour, mirroring the semantic palette in :mod:`annie.core.theme`.
 _LEVEL_COLOR = {
@@ -44,14 +70,14 @@ def _level_color(level: str) -> str:
     return _LEVEL_COLOR.get(level, theme.NEUTRAL)
 
 
-def _filtered() -> list[LogEvent]:
-    """Return the events passing the current filters, newest first, capped.
+def filtered(spec: LogFilter) -> list[LogEvent]:
+    """Return the events passing ``spec``, newest first, capped.
 
     The text filter matches the timestamp, message, and details — so a query like
     ``14:30`` or ``2026-06-26`` narrows by time as well as content.
     """
-    level = _level_filter["value"]
-    text = _text_filter["value"].strip().lower()
+    level = spec.level
+    text = spec.text.strip().lower()
     out: list[LogEvent] = []
     for event in reversed(logbook.LOG.events()):
         if level != "all" and event.level != level:
@@ -228,7 +254,7 @@ def _row(event: LogEvent) -> None:
 @client_refreshable
 def _table() -> None:
     """Build the filtered event list."""
-    events = _filtered()
+    events = filtered(_filter())
     total = logbook.LOG.latest_seq()
     ui.label(f"{len(events)} shown · {total} recorded").classes("text-xs").style(
         f"color:{theme.NEUTRAL}"
@@ -247,18 +273,26 @@ def render() -> None:
         with ui.row().classes("w-full items-center justify-end"):
             ui.button("Refresh", icon="refresh", on_click=_table.refresh).props("flat")
 
+        spec = _filter()
+
+        def set_level(value: str) -> None:
+            spec.level = value
+            _table.refresh()
+
+        def set_text(value: str | None) -> None:
+            spec.text = value or ""
+            _table.refresh()
+
         with ui.row().classes("items-center gap-3 wrap"):
             level = ui.select(
                 {"all": "all levels", "error": "errors", "warning": "warnings", "info": "info"},
-                value=_level_filter["value"],
+                value=spec.level,
             ).props("dense outlined")
-            level.on_value_change(lambda e: (_level_filter.update(value=e.value), _table.refresh()))
-            text = ui.input("filter text", value=_text_filter["value"]).props(
-                "dense outlined clearable"
+            level.on_value_change(lambda e: set_level(e.value))
+            text = ui.input("filter text", value=spec.text).props(
+                f"dense outlined clearable {DEBOUNCE}"
             )
-            text.on_value_change(
-                lambda e: (_text_filter.update(value=e.value or ""), _table.refresh())
-            )
+            text.on_value_change(lambda e: set_text(e.value))
             ui.button("Clear log", icon="delete_sweep", on_click=_clear).props("flat")
 
         _table()
