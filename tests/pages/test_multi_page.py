@@ -9,17 +9,20 @@ out (the Windows tray opens a new page on every "Open Annie").
 
 from __future__ import annotations
 
+import asyncio
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
-from nicegui import ui
+from nicegui import core, ui
 
+from annie.core.config import settings
 from annie.core.models import VideoEntry
 from annie.core.state import state
 from annie.dataset.scanning import ScanResult
+from annie.dataset.sources import SourceRegistry
 from annie.dataset.storage import ReviewStore
+from annie.media.convert import ConvertProgress
 from annie.pages import annotator, convert, dataset
 from tests.pages._nicegui import ui_client
 
@@ -32,7 +35,7 @@ class _AnnotatorTabCase(unittest.TestCase):
     """Open pages with an Annotator tab over a one-video dataset and an empty DB."""
 
     def setUp(self) -> None:
-        saved = (state.store, state.scan, dict(annotator._tabs))
+        saved = (state.store, state.scan, state.registry, dict(annotator._tabs))
         self.addCleanup(self._restore, saved)
         annotator._tabs.clear()
         # A real file: ReviewStore opens a connection per call.
@@ -40,14 +43,13 @@ class _AnnotatorTabCase(unittest.TestCase):
         state.store = ReviewStore(self.tmp / "annie.db")
         self.entry = VideoEntry(video_id="clip", video_path=self.tmp / "clip.mp4")
         state.scan = ScanResult(entries=[self.entry])
-        # No queue-free task is ready: only a queued video enables the tab.
-        patch = mock.patch.object(annotator, "_ready_tasks", return_value=[])
-        patch.start()
-        self.addCleanup(patch.stop)
+        # No sources configured, so no queue-free task is ready: only a queued video
+        # enables the tab.
+        state.registry = SourceRegistry()
 
     @staticmethod
     def _restore(saved: tuple) -> None:
-        state.store, state.scan, tabs = saved
+        state.store, state.scan, state.registry, tabs = saved
         annotator._tabs.clear()
         annotator._tabs.update(tabs)
 
@@ -109,56 +111,61 @@ class TestAnnotatorTabInEveryPage(_AnnotatorTabCase):
         self.assertEqual(annotator._tabs, {})
 
 
-class TestAnnotatorTabFollowsTheReviewDb(_AnnotatorTabCase):
+class TestAnnotatorTabFollowsTheReviewDb(_AnnotatorTabCase, unittest.IsolatedAsyncioTestCase):
     """The queue lives in the review DB: opening another DB must re-check the tab.
 
     It used to be checked only on the next Browse selection, so a DB that already had
     videos queued left the tab greyed out until a video was deselected and selected.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
-        # Rebuilding the Annotator and Persistence bodies needs NiceGUI's running loop
-        # and is not what is tested here; the tab check runs for real.
-        for refreshable in (annotator._content, dataset._persistence_section):
-            patch = mock.patch.object(refreshable, "refresh")
-            patch.start()
-            self.addCleanup(patch.stop)
+    async def asyncSetUp(self) -> None:
+        # The Annotator and Persistence bodies rebuild for real, on NiceGUI's loop.
+        saved_loop = core.loop
+        core.loop = asyncio.get_running_loop()
+        self.addCleanup(setattr, core, "loop", saved_loop)
+        saved_home = settings.annie_home
+        settings.annie_home = self.tmp / "home"  # new session DBs land here
+        self.addCleanup(setattr, settings, "annie_home", saved_home)
 
     def _db_with_the_video_queued(self) -> Path:
         path = self.tmp / "queued.db"
         ReviewStore(path).set_annotate(self.entry.key, self.entry.video_id, None, True)
         return path
 
-    def test_opening_a_db_with_queued_videos_enables_the_tab(self) -> None:
+    async def test_opening_a_db_with_queued_videos_enables_the_tab(self) -> None:
         stack: list = []
-        self.addCleanup(self._close_all, stack)
-        tab = self._page(stack)
-        self.assertTrue(_disabled(tab))
+        try:
+            tab = self._page(stack)
+            self.assertTrue(_disabled(tab))
 
-        dataset._select_existing_db(self._db_with_the_video_queued())
-        self.assertFalse(_disabled(tab))
+            dataset._select_existing_db(self._db_with_the_video_queued())
+            self.assertFalse(_disabled(tab))
 
-        dataset._select_existing_db(self.tmp / "empty.db")
-        self.assertTrue(_disabled(tab))
+            dataset._select_existing_db(self.tmp / "empty.db")
+            self.assertTrue(_disabled(tab))
+        finally:
+            self._close_all(stack)
 
-    def test_a_typed_db_path_is_re_checked_too(self) -> None:
+    async def test_a_typed_db_path_is_re_checked_too(self) -> None:
         stack: list = []
-        self.addCleanup(self._close_all, stack)
-        tab = self._page(stack)
-        dataset._ds().db_mode = "existing"
-        dataset._apply_db_path(str(self._db_with_the_video_queued()))
-        self.assertFalse(_disabled(tab))
+        try:
+            tab = self._page(stack)
+            dataset._ds().db_mode = "existing"
+            dataset._apply_db_path(str(self._db_with_the_video_queued()))
+            self.assertFalse(_disabled(tab))
+        finally:
+            self._close_all(stack)
 
-    def test_a_new_session_db_starts_without_a_queue(self) -> None:
+    async def test_a_new_session_db_starts_without_a_queue(self) -> None:
         stack: list = []
-        self.addCleanup(self._close_all, stack)
-        tab = self._page(stack)
-        dataset._select_existing_db(self._db_with_the_video_queued())
-        self.assertFalse(_disabled(tab))
-        with mock.patch.object(dataset, "_fresh_session_db_path", return_value=self.tmp / "new.db"):
+        try:
+            tab = self._page(stack)
+            dataset._select_existing_db(self._db_with_the_video_queued())
+            self.assertFalse(_disabled(tab))
             dataset._new_session_db()
-        self.assertTrue(_disabled(tab))
+            self.assertTrue(_disabled(tab))
+        finally:
+            self._close_all(stack)
 
 
 class TestConvertProgressInEveryPage(unittest.TestCase):
@@ -181,21 +188,10 @@ class TestConvertProgressInEveryPage(unittest.TestCase):
         second = self._page(stack)
         self.assertEqual(first.title.text, "No conversion running.")
 
-        running = mock.Mock(
-            status="running",
-            title="Video",
-            fraction=0.5,
-            done=1,
-            total=2,
-            succeeded_count=1,
-            failed=[],
-            current="b.mp4",
-            started_at=None,
-            elapsed=3.0,
-            eta_seconds=None,
+        running = ConvertProgress(
+            title="Video", total=2, done=1, current="b.mp4", succeeded=["a.mp4"], status="running"
         )
-        with mock.patch.object(state.converter, "progress", return_value=running):
-            convert._render_progress()
+        convert._render_progress(running)
         for panel in (first, second):
             self.assertEqual(panel.title.text, "Video — running")
             self.assertEqual(panel.bar.value, 0.5)

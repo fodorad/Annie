@@ -13,9 +13,9 @@ import threading
 import unittest
 import zipfile
 from pathlib import Path
-from unittest import mock
 
 from annie.core import runtime
+from tests.fixtures import env_vars, unimportable
 
 
 class TestFfmpegDllDir(unittest.TestCase):
@@ -226,7 +226,7 @@ class TestDecoderProblem(unittest.TestCase):
         self.assertNotIn("winget", message)
 
     def test_installed_is_detected_from_the_launcher(self) -> None:
-        with mock.patch.dict("os.environ", {"ANNIE_INSTALL_DIR": r"C:\Annie\App"}):
+        with env_vars(ANNIE_INSTALL_DIR=r"C:\Annie\App"):
             self.assertIn(runtime.INSTALLER_URL, runtime.decoder_problem(self._NO_FFMPEG, "win32"))
 
     _DLL_ERROR = OSError(
@@ -265,7 +265,7 @@ class TestTlsContext(unittest.TestCase):
         self.assertGreater(context.cert_store_stats()["x509_ca"], 0)
 
     def test_without_certifi_still_verifies(self) -> None:
-        with mock.patch.dict(sys.modules, {"certifi": None}):
+        with unimportable("certifi"):
             context = runtime._tls_context()
         self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
 

@@ -7,11 +7,15 @@ so tests exercise the parsers and scanner without touching the private dataset.
 
 from __future__ import annotations
 
+import os
+import sys
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from openpyxl import Workbook
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
     from pathlib import Path
 
 CSV_HEADER = (
@@ -113,3 +117,44 @@ def write_appledouble_junk(directory: Path, name: str) -> Path:
     path = directory / f"._{name}"
     path.write_bytes(b"\x00\x05\x16\x07")
     return path
+
+
+@contextmanager
+def env_vars(**values: str | None) -> Generator[None]:
+    """Set (or, with ``None``, remove) environment variables for the block, then restore.
+
+    A real change to the process environment, undone afterwards: what the code under
+    test reads is exactly what a user would set.
+    """
+    saved = dict(os.environ)
+    for name, value in values.items():
+        if value is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = value
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(saved)
+
+
+@contextmanager
+def unimportable(*names: str) -> Generator[None]:
+    """Make the named modules fail to import for the block (Python's ``None`` marker).
+
+    ``sys.modules[name] = None`` is how Python itself blocks an import; it makes
+    ``import name`` raise ``ImportError``, exactly as on a machine without the package.
+    """
+    missing = object()
+    saved = {name: sys.modules.get(name, missing) for name in names}
+    for name in names:
+        sys.modules[name] = None  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        for name, module in saved.items():
+            if module is missing:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = module  # type: ignore[assignment]

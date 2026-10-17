@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 _PATH = Path(__file__).resolve().parents[2] / "installer" / "windows" / "launcher.pyw"
 
@@ -141,11 +141,16 @@ class TestProgress(unittest.TestCase):
             self.assertEqual(ends[-1], 1.0)
 
 
+def _log_to_a_temp_file(case: unittest.TestCase) -> None:
+    """Point the launcher's install.log at a temp file (keeps it out of the repo)."""
+    saved = launcher.LOG
+    launcher.LOG = Path(tempfile.mkdtemp()) / "install.log"
+    case.addCleanup(setattr, launcher, "LOG", saved)
+
+
 class TestReporter(unittest.TestCase):
     def setUp(self) -> None:
-        patch = mock.patch.object(launcher, "log")  # keep install.log out of the repo
-        patch.start()
-        self.addCleanup(patch.stop)
+        _log_to_a_temp_file(self)
 
     def test_events_reach_the_window_in_order(self) -> None:
         reporter = launcher.Reporter()
@@ -216,9 +221,7 @@ class TestStreamReporter(unittest.TestCase):
     """Setup's window reads the launcher's stdout: @status, @progress and log lines."""
 
     def setUp(self) -> None:
-        patch = mock.patch.object(launcher, "log")
-        patch.start()
-        self.addCleanup(patch.stop)
+        _log_to_a_temp_file(self)
         self.lines: list[str] = []
 
     def _reporter(self) -> object:
@@ -254,11 +257,10 @@ class TestStreamReporter(unittest.TestCase):
         def broken(ui: object) -> None:
             raise RuntimeError("no network")
 
-        working, failing = self._reporter(), self._reporter()
-        with mock.patch.object(launcher, "StreamReporter", side_effect=[working, failing]):
-            self.assertTrue(launcher.run_streaming(launcher.SETUP, lambda ui: None))
-            self.assertEqual(self.lines[-1], "@progress 1000")
-            self.assertFalse(launcher.run_streaming(launcher.SETUP, broken))
+        ok = launcher.run_streaming(launcher.SETUP, lambda ui: None, self._reporter())
+        self.assertTrue(ok)
+        self.assertEqual(self.lines[-1], "@progress 1000")
+        self.assertFalse(launcher.run_streaming(launcher.SETUP, broken, self._reporter()))
         self.assertIn("ERROR: no network", self.lines)
 
 

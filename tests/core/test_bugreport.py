@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import unittest
 from datetime import datetime
-from unittest import mock
 
 from annie.core import bugreport
 from annie.core.logbook import LogEvent
+from tests.fixtures import env_vars
 
 
 def _event(seq: int = 7) -> LogEvent:
@@ -18,26 +18,20 @@ def _event(seq: int = 7) -> LogEvent:
 
 class TestAccessKey(unittest.TestCase):
     def test_off_without_a_key(self) -> None:
-        with (
-            mock.patch.object(bugreport, "ACCESS_KEY", ""),
-            mock.patch.dict("os.environ", {"ANNIE_REPORT_KEY": ""}),
-        ):
-            self.assertFalse(bugreport.reporting_available())
+        self.assertFalse(bugreport.reporting_available({"ANNIE_REPORT_KEY": ""}, built_in=""))
 
     def test_the_built_in_key(self) -> None:
-        with (
-            mock.patch.object(bugreport, "ACCESS_KEY", "built-in"),
-            mock.patch.dict("os.environ", {"ANNIE_REPORT_KEY": ""}),
-        ):
-            self.assertEqual(bugreport.access_key(), "built-in")
-            self.assertTrue(bugreport.reporting_available())
+        env = {"ANNIE_REPORT_KEY": ""}
+        self.assertEqual(bugreport.access_key(env, built_in="built-in"), "built-in")
+        self.assertTrue(bugreport.reporting_available(env, built_in="built-in"))
 
     def test_the_environment_overrides_it(self) -> None:
-        with (
-            mock.patch.object(bugreport, "ACCESS_KEY", "built-in"),
-            mock.patch.dict("os.environ", {"ANNIE_REPORT_KEY": " from-env "}),
-        ):
-            self.assertEqual(bugreport.access_key(), "from-env")
+        env = {"ANNIE_REPORT_KEY": " from-env "}
+        self.assertEqual(bugreport.access_key(env, built_in="built-in"), "from-env")
+
+    def test_the_process_environment_is_read_by_default(self) -> None:
+        with env_vars(ANNIE_REPORT_KEY="from-process"):
+            self.assertEqual(bugreport.access_key(), "from-process")
 
 
 class TestReportText(unittest.TestCase):
@@ -60,8 +54,7 @@ class TestReportText(unittest.TestCase):
         self.assertTrue(bugreport.build_report(event, "", version="1").endswith("(none)"))
 
     def test_payload_for_the_service(self) -> None:
-        with mock.patch.dict("os.environ", {"ANNIE_REPORT_KEY": "k"}):
-            body = bugreport.payload("text")
+        body = bugreport.payload("text", key="k")
         self.assertEqual(
             body,
             {

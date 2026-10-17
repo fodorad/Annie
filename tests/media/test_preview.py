@@ -9,7 +9,6 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 import numpy as np
 from PIL import Image
@@ -205,10 +204,7 @@ class TestReportDecodeFailure(unittest.TestCase):
             def __init__(self, path: str, seek_mode: str) -> None:
                 raise RuntimeError(long_error)
 
-        with (
-            mock.patch.object(decode, "media_available", return_value=True),
-            mock.patch.object(decode, "_video_decoder_class", return_value=NoFfmpeg),
-        ):
+        with decode.use_decoder_backend(lambda: NoFfmpeg):
             for i in range(10):
                 entry = VideoEntry(f"v{i}", video_path=Path(f"v{i}.mp4"))
                 try:

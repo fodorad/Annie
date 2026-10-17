@@ -13,7 +13,6 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest import mock
 
 from nicegui import core, ui
 from nicegui.events import KeyboardKey
@@ -246,14 +245,10 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
     # ── event categories ─────────────────────────────────────────────────────────
 
     async def _capture(self, seconds: float) -> EventRecord:
-        """Run _finalise with the browser's time stubbed; return the event it made."""
-        with (
-            ui_client(),
-            mock.patch.object(
-                event_task.videoclock, "current_time", mock.AsyncMock(return_value=seconds)
-            ),
-        ):
-            await event_task._finalise(self.state)  # noqa: SLF001
+        """Close the armed event at ``seconds`` (the browser's video time); return it."""
+        category = self.state.active_category or "events"
+        with ui_client():
+            event_task._finalise_at(self.state, category, seconds)  # noqa: SLF001
         got = state.store.get_event(self.state.selected_event or "")
         assert got is not None
         return got
@@ -288,15 +283,15 @@ class TestEventTaskLogic(unittest.IsolatedAsyncioTestCase):
 
     def _press(self, name: str, code: str, *, shift: bool) -> None:
         """Send one keydown through the page's real keyboard handler."""
-        with mock.patch.object(event_task.ui, "keyboard") as keyboard, ui_client():
-            event_task._keyboard(self.state)  # noqa: SLF001
-            on_key = keyboard.call_args.kwargs["on_key"]
-            on_key(
+        with ui_client():
+            event_task._on_key(  # noqa: SLF001
+                self.state,
+                "video",
                 SimpleNamespace(
                     action=SimpleNamespace(keydown=True, repeat=False),
                     key=KeyboardKey(name=name, code=code, location=0),
                     modifiers=SimpleNamespace(shift=shift),
-                )
+                ),
             )
 
     async def test_shift_digits_choose_the_event_category(self) -> None:
