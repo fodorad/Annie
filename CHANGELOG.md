@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.18.0](https://github.com/fodorad/Annie/compare/v1.17.1...v1.18.0) (2026-10-17)
+
+
+### Features
+
+* **annotator:** spinners while strips, band rows and clips load ([#88](https://github.com/fodorad/Annie/issues/88)) ([ec16c83](https://github.com/fodorad/Annie/commit/ec16c83795c3f63923233716c972fc89f0d3461f))
+* **ui:** show a spinner in every Browse pane that is still loading ([#85](https://github.com/fodorad/Annie/issues/85)) ([7ce8cba](https://github.com/fodorad/Annie/commit/7ce8cba1bf4a02202d8b71252602506ce7c97592))
+
+
+### Bug Fixes
+
+* **annotator:** never serve a stale protagonist mapping after a quick correction ([#95](https://github.com/fodorad/Annie/issues/95)) ([80e6071](https://github.com/fodorad/Annie/commit/80e60716467475e6f42aecef0b53468fd87c94bc))
+
+
+### Performance Improvements
+
+* **annotator:** load strips and band frames through the preview loader ([#91](https://github.com/fodorad/Annie/issues/91)) ([02ac22b](https://github.com/fodorad/Annie/commit/02ac22b93786bbfefc7d99ad3f7f42d75f299f5a))
+* **annotator:** open event-annotation videos off the event loop with a spinner ([#92](https://github.com/fodorad/Annie/issues/92)) ([56bd8f6](https://github.com/fodorad/Annie/commit/56bd8f63fe92997b340899f24d7c7cd2b1c7027f))
+* **dataset:** compute source facts during the scan, show scanning on metric cards ([#89](https://github.com/fodorad/Annie/issues/89)) ([521e086](https://github.com/fodorad/Annie/commit/521e086785a4ff9d305f2ea9a72e905d6a2b7617))
+* **dataset:** read the review states for a Browse filter pass in one query ([#94](https://github.com/fodorad/Annie/issues/94)) ([4f44a98](https://github.com/fodorad/Annie/commit/4f44a98e2b52a4a0664917ab84a55d9a1771d329))
+* **media:** bounded preview loader with cache, encoding off the event loop ([#90](https://github.com/fodorad/Annie/issues/90)) ([6e03ca5](https://github.com/fodorad/Annie/commit/6e03ca54020e509abeeac7ab2062f9e6b6e2c57e))
+* **ui:** keep table, conversion and maintenance reads off the event loop ([#93](https://github.com/fodorad/Annie/issues/93)) ([84d01d2](https://github.com/fodorad/Annie/commit/84d01d24a8c98ae755cedc9f08a248bcc3bdedb0))
+
 ## [1.17.1](https://github.com/fodorad/Annie/compare/v1.17.0...v1.17.1) (2026-10-17)
 
 
