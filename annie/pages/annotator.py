@@ -81,6 +81,7 @@ from annie.pages.paging import paged
 from annie.pages.refresh import client_refreshable
 from annie.pages.utils import _alive, notify_detached, render_embed_ttl, unembed_after_idle
 from annie.pages.viewport import observe_row
+from annie.pages.visibility import only_while_shown
 from annie.parsers.participants import load_source_participants
 
 if TYPE_CHECKING:
@@ -1029,7 +1030,7 @@ def _segment_keyboard(
         elif key == "d":
             _decide(clip.key, clip.video_id, "drop")
 
-    ui.keyboard(on_key=on_key)
+    only_while_shown(ui.keyboard(on_key=on_key), "annotator")
 
 
 def _clip_video_path(clip) -> Path | None:  # noqa: ANN001 - SegmentClip

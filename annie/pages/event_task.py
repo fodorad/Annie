@@ -44,6 +44,7 @@ from annie.pages import download, pending, timeline, videoclock
 from annie.pages.lazy import schedule
 from annie.pages.refresh import client_refreshable
 from annie.pages.timeline_view import TimelineView
+from annie.pages.visibility import only_while_shown
 from annie.parsers.csvmeta import short_name
 
 if TYPE_CHECKING:
@@ -526,7 +527,7 @@ def _start_playhead_poll(state_: _EventState, vid_id: str) -> None:
         if state_.pending_start is not None:
             _sync_pending_band(state_, svg_id)
 
-    ui.timer(_POLL_SECONDS, _tick)
+    only_while_shown(ui.timer(_POLL_SECONDS, _tick), "annotator")  # no polling while hidden
 
 
 def _jump_fields(state_: _EventState, vid_id: str) -> None:
@@ -1894,7 +1895,7 @@ def _parse_timecode(text: str) -> float:
 def _keyboard(state_: _EventState) -> None:
     """Bind transport + marking keys; a fresh handler each rebuild (like segment review)."""
     vid_id = videoclock.element_id(context.client.id)
-    ui.keyboard(on_key=lambda event: _on_key(state_, vid_id, event))
+    only_while_shown(ui.keyboard(on_key=lambda event: _on_key(state_, vid_id, event)), "annotator")
 
 
 def _on_key(state_: _EventState, vid_id: str, event: KeyEventArguments) -> None:
