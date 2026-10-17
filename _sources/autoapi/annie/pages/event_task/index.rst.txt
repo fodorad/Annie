@@ -32,6 +32,8 @@ Functions
 
    annie.pages.event_task.next_default_category_name
    annie.pages.event_task.cleanup
+   annie.pages.event_task.needs_metadata
+   annie.pages.event_task.load_metadata
    annie.pages.event_task.event_annotation_task
 
 
@@ -55,6 +57,27 @@ Module Contents
 .. py:function:: cleanup(client_id: str) -> None
 
    Drop a disconnected client's Event-annotation state and gesture handler flag.
+
+
+.. py:function:: needs_metadata(state_: _EventState, entry: annie.core.models.VideoEntry) -> bool
+
+   Whether ``entry``'s metadata still has to be read before its work area can be built.
+
+
+.. py:function:: load_metadata(state_: _EventState, entry: annie.core.models.VideoEntry) -> bool
+   :async:
+
+
+   Read ``entry``'s frame rate and length off the event loop and apply them.
+
+   A result that arrives after the reviewer moved on to another video is dropped, so
+   stepping quickly always ends on the video asked for last.
+
+   :param state_: The client's Event-annotation state.
+   :param entry: The video whose metadata to read.
+
+   :returns: ``True`` if ``state_`` now holds this video's metadata (or its read failed, which
+             is reported once), ``False`` if the read was stale, duplicate or not needed.
 
 
 .. py:function:: event_annotation_task() -> None

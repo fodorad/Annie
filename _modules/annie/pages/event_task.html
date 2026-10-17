@@ -330,11 +330,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">state</span>
@@ -350,7 +351,8 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.decode</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_available</span><span class="p">,</span> <span class="n">video_metadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.media.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">report_decode_failure</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">download</span><span class="p">,</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">download</span><span class="p">,</span> <span class="n">pending</span><span class="p">,</span> <span class="n">timeline</span><span class="p">,</span> <span class="n">videoclock</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.lazy</span><span class="w"> </span><span class="kn">import</span> <span class="n">schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.timeline_view</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimelineView</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.parsers.csvmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">short_name</span>
 
@@ -483,6 +485,10 @@
 <span class="sd">            the first category; ``None`` when the dataset has no categories yet.</span>
 <span class="sd">        active_event_type: The event category a newly-captured event is made with (its name,</span>
 <span class="sd">            colour and default attributes), or ``None`` for a plain event.</span>
+<span class="sd">        meta_key: The video whose metadata read has finished (successfully or not), so it</span>
+<span class="sd">            is not read again; ``None`` until the first read completes.</span>
+<span class="sd">        meta_loading: The video whose metadata is being read right now, so a rebuild</span>
+<span class="sd">            during the read does not start a second one.</span>
 <span class="sd">    """</span>
 
     <span class="n">row_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -501,6 +507,8 @@
     <span class="n">active_category</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">active_event_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">position</span><span class="p">:</span> <span class="n">_PositionFields</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">meta_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">meta_loading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_view</span><span class="p">()</span>
@@ -541,7 +549,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_video_if_needed</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VideoEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">VideoEntry</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Ensure ``state_`` points at a valid queued video and its metadata is loaded.</span>
+<span class="w">    </span><span class="sd">"""Ensure ``state_`` points at a valid queued video (its metadata loads separately).</span>
+
+<span class="sd">    Opening the video file to read its metadata is slow, so it is not done here: see</span>
+<span class="sd">    :func:`needs_metadata` and :func:`load_metadata`, which run it off the event loop.</span>
 
 <span class="sd">    Returns the current entry, or ``None`` when the queue is empty.</span>
 <span class="sd">    """</span>
@@ -550,8 +561,8 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">entry</span> <span class="o">=</span> <span class="n">entries</span><span class="p">[</span><span class="n">state_</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">==</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span> <span class="ow">and</span> <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">entry</span>  <span class="c1"># already loaded</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">==</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">entry</span>  <span class="c1"># already selected</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">video_id</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_id</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">selected_event</span> <span class="o">=</span> <span class="kc">None</span>
@@ -559,14 +570,6 @@
     <span class="n">state_</span><span class="o">.</span><span class="n">fps</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">media_available</span><span class="p">():</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">meta</span> <span class="o">=</span> <span class="n">video_metadata</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">)</span>
-            <span class="n">state_</span><span class="o">.</span><span class="n">fps</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span>
-            <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span>
-            <span class="n">state_</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad file must not break the tab</span>
-            <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">video_path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>  <span class="c1"># once per problem, not per video</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">reset_view</span><span class="p">()</span>
     <span class="c1"># Categories are DB-scoped (shared by every video of this dataset), not per-video. Seed</span>
     <span class="c1"># them from any pre-existing event track names (back-compat for the old single-lane model);</span>
@@ -579,6 +582,70 @@
     <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="n">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">entry</span>
+
+
+<div class="viewcode-block" id="needs_metadata">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.needs_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">needs_metadata</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether ``entry``'s metadata still has to be read before its work area can be built."""</span>
+    <span class="k">return</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">media_available</span><span class="p">()</span> <span class="ow">and</span> <span class="n">state_</span><span class="o">.</span><span class="n">meta_key</span> <span class="o">!=</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span></div>
+
+
+
+<div class="viewcode-block" id="load_metadata">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/event_task/index.html#annie.pages.event_task.load_metadata">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">load_metadata</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read ``entry``'s frame rate and length off the event loop and apply them.</span>
+
+<span class="sd">    A result that arrives after the reviewer moved on to another video is dropped, so</span>
+<span class="sd">    stepping quickly always ends on the video asked for last.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state_: The client's Event-annotation state.</span>
+<span class="sd">        entry: The video whose metadata to read.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if ``state_`` now holds this video's metadata (or its read failed, which</span>
+<span class="sd">        is reported once), ``False`` if the read was stale, duplicate or not needed.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">video_path</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">needs_metadata</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span> <span class="ow">or</span> <span class="n">state_</span><span class="o">.</span><span class="n">meta_loading</span> <span class="o">==</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">meta_loading</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">video_metadata</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a bad file must not break the tab</span>
+        <span class="n">report_decode_failure</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>  <span class="c1"># once per problem, not per video</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">meta_loading</span> <span class="o">==</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">:</span>
+            <span class="n">state_</span><span class="o">.</span><span class="n">meta_loading</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">state_</span><span class="o">.</span><span class="n">row_key</span> <span class="o">!=</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># the reviewer moved on while this read ran</span>
+    <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">fps</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">num_frames</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span>
+        <span class="n">state_</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">frames_to_seconds</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">meta_key</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">reset_view</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_load_then_rebuild</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">VideoEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the open video's metadata, then rebuild the work area around it."""</span>
+    <span class="k">if</span> <span class="k">await</span> <span class="n">load_metadata</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>  <span class="c1"># the tab was closed meanwhile</span>
+            <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_video_pending</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ui</span><span class="o">.</span><span class="n">element</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A spinner where the video goes, while its metadata is read; returns the box."""</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">video_height</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full justify-center"</span><span class="p">):</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">pending</span><span class="o">.</span><span class="n">media_box</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">/</span> <span class="mi">9</span><span class="p">),</span> <span class="n">height</span><span class="p">)</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="s2">"max-width:100%"</span><span class="p">)</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">pending</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"xl"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">box</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -620,6 +687,10 @@
         <span class="k">return</span>
 
     <span class="n">_toolbar</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">needs_metadata</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">_video_pending</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+        <span class="n">schedule</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_load_then_rebuild</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">entry</span><span class="p">))</span>
+        <span class="k">return</span>
     <span class="n">_keyboard</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
 
     <span class="c1"># A single layout: the top row splits into the video (with its transport) and the editor</span>

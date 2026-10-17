@@ -342,6 +342,12 @@ their own modules.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.cleanup" title="annie.pages.event_task.cleanup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cleanup</span></code></a>(→ None)</p></td>
 <td><p>Drop a disconnected client's Event-annotation state and gesture handler flag.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.needs_metadata" title="annie.pages.event_task.needs_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">needs_metadata</span></code></a>(→ bool)</p></td>
+<td><p>Whether <code class="docutils literal notranslate"><span class="pre">entry</span></code>'s metadata still has to be read before its work area can be built.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.load_metadata" title="annie.pages.event_task.load_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_metadata</span></code></a>(→ bool)</p></td>
+<td><p>Read <code class="docutils literal notranslate"><span class="pre">entry</span></code>'s frame rate and length off the event loop and apply them.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.event_annotation_task" title="annie.pages.event_task.event_annotation_task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">event_annotation_task</span></code></a>(→ None)</p></td>
 <td><p>Build the Event-annotation work area for the current queued video.</p></td>
 </tr>
@@ -375,6 +381,32 @@ and never a collision.</p>
 <dt class="sig sig-object py" id="annie.pages.event_task.cleanup">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/event_task.html#cleanup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.event_task.cleanup" title="Link to this definition">¶</a></dt>
 <dd><p>Drop a disconnected client’s Event-annotation state and gesture handler flag.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.event_task.needs_metadata">
+<span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">needs_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_EventState</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/models/index.html#annie.core.models.VideoEntry" title="annie.core.models.VideoEntry"><span class="pre">annie.core.models.VideoEntry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/event_task.html#needs_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.event_task.needs_metadata" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <code class="docutils literal notranslate"><span class="pre">entry</span></code>’s metadata still has to be read before its work area can be built.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.pages.event_task.load_metadata">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.pages.event_task.</span></span><span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_EventState</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/models/index.html#annie.core.models.VideoEntry" title="annie.core.models.VideoEntry"><span class="pre">annie.core.models.VideoEntry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/event_task.html#load_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.event_task.load_metadata" title="Link to this definition">¶</a></dt>
+<dd><p>Read <code class="docutils literal notranslate"><span class="pre">entry</span></code>’s frame rate and length off the event loop and apply them.</p>
+<p>A result that arrives after the reviewer moved on to another video is dropped, so
+stepping quickly always ends on the video asked for last.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – The client’s Event-annotation state.</p></li>
+<li><p><strong>entry</strong> – The video whose metadata to read.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">state_</span></code> now holds this video’s metadata (or its read failed, which
+is reported once), <code class="docutils literal notranslate"><span class="pre">False</span></code> if the read was stale, duplicate or not needed.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -446,6 +478,8 @@ and never a collision.</p>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#annie.pages.event_task.next_default_category_name"><code class="docutils literal notranslate"><span class="pre">next_default_category_name()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.event_task.cleanup"><code class="docutils literal notranslate"><span class="pre">cleanup()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.event_task.needs_metadata"><code class="docutils literal notranslate"><span class="pre">needs_metadata()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.event_task.load_metadata"><code class="docutils literal notranslate"><span class="pre">load_metadata()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.event_task.event_annotation_task"><code class="docutils literal notranslate"><span class="pre">event_annotation_task()</span></code></a></li>
 </ul>
 </li>
