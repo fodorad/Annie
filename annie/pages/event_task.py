@@ -394,18 +394,10 @@ def _toolbar(state_: _EventState, entries: list[VideoEntry]) -> None:
         ui.label(f"video {state_.index + 1} / {len(entries)} — {state_.video_id}").classes(
             "text-sm font-medium"
         )
-        entry = entries[state_.index]
-        for value in _layout_badges(entry):
-            ui.badge(value).props("outline")
-        for text, hint in _label_badges(entry):
-            badge = ui.badge(text, color=theme.LABEL_COLOR)
-            if hint:
-                badge.tooltip(hint)
         ui.button(icon="chevron_right", on_click=lambda: _step_video(state_, 1)).props(
             "flat round"
         ).tooltip("Next video")
-
-        ui.element("div").classes("flex-grow")
+        _video_tags(entries[state_.index])
 
         with ui.button("Export", icon="download").props("flat dense"), ui.menu():
             for scope, scope_label in (("video", "This video"), ("session", "All session")):
@@ -596,6 +588,20 @@ def _show_position(state_: _EventState) -> None:
 def _category_color(ordinal: int, override: str | None) -> str:
     """The lane colour for a category: its override, else the palette by ordinal."""
     return override or theme.event_track_color(ordinal)
+
+
+def _video_tags(entry: VideoEntry) -> None:
+    """The video's layout and label tags, packed tightly and wrapping within the toolbar.
+
+    They get their own row so a wrapped line is only a tag high, not a toolbar button high.
+    """
+    with ui.row().classes("flex-1 min-w-0 items-center gap-1 wrap"):
+        for value in _layout_badges(entry):
+            ui.badge(value).props("outline")
+        for text, hint in _label_badges(entry):
+            badge = ui.badge(text, color=theme.LABEL_COLOR)
+            if hint:
+                badge.tooltip(hint)
 
 
 @client_refreshable

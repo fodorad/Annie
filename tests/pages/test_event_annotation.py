@@ -618,6 +618,16 @@ class TestLayoutBadgesAndMeta(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(text.startswith("Text: word") and text.endswith("…"))
         self.assertEqual(hint, "word " * 20)
 
+    async def test_tags_share_one_tight_row_of_their_own(self) -> None:
+        with ui_client():
+            row = ui.row()
+            with row:
+                event_task._video_tags(self.entry)  # noqa: SLF001
+        (tags,) = row.default_slot.children
+        badges = [el.text for el in tags.default_slot.children if isinstance(el, ui.badge)]
+        self.assertEqual(badges[:3], ["g1", "a", "Other: z"])  # layout fields, then labels
+        self.assertIn("gap-1", tags.classes)  # a wrapped line is one tag high
+
     async def test_flat_folder_shows_every_label_tag(self) -> None:
         state.registry = SourceRegistry()
         state.registry.add(DataSource(SourceKind.VIDEO, self.root))
