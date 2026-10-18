@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.18.1](https://github.com/fodorad/Annie/compare/v1.18.0...v1.18.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **ui:** keep config loads, copies and exports off the event loop; refresh maintenance sizes ([#103](https://github.com/fodorad/Annie/issues/103)) ([073d1fa](https://github.com/fodorad/Annie/commit/073d1fa858b7848f3b7d39fd74895aba1c0206de))
+* **ui:** keep every open tab in sync after data-wide changes ([#107](https://github.com/fodorad/Annie/issues/107)) ([deb5e19](https://github.com/fodorad/Annie/commit/deb5e1930ce74ba732fa3494fda1d7f49d162bea))
+
+
+### Performance Improvements
+
+* **annotator:** run keyboard handlers and the playhead poll only while visible ([#102](https://github.com/fodorad/Annie/issues/102)) ([37bc5f0](https://github.com/fodorad/Annie/commit/37bc5f00b481162a0a2fd880848f490b5e4d2926))
+* **annotator:** update event annotation in place without resetting the video ([#101](https://github.com/fodorad/Annie/issues/101)) ([14f6d41](https://github.com/fodorad/Annie/commit/14f6d4136b5052db12dffee7e47a19068f979e1d))
+* **ui:** debounce filter inputs and make the Log filter per tab ([#100](https://github.com/fodorad/Annie/issues/100)) ([dcce5ca](https://github.com/fodorad/Annie/commit/dcce5ca841b68d20e91ff0410663976d45ba9ee3))
+* **ui:** redraw only the acting tab and build tabs on first open ([#98](https://github.com/fodorad/Annie/issues/98)) ([fc72873](https://github.com/fodorad/Annie/commit/fc72873bf45fd0d54050c944b9e7c90916776ec0))
+
 ## [1.18.0](https://github.com/fodorad/Annie/compare/v1.17.1...v1.18.0) (2026-10-17)
 
 
