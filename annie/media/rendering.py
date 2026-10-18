@@ -243,8 +243,9 @@ class RenderService:
                     files_deleted += 1
                 del self._jobs[job_id]
                 jobs_cleared += 1
+            # Snapshot under the lock: submit() may add jobs from another thread.
+            tracked = {job.output_path for job in self._jobs.values() if job.output_path}
         # Remove any orphaned mp4s not tracked by a current job.
-        tracked = {job.output_path for job in self._jobs.values() if job.output_path}
         for f in self.temp_dir.iterdir():
             if f.suffix == ".mp4" and f not in tracked:
                 f.unlink(missing_ok=True)

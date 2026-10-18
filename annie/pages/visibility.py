@@ -63,6 +63,7 @@ def only_while_shown[T: _Switchable](element: T, tab: str) -> T:
         The element, already switched to match the tab shown now.
     """
     cid = context.client.id
-    _members.setdefault(cid, []).append((tab, element))
+    live = [(name, el) for name, el in _members.get(cid, []) if not el.is_deleted]
+    _members[cid] = [*live, (tab, element)]  # rebuilds replace members: drop deleted ones
     element.active = _shown.get(cid, tab) == tab
     return element

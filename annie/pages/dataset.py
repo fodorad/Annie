@@ -46,7 +46,7 @@ from annie.dataset.sources import (
     task_readiness,
 )
 from annie.dataset.storage import ReviewStore
-from annie.pages import annotator, browse
+from annie.pages import annotator, browse, pending
 from annie.pages.csv_dialog import VIDEO_ID_TARGET, Targets, configure_table
 from annie.pages.folder_picker import pick_directory, pick_file
 from annie.pages.refresh import client_refreshable
@@ -115,7 +115,10 @@ def _switch_review_db(path: Path) -> None:
         path: The SQLite file to open (created if it does not exist).
     """
     state.set_store(path)
-    annotator.update_availability()
+    # Every tab now reads and writes the new DB: rebuild the views that show its contents.
+    annotator.sync_tab()
+    annotator.refresh(everywhere=True)
+    browse.refresh(everywhere=True)
 
 
 def _match_targets() -> Targets:
@@ -220,7 +223,7 @@ async def _apply_registry(
         ds.db_path_custom = str(config_db)
         state.set_store(config_db)
     await _apply_changes()
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
     counts = state.scan.counts if state.scan is not None else {}
     ui.notify(f"Loaded '{name}' — {counts.get('num_videos', 0)} videos", color=theme.PRIMARY)
 
@@ -262,7 +265,7 @@ async def _new_config() -> None:
     ds.session_db_path = str(fresh)
     state.set_store(fresh)
     await _apply_changes()
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
     ui.notify("New config — save it to keep your progress for next time.", color=theme.PRIMARY)
 
 
@@ -280,7 +283,7 @@ async def _env_config() -> None:
     ds.session_db_path = ""
     state.set_store(settings.db_path)
     await _apply_changes()
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
     ui.notify("Loaded from environment variables", color=theme.PRIMARY)
 
 
@@ -345,13 +348,18 @@ async def _save_current() -> None:
     if keep_current:
         # Carry everything reviewed so far into the config's DB, so saving never looks
         # like it wiped the user's progress. Older progress in that DB is set aside, not lost.
-        # Off the loop: a database copy takes as long as the database is big.
-        await run.io_bound(_carry_progress, state.store, db_to_save)
+        # Off the loop, behind a modal spinner: a copy takes as long as the database is big,
+        # and nothing in this tab may write to the old database meanwhile.
+        store = state.store
+        await pending.while_busy(
+            f"Saving your progress to {db_to_save.name}…",
+            lambda: _carry_progress(store, db_to_save),
+        )
     _switch_review_db(db_to_save)
     state.active_config = out.resolve()
     datasets.remember_last_config(out)
-    _config_section.refresh()
-    _persistence_section.refresh()
+    _config_section.refresh_everywhere()
+    _persistence_section.refresh_everywhere()
     ui.notify(f"Saved '{config_name}' → {out.name} (DB: {db_to_save.name})", color=theme.PRIMARY)
 
 
@@ -1012,7 +1020,7 @@ def _new_session_db() -> None:
     ds.session_db_path = str(fresh)
     _switch_review_db(fresh)
     ui.notify(f"New session DB: {fresh.name}", color=theme.PRIMARY)
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
 
 
 def _rename_session_db(new_str: str) -> None:
@@ -1042,7 +1050,7 @@ def _rename_session_db(new_str: str) -> None:
     ds.session_db_path = str(new)
     _switch_review_db(new)  # (re)creates the file if the move was a no-op
     ui.notify(f"Renamed session DB to {new.name}", color=theme.PRIMARY)
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
 
 
 def _select_existing_db(path: Path) -> None:
@@ -1052,7 +1060,7 @@ def _select_existing_db(path: Path) -> None:
     ds.db_path_custom = str(path)
     _switch_review_db(path)
     ui.notify(f"Review DB: {path.name}", color=theme.PRIMARY)
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
 
 
 def _apply_db_path(path_str: str) -> None:
@@ -1082,7 +1090,7 @@ def _apply_db_path(path_str: str) -> None:
     ds.db_path_custom = str(new)
     _switch_review_db(new)
     ui.notify(f"Review DB: {new.name}", color=theme.PRIMARY)
-    _persistence_section.refresh()
+    _persistence_section.refresh_everywhere()
 
 
 async def _pick_db_file() -> None:

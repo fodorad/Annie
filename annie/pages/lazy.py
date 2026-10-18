@@ -34,5 +34,7 @@ def schedule(host: ui.element, factory: Callable[[], Coroutine[Any, Any, None]])
     if core.loop is None:  # build time: no running loop yet
         with host:
             ui.timer(0.05, factory, once=True)
-    else:  # runtime: a tracked task has no parent slot to be deleted
-        background_tasks.create(factory(), name="annie-lazy")
+    else:
+        # Runtime: a tracked task (no parent slot to be deleted) that runs in the scheduling
+        # page's client context, so a refresh inside it redraws that page only.
+        background_tasks.create(factory(), name="annie-lazy", context=host.client)
