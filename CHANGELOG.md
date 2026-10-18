@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.18.2](https://github.com/fodorad/Annie/compare/v1.18.1...v1.18.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* **annotator:** keep the rows when the shown task is chosen again ([#110](https://github.com/fodorad/Annie/issues/110)) ([e1f8ffc](https://github.com/fodorad/Annie/commit/e1f8ffc10603b2e7e4a578643df61acb2b73156c))
+* **annotator:** pack the event-annotation video tags tightly ([#108](https://github.com/fodorad/Annie/issues/108)) ([2105fc2](https://github.com/fodorad/Annie/commit/2105fc225dfdd96b20f85b32c9a92ede9c5828c9))
+
 ## [1.18.1](https://github.com/fodorad/Annie/compare/v1.18.0...v1.18.1) (2026-10-18)
 
 
