@@ -13,6 +13,8 @@ on the one event loop.
   tab, as before.
 - :meth:`client_refreshable.refresh_everywhere` rebuilds every tab on purpose, for data that
   every open tab must show at once.
+- :meth:`client_refreshable.refresh_others` rebuilds every tab except the acting one, for a
+  data change whose acting tab will rebuild the view anyway when it next opens it.
 """
 
 from __future__ import annotations
@@ -52,15 +54,24 @@ class client_refreshable(refreshable):  # noqa: N801 - mirrors NiceGUI's decorat
         """Rebuild this view in every open tab (for data all tabs must show at once)."""
         return self._refresh_for(None, args, kwargs)
 
+    def refresh_others(self, *args: Any, **kwargs: Any) -> AwaitableResponse:
+        """Rebuild this view in every open tab except the acting one (all, outside a tab)."""
+        return self._refresh_for(_acting_client(), args, kwargs, exclude=True)
+
     def _refresh_for(
-        self, client: Client | None, args: tuple[Any, ...], kwargs: dict[str, Any]
+        self,
+        client: Client | None,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+        *,
+        exclude: bool = False,
     ) -> AwaitableResponse:
-        """Rebuild the targets of ``client`` (``None``: all), now or when awaited."""
+        """Rebuild the targets of ``client`` (``None``: all; ``exclude``: all but it)."""
         self.prune()
         instance = self.instance
 
         async def execute() -> None:
-            awaitables = self._rebuild(client, args, kwargs, instance=instance)
+            awaitables = self._rebuild(client, args, kwargs, instance=instance, exclude=exclude)
             if awaitables:
                 await asyncio.gather(*awaitables)
 
@@ -74,11 +85,12 @@ class client_refreshable(refreshable):  # noqa: N801 - mirrors NiceGUI's decorat
         kwargs: dict[str, Any],
         *,
         instance: Any,
+        exclude: bool = False,
     ) -> list[Awaitable[Any]]:
         """Run NiceGUI's rebuild over the chosen targets only."""
         everything = self.targets
         if client is not None:
-            self.targets = [t for t in everything if t.container.client is client]
+            self.targets = [t for t in everything if (t.container.client is client) != exclude]
         try:
             return self._execute_refresh(args, kwargs, instance=instance)
         finally:

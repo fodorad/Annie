@@ -21,7 +21,7 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
-from nicegui import ui
+from nicegui import run, ui
 
 from annie.core import theme
 from annie.pages.utils import _alive
@@ -144,3 +144,27 @@ def settle_badge(slot: ui.element, text: str, color: str = theme.NEUTRAL) -> Non
         color: The badge colour.
     """
     ready(slot, lambda: ui.badge(text, color=color))
+
+
+async def while_busy[T](message: str, work: Callable[[], T]) -> T | None:
+    """Run blocking ``work`` off the event loop behind a modal spinner showing ``message``.
+
+    The dialog is persistent (it cannot be dismissed), so the user cannot act in this tab
+    while the work runs, e.g. while a database is being copied.
+
+    Args:
+        message: What is happening, e.g. ``"Reading visits.xlsx…"``.
+        work: The blocking call, run on a worker thread.
+
+    Returns:
+        What ``work`` returned; ``None`` if the app is shutting down.
+    """
+    with ui.dialog().props("persistent") as dialog, ui.card().classes("items-center gap-3"):
+        ui.spinner(size="lg", color=theme.PRIMARY)
+        ui.label(message).classes("text-sm")
+    dialog.open()
+    try:
+        return await run.io_bound(work)
+    finally:
+        dialog.close()
+        dialog.delete()

@@ -22,12 +22,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nicegui import run, ui
+from nicegui import ui
 
 from annie.core import theme
 from annie.dataset.manipulate import detect_type
 from annie.dataset.scanning import join_summary
 from annie.dataset.sources import CsvRole, DataSource, SegmentationBand, SourceKind
+from annie.pages import pending
 from annie.parsers.csvmeta import (
     JoinSuggestion,
     distinct_column_values,
@@ -325,27 +326,15 @@ def _clash_message(sources: list[DataSource], taken: set[str]) -> str | None:
 
 
 async def reading[T](path: Path, read: Callable[[], T]) -> T | None:
-    """Run ``read`` off the event loop while a small dialog says the file is being read.
+    """Run ``read`` off the event loop while a small dialog says ``path`` is being read.
 
     Large tables and many-sheet workbooks take seconds to parse; the spinner shows the
     click was taken, and the UI stays responsive meanwhile.
 
-    Args:
-        path: The file being read (named in the dialog).
-        read: The blocking read to run on a worker thread.
-
     Returns:
         Whatever ``read`` returned; ``None`` if the app is shutting down.
     """
-    with ui.dialog().props("persistent") as dialog, ui.card().classes("items-center gap-3"):
-        ui.spinner(size="lg", color=theme.PRIMARY)
-        ui.label(f"Reading {path.name}…").classes("text-sm")
-    dialog.open()
-    try:
-        return await run.io_bound(read)
-    finally:
-        dialog.close()
-        dialog.delete()
+    return await pending.while_busy(f"Reading {path.name}…", read)
 
 
 @dataclass(frozen=True, slots=True)

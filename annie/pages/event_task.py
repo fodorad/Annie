@@ -602,8 +602,12 @@ def _category_color(ordinal: int, override: str | None) -> str:
 def _category_bar(state_: _EventState) -> None:
     """The Category block: participants on the left half, event categories on the right.
 
-    Both halves share one Manage dialog. On a narrow screen the halves stack.
+    Both halves share one Manage dialog. On a narrow screen the halves stack. The active
+    participant and event category are re-checked first: another tab may have renamed or
+    deleted them.
     """
+    _ensure_active_category(state_)
+    _ensure_active_event_type(state_)
     with ui.row().classes("w-full items-start gap-4 wrap"):
         with ui.row().classes("flex-1 min-w-[18rem] items-center gap-2 wrap"):
             _participant_chips(state_)
@@ -1525,10 +1529,13 @@ def _refresh_work_area(state_: _EventState) -> None:
     """Redraw the editor, the category bar and the timeline, keeping the ``<video>``.
 
     Rebuilding the whole task would recreate the video element, which the browser resets
-    to frame 0; these parts are everything an event edit can change.
+    to frame 0; these parts are everything an event edit can change. Events and categories
+    live in the review DB, so every open tab redraws its category bar and timeline; the
+    editor (this tab's selection) only here.
     """
     _editor.refresh()
-    _category_bar.refresh()
+    _category_bar.refresh_everywhere()
+    _timeline_surface.refresh_others()
     _refresh_timeline(state_, rebuild_scrollbar=True)
 
 
@@ -1573,6 +1580,7 @@ def _resize_video(state_: _EventState, delta: int) -> None:
     except ValueError:
         i = 1
     state_.video_height = heights[max(0, min(i + delta, len(heights) - 1))]
+    state_.restore_frame = state_.playhead_frame  # the rebuilt <video> starts at frame 0
     event_annotation_task.refresh()
 
 

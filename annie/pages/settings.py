@@ -104,7 +104,7 @@ def _clear_session_dbs() -> str:
 def _clear_render_cache() -> str:
     """Delete all render clips (blocking; run off the loop) and return a summary.
 
-    The Browse and Annotator render boxes are reset by :func:`_after_cleanup`.
+    The Browse and Annotator render boxes are reset afterwards by :func:`_run_cleanup`.
     """
     _jobs, files = state.renderer.clear_all()
     return f"Cleared {files} rendered clip(s) — render boxes reset to default"
@@ -135,9 +135,9 @@ async def _run_cleanup(actions: list[Callable[[], str]]) -> None:
         return  # the app is shutting down
     logbook.report(msg, level="info")
     ui.notify(msg, color=theme.PRIMARY)
-    if _clear_render_cache in actions:
-        browse.refresh()
-        annotator.refresh()
+    if _clear_render_cache in actions:  # every tab's render boxes pointed at the clips
+        browse.refresh(everywhere=True)
+        annotator.refresh(everywhere=True)
     _maintenance_section.refresh(None)  # None: measure again (not the old sizes)
 
 
