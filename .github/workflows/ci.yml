@@ -48,6 +48,9 @@ jobs:
         # default) and 2.11.0+cpu (CPU index).
         uv pip install --system --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match -e ".[all,dev,docs]"
 
+    - name: Install Chromium for the end-to-end tests
+      run: playwright install --with-deps chromium
+
     - name: Audit dependencies for vulnerabilities
       # Audits Annie's installed dependencies (uvx would audit its own isolated env).
       # Blocking: a known vulnerability fails the build; an accepted one is listed with
@@ -70,6 +73,7 @@ jobs:
         ANNIE_HOME: ${{ runner.temp }}/annie-home  # tests never touch a real Annie home
       run: |
         coverage run -m unittest discover -s tests -v
+        coverage combine
         coverage report
         coverage html
         coverage xml -o coverage.xml
@@ -119,11 +123,16 @@ jobs:
       run: installer/windows/fetch-deps.ps1 -OutDir "$env:RUNNER_TEMP\deps"
 
     - name: Install dependencies
-      run: uv pip install --system -e ".[all,dev]"
+      run: |
+        uv pip install --system -e ".[all,dev]"
+        playwright install chromium
 
-    - name: Unit tests
+    - name: Tests
       env:
         ANNIE_HOME: ${{ runner.temp }}/annie-home  # tests never touch a real Annie home
+        # Test data outside the hidden AppData folder, which Annie's folder picker (rightly)
+        # does not list, so the end-to-end tests can walk to it as a user would.
+        TMPDIR: ${{ runner.temp }}
       run: |
         # Only ANNIE_FFMPEG_LIB_DIR locates the DLLs (as in the installed app); PATH gets
         # ffmpeg/ffprobe for the subprocess-based convert/render tests.

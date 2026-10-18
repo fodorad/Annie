@@ -119,6 +119,16 @@ Tests live in `tests/` and mirror the `annie/` package structure. They use
 private MOSEI dataset. Tests that need `torchcodec`/FFmpeg skip gracefully when
 the `media` extra is not installed.
 
+Three levels, all run by `make test` (locally and in CI):
+
+- **Unit**: one module through its interface (`tests/core`, `tests/dataset`, …).
+- **Integration**: pages built on headless NiceGUI clients over a real dataset on
+  disk and a real review database (`tests/pages`).
+- **End to end**: Annie started as its own process (`python -m annie.app`) on a
+  throwaway home and driven in headless Chromium, as a user would (`tests/e2e`).
+  The server is measured by coverage too. `make dev` downloads Chromium; set
+  `ANNIE_E2E_HEADED=1` to watch the browser.
+
 ---
 
 ## Reporting bugs and requesting features

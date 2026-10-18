@@ -58,6 +58,8 @@ dev = [
   "ty",
   "coverage",
   "pre-commit",
+  # The end-to-end tests drive a real browser (tests/e2e); `make dev` fetches Chromium.
+  "playwright",
 ]
 docs = [
   "sphinx>=8.0",
@@ -116,6 +118,9 @@ convention = "google"
 
 [tool.coverage.run]
 source = ["annie"]
+# The end-to-end tests run Annie as its own process (python -m annie.app); measure it too.
+# Each process writes its own data file, so `coverage combine` runs before the report.
+patch = ["subprocess"]
 omit = [
   "*/tests/*",
   "*/__init__.py",
@@ -125,7 +130,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 81  # the floor measured in CI (fewer media tools than a dev machine); only ever raise it
+fail_under = 91  # the floor measured in CI (fewer media tools than a dev machine); only ever raise it
 show_missing = true
 skip_covered = false
 

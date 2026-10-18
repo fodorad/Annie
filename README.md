@@ -176,7 +176,7 @@ directly accessible from Finder / Explorer. Exported review CSVs land in
 | Extra | What it adds |
 |---|---|
 | `media` | torch, torchcodec — frame decoding & rendering |
-| `dev` | ruff, ty, coverage, pre-commit |
+| `dev` | ruff, ty, coverage, pre-commit, playwright (end-to-end tests) |
 | `docs` | sphinx, furo, sphinx-autoapi, myst-parser |
 | `all` | `media` |
 

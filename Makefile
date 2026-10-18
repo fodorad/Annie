@@ -25,6 +25,7 @@ install:
 
 dev:
 	uv pip install --python "$(PYTHON)" -e ".[all,dev]"
+	python -m playwright install chromium
 
 upgrade:
 	uv pip install --python "$(PYTHON)" --upgrade -e ".[all,dev,docs]"
@@ -47,9 +48,15 @@ lint:
 type-check:
 	uv tool run ty check annie --python "$(PYTHON)"
 
-# Tests run against a throwaway Annie home, never the user's ~/.annie.
+# Tests run in a scratch folder removed afterwards: a throwaway Annie home (never the user's
+# ~/.annie) and their own TMPDIR, so the temp files they create never pile up. They include
+# the end-to-end tests (tests/e2e), which drive Annie in headless Chromium (`make dev` gets it).
 test:
-	ANNIE_HOME="$$(mktemp -d)" uv run coverage run -m unittest discover -s tests
+	scratch="$$(mktemp -d)" && mkdir "$$scratch/home" "$$scratch/tmp" && \
+	ANNIE_HOME="$$scratch/home" TMPDIR="$$scratch/tmp" \
+	uv run coverage run -m unittest discover -s tests; \
+	status=$$?; rm -rf "$$scratch"; exit $$status
+	uv run coverage combine
 	uv run coverage report
 	uv run coverage html
 	uv run coverage xml -o coverage.xml
