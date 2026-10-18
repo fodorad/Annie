@@ -130,7 +130,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 90  # the floor measured in CI (fewer media tools than a dev machine); only ever raise it
+fail_under = 91  # the floor measured in CI (fewer media tools than a dev machine); only ever raise it
 show_missing = true
 skip_covered = false
 

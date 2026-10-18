@@ -130,6 +130,9 @@ jobs:
     - name: Tests
       env:
         ANNIE_HOME: ${{ runner.temp }}/annie-home  # tests never touch a real Annie home
+        # Test data outside the hidden AppData folder, which Annie's folder picker (rightly)
+        # does not list, so the end-to-end tests can walk to it as a user would.
+        TMPDIR: ${{ runner.temp }}
       run: |
         # Only ANNIE_FFMPEG_LIB_DIR locates the DLLs (as in the installed app); PATH gets
         # ffmpeg/ffprobe for the subprocess-based convert/render tests.
