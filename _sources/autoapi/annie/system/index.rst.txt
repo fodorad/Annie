@@ -1,0 +1,21 @@
+annie.system
+============
+
+.. py:module:: annie.system
+
+.. autoapi-nested-parse::
+
+   Operating-system integration with no UI: file-system browsing and "show in folder".
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/annie/system/fsbrowse/index
+   /autoapi/annie/system/reveal/index
+
+

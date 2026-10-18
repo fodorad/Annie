@@ -1,7 +1,7 @@
-annie.pages.reveal
-==================
+annie.system.reveal
+===================
 
-.. py:module:: annie.pages.reveal
+.. py:module:: annie.system.reveal
 
 .. autoapi-nested-parse::
 
@@ -25,9 +25,9 @@ Functions
 
 .. autoapisummary::
 
-   annie.pages.reveal.is_docker
-   annie.pages.reveal.reveal_command
-   annie.pages.reveal.reveal
+   annie.system.reveal.is_docker
+   annie.system.reveal.reveal_command
+   annie.system.reveal.reveal
 
 
 Module Contents

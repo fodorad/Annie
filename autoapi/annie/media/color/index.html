@@ -204,13 +204,13 @@
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../../../index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html">annie</a><input aria-label="Toggle navigation of annie" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../../app/index.html">annie.app</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../app_state/index.html">annie.app_state</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../core/bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/models/index.html">annie.core.models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/runtime/index.html">annie.core.runtime</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../core/state/index.html">annie.core.state</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../core/theme/index.html">annie.core.theme</a></li>
 </ul>
 </li>
@@ -249,14 +249,12 @@
 <li class="toctree-l4"><a class="reference internal" href="../../pages/download/index.html">annie.pages.download</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/pending/index.html">annie.pages.pending</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/refresh/index.html">annie.pages.refresh</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../pages/timeline/index.html">annie.pages.timeline</a></li>
@@ -274,6 +272,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/vdet/index.html">annie.parsers.vdet</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../parsers/workbook/index.html">annie.parsers.workbook</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../system/index.html">annie.system</a><input aria-label="Toggle navigation of annie.system" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../system/fsbrowse/index.html">annie.system.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../system/reveal/index.html">annie.system.reveal</a></li>
 </ul>
 </li>
 </ul>
@@ -370,9 +373,6 @@ colour.</p></li>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.color.draw_overlay" title="annie.media.color.draw_overlay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">draw_overlay</span></code></a>(→ PIL.Image.Image)</p></td>
 <td><p>Draw all boxes (and their track-id labels) for one frame.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.color.hit_test" title="annie.media.color.hit_test"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hit_test</span></code></a>(→ int | None)</p></td>
-<td><p>Return the <code class="docutils literal notranslate"><span class="pre">track_id</span></code> of the box under a click, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -460,30 +460,6 @@ frame (the input array is not modified).</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="annie.media.color.hit_test">
-<span class="sig-prename descclassname"><span class="pre">annie.media.color.</span></span><span class="sig-name descname"><span class="pre">hit_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">click_xy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/models/index.html#annie.core.models.FrameAnnotation" title="annie.core.models.FrameAnnotation"><span class="pre">annie.core.models.FrameAnnotation</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">smallest_wins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/media/color.html#hit_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.media.color.hit_test" title="Link to this definition">¶</a></dt>
-<dd><p>Return the <code class="docutils literal notranslate"><span class="pre">track_id</span></code> of the box under a click, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-<p>Used by the protagonist correction flow: the click is tested against every
-box on the frame. When boxes overlap, the smallest enclosing box wins by
-default (configurable), which makes it possible to select a face nested
-inside a larger one.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>click_xy</strong> – The <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y)</span></code> click position in image-pixel space.</p></li>
-<li><p><strong>annotation</strong> – The boxes drawn on the clicked frame.</p></li>
-<li><p><strong>smallest_wins</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, ties break to the smallest-area box; if
-<code class="docutils literal notranslate"><span class="pre">False</span></code>, to the largest.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The enclosing box’s <code class="docutils literal notranslate"><span class="pre">track_id</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the click hit no box (or
-the hit box has no track id).</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 </section>
 
@@ -552,7 +528,6 @@ the hit box has no track id).</p>
 <li><a class="reference internal" href="#annie.media.color.color_for_track"><code class="docutils literal notranslate"><span class="pre">color_for_track()</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.color.box_color"><code class="docutils literal notranslate"><span class="pre">box_color()</span></code></a></li>
 <li><a class="reference internal" href="#annie.media.color.draw_overlay"><code class="docutils literal notranslate"><span class="pre">draw_overlay()</span></code></a></li>
-<li><a class="reference internal" href="#annie.media.color.hit_test"><code class="docutils literal notranslate"><span class="pre">hit_test()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -1,0 +1,725 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html"><link rel="next" title="annie.core" href="../core/index.html"><link rel="prev" title="annie.app" href="../app/index.html">
+        <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/app_state/index.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>annie.app_state - Annie latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">Annie latest documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">Annie latest documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../install-windows.html">Installing Annie on Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../code-signing-policy.html">Code signing policy</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../playbooks/index.html">Playbooks</a><input aria-label="Toggle navigation of Playbooks" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../playbooks/browse-and-curate.html">Playbook — Dataset, Browse &amp; Curation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../playbooks/segment-review.html">Playbook — Segment review (accept / drop clips)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../index.html">annie</a><input aria-label="Toggle navigation of annie" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../app/index.html">annie.app</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">annie.app_state</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../core/bugreport/index.html">annie.core.bugreport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/config/index.html">annie.core.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/logbook/index.html">annie.core.logbook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/models/index.html">annie.core.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/runtime/index.html">annie.core.runtime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/theme/index.html">annie.core.theme</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dataset/index.html">annie.dataset</a><input aria-label="Toggle navigation of annie.dataset" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/corrections/index.html">annie.dataset.corrections</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/datasets/index.html">annie.dataset.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/events/index.html">annie.dataset.events</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/filtering/index.html">annie.dataset.filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/layout/index.html">annie.dataset.layout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/manipulate/index.html">annie.dataset.manipulate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/scanning/index.html">annie.dataset.scanning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/segments/index.html">annie.dataset.segments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/sources/index.html">annie.dataset.sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dataset/storage/index.html">annie.dataset.storage</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../desktop/index.html">annie.desktop</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../media/index.html">annie.media</a><input aria-label="Toggle navigation of annie.media" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../media/clipping/index.html">annie.media.clipping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/color/index.html">annie.media.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/compose/index.html">annie.media.compose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/convert/index.html">annie.media.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/decode/index.html">annie.media.decode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/preview/index.html">annie.media.preview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/previews/index.html">annie.media.previews</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/probe/index.html">annie.media.probe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../media/rendering/index.html">annie.media.rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../pages/index.html">annie.pages</a><input aria-label="Toggle navigation of annie.pages" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pages/annotator/index.html">annie.pages.annotator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/browse/index.html">annie.pages.browse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/convert/index.html">annie.pages.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/csv_dialog/index.html">annie.pages.csv_dialog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/dataset/index.html">annie.pages.dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/download/index.html">annie.pages.download</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/event_task/index.html">annie.pages.event_task</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/home/index.html">annie.pages.home</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/lazy/index.html">annie.pages.lazy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/logs/index.html">annie.pages.logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/paging/index.html">annie.pages.paging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/pending/index.html">annie.pages.pending</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/refresh/index.html">annie.pages.refresh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/settings/index.html">annie.pages.settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/tabs/index.html">annie.pages.tabs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/timeline/index.html">annie.pages.timeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/timeline_view/index.html">annie.pages.timeline_view</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/utils/index.html">annie.pages.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/videoclock/index.html">annie.pages.videoclock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/viewport/index.html">annie.pages.viewport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pages/visibility/index.html">annie.pages.visibility</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../parsers/index.html">annie.parsers</a><input aria-label="Toggle navigation of annie.parsers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../parsers/base/index.html">annie.parsers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../parsers/csvmeta/index.html">annie.parsers.csvmeta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../parsers/participants/index.html">annie.parsers.participants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../parsers/track/index.html">annie.parsers.track</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../parsers/vdet/index.html">annie.parsers.vdet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../parsers/workbook/index.html">annie.parsers.workbook</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../system/index.html">annie.system</a><input aria-label="Toggle navigation of annie.system" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../system/fsbrowse/index.html">annie.system.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../system/reveal/index.html">annie.system.reveal</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../../_sources/autoapi/annie/app_state/index.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-annie.app_state">
+<span id="annie-app-state"></span><h1>annie.app_state<a class="headerlink" href="#module-annie.app_state" title="Link to this heading">¶</a></h1>
+<p>The composition root: the one place that wires the backend together for the UI.</p>
+<p>It sits above every package: it builds the source registry, the scan, the review store
+and the background services (rendering, conversion, previews) from <a class="reference internal" href="../dataset/index.html#module-annie.dataset" title="annie.dataset"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.dataset</span></code></a>,
+<a class="reference internal" href="../media/index.html#module-annie.media" title="annie.media"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.media</span></code></a> and <a class="reference internal" href="../parsers/index.html#module-annie.parsers" title="annie.parsers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.parsers</span></code></a>, and the UI (<a class="reference internal" href="../pages/index.html#module-annie.pages" title="annie.pages"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.pages</span></code></a>, <code class="docutils literal notranslate"><span class="pre">app.py</span></code>)
+reaches them through <a class="reference internal" href="#annie.app_state.state" title="annie.app_state.state"><code class="xref py py-data docutils literal notranslate"><span class="pre">state</span></code></a>. Nothing below it imports it.</p>
+<p>Holds the configured <code class="xref py py-class docutils literal notranslate"><span class="pre">SourceRegistry</span></code>, the cached scan
+manifest (Browse/Annotator are pure consumers of it), the review store, the render
+service, and session-only UI settings (row heights). Adding or removing a source
+re-runs the scan in place, so there is no Scan button.</p>
+<p>Sources are <strong>session-only</strong>: the registry is seeded from the <code class="docutils literal notranslate"><span class="pre">ANNIE_*</span></code>
+environment variables on startup and otherwise lives for the process lifetime.
+Curation (verdicts, notes, annotator selection) and protagonist corrections
+persist independently in SQLite / the <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.app_state.state" title="annie.app_state.state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">state</span></code></a></p></td>
+<td><p>The single shared state instance.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.app_state.UiSettings" title="annie.app_state.UiSettings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UiSettings</span></code></a></p></td>
+<td><p>Session-only UI preferences set on the Settings tab.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.app_state.AppState" title="annie.app_state.AppState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppState</span></code></a></p></td>
+<td><p>Mutable application state shared between tabs.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.app_state.seed_registry" title="annie.app_state.seed_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seed_registry</span></code></a>(→ annie.dataset.sources.SourceRegistry)</p></td>
+<td><p>Build the initial registry from the <code class="docutils literal notranslate"><span class="pre">ANNIE_*</span></code> environment variables.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.app_state.</span></span><span class="sig-name descname"><span class="pre">UiSettings</span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#UiSettings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.UiSettings" title="Link to this definition">¶</a></dt>
+<dd><p>Session-only UI preferences set on the Settings tab.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.browse_row_height">
+<span class="sig-name descname"><span class="pre">browse_row_height</span></span><a class="headerlink" href="#annie.app_state.UiSettings.browse_row_height" title="Link to this definition">¶</a></dt>
+<dd><p>Media height (px) of a Browse row’s thumbnail/strip/render.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.annotator_row_height">
+<span class="sig-name descname"><span class="pre">annotator_row_height</span></span><a class="headerlink" href="#annie.app_state.UiSettings.annotator_row_height" title="Link to this definition">¶</a></dt>
+<dd><p>Max media height (px) of an Annotator row; its boxes
+flex to share the row width and only hit this cap on very wide screens.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.auto_scroll">
+<span class="sig-name descname"><span class="pre">auto_scroll</span></span><a class="headerlink" href="#annie.app_state.UiSettings.auto_scroll" title="Link to this definition">¶</a></dt>
+<dd><p>Whether reaching the bottom of Browse / Annotator reveals the
+next page automatically, instead of waiting for a “Show more” click.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.page_size">
+<span class="sig-name descname"><span class="pre">page_size</span></span><a class="headerlink" href="#annie.app_state.UiSettings.page_size" title="Link to this definition">¶</a></dt>
+<dd><p>How many rows one page reveals, whether auto-scrolled or clicked.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.embed_ttl_seconds">
+<span class="sig-name descname"><span class="pre">embed_ttl_seconds</span></span><a class="headerlink" href="#annie.app_state.UiSettings.embed_ttl_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>How long an embedded clip stays on a row before it
+reverts to its placeholder, freeing the memory the browser holds for it.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.unload_after_seconds">
+<span class="sig-name descname"><span class="pre">unload_after_seconds</span></span><a class="headerlink" href="#annie.app_state.UiSettings.unload_after_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>How long a row may sit off screen before its preview
+frames are dropped; they are decoded again when it scrolls back.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.grid_thumb_height">
+<span class="sig-name descname"><span class="pre">grid_thumb_height</span></span><a class="headerlink" href="#annie.app_state.UiSettings.grid_thumb_height" title="Link to this definition">¶</a></dt>
+<dd><p>Media height (px) of a Browse <strong>grid</strong> box (Quick
+selection view); its width is derived 16:9.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.grid_page_size">
+<span class="sig-name descname"><span class="pre">grid_page_size</span></span><a class="headerlink" href="#annie.app_state.UiSettings.grid_page_size" title="Link to this definition">¶</a></dt>
+<dd><p>How many grid boxes one page reveals — larger than
+<code class="docutils literal notranslate"><span class="pre">page_size</span></code> because a grid box is a single cheap frame.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.UiSettings.grid_unload_after_seconds">
+<span class="sig-name descname"><span class="pre">grid_unload_after_seconds</span></span><a class="headerlink" href="#annie.app_state.UiSettings.grid_unload_after_seconds" title="Link to this definition">¶</a></dt>
+<dd><p>Off-screen TTL for grid boxes; shorter than
+<code class="docutils literal notranslate"><span class="pre">unload_after_seconds</span></code> since the grid packs many videos on screen.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="annie.app_state.seed_registry">
+<span class="sig-prename descclassname"><span class="pre">annie.app_state.</span></span><span class="sig-name descname"><span class="pre">seed_registry</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../dataset/sources/index.html#annie.dataset.sources.SourceRegistry" title="annie.dataset.sources.SourceRegistry"><span class="pre">annie.dataset.sources.SourceRegistry</span></a></span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#seed_registry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.seed_registry" title="Link to this definition">¶</a></dt>
+<dd><p>Build the initial registry from the <code class="docutils literal notranslate"><span class="pre">ANNIE_*</span></code> environment variables.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="annie.app_state.AppState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">annie.app_state.</span></span><span class="sig-name descname"><span class="pre">AppState</span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#AppState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.AppState" title="Link to this definition">¶</a></dt>
+<dd><p>Mutable application state shared between tabs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.registry">
+<span class="sig-name descname"><span class="pre">registry</span></span><a class="headerlink" href="#annie.app_state.AppState.registry" title="Link to this definition">¶</a></dt>
+<dd><p>The configured data sources (the dataset definition).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.scan">
+<span class="sig-name descname"><span class="pre">scan</span></span><a class="headerlink" href="#annie.app_state.AppState.scan" title="Link to this definition">¶</a></dt>
+<dd><p>The most recent scan result, recomputed on every source change.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.store">
+<span class="sig-name descname"><span class="pre">store</span></span><a class="headerlink" href="#annie.app_state.AppState.store" title="Link to this definition">¶</a></dt>
+<dd><p>The SQLite review-status store.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.renderer">
+<span class="sig-name descname"><span class="pre">renderer</span></span><a class="headerlink" href="#annie.app_state.AppState.renderer" title="Link to this definition">¶</a></dt>
+<dd><p>The render-job service.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.converter">
+<span class="sig-name descname"><span class="pre">converter</span></span><a class="headerlink" href="#annie.app_state.AppState.converter" title="Link to this definition">¶</a></dt>
+<dd><p>The audio/video re-encode batch runner.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.audio_cache">
+<span class="sig-name descname"><span class="pre">audio_cache</span></span><a class="headerlink" href="#annie.app_state.AppState.audio_cache" title="Link to this definition">¶</a></dt>
+<dd><p>Probed audio-stream presence per video id (lazy; see Browse).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.frames_cache">
+<span class="sig-name descname"><span class="pre">frames_cache</span></span><a class="headerlink" href="#annie.app_state.AppState.frames_cache" title="Link to this definition">¶</a></dt>
+<dd><p>Decoded frame count per video id (lazy; see Browse).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.ui">
+<span class="sig-name descname"><span class="pre">ui</span></span><a class="headerlink" href="#annie.app_state.AppState.ui" title="Link to this definition">¶</a></dt>
+<dd><p>Session-only UI preferences.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.active_config">
+<span class="sig-name descname"><span class="pre">active_config</span></span><a class="headerlink" href="#annie.app_state.AppState.active_config" title="Link to this definition">¶</a></dt>
+<dd><p>The dataset config file currently loaded, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for the
+env-seeded / blank dataset. Lets the Dataset tab show it as selected.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.scanned_tracks">
+<span class="sig-name descname"><span class="pre">scanned_tracks</span></span><a class="headerlink" href="#annie.app_state.AppState.scanned_tracks" title="Link to this definition">¶</a></dt>
+<dd><p>Each video’s protagonist as scanned (the heuristic CSV), before
+the review DB’s corrections are layered over it; lets a DB switch start over.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.previews">
+<span class="sig-name descname"><span class="pre">previews</span></span><a class="headerlink" href="#annie.app_state.AppState.previews" title="Link to this definition">¶</a></dt>
+<dd><p>The shared preview loader (bounded, newest-first, cached decoding).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="annie.app_state.AppState.scanning">
+<span class="sig-name descname"><span class="pre">scanning</span></span><a class="headerlink" href="#annie.app_state.AppState.scanning" title="Link to this definition">¶</a></dt>
+<dd><p>Whether a scan is running right now (start-up scan included), so every
+page can show it as busy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.app_state.AppState.restore_last_config">
+<span class="sig-name descname"><span class="pre">restore_last_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#AppState.restore_last_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.AppState.restore_last_config" title="Link to this definition">¶</a></dt>
+<dd><p>Reopen the config remembered from the previous run, with its review database.</p>
+<p>This is what lets a user close Annie and, on the next start, land straight back
+in their dataset with all their progress — no need to re-pick the config. A
+config that has gone missing or fails to load is skipped (and logged), leaving
+the current dataset in place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The config path that was restored, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if nothing was.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.app_state.AppState.rescan">
+<span class="sig-name descname"><span class="pre">rescan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#AppState.rescan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.AppState.rescan" title="Link to this definition">¶</a></dt>
+<dd><p>Rebuild the manifest from the current registry (after a source change).</p>
+<p>Also clears the audio and frame-count caches so that any replaced or
+renamed video files are re-probed on the next Browse render.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.app_state.AppState.set_store">
+<span class="sig-name descname"><span class="pre">set_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#AppState.set_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.AppState.set_store" title="Link to this definition">¶</a></dt>
+<dd><p>Replace the active review store with one backed by <code class="docutils literal notranslate"><span class="pre">db_path</span></code>.</p>
+<p>The file is created (with the schema applied) if it does not exist yet.
+Call this whenever the user changes the persistence target — either by
+loading a config that embeds a <code class="docutils literal notranslate"><span class="pre">&quot;db&quot;</span></code> path, or by choosing a DB file
+in the Persistence block on the Dataset tab.</p>
+<p>The new DB’s protagonist corrections replace the previous DB’s on the scanned
+videos straight away, instead of only after the next rescan or restart.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>db_path</strong> – Absolute path to the SQLite file to open.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.app_state.AppState.review_lookup">
+<span class="sig-name descname"><span class="pre">review_lookup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dataset/filtering/index.html#annie.dataset.filtering.ReviewState" title="annie.dataset.filtering.ReviewState"><span class="pre">annie.dataset.filtering.ReviewState</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#AppState.review_lookup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.AppState.review_lookup" title="Link to this definition">¶</a></dt>
+<dd><p>Read every review state in one query and return a per-key lookup.</p>
+<p>For a pass over many videos (e.g. the Browse filter); the lookup answers exactly
+like <a class="reference internal" href="#annie.app_state.AppState.review_state" title="annie.app_state.AppState.review_state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">review_state()</span></code></a> but from a snapshot taken now.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function mapping a video key to its <code class="xref py py-class docutils literal notranslate"><span class="pre">ReviewState</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.app_state.AppState.review_state">
+<span class="sig-name descname"><span class="pre">review_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../dataset/filtering/index.html#annie.dataset.filtering.ReviewState" title="annie.dataset.filtering.ReviewState"><span class="pre">annie.dataset.filtering.ReviewState</span></a></span></span><a class="reference internal" href="../../../_modules/annie/app_state.html#AppState.review_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.app_state.AppState.review_state" title="Link to this definition">¶</a></dt>
+<dd><p>Return the filtering-facing review state for a video (default liked).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The video key.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">ReviewState</span></code>; videos with no stored row are
+liked (good) with no note and not queued for the Annotator.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="annie.app_state.state">
+<span class="sig-prename descclassname"><span class="pre">annie.app_state.</span></span><span class="sig-name descname"><span class="pre">state</span></span><a class="headerlink" href="#annie.app_state.state" title="Link to this definition">¶</a></dt>
+<dd><p>The single shared state instance.</p>
+<p>The initial scan is deferred to app startup (see <a class="reference internal" href="../app/index.html#module-annie.app" title="annie.app"><code class="xref py py-mod docutils literal notranslate"><span class="pre">annie.app</span></code></a>) so imports
+stay fast.</p>
+</dd></dl>
+
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="../core/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">annie.core</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../app/index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">annie.app</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Ádám Fodor
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">annie.app_state</a><ul>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#annie.app_state.UiSettings"><code class="docutils literal notranslate"><span class="pre">UiSettings</span></code></a><ul>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.browse_row_height"><code class="docutils literal notranslate"><span class="pre">UiSettings.browse_row_height</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.annotator_row_height"><code class="docutils literal notranslate"><span class="pre">UiSettings.annotator_row_height</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.auto_scroll"><code class="docutils literal notranslate"><span class="pre">UiSettings.auto_scroll</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.page_size"><code class="docutils literal notranslate"><span class="pre">UiSettings.page_size</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.embed_ttl_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.embed_ttl_seconds</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.unload_after_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.unload_after_seconds</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.grid_thumb_height"><code class="docutils literal notranslate"><span class="pre">UiSettings.grid_thumb_height</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.grid_page_size"><code class="docutils literal notranslate"><span class="pre">UiSettings.grid_page_size</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.UiSettings.grid_unload_after_seconds"><code class="docutils literal notranslate"><span class="pre">UiSettings.grid_unload_after_seconds</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.app_state.seed_registry"><code class="docutils literal notranslate"><span class="pre">seed_registry()</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState"><code class="docutils literal notranslate"><span class="pre">AppState</span></code></a><ul>
+<li><a class="reference internal" href="#annie.app_state.AppState.registry"><code class="docutils literal notranslate"><span class="pre">AppState.registry</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.scan"><code class="docutils literal notranslate"><span class="pre">AppState.scan</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.store"><code class="docutils literal notranslate"><span class="pre">AppState.store</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.renderer"><code class="docutils literal notranslate"><span class="pre">AppState.renderer</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.converter"><code class="docutils literal notranslate"><span class="pre">AppState.converter</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.audio_cache"><code class="docutils literal notranslate"><span class="pre">AppState.audio_cache</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.frames_cache"><code class="docutils literal notranslate"><span class="pre">AppState.frames_cache</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.ui"><code class="docutils literal notranslate"><span class="pre">AppState.ui</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.active_config"><code class="docutils literal notranslate"><span class="pre">AppState.active_config</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.scanned_tracks"><code class="docutils literal notranslate"><span class="pre">AppState.scanned_tracks</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.previews"><code class="docutils literal notranslate"><span class="pre">AppState.previews</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.scanning"><code class="docutils literal notranslate"><span class="pre">AppState.scanning</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.restore_last_config"><code class="docutils literal notranslate"><span class="pre">AppState.restore_last_config()</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.rescan"><code class="docutils literal notranslate"><span class="pre">AppState.rescan()</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.set_store"><code class="docutils literal notranslate"><span class="pre">AppState.set_store()</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.review_lookup"><code class="docutils literal notranslate"><span class="pre">AppState.review_lookup()</span></code></a></li>
+<li><a class="reference internal" href="#annie.app_state.AppState.review_state"><code class="docutils literal notranslate"><span class="pre">AppState.review_state()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#annie.app_state.state"><code class="docutils literal notranslate"><span class="pre">state</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=c6e86fd7"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -15,7 +15,6 @@ Submodules
    /autoapi/annie/core/logbook/index
    /autoapi/annie/core/models/index
    /autoapi/annie/core/runtime/index
-   /autoapi/annie/core/state/index
    /autoapi/annie/core/theme/index
 
 

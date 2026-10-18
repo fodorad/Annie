@@ -20,12 +20,14 @@ Submodules
    :maxdepth: 1
 
    /autoapi/annie/app/index
+   /autoapi/annie/app_state/index
    /autoapi/annie/core/index
    /autoapi/annie/dataset/index
    /autoapi/annie/desktop/index
    /autoapi/annie/media/index
    /autoapi/annie/pages/index
    /autoapi/annie/parsers/index
+   /autoapi/annie/system/index
 
 
 Attributes

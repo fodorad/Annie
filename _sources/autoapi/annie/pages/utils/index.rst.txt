@@ -82,7 +82,7 @@ Module Contents
    :param box: The container holding the embedded clip.
    :param restore: Rebuilds the placeholder content inside ``box``. Must clear it.
    :param ttl: Idle seconds before reverting. Defaults to
-               :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass
+               :attr:`annie.app_state.UiSettings.embed_ttl_seconds`; rendered clips pass
                :func:`render_embed_ttl` so they never outlive the temp-dir sweep.
 
 

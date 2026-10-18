@@ -1,11 +1,16 @@
-annie.core.state
-================
+annie.app_state
+===============
 
-.. py:module:: annie.core.state
+.. py:module:: annie.app_state
 
 .. autoapi-nested-parse::
 
-   Process-wide UI state shared across the NiceGUI tabs (service-facing glue).
+   The composition root: the one place that wires the backend together for the UI.
+
+   It sits above every package: it builds the source registry, the scan, the review store
+   and the background services (rendering, conversion, previews) from :mod:`annie.dataset`,
+   :mod:`annie.media` and :mod:`annie.parsers`, and the UI (:mod:`annie.pages`, ``app.py``)
+   reaches them through :data:`state`. Nothing below it imports it.
 
    Holds the configured :class:`~annie.sources.SourceRegistry`, the cached scan
    manifest (Browse/Annotator are pure consumers of it), the review store, the render
@@ -24,7 +29,7 @@ Attributes
 
 .. autoapisummary::
 
-   annie.core.state.state
+   annie.app_state.state
 
 
 Classes
@@ -32,8 +37,16 @@ Classes
 
 .. autoapisummary::
 
-   annie.core.state.UiSettings
-   annie.core.state.AppState
+   annie.app_state.UiSettings
+   annie.app_state.AppState
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   annie.app_state.seed_registry
 
 
 Module Contents
@@ -85,6 +98,11 @@ Module Contents
 
       Off-screen TTL for grid boxes; shorter than
       ``unload_after_seconds`` since the grid packs many videos on screen.
+
+
+.. py:function:: seed_registry() -> annie.dataset.sources.SourceRegistry
+
+   Build the initial registry from the ``ANNIE_*`` environment variables.
 
 
 .. py:class:: AppState

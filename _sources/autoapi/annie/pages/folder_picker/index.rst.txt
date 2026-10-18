@@ -10,7 +10,7 @@ annie.pages.folder_picker
    Annie runs locally, so the browser and the filesystem are the same machine: the
    user can navigate the real directory tree and pick a folder (or a file) instead
    of typing its path. Thin NiceGUI views over the pure helpers in
-   :mod:`annie.fsbrowse`.
+   :mod:`annie.system.fsbrowse`.
 
 
 

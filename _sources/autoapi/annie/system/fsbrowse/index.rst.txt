@@ -1,7 +1,7 @@
-annie.pages.fsbrowse
-====================
+annie.system.fsbrowse
+=====================
 
-.. py:module:: annie.pages.fsbrowse
+.. py:module:: annie.system.fsbrowse
 
 .. autoapi-nested-parse::
 
@@ -18,13 +18,13 @@ Functions
 
 .. autoapisummary::
 
-   annie.pages.fsbrowse.resolve_start_dir
-   annie.pages.fsbrowse.parent_of
-   annie.pages.fsbrowse.drive_roots
-   annie.pages.fsbrowse.other_drives
-   annie.pages.fsbrowse.scan_entries
-   annie.pages.fsbrowse.list_subdirectories
-   annie.pages.fsbrowse.list_files
+   annie.system.fsbrowse.resolve_start_dir
+   annie.system.fsbrowse.parent_of
+   annie.system.fsbrowse.drive_roots
+   annie.system.fsbrowse.other_drives
+   annie.system.fsbrowse.scan_entries
+   annie.system.fsbrowse.list_subdirectories
+   annie.system.fsbrowse.list_files
 
 
 Module Contents

@@ -27,14 +27,12 @@ Submodules
    /autoapi/annie/pages/download/index
    /autoapi/annie/pages/event_task/index
    /autoapi/annie/pages/folder_picker/index
-   /autoapi/annie/pages/fsbrowse/index
    /autoapi/annie/pages/home/index
    /autoapi/annie/pages/lazy/index
    /autoapi/annie/pages/logs/index
    /autoapi/annie/pages/paging/index
    /autoapi/annie/pages/pending/index
    /autoapi/annie/pages/refresh/index
-   /autoapi/annie/pages/reveal/index
    /autoapi/annie/pages/settings/index
    /autoapi/annie/pages/tabs/index
    /autoapi/annie/pages/timeline/index

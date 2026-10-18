@@ -203,13 +203,13 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/annie/index.html">annie</a><input aria-label="Toggle navigation of annie" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app/index.html">annie.app</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/annie/app_state/index.html">annie.app_state</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/core/index.html">annie.core</a><input aria-label="Toggle navigation of annie.core" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/bugreport/index.html">annie.core.bugreport</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/config/index.html">annie.core.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/logbook/index.html">annie.core.logbook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/models/index.html">annie.core.models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/runtime/index.html">annie.core.runtime</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/state/index.html">annie.core.state</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/core/theme/index.html">annie.core.theme</a></li>
 </ul>
 </li>
@@ -248,14 +248,12 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/download/index.html">annie.pages.download</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/event_task/index.html">annie.pages.event_task</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/folder_picker/index.html">annie.pages.folder_picker</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/fsbrowse/index.html">annie.pages.fsbrowse</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/home/index.html">annie.pages.home</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/lazy/index.html">annie.pages.lazy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/logs/index.html">annie.pages.logs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/paging/index.html">annie.pages.paging</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/pending/index.html">annie.pages.pending</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/refresh/index.html">annie.pages.refresh</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/reveal/index.html">annie.pages.reveal</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/settings/index.html">annie.pages.settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/tabs/index.html">annie.pages.tabs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/pages/timeline/index.html">annie.pages.timeline</a></li>
@@ -273,6 +271,11 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/track/index.html">annie.parsers.track</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/vdet/index.html">annie.parsers.vdet</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/parsers/workbook/index.html">annie.parsers.workbook</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/annie/system/index.html">annie.system</a><input aria-label="Toggle navigation of annie.system" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/system/fsbrowse/index.html">annie.system.fsbrowse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/annie/system/reveal/index.html">annie.system.reveal</a></li>
 </ul>
 </li>
 </ul>
@@ -444,40 +447,6 @@
             <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">box</span><span class="o">.</span><span class="n">track_id</span><span class="p">)</span>
             <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="n">box</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">label</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">rgb</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">image</span></div>
-
-
-
-<div class="viewcode-block" id="hit_test">
-<a class="viewcode-back" href="../../../autoapi/annie/media/color/index.html#annie.media.color.hit_test">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">hit_test</span><span class="p">(</span>
-    <span class="n">click_xy</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-    <span class="n">annotation</span><span class="p">:</span> <span class="n">FrameAnnotation</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">smallest_wins</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Return the ``track_id`` of the box under a click, or ``None``.</span>
-
-<span class="sd">    Used by the protagonist correction flow: the click is tested against every</span>
-<span class="sd">    box on the frame. When boxes overlap, the smallest enclosing box wins by</span>
-<span class="sd">    default (configurable), which makes it possible to select a face nested</span>
-<span class="sd">    inside a larger one.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        click_xy: The ``(x, y)`` click position in image-pixel space.</span>
-<span class="sd">        annotation: The boxes drawn on the clicked frame.</span>
-<span class="sd">        smallest_wins: If ``True``, ties break to the smallest-area box; if</span>
-<span class="sd">            ``False``, to the largest.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        The enclosing box's ``track_id``, or ``None`` if the click hit no box (or</span>
-<span class="sd">        the hit box has no track id).</span>
-<span class="sd">    """</span>
-    <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">=</span> <span class="n">click_xy</span>
-    <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span><span class="n">box</span> <span class="k">for</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">annotation</span><span class="o">.</span><span class="n">boxes</span> <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">hits</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">chosen</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">hits</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">b</span><span class="o">.</span><span class="n">area</span><span class="p">)</span> <span class="k">if</span> <span class="n">smallest_wins</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">hits</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">b</span><span class="o">.</span><span class="n">area</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">chosen</span><span class="o">.</span><span class="n">track_id</span></div>
 
 </pre></div>
         </article>
