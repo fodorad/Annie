@@ -49,8 +49,12 @@ jobs:
         uv pip install --system --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match -e ".[all,dev,docs]"
 
     - name: Audit dependencies for vulnerabilities
-      run: uvx pip-audit
-      continue-on-error: true  # torch may have known CVEs; treat as warning
+      # Audits Annie's installed dependencies (uvx would audit its own isolated env).
+      # Blocking: a known vulnerability fails the build; an accepted one is listed with
+      # --ignore-vuln and a reason, never by ignoring the step.
+      run: |
+        uv pip install --system pip-audit
+        pip-audit --skip-editable
 
     - name: Ruff Lint
       run: ruff check .

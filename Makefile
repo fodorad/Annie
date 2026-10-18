@@ -1,4 +1,4 @@
-.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer installer-try installer-icon run check clean docker-build docker-run help
+.PHONY: install dev upgrade install-docs fix lint type-check test docs docs-serve docs-deploy screenshots installer installer-try installer-icon run check clean docker-build docker-run help audit
 
 # macOS: torchcodec requires FFmpeg dylibs which Homebrew installs to a non-standard
 # prefix. make does not inherit DYLD_LIBRARY_PATH, so we set it explicitly here.
@@ -57,7 +57,11 @@ test:
 docs:
 	sphinx-build -b html docs/ site/
 
-check: lint type-check test docs
+# Known vulnerabilities in Annie's dependencies (the same audit CI runs).
+audit:
+	uv run --no-sync --with pip-audit pip-audit --skip-editable
+
+check: lint type-check audit test docs
 
 # ── Run ────────────────────────────────────────────────────────────────────────
 
