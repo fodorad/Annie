@@ -145,7 +145,13 @@ def _current_task() -> TaskKind | None:
 
 
 def _select_task(task: TaskKind) -> None:
-    """Switch the client's active task and rebuild the body."""
+    """Switch the client's active task and rebuild the body.
+
+    Choosing the task already shown does nothing: rebuilding it would only drop clicks
+    still on their way to the rows being replaced.
+    """
+    if task is _current_task():
+        return
     _active_task[context.client.id] = task
     _content.refresh()
 
