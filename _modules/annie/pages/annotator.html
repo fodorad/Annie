@@ -462,7 +462,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_select_task</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">TaskKind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Switch the client's active task and rebuild the body."""</span>
+<span class="w">    </span><span class="sd">"""Switch the client's active task and rebuild the body.</span>
+
+<span class="sd">    Choosing the task already shown does nothing: rebuilding it would only drop clicks</span>
+<span class="sd">    still on their way to the rows being replaced.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="n">_current_task</span><span class="p">():</span>
+        <span class="k">return</span>
     <span class="n">_active_task</span><span class="p">[</span><span class="n">context</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
     <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
