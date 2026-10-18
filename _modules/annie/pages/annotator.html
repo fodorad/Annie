@@ -542,14 +542,18 @@
 <div class="viewcode-block" id="update_availability">
 <a class="viewcode-back" href="../../../autoapi/annie/pages/annotator/index.html#annie.pages.annotator.update_availability">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_availability</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">rebuild</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Sync the Annotator tab's enabled state after the queue changed.</span>
+<span class="w">    </span><span class="sd">"""Sync the Annotator tab's enabled state after the queue changed, in every tab.</span>
 
-<span class="sd">    The body is rebuilt only with ``rebuild`` (a change made inside the Annotator, which</span>
-<span class="sd">    is on screen); elsewhere it is rebuilt when its tab is next opened.</span>
+<span class="sd">    The queue lives in the review DB, so every open tab must follow. The acting tab's</span>
+<span class="sd">    Annotator is rebuilt only with ``rebuild`` (a change made inside it, on screen);</span>
+<span class="sd">    otherwise it rebuilds when its tab is next opened. Other tabs are rebuilt now, since</span>
+<span class="sd">    one of them may be showing the Annotator.</span>
 <span class="sd">    """</span>
     <span class="n">sync_tab</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">rebuild</span><span class="p">:</span>
-        <span class="n">_content</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_content</span><span class="o">.</span><span class="n">refresh_others</span><span class="p">()</span></div>
 
 
 

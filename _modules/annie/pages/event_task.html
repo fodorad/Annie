@@ -931,8 +931,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_category_bar</span><span class="p">(</span><span class="n">state_</span><span class="p">:</span> <span class="n">_EventState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The Category block: participants on the left half, event categories on the right.</span>
 
-<span class="sd">    Both halves share one Manage dialog. On a narrow screen the halves stack.</span>
+<span class="sd">    Both halves share one Manage dialog. On a narrow screen the halves stack. The active</span>
+<span class="sd">    participant and event category are re-checked first: another tab may have renamed or</span>
+<span class="sd">    deleted them.</span>
 <span class="sd">    """</span>
+    <span class="n">_ensure_active_category</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
+    <span class="n">_ensure_active_event_type</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"w-full items-start gap-4 wrap"</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">row</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"flex-1 min-w-[18rem] items-center gap-2 wrap"</span><span class="p">):</span>
             <span class="n">_participant_chips</span><span class="p">(</span><span class="n">state_</span><span class="p">)</span>
@@ -1857,10 +1861,13 @@
 <span class="w">    </span><span class="sd">"""Redraw the editor, the category bar and the timeline, keeping the ``&lt;video&gt;``.</span>
 
 <span class="sd">    Rebuilding the whole task would recreate the video element, which the browser resets</span>
-<span class="sd">    to frame 0; these parts are everything an event edit can change.</span>
+<span class="sd">    to frame 0; these parts are everything an event edit can change. Events and categories</span>
+<span class="sd">    live in the review DB, so every open tab redraws its category bar and timeline; the</span>
+<span class="sd">    editor (this tab's selection) only here.</span>
 <span class="sd">    """</span>
     <span class="n">_editor</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">_category_bar</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_category_bar</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="n">_timeline_surface</span><span class="o">.</span><span class="n">refresh_others</span><span class="p">()</span>
     <span class="n">_refresh_timeline</span><span class="p">(</span><span class="n">state_</span><span class="p">,</span> <span class="n">rebuild_scrollbar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
@@ -1905,6 +1912,7 @@
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">state_</span><span class="o">.</span><span class="n">video_height</span> <span class="o">=</span> <span class="n">heights</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">delta</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">heights</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))]</span>
+    <span class="n">state_</span><span class="o">.</span><span class="n">restore_frame</span> <span class="o">=</span> <span class="n">state_</span><span class="o">.</span><span class="n">playhead_frame</span>  <span class="c1"># the rebuilt &lt;video&gt; starts at frame 0</span>
     <span class="n">event_annotation_task</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 
 

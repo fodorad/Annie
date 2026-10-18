@@ -92,10 +92,12 @@ Module Contents
 
 .. py:function:: update_availability(*, rebuild: bool = False) -> None
 
-   Sync the Annotator tab's enabled state after the queue changed.
+   Sync the Annotator tab's enabled state after the queue changed, in every tab.
 
-   The body is rebuilt only with ``rebuild`` (a change made inside the Annotator, which
-   is on screen); elsewhere it is rebuilt when its tab is next opened.
+   The queue lives in the review DB, so every open tab must follow. The acting tab's
+   Annotator is rebuilt only with ``rebuild`` (a change made inside it, on screen);
+   otherwise it rebuilds when its tab is next opened. Other tabs are rebuilt now, since
+   one of them may be showing the Annotator.
 
 
 .. py:function:: load_segment_clips_async(state_: _SegmentState) -> bool

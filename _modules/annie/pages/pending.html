@@ -338,7 +338,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">ui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nicegui</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">ui</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">theme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_alive</span>
@@ -481,6 +481,33 @@
 <span class="sd">        color: The badge colour.</span>
 <span class="sd">    """</span>
     <span class="n">ready</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">ui</span><span class="o">.</span><span class="n">badge</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="while_busy">
+<a class="viewcode-back" href="../../../autoapi/annie/pages/pending/index.html#annie.pages.pending.while_busy">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">while_busy</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">work</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run blocking ``work`` off the event loop behind a modal spinner showing ``message``.</span>
+
+<span class="sd">    The dialog is persistent (it cannot be dismissed), so the user cannot act in this tab</span>
+<span class="sd">    while the work runs, e.g. while a database is being copied.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        message: What is happening, e.g. ``"Reading visits.xlsx…"``.</span>
+<span class="sd">        work: The blocking call, run on a worker thread.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        What ``work`` returned; ``None`` if the app is shutting down.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">ui</span><span class="o">.</span><span class="n">dialog</span><span class="p">()</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="s2">"persistent"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dialog</span><span class="p">,</span> <span class="n">ui</span><span class="o">.</span><span class="n">card</span><span class="p">()</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"items-center gap-3"</span><span class="p">):</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
+        <span class="n">ui</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">(</span><span class="s2">"text-sm"</span><span class="p">)</span>
+    <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">dialog</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">dialog</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
 
 </pre></div>
         </article>

@@ -89,13 +89,10 @@ Module Contents
    :async:
 
 
-   Run ``read`` off the event loop while a small dialog says the file is being read.
+   Run ``read`` off the event loop while a small dialog says ``path`` is being read.
 
    Large tables and many-sheet workbooks take seconds to parse; the spinner shows the
    click was taken, and the UI stays responsive meanwhile.
-
-   :param path: The file being read (named in the dialog).
-   :param read: The blocking read to run on a worker thread.
 
    :returns: Whatever ``read`` returned; ``None`` if the app is shutting down.
 

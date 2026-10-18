@@ -20,6 +20,8 @@ annie.pages.refresh
      tab, as before.
    - :meth:`client_refreshable.refresh_everywhere` rebuilds every tab on purpose, for data that
      every open tab must show at once.
+   - :meth:`client_refreshable.refresh_others` rebuilds every tab except the acting one, for a
+     data change whose acting tab will rebuild the view anyway when it next opens it.
 
 
 
@@ -61,6 +63,12 @@ Module Contents
    .. py:method:: refresh_everywhere(*args: Any, **kwargs: Any) -> nicegui.awaitable_response.AwaitableResponse
 
       Rebuild this view in every open tab (for data all tabs must show at once).
+
+
+
+   .. py:method:: refresh_others(*args: Any, **kwargs: Any) -> nicegui.awaitable_response.AwaitableResponse
+
+      Rebuild this view in every open tab except the acting one (all, outside a tab).
 
 
 

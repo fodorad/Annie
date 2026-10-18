@@ -384,7 +384,7 @@ corrections to the <code class="docutils literal notranslate"><span class="pre">
 <td><p>Enable the tab in every open page when a video is queued or a queue-free task is ready.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.annotator.update_availability" title="annie.pages.annotator.update_availability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_availability</span></code></a>(→ None)</p></td>
-<td><p>Sync the Annotator tab's enabled state after the queue changed.</p></td>
+<td><p>Sync the Annotator tab's enabled state after the queue changed, in every tab.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.annotator.load_segment_clips_async" title="annie.pages.annotator.load_segment_clips_async"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_segment_clips_async</span></code></a>(→ bool)</p></td>
 <td><p>Read the segmentation source's clips off the event loop, if it changed.</p></td>
@@ -419,9 +419,11 @@ which the same page reconnects).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="annie.pages.annotator.update_availability">
 <span class="sig-prename descclassname"><span class="pre">annie.pages.annotator.</span></span><span class="sig-name descname"><span class="pre">update_availability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">rebuild</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/annotator.html#update_availability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.annotator.update_availability" title="Link to this definition">¶</a></dt>
-<dd><p>Sync the Annotator tab’s enabled state after the queue changed.</p>
-<p>The body is rebuilt only with <code class="docutils literal notranslate"><span class="pre">rebuild</span></code> (a change made inside the Annotator, which
-is on screen); elsewhere it is rebuilt when its tab is next opened.</p>
+<dd><p>Sync the Annotator tab’s enabled state after the queue changed, in every tab.</p>
+<p>The queue lives in the review DB, so every open tab must follow. The acting tab’s
+Annotator is rebuilt only with <code class="docutils literal notranslate"><span class="pre">rebuild</span></code> (a change made inside it, on screen);
+otherwise it rebuilds when its tab is next opened. Other tabs are rebuilt now, since
+one of them may be showing the Annotator.</p>
 </dd></dl>
 
 <dl class="py function">

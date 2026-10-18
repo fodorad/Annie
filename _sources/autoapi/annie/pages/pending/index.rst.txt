@@ -45,6 +45,7 @@ Functions
    annie.pages.pending.failed
    annie.pages.pending.pending_badge
    annie.pages.pending.settle_badge
+   annie.pages.pending.while_busy
 
 
 Module Contents
@@ -121,5 +122,20 @@ Module Contents
    :param slot: The slot returned by :func:`pending_badge`.
    :param text: The final text, e.g. ``"#frames: 120"`` or ``"audio: ?"``.
    :param color: The badge colour.
+
+
+.. py:function:: while_busy[T](message: str, work: collections.abc.Callable[[], T]) -> T | None
+   :async:
+
+
+   Run blocking ``work`` off the event loop behind a modal spinner showing ``message``.
+
+   The dialog is persistent (it cannot be dismissed), so the user cannot act in this tab
+   while the work runs, e.g. while a database is being copied.
+
+   :param message: What is happening, e.g. ``"Reading visits.xlsx…"``.
+   :param work: The blocking call, run on a worker thread.
+
+   :returns: What ``work`` returned; ``None`` if the app is shutting down.
 
 

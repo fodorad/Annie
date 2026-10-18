@@ -363,7 +363,7 @@
     <span class="n">task_readiness</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.dataset.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReviewStore</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotator</span><span class="p">,</span> <span class="n">browse</span><span class="p">,</span> <span class="n">pending</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.csv_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">VIDEO_ID_TARGET</span><span class="p">,</span> <span class="n">Targets</span><span class="p">,</span> <span class="n">configure_table</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.folder_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_directory</span><span class="p">,</span> <span class="n">pick_file</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">annie.pages.refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">client_refreshable</span>
@@ -432,7 +432,10 @@
 <span class="sd">        path: The SQLite file to open (created if it does not exist).</span>
 <span class="sd">    """</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">annotator</span><span class="o">.</span><span class="n">update_availability</span><span class="p">()</span>
+    <span class="c1"># Every tab now reads and writes the new DB: rebuild the views that show its contents.</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">sync_tab</span><span class="p">()</span>
+    <span class="n">annotator</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">everywhere</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">browse</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">everywhere</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_match_targets</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Targets</span><span class="p">:</span>
@@ -537,7 +540,7 @@
         <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config_db</span><span class="p">)</span>
         <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">config_db</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
     <span class="n">counts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="n">counts</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">scan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' — </span><span class="si">{</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'num_videos'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> videos"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
@@ -579,7 +582,7 @@
     <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"New config — save it to keep your progress for next time."</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
@@ -597,7 +600,7 @@
     <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">state</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">_apply_changes</span><span class="p">()</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="s2">"Loaded from environment variables"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
@@ -662,13 +665,18 @@
     <span class="k">if</span> <span class="n">keep_current</span><span class="p">:</span>
         <span class="c1"># Carry everything reviewed so far into the config's DB, so saving never looks</span>
         <span class="c1"># like it wiped the user's progress. Older progress in that DB is set aside, not lost.</span>
-        <span class="c1"># Off the loop: a database copy takes as long as the database is big.</span>
-        <span class="k">await</span> <span class="n">run</span><span class="o">.</span><span class="n">io_bound</span><span class="p">(</span><span class="n">_carry_progress</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span><span class="p">,</span> <span class="n">db_to_save</span><span class="p">)</span>
+        <span class="c1"># Off the loop, behind a modal spinner: a copy takes as long as the database is big,</span>
+        <span class="c1"># and nothing in this tab may write to the old database meanwhile.</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">store</span>
+        <span class="k">await</span> <span class="n">pending</span><span class="o">.</span><span class="n">while_busy</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Saving your progress to </span><span class="si">{</span><span class="n">db_to_save</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">…"</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">_carry_progress</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">db_to_save</span><span class="p">),</span>
+        <span class="p">)</span>
     <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">db_to_save</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">active_config</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">datasets</span><span class="o">.</span><span class="n">remember_last_config</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
-    <span class="n">_config_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_config_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Saved '</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">' → </span><span class="si">{</span><span class="n">out</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (DB: </span><span class="si">{</span><span class="n">db_to_save</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
 
 
@@ -1347,7 +1355,7 @@
     <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
     <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"New session DB: </span><span class="si">{</span><span class="n">fresh</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_rename_session_db</span><span class="p">(</span><span class="n">new_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1377,7 +1385,7 @@
     <span class="n">ds</span><span class="o">.</span><span class="n">session_db_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
     <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>  <span class="c1"># (re)creates the file if the move was a no-op</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Renamed session DB to </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_select_existing_db</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1387,7 +1395,7 @@
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Review DB: </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_apply_db_path</span><span class="p">(</span><span class="n">path_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1417,7 +1425,7 @@
     <span class="n">ds</span><span class="o">.</span><span class="n">db_path_custom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
     <span class="n">_switch_review_db</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
     <span class="n">ui</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Review DB: </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">PRIMARY</span><span class="p">)</span>
-    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+    <span class="n">_persistence_section</span><span class="o">.</span><span class="n">refresh_everywhere</span><span class="p">()</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_pick_db_file</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

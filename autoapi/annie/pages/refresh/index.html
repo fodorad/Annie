@@ -336,6 +336,8 @@ that tab’s target. Other tabs catch up when they next build or open the view.<
 tab, as before.</p></li>
 <li><p><a class="reference internal" href="#annie.pages.refresh.client_refreshable.refresh_everywhere" title="annie.pages.refresh.client_refreshable.refresh_everywhere"><code class="xref py py-meth docutils literal notranslate"><span class="pre">client_refreshable.refresh_everywhere()</span></code></a> rebuilds every tab on purpose, for data that
 every open tab must show at once.</p></li>
+<li><p><a class="reference internal" href="#annie.pages.refresh.client_refreshable.refresh_others" title="annie.pages.refresh.client_refreshable.refresh_others"><code class="xref py py-meth docutils literal notranslate"><span class="pre">client_refreshable.refresh_others()</span></code></a> rebuilds every tab except the acting one, for a
+data change whose acting tab will rebuild the view anyway when it next opens it.</p></li>
 </ul>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h2>
@@ -372,6 +374,12 @@ which is equivalent but prevents static type checking errors.</p>
 <dt class="sig sig-object py" id="annie.pages.refresh.client_refreshable.refresh_everywhere">
 <span class="sig-name descname"><span class="pre">refresh_everywhere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">nicegui.awaitable_response.AwaitableResponse</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/refresh.html#client_refreshable.refresh_everywhere"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.refresh.client_refreshable.refresh_everywhere" title="Link to this definition">¶</a></dt>
 <dd><p>Rebuild this view in every open tab (for data all tabs must show at once).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="annie.pages.refresh.client_refreshable.refresh_others">
+<span class="sig-name descname"><span class="pre">refresh_others</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">nicegui.awaitable_response.AwaitableResponse</span></span></span><a class="reference internal" href="../../../../_modules/annie/pages/refresh.html#client_refreshable.refresh_others"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#annie.pages.refresh.client_refreshable.refresh_others" title="Link to this definition">¶</a></dt>
+<dd><p>Rebuild this view in every open tab except the acting one (all, outside a tab).</p>
 </dd></dl>
 
 </dd></dl>
@@ -440,6 +448,7 @@ which is equivalent but prevents static type checking errors.</p>
 <li><a class="reference internal" href="#annie.pages.refresh.client_refreshable"><code class="docutils literal notranslate"><span class="pre">client_refreshable</span></code></a><ul>
 <li><a class="reference internal" href="#annie.pages.refresh.client_refreshable.refresh"><code class="docutils literal notranslate"><span class="pre">client_refreshable.refresh()</span></code></a></li>
 <li><a class="reference internal" href="#annie.pages.refresh.client_refreshable.refresh_everywhere"><code class="docutils literal notranslate"><span class="pre">client_refreshable.refresh_everywhere()</span></code></a></li>
+<li><a class="reference internal" href="#annie.pages.refresh.client_refreshable.refresh_others"><code class="docutils literal notranslate"><span class="pre">client_refreshable.refresh_others()</span></code></a></li>
 </ul>
 </li>
 </ul>
