@@ -96,6 +96,8 @@ class TestReviewDatabases(BrowserCase):
         path_box.press("Enter")
         expect(self.page.get_by_text("Renamed session DB to named.db")).to_be_visible()
         expect(path_box).to_have_value(str(renamed))
+        # The section rebuilds after a rename: a click before that lands on a stale button.
+        expect(self.panel().get_by_text("named.db", exact=True)).to_be_visible()
         self.assertFalse(Path(fresh).exists())
 
         # Another new one, then back to the named one from the recent list.
