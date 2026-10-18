@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 from nicegui import ui
 
+from annie.app_state import state
 from annie.core.config import settings
-from annie.core.state import state
 from annie.pages.lazy import schedule
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ def unembed_after_idle(
         box: The container holding the embedded clip.
         restore: Rebuilds the placeholder content inside ``box``. Must clear it.
         ttl: Idle seconds before reverting. Defaults to
-            :attr:`annie.core.state.UiSettings.embed_ttl_seconds`; rendered clips pass
+            :attr:`annie.app_state.UiSettings.embed_ttl_seconds`; rendered clips pass
             :func:`render_embed_ttl` so they never outlive the temp-dir sweep.
     """
     delay = ttl if ttl is not None else state.ui.embed_ttl_seconds

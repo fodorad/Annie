@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING
 from fastapi import Response
 from nicegui import app, run, ui
 
+from annie.app_state import state
 from annie.core import logbook, theme
 from annie.core.config import settings
-from annie.core.state import state
 from annie.pages import annotator, browse, download
 from annie.pages.lazy import schedule
 from annie.pages.refresh import client_refreshable

@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from annie.core.models import NO_ACTIVE_TRACK, BBox, Event, FrameAnnotation, VideoEntry
+from annie.core.models import NO_ACTIVE_TRACK, BBox, Event, FrameAnnotation, VideoEntry, hit_test
 
 
 class TestBBox(unittest.TestCase):
@@ -77,6 +77,24 @@ class TestFrameAnnotationAndEvent(unittest.TestCase):
         event = Event("e1", "smile", 1.0, 2.5)
         self.assertEqual(event.metadata, {})
         self.assertEqual(event.end, 2.5)
+
+
+class TestHitTest(unittest.TestCase):
+    def test_returns_none_when_no_box_hit(self) -> None:
+        annotation = FrameAnnotation(0, [BBox(0, 0, 10, 10, 0.9, track_id=1)])
+        self.assertIsNone(hit_test((50, 50), annotation))
+
+    def test_smallest_box_wins_on_overlap(self) -> None:
+        big = BBox(0, 0, 100, 100, 0.9, track_id=1)
+        small = BBox(40, 40, 20, 20, 0.9, track_id=2)
+        annotation = FrameAnnotation(0, [big, small])
+        self.assertEqual(hit_test((45, 45), annotation), 2)
+
+    def test_largest_box_wins_when_configured(self) -> None:
+        big = BBox(0, 0, 100, 100, 0.9, track_id=1)
+        small = BBox(40, 40, 20, 20, 0.9, track_id=2)
+        annotation = FrameAnnotation(0, [big, small])
+        self.assertEqual(hit_test((45, 45), annotation, smallest_wins=False), 1)
 
 
 if __name__ == "__main__":

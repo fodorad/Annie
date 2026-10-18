@@ -9,7 +9,7 @@ from pathlib import Path
 
 from nicegui import core, ui
 
-from annie.core.state import state
+from annie.app_state import state
 from annie.pages import csv_dialog
 from annie.pages import settings as settings_page
 from tests.fixtures import write_table, write_workbook

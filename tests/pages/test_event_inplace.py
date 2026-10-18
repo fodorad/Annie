@@ -12,8 +12,8 @@ from pathlib import Path
 from nicegui import core, ui
 from PIL import Image
 
+from annie.app_state import state
 from annie.core.models import VideoEntry
-from annie.core.state import state
 from annie.dataset.scanning import ScanResult
 from annie.dataset.storage import ReviewStore
 from annie.media.decode import media_available

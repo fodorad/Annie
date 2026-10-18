@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING, Literal
 
 from nicegui import context, run, ui
 
+from annie.app_state import seed_registry, state
 from annie.core import logbook, theme
 from annie.core.config import settings
-from annie.core.state import _seed_registry, state
 from annie.dataset import datasets
 from annie.dataset.layout import (
     DiscoveredVideo,
@@ -270,7 +270,7 @@ async def _env_config() -> None:
     """Reload sources from the ANNIE_* environment variables."""
     ds = _ds()
     state.active_config = None
-    state.registry = _seed_registry()
+    state.registry = seed_registry()
     state.audio_cache.clear()
     state.frames_cache.clear()
     # The env DB is a named, reloadable database (ANNIE_DB_PATH or annie_env.db), never

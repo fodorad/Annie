@@ -7,7 +7,7 @@ That adds up to hundreds of megabytes long after the row has left the screen.
 
 So each row carries a **viewport observer** — a Quasar ``q-intersection`` stretched
 over the row — and a :class:`OffscreenGate`. When the row has been out of view for
-:attr:`annie.core.state.UiSettings.unload_after_seconds`, its images are cleared back
+:attr:`annie.app_state.UiSettings.unload_after_seconds`, its images are cleared back
 to the grey placeholders they started as; when it scrolls back, they are decoded
 again. Both tabs size their media boxes in fixed pixels, so an emptied row keeps its
 exact height and nothing below it jumps.
@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 
 from nicegui import ui
 
-from annie.core.state import state
+from annie.app_state import state
 from annie.pages.lazy import schedule
 from annie.pages.utils import _alive
 
@@ -109,7 +109,7 @@ def observe_row(
         load: Rebuilds the row's images. Called when a dropped row scrolls back in.
         unload: Clears the row's images back to their placeholders.
         delay: How long the row may sit off screen before its images are dropped.
-            Defaults to :attr:`annie.core.state.UiSettings.unload_after_seconds`; the
+            Defaults to :attr:`annie.app_state.UiSettings.unload_after_seconds`; the
             Browse grid view passes a shorter value.
     """
     observer = ui.element("q-intersection").props(f"margin={_MARGIN}")

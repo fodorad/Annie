@@ -12,8 +12,8 @@ from types import SimpleNamespace
 from nicegui import core, ui
 from PIL import Image
 
+from annie.app_state import state
 from annie.core.models import VideoEntry
-from annie.core.state import state
 from annie.media.previews import PreviewLoader
 from annie.pages import annotator, pending
 from tests.pages._nicegui import quiet_slow_callback_warnings, ui_client

@@ -122,34 +122,3 @@ def draw_overlay(
             label = str(box.track_id)
             draw.text((box.x + 2, box.y + 2), label, fill=rgb)
     return image
-
-
-def hit_test(
-    click_xy: tuple[int, int],
-    annotation: FrameAnnotation,
-    *,
-    smallest_wins: bool = True,
-) -> int | None:
-    """Return the ``track_id`` of the box under a click, or ``None``.
-
-    Used by the protagonist correction flow: the click is tested against every
-    box on the frame. When boxes overlap, the smallest enclosing box wins by
-    default (configurable), which makes it possible to select a face nested
-    inside a larger one.
-
-    Args:
-        click_xy: The ``(x, y)`` click position in image-pixel space.
-        annotation: The boxes drawn on the clicked frame.
-        smallest_wins: If ``True``, ties break to the smallest-area box; if
-            ``False``, to the largest.
-
-    Returns:
-        The enclosing box's ``track_id``, or ``None`` if the click hit no box (or
-        the hit box has no track id).
-    """
-    px, py = click_xy
-    hits = [box for box in annotation.boxes if box.contains(px, py)]
-    if not hits:
-        return None
-    chosen = min(hits, key=lambda b: b.area) if smallest_wins else max(hits, key=lambda b: b.area)
-    return chosen.track_id

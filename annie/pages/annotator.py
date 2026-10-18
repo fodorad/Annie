@@ -60,9 +60,9 @@ from typing import TYPE_CHECKING
 
 from nicegui import background_tasks, context, run, ui
 
+from annie.app_state import state
 from annie.core import logbook, theme
 from annie.core.models import NO_ACTIVE_TRACK
-from annie.core.state import state
 from annie.dataset import corrections
 from annie.dataset.segments import (
     export_decision_sets,

@@ -17,8 +17,8 @@ from types import SimpleNamespace
 from nicegui import core, ui
 from nicegui.events import KeyboardKey
 
+from annie.app_state import state
 from annie.core.models import VideoEntry
-from annie.core.state import state
 from annie.dataset.layout import VideoLayout
 from annie.dataset.scanning import ScanResult
 from annie.dataset.sources import DataSource, SourceKind, SourceRegistry

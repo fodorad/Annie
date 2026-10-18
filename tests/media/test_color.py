@@ -1,4 +1,4 @@
-"""Tests for box colours, overlay drawing, and click hit-testing."""
+"""Tests for box colours and overlay drawing."""
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ from annie.media.color import (
     box_color,
     color_for_track,
     draw_overlay,
-    hit_test,
 )
 
 
@@ -63,24 +62,6 @@ class TestDrawOverlay(unittest.TestCase):
         annotation = FrameAnnotation(0, [BBox(5, 5, 20, 20, 0.9, track_id=None)])
         image = draw_overlay(frame, annotation, has_tracks=False)
         self.assertGreater(int(np.asarray(image).sum()), 0)
-
-
-class TestHitTest(unittest.TestCase):
-    def test_returns_none_when_no_box_hit(self) -> None:
-        annotation = FrameAnnotation(0, [BBox(0, 0, 10, 10, 0.9, track_id=1)])
-        self.assertIsNone(hit_test((50, 50), annotation))
-
-    def test_smallest_box_wins_on_overlap(self) -> None:
-        big = BBox(0, 0, 100, 100, 0.9, track_id=1)
-        small = BBox(40, 40, 20, 20, 0.9, track_id=2)
-        annotation = FrameAnnotation(0, [big, small])
-        self.assertEqual(hit_test((45, 45), annotation), 2)
-
-    def test_largest_box_wins_when_configured(self) -> None:
-        big = BBox(0, 0, 100, 100, 0.9, track_id=1)
-        small = BBox(40, 40, 20, 20, 0.9, track_id=2)
-        annotation = FrameAnnotation(0, [big, small])
-        self.assertEqual(hit_test((45, 45), annotation, smallest_wins=False), 1)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from annie.core.state import state
+from annie.app_state import state
 from annie.dataset.storage import ReviewStore
 from annie.pages import settings
 

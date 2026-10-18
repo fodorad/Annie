@@ -15,7 +15,7 @@ from pathlib import Path
 
 from nicegui import core, ui
 
-from annie.core.state import state
+from annie.app_state import state
 from annie.dataset.scanning import ScanResult
 from annie.dataset.segments import next_undecided_index
 from annie.dataset.sources import (

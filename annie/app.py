@@ -27,9 +27,9 @@ from pathlib import Path
 from nicegui import app, run, ui
 
 from annie import __version__
+from annie.app_state import state
 from annie.core import logbook, runtime, theme
 from annie.core.config import settings
-from annie.core.state import state
 from annie.media import decode
 from annie.media.decode import media_available
 from annie.media.preview import report_decode_failure
