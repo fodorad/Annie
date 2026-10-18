@@ -103,8 +103,9 @@ class BrowserCase(unittest.TestCase):
     def pick(self, target: Path) -> None:
         """Walk Annie's folder/file picker to ``target`` and choose it.
 
-        The picker opens at home (or beside the last pick); this clicks ``..`` and folder
-        names until it shows ``target``'s folder, as a user would.
+        The picker opens at home (or beside the last pick); this clicks ``..``, another
+        drive at a Windows drive root, and folder names until it shows ``target``'s folder,
+        as a user would.
         """
         target = target.resolve()
         picker = self.dialog()
@@ -115,7 +116,12 @@ class BrowserCase(unittest.TestCase):
             current = Path(where.inner_text())
             if current == folder:
                 break
-            step = folder.relative_to(current).parts[0] if folder.is_relative_to(current) else ".."
+            if folder.is_relative_to(current):
+                step = folder.relative_to(current).parts[0]
+            elif current.parent == current:
+                step = folder.anchor  # at a drive root the picker lists the other drives
+            else:
+                step = ".."
             picker.locator(".cursor-pointer").filter(
                 has=self.page.get_by_text(step, exact=True)
             ).first.click()
