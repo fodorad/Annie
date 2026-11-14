@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.core.config" href="../config/index.html"><link rel="prev" title="annie.core" href="../index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/core/bugreport/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.core.bugreport - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -357,28 +357,28 @@ leave one Annie per hour, so a crash loop cannot flood the inbox.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.access_key" title="annie.core.bugreport.access_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">access_key</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.access_key" title="annie.core.bugreport.access_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">access_key</span></code></a>([environ, built_in]) → str</p></td>
 <td><p>The access key in use: <code class="docutils literal notranslate"><span class="pre">ANNIE_REPORT_KEY</span></code> if set, else the built-in key.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.reporting_available" title="annie.core.bugreport.reporting_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reporting_available</span></code></a>(→ bool)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.reporting_available" title="annie.core.bugreport.reporting_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reporting_available</span></code></a>([environ, built_in]) → bool</p></td>
 <td><p>Whether reports can be sent (an access key is configured); see <a class="reference internal" href="#annie.core.bugreport.access_key" title="annie.core.bugreport.access_key"><code class="xref py py-func docutils literal notranslate"><span class="pre">access_key()</span></code></a>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.build_report" title="annie.core.bugreport.build_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_report</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.build_report" title="annie.core.bugreport.build_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_report</span></code></a>(event, note, *, version) → str</p></td>
 <td><p>The plain text that is sent, exactly as the user previews it.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.payload" title="annie.core.bugreport.payload"><code class="xref py py-obj docutils literal notranslate"><span class="pre">payload</span></code></a>(→ dict[str, str])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.payload" title="annie.core.bugreport.payload"><code class="xref py py-obj docutils literal notranslate"><span class="pre">payload</span></code></a>(text[, key]) → dict[str, str]</p></td>
 <td><p>The JSON body the form-to-email service expects (<code class="docutils literal notranslate"><span class="pre">key</span></code> defaults to the key in use).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.already_sent" title="annie.core.bugreport.already_sent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">already_sent</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.already_sent" title="annie.core.bugreport.already_sent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">already_sent</span></code></a>(seq) → bool</p></td>
 <td><p>Whether the error with log sequence number <code class="docutils literal notranslate"><span class="pre">seq</span></code> was reported already.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.can_send" title="annie.core.bugreport.can_send"><code class="xref py py-obj docutils literal notranslate"><span class="pre">can_send</span></code></a>(→ bool)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.can_send" title="annie.core.bugreport.can_send"><code class="xref py py-obj docutils literal notranslate"><span class="pre">can_send</span></code></a>([now]) → bool</p></td>
 <td><p>Whether another report fits within <a class="reference internal" href="#annie.core.bugreport.MAX_REPORTS_PER_HOUR" title="annie.core.bugreport.MAX_REPORTS_PER_HOUR"><code class="xref py py-data docutils literal notranslate"><span class="pre">MAX_REPORTS_PER_HOUR</span></code></a>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.mark_sent" title="annie.core.bugreport.mark_sent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mark_sent</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.bugreport.mark_sent" title="annie.core.bugreport.mark_sent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mark_sent</span></code></a>(seq[, now]) → None</p></td>
 <td><p>Remember that the error <code class="docutils literal notranslate"><span class="pre">seq</span></code> was reported, for the Sent state and the limit.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.reset" title="annie.core.bugreport.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.bugreport.reset" title="annie.core.bugreport.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a>() → None</p></td>
 <td><p>Forget sent reports (for tests).</p></td>
 </tr>
 </tbody>

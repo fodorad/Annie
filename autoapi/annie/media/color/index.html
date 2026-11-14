@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.media.compose" href="../compose/index.html"><link rel="prev" title="annie.media.clipping" href="../clipping/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/media/color/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.media.color - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -364,13 +364,13 @@ colour.</p></li>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.color.color_for_track" title="annie.media.color.color_for_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">color_for_track</span></code></a>(→ tuple[int, int, int])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.color.color_for_track" title="annie.media.color.color_for_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">color_for_track</span></code></a>(track_id, *[, active]) → tuple[int, int, int]</p></td>
 <td><p>Return the stable RGB colour for a track.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.color.box_color" title="annie.media.color.box_color"><code class="xref py py-obj docutils literal notranslate"><span class="pre">box_color</span></code></a>(→ tuple[int, int, int])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.color.box_color" title="annie.media.color.box_color"><code class="xref py py-obj docutils literal notranslate"><span class="pre">box_color</span></code></a>(box, *, has_tracks, active_track_id) → tuple[int, int, int]</p></td>
 <td><p>Choose the colour for a single box per the four drawing rules.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.color.draw_overlay" title="annie.media.color.draw_overlay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">draw_overlay</span></code></a>(→ PIL.Image.Image)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.color.draw_overlay" title="annie.media.color.draw_overlay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">draw_overlay</span></code></a>(frame, annotation, *, has_tracks[, ...]) → PIL.Image.Image</p></td>
 <td><p>Draw all boxes (and their track-id labels) for one frame.</p></td>
 </tr>
 </tbody>

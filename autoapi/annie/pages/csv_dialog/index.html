@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.dataset" href="../dataset/index.html"><link rel="prev" title="annie.pages.convert" href="../convert/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/csv_dialog/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.csv_dialog - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -358,19 +358,19 @@ restrict the Browse list to.</p></li>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.tag_clashes" title="annie.pages.csv_dialog.tag_clashes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tag_clashes</span></code></a>(→ list[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.tag_clashes" title="annie.pages.csv_dialog.tag_clashes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tag_clashes</span></code></a>(sources, taken) → list[str]</p></td>
 <td><p>Return tag names that would collide, in the order they appear.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_table" title="annie.pages.csv_dialog.configure_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_table</span></code></a>(...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_table" title="annie.pages.csv_dialog.configure_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_table</span></code></a>(path, targets, taken) → list[annie.dataset.sources.DataSource] | None</p></td>
 <td><p>Configure a CSV or an Excel workbook as one or more sources.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.reading" title="annie.pages.csv_dialog.reading"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reading</span></code></a>(→ T | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.reading" title="annie.pages.csv_dialog.reading"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reading</span></code></a>(path, read) → T | None</p></td>
 <td><p>Run <code class="docutils literal notranslate"><span class="pre">read</span></code> off the event loop while a small dialog says <code class="docutils literal notranslate"><span class="pre">path</span></code> is being read.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv" title="annie.pages.csv_dialog.configure_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_csv</span></code></a>(→ annie.dataset.sources.DataSource | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.configure_csv" title="annie.pages.csv_dialog.configure_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_csv</span></code></a>(path, targets, taken) → annie.dataset.sources.DataSource | None</p></td>
 <td><p>Open the CSV configuration modal and return the resulting source.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column" title="annie.pages.csv_dialog.select_id_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_id_column</span></code></a>(→ tuple[str, list[str]] | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.csv_dialog.select_id_column" title="annie.pages.csv_dialog.select_id_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_id_column</span></code></a>(path, video_stems) → tuple[str, list[str]] | None</p></td>
 <td><p>Open the id-column modal for a CSV that supplies a Browse id filter.</p></td>
 </tr>
 </tbody>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.timeline_view" href="../timeline_view/index.html"><link rel="prev" title="annie.pages.tabs" href="../tabs/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/timeline/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.timeline - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -401,19 +401,19 @@ re-render (see <a class="reference internal" href="../videoclock/index.html#anni
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.pack_lanes" title="annie.pages.timeline.pack_lanes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_lanes</span></code></a>(→ list[int])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.pack_lanes" title="annie.pages.timeline.pack_lanes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_lanes</span></code></a>(events) → list[int]</p></td>
 <td><p>Assign each event a sub-row so overlapping events never share one.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.build_svg" title="annie.pages.timeline.build_svg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_svg</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.build_svg" title="annie.pages.timeline.build_svg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_svg</span></code></a>(tracks, *, view_start, view_end, fps, svg_id) → str</p></td>
 <td><p>Render the timeline as an inline-SVG string for the visible frame window.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.gesture_script" title="annie.pages.timeline.gesture_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gesture_script</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.gesture_script" title="annie.pages.timeline.gesture_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gesture_script</span></code></a>(svg_id, event_name, *[, pannable]) → str</p></td>
 <td><p>Return JS that reports a timeline click to the server via <code class="docutils literal notranslate"><span class="pre">emitEvent</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.scrollbar_html" title="annie.pages.timeline.scrollbar_html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scrollbar_html</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.timeline.scrollbar_html" title="annie.pages.timeline.scrollbar_html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scrollbar_html</span></code></a>(scroll_id, left, width) → str</p></td>
 <td><p>Return the pan scrollbar markup: a track holding a draggable thumb.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.scrollbar_script" title="annie.pages.timeline.scrollbar_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scrollbar_script</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.timeline.scrollbar_script" title="annie.pages.timeline.scrollbar_script"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scrollbar_script</span></code></a>(scroll_id, event_name) → str</p></td>
 <td><p>Return JS that makes the scrollbar draggable and click-to-centre.</p></td>
 </tr>
 </tbody>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.parsers.participants" href="../participants/index.html"><link rel="prev" title="annie.parsers.base" href="../base/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/parsers/csvmeta/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.parsers.csvmeta - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -354,37 +354,37 @@ newest timestamp); see <a class="reference internal" href="#annie.parsers.csvmet
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.read_header" title="annie.parsers.csvmeta.read_header"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_header</span></code></a>(→ list[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.read_header" title="annie.parsers.csvmeta.read_header"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_header</span></code></a>(path[, sheet]) → list[str]</p></td>
 <td><p>Return the column names of a table (its header row).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.read_rows" title="annie.parsers.csvmeta.read_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_rows</span></code></a>(→ list[dict[str, str]])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.read_rows" title="annie.parsers.csvmeta.read_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_rows</span></code></a>(path[, sheet]) → list[dict[str, str]]</p></td>
 <td><p>Read a table into column-keyed dict rows (CSV: BOM- and CRLF-tolerant).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.count_rows" title="annie.parsers.csvmeta.count_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count_rows</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.count_rows" title="annie.parsers.csvmeta.count_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count_rows</span></code></a>(path[, sheet]) → int</p></td>
 <td><p>Count data rows in a table (excludes the header), cheaply.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.suggest_key_column" title="annie.parsers.csvmeta.suggest_key_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suggest_key_column</span></code></a>(→ str | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.suggest_key_column" title="annie.parsers.csvmeta.suggest_key_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suggest_key_column</span></code></a>(path[, video_stems, sample, sheet]) → str | None</p></td>
 <td><p>Guess which column joins the CSV to videos.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.load_value_map" title="annie.parsers.csvmeta.load_value_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_value_map</span></code></a>(→ dict[str, dict[str, str]])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.load_value_map" title="annie.parsers.csvmeta.load_value_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_value_map</span></code></a>(path, key_column, value_columns, *[, ...]) → dict[str, dict[str, str]]</p></td>
 <td><p>Build a <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">{value_column:</span> <span class="pre">value}</span></code> mapping from a table.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.order_rows" title="annie.parsers.csvmeta.order_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">order_rows</span></code></a>(→ list[dict[str, str]])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.order_rows" title="annie.parsers.csvmeta.order_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">order_rows</span></code></a>(rows, column, *, descending) → list[dict[str, str]]</p></td>
 <td><p>Return <code class="docutils literal notranslate"><span class="pre">rows</span></code> sorted by <code class="docutils literal notranslate"><span class="pre">column</span></code>, stably, with empty values always last.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.duplicate_report" title="annie.parsers.csvmeta.duplicate_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">duplicate_report</span></code></a>(→ DuplicateReport)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.duplicate_report" title="annie.parsers.csvmeta.duplicate_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">duplicate_report</span></code></a>(rows, key_column[, order_column, ...]) → DuplicateReport</p></td>
 <td><p>Report the repeated keys of a table and which of them the order can't separate.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.suggest_join" title="annie.parsers.csvmeta.suggest_join"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suggest_join</span></code></a>(→ JoinSuggestion | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.suggest_join" title="annie.parsers.csvmeta.suggest_join"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suggest_join</span></code></a>(rows, header, targets, *[, sample]) → JoinSuggestion | None</p></td>
 <td><p>Propose the (id column, target) pair whose values overlap the most.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.short_name" title="annie.parsers.csvmeta.short_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">short_name</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.short_name" title="annie.parsers.csvmeta.short_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">short_name</span></code></a>(header[, limit]) → str</p></td>
 <td><p>Prefill for a tag name: the header on one line, cut at a word within <code class="docutils literal notranslate"><span class="pre">limit</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.distinct_column_values" title="annie.parsers.csvmeta.distinct_column_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distinct_column_values</span></code></a>(→ list[str])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.distinct_column_values" title="annie.parsers.csvmeta.distinct_column_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distinct_column_values</span></code></a>(rows, column) → list[str]</p></td>
 <td><p>Return the distinct non-empty values of one column, in first-seen order.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.distinct_values" title="annie.parsers.csvmeta.distinct_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distinct_values</span></code></a>(→ list[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.csvmeta.distinct_values" title="annie.parsers.csvmeta.distinct_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distinct_values</span></code></a>(value_map, column) → list[str]</p></td>
 <td><p>Return the sorted distinct non-empty values of <code class="docutils literal notranslate"><span class="pre">column</span></code> across a map.</p></td>
 </tr>
 </tbody>

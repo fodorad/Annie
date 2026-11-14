@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.sources" href="../sources/index.html"><link rel="prev" title="annie.dataset.scanning" href="../scanning/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/segments/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.segments - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -352,16 +352,16 @@ accepted set and the dropped set — keyed by clip.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.clip_key" title="annie.dataset.segments.clip_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clip_key</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.clip_key" title="annie.dataset.segments.clip_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clip_key</span></code></a>(video_id, segment_id) → str</p></td>
 <td><p>Return the composite clip identity <code class="docutils literal notranslate"><span class="pre">{video_id}_{segment_id}</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.next_undecided_index" title="annie.dataset.segments.next_undecided_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">next_undecided_index</span></code></a>(→ int | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.next_undecided_index" title="annie.dataset.segments.next_undecided_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">next_undecided_index</span></code></a>(clips, decisions, start) → int | None</p></td>
 <td><p>Find the next clip after <code class="docutils literal notranslate"><span class="pre">start</span></code> with no accept/drop decision yet.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.load_segment_clips" title="annie.dataset.segments.load_segment_clips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_segment_clips</span></code></a>(→ list[SegmentClip])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.segments.load_segment_clips" title="annie.dataset.segments.load_segment_clips"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_segment_clips</span></code></a>(source) → list[SegmentClip]</p></td>
 <td><p>Load a segmentation CSV into clip records, one per usable row.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.export_decision_sets" title="annie.dataset.segments.export_decision_sets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_decision_sets</span></code></a>(→ tuple[pathlib.Path, pathlib.Path])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.segments.export_decision_sets" title="annie.dataset.segments.export_decision_sets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_decision_sets</span></code></a>(clips, decisions, accepted_path, ...) → tuple[pathlib.Path, pathlib.Path]</p></td>
 <td><p>Write the accepted clips and dropped clips to two separate CSV files.</p></td>
 </tr>
 </tbody>

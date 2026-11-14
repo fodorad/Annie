@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.system" href="../../system/index.html"><link rel="prev" title="annie.parsers.vdet" href="../vdet/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/parsers/workbook/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.parsers.workbook - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -353,16 +353,16 @@ because Excel stores ids as floats and they must still join to a video id.</p></
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.workbook.is_workbook" title="annie.parsers.workbook.is_workbook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_workbook</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.workbook.is_workbook" title="annie.parsers.workbook.is_workbook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_workbook</span></code></a>(path) → bool</p></td>
 <td><p>Return whether <code class="docutils literal notranslate"><span class="pre">path</span></code> names an Excel workbook (by suffix).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.workbook.cell_text" title="annie.parsers.workbook.cell_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_text</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.workbook.cell_text" title="annie.parsers.workbook.cell_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_text</span></code></a>(value) → str</p></td>
 <td><p>Return a cell value as the text Annie joins, tags and filters on.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.workbook.sheet_names" title="annie.parsers.workbook.sheet_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sheet_names</span></code></a>(→ list[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.workbook.sheet_names" title="annie.parsers.workbook.sheet_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sheet_names</span></code></a>(path) → list[str]</p></td>
 <td><p>Return a workbook's sheet names in tab order, or <code class="docutils literal notranslate"><span class="pre">[]</span></code> if it can't be read.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.workbook.read_sheet" title="annie.parsers.workbook.read_sheet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_sheet</span></code></a>(→ _Table)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.workbook.read_sheet" title="annie.parsers.workbook.read_sheet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_sheet</span></code></a>(path, sheet) → _Table</p></td>
 <td><p>Read one worksheet as <code class="docutils literal notranslate"><span class="pre">(header,</span> <span class="pre">rows)</span></code>, every value as text.</p></td>
 </tr>
 </tbody>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.datasets" href="../datasets/index.html"><link rel="prev" title="annie.dataset" href="../index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/corrections/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.corrections - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -337,22 +337,22 @@ the frames are re-rendered so the new active track shows green.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.manual_sibling" title="annie.dataset.corrections.manual_sibling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manual_sibling</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.manual_sibling" title="annie.dataset.corrections.manual_sibling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manual_sibling</span></code></a>(heuristic_path) → pathlib.Path</p></td>
 <td><p>The <code class="docutils literal notranslate"><span class="pre">_manual</span></code> CSV path for a protagonist source, next to the heuristic file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.export_active_tracks" title="annie.dataset.corrections.export_active_tracks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_active_tracks</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.export_active_tracks" title="annie.dataset.corrections.export_active_tracks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_active_tracks</span></code></a>(out_path, mapping[, key_column, ...]) → pathlib.Path</p></td>
 <td><p>Write a <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">track_id</span></code> correction mapping as a two-column CSV.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.resolve_active_track" title="annie.dataset.corrections.resolve_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_active_track</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.resolve_active_track" title="annie.dataset.corrections.resolve_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_active_track</span></code></a>(uuid[, heuristic_file, ...]) → int</p></td>
 <td><p>Resolve a video's active track id (manual ▸ source ▸ -1).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.set_active_track" title="annie.dataset.corrections.set_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_active_track</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.set_active_track" title="annie.dataset.corrections.set_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_active_track</span></code></a>(uuid, track_id[, heuristic_file, ...]) → pathlib.Path</p></td>
 <td><p>Persist a manual protagonist correction (upsert by video id).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.export_corrected" title="annie.dataset.corrections.export_corrected"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_corrected</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.corrections.export_corrected" title="annie.dataset.corrections.export_corrected"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_corrected</span></code></a>(out_path[, heuristic_file, ...]) → pathlib.Path</p></td>
 <td><p>Export the resolved (manual ▸ source) protagonist mapping to a CSV.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.hit_test_frame" title="annie.dataset.corrections.hit_test_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hit_test_frame</span></code></a>(→ int | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.corrections.hit_test_frame" title="annie.dataset.corrections.hit_test_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hit_test_frame</span></code></a>(click_xy, annotation, *[, smallest_wins]) → int | None</p></td>
 <td><p>Map a click on a frame to the enclosing box's <code class="docutils literal notranslate"><span class="pre">track_id</span></code>.</p></td>
 </tr>
 </tbody>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.refresh" href="../refresh/index.html"><link rel="prev" title="annie.pages.paging" href="../paging/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/pending/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.pending - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -358,28 +358,28 @@ finishes after a refresh or reload never has to guard the UI itself.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.media_box" title="annie.pages.pending.media_box"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media_box</span></code></a>(→ nicegui.ui.element)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.media_box" title="annie.pages.pending.media_box"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media_box</span></code></a>(width, height) → nicegui.ui.element</p></td>
 <td><p>Create an empty grey media box of a fixed CSS size.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.is_pending" title="annie.pages.pending.is_pending"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_pending</span></code></a>(→ bool)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.is_pending" title="annie.pages.pending.is_pending"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_pending</span></code></a>(box) → bool</p></td>
 <td><p>Whether <code class="docutils literal notranslate"><span class="pre">box</span></code> currently shows a pending spinner (<code class="docutils literal notranslate"><span class="pre">False</span></code> once it is gone).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.pending" title="annie.pages.pending.pending"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pending</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.pending" title="annie.pages.pending.pending"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pending</span></code></a>(box, *[, keep, size]) → None</p></td>
 <td><p>Show a centred spinner in <code class="docutils literal notranslate"><span class="pre">box</span></code> until <a class="reference internal" href="#annie.pages.pending.ready" title="annie.pages.pending.ready"><code class="xref py py-func docutils literal notranslate"><span class="pre">ready()</span></code></a> or <a class="reference internal" href="#annie.pages.pending.failed" title="annie.pages.pending.failed"><code class="xref py py-func docutils literal notranslate"><span class="pre">failed()</span></code></a>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.ready" title="annie.pages.pending.ready"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ready</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.ready" title="annie.pages.pending.ready"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ready</span></code></a>(box, build) → None</p></td>
 <td><p>Replace the spinner (and any old content) with the finished content.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.failed" title="annie.pages.pending.failed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">failed</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.failed" title="annie.pages.pending.failed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">failed</span></code></a>(box, reason) → None</p></td>
 <td><p>Replace the spinner with an error icon whose tooltip explains why.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.pending_badge" title="annie.pages.pending.pending_badge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pending_badge</span></code></a>(→ nicegui.ui.element)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.pending_badge" title="annie.pages.pending.pending_badge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pending_badge</span></code></a>(text) → nicegui.ui.element</p></td>
 <td><p>Create a badge slot showing <code class="docutils literal notranslate"><span class="pre">text</span></code> with a small spinner, for a value not known yet.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.settle_badge" title="annie.pages.pending.settle_badge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">settle_badge</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.pending.settle_badge" title="annie.pages.pending.settle_badge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">settle_badge</span></code></a>(slot, text[, color]) → None</p></td>
 <td><p>Replace a pending badge with its final <code class="docutils literal notranslate"><span class="pre">text</span></code> (no spinner).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.while_busy" title="annie.pages.pending.while_busy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">while_busy</span></code></a>(→ T | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.pending.while_busy" title="annie.pages.pending.while_busy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">while_busy</span></code></a>(message, work) → T | None</p></td>
 <td><p>Run blocking <code class="docutils literal notranslate"><span class="pre">work</span></code> off the event loop behind a modal spinner showing <code class="docutils literal notranslate"><span class="pre">message</span></code>.</p></td>
 </tr>
 </tbody>

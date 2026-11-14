@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.segments" href="../segments/index.html"><link rel="prev" title="annie.dataset.manipulate" href="../manipulate/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/scanning/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.scanning - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -360,19 +360,19 @@ substring (<code class="docutils literal notranslate"><span class="pre">match_su
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.resolve_video_stem" title="annie.dataset.scanning.resolve_video_stem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_video_stem</span></code></a>(→ str | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.resolve_video_stem" title="annie.dataset.scanning.resolve_video_stem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_video_stem</span></code></a>(annotation_stem, ...) → str | None</p></td>
 <td><p>Find the video stem an annotation belongs to, longest-stem-first.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.match_keys" title="annie.dataset.scanning.match_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_keys</span></code></a>(→ tuple[dict[str, str], set[str]])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.match_keys" title="annie.dataset.scanning.match_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_keys</span></code></a>(keys, targets, *, substring) → tuple[dict[str, str], set[str]]</p></td>
 <td><p>Link table keys to match targets (video ids or path-field values).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.join_summary" title="annie.dataset.scanning.join_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_summary</span></code></a>(→ JoinSummary)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.join_summary" title="annie.dataset.scanning.join_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_summary</span></code></a>(keys, video_targets, *, substring) → JoinSummary</p></td>
 <td><p>Summarise a prospective join for the table dialog.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.build_manifest" title="annie.dataset.scanning.build_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_manifest</span></code></a>(→ ScanResult)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.scanning.build_manifest" title="annie.dataset.scanning.build_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_manifest</span></code></a>(registry) → ScanResult</p></td>
 <td><p>Scan all sources in <code class="docutils literal notranslate"><span class="pre">registry</span></code> into a per-video manifest.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.scan_dataset" title="annie.dataset.scanning.scan_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_dataset</span></code></a>(→ ScanResult)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.scanning.scan_dataset" title="annie.dataset.scanning.scan_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_dataset</span></code></a>([videos_dir, vdet_dir, track_dir, ...]) → ScanResult</p></td>
 <td><p>Scan the classic four MOSEI paths into a per-video manifest (convenience).</p></td>
 </tr>
 </tbody>

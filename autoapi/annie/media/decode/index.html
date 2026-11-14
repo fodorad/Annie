@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.media.preview" href="../preview/index.html"><link rel="prev" title="annie.media.convert" href="../convert/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/media/decode/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.media.decode - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -381,34 +381,34 @@ the Pillow-based overlay renderer in <code class="xref py py-mod docutils litera
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.media_available" title="annie.media.decode.media_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media_available</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.media_available" title="annie.media.decode.media_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media_available</span></code></a>() → bool</p></td>
 <td><p>Return whether the optional torchcodec backend can be imported.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.use_decoder_backend" title="annie.media.decode.use_decoder_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">use_decoder_backend</span></code></a>(→ collections.abc.Generator[None])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.use_decoder_backend" title="annie.media.decode.use_decoder_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">use_decoder_backend</span></code></a>(load) → collections.abc.Generator[None]</p></td>
 <td><p>Decode with another backend while the block runs (e.g. a fake decoder in tests).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.check_decoder" title="annie.media.decode.check_decoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_decoder</span></code></a>(→ MediaUnavailableError | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.check_decoder" title="annie.media.decode.check_decoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_decoder</span></code></a>() → MediaUnavailableError | None</p></td>
 <td><p>Load the decoder once and remember why it failed (run off the event loop).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.decoder_problem_found" title="annie.media.decode.decoder_problem_found"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decoder_problem_found</span></code></a>(→ str | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.decoder_problem_found" title="annie.media.decode.decoder_problem_found"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decoder_problem_found</span></code></a>() → str | None</p></td>
 <td><p>The problem <a class="reference internal" href="#annie.media.decode.check_decoder" title="annie.media.decode.check_decoder"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_decoder()</span></code></a> found, without loading anything.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.read_frame" title="annie.media.decode.read_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_frame</span></code></a>(→ numpy.ndarray)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.read_frame" title="annie.media.decode.read_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_frame</span></code></a>(path, frame_idx, *[, seek_mode]) → numpy.ndarray</p></td>
 <td><p>Read a single frame by index.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.read_frames" title="annie.media.decode.read_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_frames</span></code></a>(→ list[numpy.ndarray])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.read_frames" title="annie.media.decode.read_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_frames</span></code></a>(path, indices, *[, seek_mode]) → list[numpy.ndarray]</p></td>
 <td><p>Read several frames by index.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.frame_count" title="annie.media.decode.frame_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frame_count</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.frame_count" title="annie.media.decode.frame_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frame_count</span></code></a>(path) → int</p></td>
 <td><p>Return the number of frames in a video.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.video_metadata" title="annie.media.decode.video_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_metadata</span></code></a>(→ VideoMetadata)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.video_metadata" title="annie.media.decode.video_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_metadata</span></code></a>(path) → VideoMetadata</p></td>
 <td><p>Read frame count, dimensions, and fps for a video.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.read_strip" title="annie.media.decode.read_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_strip</span></code></a>(→ tuple[list[int], list[numpy.ndarray], int])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.decode.read_strip" title="annie.media.decode.read_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_strip</span></code></a>(path[, count, seek_mode]) → tuple[list[int], list[numpy.ndarray], int]</p></td>
 <td><p>Read evenly spaced sample frames for the Browse strip in one pass.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.strip_indices" title="annie.media.decode.strip_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_indices</span></code></a>(→ list[int])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.decode.strip_indices" title="annie.media.decode.strip_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_indices</span></code></a>(total[, count]) → list[int]</p></td>
 <td><p>Compute evenly spaced sample indices for the Browse 5-frame strip.</p></td>
 </tr>
 </tbody>

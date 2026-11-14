@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.system.reveal" href="../reveal/index.html"><link rel="prev" title="annie.system" href="../index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/system/fsbrowse/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.system.fsbrowse - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -332,25 +332,25 @@ picker dialog (<code class="docutils literal notranslate"><span class="pre">anni
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.resolve_start_dir" title="annie.system.fsbrowse.resolve_start_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_start_dir</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.resolve_start_dir" title="annie.system.fsbrowse.resolve_start_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_start_dir</span></code></a>(start) → pathlib.Path</p></td>
 <td><p>Return a sensible existing directory to open the picker at.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.system.fsbrowse.parent_of" title="annie.system.fsbrowse.parent_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent_of</span></code></a>(→ pathlib.Path | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.system.fsbrowse.parent_of" title="annie.system.fsbrowse.parent_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent_of</span></code></a>(path) → pathlib.Path | None</p></td>
 <td><p>Return the parent directory, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if already at the filesystem root.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.drive_roots" title="annie.system.fsbrowse.drive_roots"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drive_roots</span></code></a>(→ list[pathlib.Path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.drive_roots" title="annie.system.fsbrowse.drive_roots"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drive_roots</span></code></a>() → list[pathlib.Path]</p></td>
 <td><p>Return the drive roots (<code class="docutils literal notranslate"><span class="pre">C:/</span></code>, <code class="docutils literal notranslate"><span class="pre">E:/</span></code>, …) on Windows; empty elsewhere.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.system.fsbrowse.other_drives" title="annie.system.fsbrowse.other_drives"><code class="xref py py-obj docutils literal notranslate"><span class="pre">other_drives</span></code></a>(→ list[P])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.system.fsbrowse.other_drives" title="annie.system.fsbrowse.other_drives"><code class="xref py py-obj docutils literal notranslate"><span class="pre">other_drives</span></code></a>(current, drives) → list[P]</p></td>
 <td><p>Return the drives in <code class="docutils literal notranslate"><span class="pre">drives</span></code> other than the one <code class="docutils literal notranslate"><span class="pre">current</span></code> lives on.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.scan_entries" title="annie.system.fsbrowse.scan_entries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_entries</span></code></a>(→ tuple[list[pathlib.Path], ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.scan_entries" title="annie.system.fsbrowse.scan_entries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_entries</span></code></a>(path, *, want_files[, suffixes, show_hidden]) → tuple[list[pathlib.Path], list[pathlib.Path]]</p></td>
 <td><p>List a directory's subfolders (and optionally files) in a single pass.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.system.fsbrowse.list_subdirectories" title="annie.system.fsbrowse.list_subdirectories"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_subdirectories</span></code></a>(→ list[pathlib.Path])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.system.fsbrowse.list_subdirectories" title="annie.system.fsbrowse.list_subdirectories"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_subdirectories</span></code></a>(path, *[, show_hidden]) → list[pathlib.Path]</p></td>
 <td><p>List immediate subdirectories of <code class="docutils literal notranslate"><span class="pre">path</span></code>, sorted case-insensitively.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.list_files" title="annie.system.fsbrowse.list_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_files</span></code></a>(→ list[pathlib.Path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.system.fsbrowse.list_files" title="annie.system.fsbrowse.list_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_files</span></code></a>(path, *[, suffixes, show_hidden]) → list[pathlib.Path]</p></td>
 <td><p>List immediate files of <code class="docutils literal notranslate"><span class="pre">path</span></code>, sorted case-insensitively.</p></td>
 </tr>
 </tbody>

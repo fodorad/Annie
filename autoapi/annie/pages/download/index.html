@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.event_task" href="../event_task/index.html"><link rel="prev" title="annie.pages.dataset" href="../dataset/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/download/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.download - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -349,16 +349,16 @@ runs and Docker behave identically.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.download.sanitize_filename" title="annie.pages.download.sanitize_filename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sanitize_filename</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.download.sanitize_filename" title="annie.pages.download.sanitize_filename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sanitize_filename</span></code></a>(name, *, extension, default_stem) → str</p></td>
 <td><p>Make <code class="docutils literal notranslate"><span class="pre">name</span></code> a safe file name that ends in <code class="docutils literal notranslate"><span class="pre">.extension</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.download.save_from_url_js" title="annie.pages.download.save_from_url_js"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_from_url_js</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.download.save_from_url_js" title="annie.pages.download.save_from_url_js"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_from_url_js</span></code></a>(filename, url, mime) → str</p></td>
 <td><p>Return a click handler that fetches <code class="docutils literal notranslate"><span class="pre">url</span></code> and saves it where the user picks.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.download.attach_save" title="annie.pages.download.attach_save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attach_save</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.download.attach_save" title="annie.pages.download.attach_save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attach_save</span></code></a>(element, *, filename, url, extension) → None</p></td>
 <td><p>Make clicking <code class="docutils literal notranslate"><span class="pre">element</span></code> open the native Save dialog straight away.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.download.export_menu_item" title="annie.pages.download.export_menu_item"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_menu_item</span></code></a>(→ nicegui.ui.menu_item)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.download.export_menu_item" title="annie.pages.download.export_menu_item"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_menu_item</span></code></a>(label, *, filename, url, extension) → nicegui.ui.menu_item</p></td>
 <td><p>Add a menu entry that opens the native Save dialog straight away when clicked.</p></td>
 </tr>
 </tbody>

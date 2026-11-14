@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.media.convert" href="../convert/index.html"><link rel="prev" title="annie.media.color" href="../color/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/media/compose/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.media.compose - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -340,13 +340,13 @@ the active track; the full <strong>render</strong> shows vdet + every track.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.compose.load_entry_annotations" title="annie.media.compose.load_entry_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_entry_annotations</span></code></a>(→ tuple[dict[int, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.compose.load_entry_annotations" title="annie.media.compose.load_entry_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_entry_annotations</span></code></a>(entry) → tuple[dict[int, annie.core.models.FrameAnnotation], dict[int, dict[int, annie.core.models.FrameAnnotation]]]</p></td>
 <td><p>Load and index a video's vdet and track annotations by frame.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.compose.merge_frame" title="annie.media.compose.merge_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_frame</span></code></a>(→ annie.core.models.FrameAnnotation)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.compose.merge_frame" title="annie.media.compose.merge_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_frame</span></code></a>(frame_idx, vdet_by_frame, tracks_by_id, ...) → annie.core.models.FrameAnnotation</p></td>
 <td><p>Combine vdet and selected track boxes for one frame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.compose.strip_track_ids" title="annie.media.compose.strip_track_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_track_ids</span></code></a>(→ list[int])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.compose.strip_track_ids" title="annie.media.compose.strip_track_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_track_ids</span></code></a>(entry) → list[int]</p></td>
 <td><p>Track ids to draw on the Browse strip: just the active one, if any.</p></td>
 </tr>
 </tbody>

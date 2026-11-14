@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.layout" href="../layout/index.html"><link rel="prev" title="annie.dataset.events" href="../events/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/filtering/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.filtering - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -379,16 +379,16 @@ combine with <strong>OR</strong> (e.g. Sentiment in {negative, neutral}).</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.filtering.source_facets" title="annie.dataset.filtering.source_facets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source_facets</span></code></a>(→ set[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.filtering.source_facets" title="annie.dataset.filtering.source_facets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source_facets</span></code></a>(*, has_vdet, has_track) → set[str]</p></td>
 <td><p>The source-dependent facets that fit the configured sources.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.filtering.drop_facets" title="annie.dataset.filtering.drop_facets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_facets</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.filtering.drop_facets" title="annie.dataset.filtering.drop_facets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_facets</span></code></a>(spec, keep) → None</p></td>
 <td><p>Turn off every source-dependent facet not in <code class="docutils literal notranslate"><span class="pre">keep</span></code>, so a hidden box never filters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.filtering.matches" title="annie.dataset.filtering.matches"><code class="xref py py-obj docutils literal notranslate"><span class="pre">matches</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.filtering.matches" title="annie.dataset.filtering.matches"><code class="xref py py-obj docutils literal notranslate"><span class="pre">matches</span></code></a>(entry, review, spec, *[, has_audio, ...]) → bool</p></td>
 <td><p>Return whether a single video passes every active facet.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.filtering.apply_filters" title="annie.dataset.filtering.apply_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_filters</span></code></a>(→ list)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.filtering.apply_filters" title="annie.dataset.filtering.apply_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_filters</span></code></a>(entries, spec, review_of[, audio_of, ...]) → list</p></td>
 <td><p>Filter a manifest, keeping the entries that pass <code class="docutils literal notranslate"><span class="pre">spec</span></code>.</p></td>
 </tr>
 </tbody>

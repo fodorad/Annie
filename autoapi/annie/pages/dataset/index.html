@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.download" href="../download/index.html"><link rel="prev" title="annie.pages.csv_dialog" href="../csv_dialog/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/dataset/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.dataset - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -365,19 +365,19 @@ selection via a per-client <code class="xref py py-class docutils literal notran
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.metric_rows" title="annie.pages.dataset.metric_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metric_rows</span></code></a>(→ list[list[MetricCard]])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.metric_rows" title="annie.pages.dataset.metric_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metric_rows</span></code></a>(registry) → list[list[MetricCard]]</p></td>
 <td><p>The overview cards that fit the configured sources, as rows (empty rows dropped).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_from_input" title="annie.pages.dataset.layout_from_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_from_input</span></code></a>(→ annie.dataset.layout.VideoLayout)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_from_input" title="annie.pages.dataset.layout_from_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_from_input</span></code></a>(pattern) → annie.dataset.layout.VideoLayout</p></td>
 <td><p>Build and validate a <code class="xref py py-class docutils literal notranslate"><span class="pre">VideoLayout</span></code> from the Pattern box.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_commit" title="annie.pages.dataset.layout_commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_commit</span></code></a>(→ LayoutCommit)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_commit" title="annie.pages.dataset.layout_commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_commit</span></code></a>(pattern, current) → LayoutCommit</p></td>
 <td><p>Decide what to do when the Pattern box is committed (blur / Enter).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_summary" title="annie.pages.dataset.layout_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_summary</span></code></a>(→ str | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.dataset.layout_summary" title="annie.pages.dataset.layout_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">layout_summary</span></code></a>(source, scan) → str | None</p></td>
 <td><p>Describe what a nested layout found, from the last scan (no extra filesystem walk).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.render" title="annie.pages.dataset.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.dataset.render" title="annie.pages.dataset.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>() → None</p></td>
 <td><p>Build the Dataset tab body; register per-client state.</p></td>
 </tr>
 </tbody>

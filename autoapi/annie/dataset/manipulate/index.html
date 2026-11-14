@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.scanning" href="../scanning/index.html"><link rel="prev" title="annie.dataset.layout" href="../layout/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/manipulate/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.manipulate - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -369,13 +369,13 @@ one <strong>transform</strong> per column, replacing its raw value for tags and 
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.manipulate.transforms_for" title="annie.dataset.manipulate.transforms_for"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transforms_for</span></code></a>(→ tuple[TransformKind, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.manipulate.transforms_for" title="annie.dataset.manipulate.transforms_for"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transforms_for</span></code></a>(col_type) → tuple[TransformKind, ...]</p></td>
 <td><p>Return the transforms valid for a column type.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.manipulate.detect_type" title="annie.dataset.manipulate.detect_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_type</span></code></a>(→ ColumnType)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.manipulate.detect_type" title="annie.dataset.manipulate.detect_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_type</span></code></a>(values) → ColumnType</p></td>
 <td><p>Guess a column's type from a sample of its (string) values.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.manipulate.apply_transform" title="annie.dataset.manipulate.apply_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_transform</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.manipulate.apply_transform" title="annie.dataset.manipulate.apply_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_transform</span></code></a>(value, col_type, transform) → str</p></td>
 <td><p>Apply a column's transform to one raw value, returning its display value.</p></td>
 </tr>
 </tbody>

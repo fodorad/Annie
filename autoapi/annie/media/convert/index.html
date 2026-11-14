@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.media.decode" href="../decode/index.html"><link rel="prev" title="annie.media.compose" href="../compose/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/media/convert/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.media.convert - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -406,52 +406,52 @@ cut — which is what <a class="reference internal" href="#annie.media.convert.a
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.audio_command" title="annie.media.convert.audio_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audio_command</span></code></a>(→ list[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.audio_command" title="annie.media.convert.audio_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audio_command</span></code></a>(src, dst, opts) → list[str]</p></td>
 <td><p>Build the ffmpeg argv to re-encode one audio file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.video_filters" title="annie.media.convert.video_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_filters</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.video_filters" title="annie.media.convert.video_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_filters</span></code></a>(opts) → str</p></td>
 <td><p>Build the <code class="docutils literal notranslate"><span class="pre">-vf</span></code> filter chain string for the given video options.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.video_command" title="annie.media.convert.video_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_command</span></code></a>(→ list[str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.video_command" title="annie.media.convert.video_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">video_command</span></code></a>(src, dst, opts[, audio_path]) → list[str]</p></td>
 <td><p>Build the ffmpeg argv to re-encode one video (constant frame rate H.264).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.black_video_command" title="annie.media.convert.black_video_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">black_video_command</span></code></a>(→ list[str])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.black_video_command" title="annie.media.convert.black_video_command"><code class="xref py py-obj docutils literal notranslate"><span class="pre">black_video_command</span></code></a>(dst, audio, opts) → list[str]</p></td>
 <td><p>Build the ffmpeg argv for an audio-only item: a black-frame video + audio.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.plan_audio" title="annie.media.convert.plan_audio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan_audio</span></code></a>(→ list[AudioItem])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.plan_audio" title="annie.media.convert.plan_audio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan_audio</span></code></a>(in_dir, out_dir, opts) → list[AudioItem]</p></td>
 <td><p>Plan the audio batch: one <a class="reference internal" href="#annie.media.convert.AudioItem" title="annie.media.convert.AudioItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">AudioItem</span></code></a> per input file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.plan_video" title="annie.media.convert.plan_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan_video</span></code></a>(→ list[VideoItem])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.plan_video" title="annie.media.convert.plan_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan_video</span></code></a>(in_dir, out_dir, opts[, audio_dir]) → list[VideoItem]</p></td>
 <td><p>Plan the video batch: one <a class="reference internal" href="#annie.media.convert.VideoItem" title="annie.media.convert.VideoItem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VideoItem</span></code></a> per input file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.expected_frame_count" title="annie.media.convert.expected_frame_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expected_frame_count</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.expected_frame_count" title="annie.media.convert.expected_frame_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expected_frame_count</span></code></a>(duration_s, fps) → int</p></td>
 <td><p>Return the number of frames a <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> clip at <code class="docutils literal notranslate"><span class="pre">fps</span></code> should have.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.expected_sample_count" title="annie.media.convert.expected_sample_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expected_sample_count</span></code></a>(→ int)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.expected_sample_count" title="annie.media.convert.expected_sample_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">expected_sample_count</span></code></a>(duration_s, sample_rate) → int</p></td>
 <td><p>Return the number of audio samples a <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> clip at <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> has.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.audio_video_consistent" title="annie.media.convert.audio_video_consistent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audio_video_consistent</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.audio_video_consistent" title="annie.media.convert.audio_video_consistent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">audio_video_consistent</span></code></a>(num_frames, fps, num_samples, ...) → bool</p></td>
 <td><p>Whether an audio track and a video stream have matching durations.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.run_ffmpeg" title="annie.media.convert.run_ffmpeg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_ffmpeg</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.run_ffmpeg" title="annie.media.convert.run_ffmpeg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_ffmpeg</span></code></a>(cmd) → None</p></td>
 <td><p>Run an ffmpeg command, raising <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code> with its tail on failure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.decodable_frames" title="annie.media.convert.decodable_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decodable_frames</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.decodable_frames" title="annie.media.convert.decodable_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decodable_frames</span></code></a>(path) → int</p></td>
 <td><p>Return the torchcodec frame count, verified by actually decoding, or <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.validate_video" title="annie.media.convert.validate_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_video</span></code></a>(→ tuple[bool, str])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.validate_video" title="annie.media.convert.validate_video"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_video</span></code></a>(path[, min_frames]) → tuple[bool, str]</p></td>
 <td><p>Validate a re-encoded video with torchcodec.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.convert_audio_file" title="annie.media.convert.convert_audio_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_audio_file</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.convert_audio_file" title="annie.media.convert.convert_audio_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_audio_file</span></code></a>(item, opts) → None</p></td>
 <td><p>Re-encode one audio file, skipping it if a non-empty output already exists.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.convert_video_file" title="annie.media.convert.convert_video_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_video_file</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.convert_video_file" title="annie.media.convert.convert_video_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_video_file</span></code></a>(item, opts) → None</p></td>
 <td><p>Re-encode one video (or synthesise a black-frame one), then validate it.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.export_ids" title="annie.media.convert.export_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_ids</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.convert.export_ids" title="annie.media.convert.export_ids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_ids</span></code></a>(path, ids) → pathlib.Path</p></td>
 <td><p>Write a one-column CSV (<code class="docutils literal notranslate"><span class="pre">id</span></code>) of the given filenames' stems, sorted.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.export_failures" title="annie.media.convert.export_failures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_failures</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.convert.export_failures" title="annie.media.convert.export_failures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_failures</span></code></a>(path, failures) → pathlib.Path</p></td>
 <td><p>Write a two-column CSV (<code class="docutils literal notranslate"><span class="pre">id,error</span></code>) for the failed files, sorted by id.</p></td>
 </tr>
 </tbody>

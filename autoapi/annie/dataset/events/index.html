@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.filtering" href="../filtering/index.html"><link rel="prev" title="annie.dataset.datasets" href="../datasets/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/events/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.events - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -348,43 +348,43 @@ deliberate: nested attributes do not live cleanly in a spreadsheet cell.</p></li
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.frames_to_seconds" title="annie.dataset.events.frames_to_seconds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frames_to_seconds</span></code></a>(→ float)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.frames_to_seconds" title="annie.dataset.events.frames_to_seconds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frames_to_seconds</span></code></a>(frame, fps) → float</p></td>
 <td><p>Convert a frame index to seconds at <code class="docutils literal notranslate"><span class="pre">fps</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.seconds_to_frame" title="annie.dataset.events.seconds_to_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seconds_to_frame</span></code></a>(→ int)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.seconds_to_frame" title="annie.dataset.events.seconds_to_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seconds_to_frame</span></code></a>(sec, fps) → int</p></td>
 <td><p>Convert seconds to the nearest frame index at <code class="docutils literal notranslate"><span class="pre">fps</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.clamp_event" title="annie.dataset.events.clamp_event"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clamp_event</span></code></a>(→ tuple[int, int])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.clamp_event" title="annie.dataset.events.clamp_event"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clamp_event</span></code></a>(start, end, num_frames) → tuple[int, int]</p></td>
 <td><p>Order and bound an event's frames to a valid interval within the video.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.effective_color" title="annie.dataset.events.effective_color"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_color</span></code></a>(→ str | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.effective_color" title="annie.dataset.events.effective_color"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_color</span></code></a>(event[, types, lane_color]) → str | None</p></td>
 <td><p>Return the colour an event is drawn and exported with.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.effective_attributes" title="annie.dataset.events.effective_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_attributes</span></code></a>(→ dict[str, str])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.effective_attributes" title="annie.dataset.events.effective_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_attributes</span></code></a>(event[, types]) → dict[str, str]</p></td>
 <td><p>Return an event's attributes with its event category's defaults filled in.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.build_export_tree" title="annie.dataset.events.build_export_tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_export_tree</span></code></a>(→ dict[str, dict[str, object]])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.build_export_tree" title="annie.dataset.events.build_export_tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_export_tree</span></code></a>(events, fps_by_video[, ...]) → dict[str, dict[str, object]]</p></td>
 <td><p>Group events into the nested <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">{fps,</span> <span class="pre">tracks}</span></code> export structure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_json_text" title="annie.dataset.events.events_to_json_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_json_text</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_json_text" title="annie.dataset.events.events_to_json_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_json_text</span></code></a>(events, fps_by_video[, ...]) → str</p></td>
 <td><p>Render events as nested JSON text (one object per video).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_json" title="annie.dataset.events.export_events_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_json</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_json" title="annie.dataset.events.export_events_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_json</span></code></a>(events, fps_by_video, path) → pathlib.Path</p></td>
 <td><p>Write events to a nested JSON file (see <a class="reference internal" href="#annie.dataset.events.events_to_json_text" title="annie.dataset.events.events_to_json_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_json_text()</span></code></a>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.event_table" title="annie.dataset.events.event_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">event_table</span></code></a>(→ tuple[list[str], list[dict[str, object]]])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.event_table" title="annie.dataset.events.event_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">event_table</span></code></a>(events, fps_by_video[, meta_by_video, types]) → tuple[list[str], list[dict[str, object]]]</p></td>
 <td><p>Flatten events into spreadsheet rows (one per event), shared by CSV and XLSX.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_csv_text" title="annie.dataset.events.events_to_csv_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_csv_text</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_csv_text" title="annie.dataset.events.events_to_csv_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_csv_text</span></code></a>(events, fps_by_video[, ...]) → str</p></td>
 <td><p>Render events as flat CSV text (one row per event; columns as <a class="reference internal" href="#annie.dataset.events.event_table" title="annie.dataset.events.event_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">event_table()</span></code></a>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_csv" title="annie.dataset.events.export_events_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_csv</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_csv" title="annie.dataset.events.export_events_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_csv</span></code></a>(events, fps_by_video, path) → pathlib.Path</p></td>
 <td><p>Write events to a flat CSV file (see <a class="reference internal" href="#annie.dataset.events.events_to_csv_text" title="annie.dataset.events.events_to_csv_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_csv_text()</span></code></a>).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_xlsx_bytes" title="annie.dataset.events.events_to_xlsx_bytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_xlsx_bytes</span></code></a>(→ bytes)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.events.events_to_xlsx_bytes" title="annie.dataset.events.events_to_xlsx_bytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events_to_xlsx_bytes</span></code></a>(events, fps_by_video[, ...]) → bytes</p></td>
 <td><p>Render events as an Excel workbook (same columns as the CSV, see <a class="reference internal" href="#annie.dataset.events.event_table" title="annie.dataset.events.event_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">event_table()</span></code></a>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_xlsx" title="annie.dataset.events.export_events_xlsx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_xlsx</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.events.export_events_xlsx" title="annie.dataset.events.export_events_xlsx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_events_xlsx</span></code></a>(events, fps_by_video, path) → pathlib.Path</p></td>
 <td><p>Write events to an Excel file (see <a class="reference internal" href="#annie.dataset.events.events_to_xlsx_bytes" title="annie.dataset.events.events_to_xlsx_bytes"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_to_xlsx_bytes()</span></code></a>).</p></td>
 </tr>
 </tbody>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.media.previews" href="../previews/index.html"><link rel="prev" title="annie.media.decode" href="../decode/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/media/preview/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.media.preview - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -345,22 +345,22 @@ requires torch; call <code class="xref py py-func docutils literal notranslate">
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.to_data_uri" title="annie.media.preview.to_data_uri"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data_uri</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.to_data_uri" title="annie.media.preview.to_data_uri"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_data_uri</span></code></a>(image[, box]) → str</p></td>
 <td><p>Encode a PIL image as a self-contained <code class="docutils literal notranslate"><span class="pre">data:</span></code> WebP URI.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.band_frame_indices" title="annie.media.preview.band_frame_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">band_frame_indices</span></code></a>(→ list[int])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.band_frame_indices" title="annie.media.preview.band_frame_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">band_frame_indices</span></code></a>(start_sec, end_sec, fps, num_frames) → list[int]</p></td>
 <td><p>Evenly sample <code class="docutils literal notranslate"><span class="pre">count</span></code> frame indices across the span <code class="docutils literal notranslate"><span class="pre">[start_sec,</span> <span class="pre">end_sec)</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.build_preview" title="annie.media.preview.build_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_preview</span></code></a>(→ tuple[PIL.Image.Image, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.build_preview" title="annie.media.preview.build_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_preview</span></code></a>(entry[, count]) → tuple[PIL.Image.Image, list[PIL.Image.Image], int]</p></td>
 <td><p>Decode a video's strip and draw its annotations.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.build_grid_preview" title="annie.media.preview.build_grid_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_grid_preview</span></code></a>(→ tuple[PIL.Image.Image, int])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.build_grid_preview" title="annie.media.preview.build_grid_preview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_grid_preview</span></code></a>(entry) → tuple[PIL.Image.Image, int]</p></td>
 <td><p>Decode a video's middle (½) frame with its annotations drawn on it.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.build_band_strip" title="annie.media.preview.build_band_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_band_strip</span></code></a>(→ list[PIL.Image.Image])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.media.preview.build_band_strip" title="annie.media.preview.build_band_strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_band_strip</span></code></a>(video_path, start_sec, end_sec[, count]) → list[PIL.Image.Image]</p></td>
 <td><p>Decode a plain strip spanning one band's <code class="docutils literal notranslate"><span class="pre">[start_sec,</span> <span class="pre">end_sec)</span></code> window.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.report_decode_failure" title="annie.media.preview.report_decode_failure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">report_decode_failure</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.media.preview.report_decode_failure" title="annie.media.preview.report_decode_failure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">report_decode_failure</span></code></a>(video, exc) → str</p></td>
 <td><p>Log a failed frame decode once, and return the reason to show on the frame box.</p></td>
 </tr>
 </tbody>

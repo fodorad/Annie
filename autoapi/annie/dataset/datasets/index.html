@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.dataset.events" href="../events/index.html"><link rel="prev" title="annie.dataset.corrections" href="../corrections/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/dataset/datasets/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.dataset.datasets - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -349,31 +349,31 @@ users load configs via the file picker or save their own.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.repo_data_dir" title="annie.dataset.datasets.repo_data_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repo_data_dir</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.repo_data_dir" title="annie.dataset.datasets.repo_data_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">repo_data_dir</span></code></a>() → pathlib.Path</p></td>
 <td><p>Return the bundled <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.bundled_config_dir" title="annie.dataset.datasets.bundled_config_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bundled_config_dir</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.bundled_config_dir" title="annie.dataset.datasets.bundled_config_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bundled_config_dir</span></code></a>() → pathlib.Path</p></td>
 <td><p>Return the source-checkout config directory (<code class="docutils literal notranslate"><span class="pre">data/config</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.discover_configs" title="annie.dataset.datasets.discover_configs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover_configs</span></code></a>(→ list[pathlib.Path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.discover_configs" title="annie.dataset.datasets.discover_configs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover_configs</span></code></a>([directory]) → list[pathlib.Path]</p></td>
 <td><p>List <code class="docutils literal notranslate"><span class="pre">*.json</span></code> config files for the Dataset tab dropdown.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.config_name" title="annie.dataset.datasets.config_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_name</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.config_name" title="annie.dataset.datasets.config_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_name</span></code></a>(path) → str</p></td>
 <td><p>Return a config's display name (its <code class="docutils literal notranslate"><span class="pre">name</span></code> field, or the file stem).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.load_config" title="annie.dataset.datasets.load_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_config</span></code></a>(→ tuple[str, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.load_config" title="annie.dataset.datasets.load_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_config</span></code></a>(path) → tuple[str, annie.dataset.sources.SourceRegistry, pathlib.Path | None]</p></td>
 <td><p>Load a config file into a <code class="docutils literal notranslate"><span class="pre">(name,</span> <span class="pre">registry,</span> <span class="pre">db_path)</span></code> triple.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.to_config_dict" title="annie.dataset.datasets.to_config_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_config_dict</span></code></a>(→ dict)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.to_config_dict" title="annie.dataset.datasets.to_config_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_config_dict</span></code></a>(registry, name, *[, relative_to, db_path]) → dict</p></td>
 <td><p>Serialise a registry to a config dict.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.save_config" title="annie.dataset.datasets.save_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_config</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.save_config" title="annie.dataset.datasets.save_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_config</span></code></a>(path, registry, name, *[, relative_to, ...]) → pathlib.Path</p></td>
 <td><p>Write a registry to a config file as JSON.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remember_last_config</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remember_last_config</span></code></a>(path) → None</p></td>
 <td><p>Record <code class="docutils literal notranslate"><span class="pre">path</span></code> as the config to reopen on the next start.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.last_config" title="annie.dataset.datasets.last_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">last_config</span></code></a>(→ pathlib.Path | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.dataset.datasets.last_config" title="annie.dataset.datasets.last_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">last_config</span></code></a>() → pathlib.Path | None</p></td>
 <td><p>Return the config remembered by <a class="reference internal" href="#annie.dataset.datasets.remember_last_config" title="annie.dataset.datasets.remember_last_config"><code class="xref py py-func docutils literal notranslate"><span class="pre">remember_last_config()</span></code></a>, if it still exists.</p></td>
 </tr>
 </tbody>

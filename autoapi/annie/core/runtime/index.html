@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.core.theme" href="../theme/index.html"><link rel="prev" title="annie.core.models" href="../models/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/core/runtime/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.core.runtime - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -378,49 +378,49 @@ downloads them later when they were left out.</p></li>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.ffmpeg_dll_dir" title="annie.core.runtime.ffmpeg_dll_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ffmpeg_dll_dir</span></code></a>(→ pathlib.Path | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.ffmpeg_dll_dir" title="annie.core.runtime.ffmpeg_dll_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ffmpeg_dll_dir</span></code></a>(override, ffmpeg_exe) → pathlib.Path | None</p></td>
 <td><p>Return the folder holding FFmpeg's shared libraries, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unknown.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.hidden_console" title="annie.core.runtime.hidden_console"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hidden_console</span></code></a>(→ int)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.hidden_console" title="annie.core.runtime.hidden_console"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hidden_console</span></code></a>([platform]) → int</p></td>
 <td><p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">subprocess</span></code> <code class="docutils literal notranslate"><span class="pre">creationflags</span></code> that keep a console program out of sight.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.ensure_windows_ffmpeg_dlls" title="annie.core.runtime.ensure_windows_ffmpeg_dlls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensure_windows_ffmpeg_dlls</span></code></a>(→ pathlib.Path | None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.ensure_windows_ffmpeg_dlls" title="annie.core.runtime.ensure_windows_ffmpeg_dlls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensure_windows_ffmpeg_dlls</span></code></a>() → pathlib.Path | None</p></td>
 <td><p>On Windows, register FFmpeg's DLL folder so torchcodec can load it.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.app_url" title="annie.core.runtime.app_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">app_url</span></code></a>(→ str)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.app_url" title="annie.core.runtime.app_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">app_url</span></code></a>(host, port) → str</p></td>
 <td><p>Return the browser URL for an Annie server bound to <code class="docutils literal notranslate"><span class="pre">host:port</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.port_in_use" title="annie.core.runtime.port_in_use"><code class="xref py py-obj docutils literal notranslate"><span class="pre">port_in_use</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.port_in_use" title="annie.core.runtime.port_in_use"><code class="xref py py-obj docutils literal notranslate"><span class="pre">port_in_use</span></code></a>(host, port) → bool</p></td>
 <td><p>Return whether something already accepts connections on <code class="docutils literal notranslate"><span class="pre">host:port</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.annie_running" title="annie.core.runtime.annie_running"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annie_running</span></code></a>(→ bool)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.annie_running" title="annie.core.runtime.annie_running"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annie_running</span></code></a>(host, port) → bool</p></td>
 <td><p>Return whether the server on <code class="docutils literal notranslate"><span class="pre">host:port</span></code> is Annie (its page title says so).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.launcher_outdated" title="annie.core.runtime.launcher_outdated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">launcher_outdated</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.launcher_outdated" title="annie.core.runtime.launcher_outdated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">launcher_outdated</span></code></a>(raw_version) → bool</p></td>
 <td><p>Return whether the Windows launcher that started Annie is too old.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.parse_version" title="annie.core.runtime.parse_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_version</span></code></a>(→ tuple[int, ...] | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.parse_version" title="annie.core.runtime.parse_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_version</span></code></a>(raw) → tuple[int, ...] | None</p></td>
 <td><p>Return the numeric release part of a version string, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if there is none.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.is_newer" title="annie.core.runtime.is_newer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_newer</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.is_newer" title="annie.core.runtime.is_newer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_newer</span></code></a>(latest, current) → bool</p></td>
 <td><p>Return whether release <code class="docutils literal notranslate"><span class="pre">latest</span></code> is newer than the running <code class="docutils literal notranslate"><span class="pre">current</span></code> version.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.latest_pypi_version" title="annie.core.runtime.latest_pypi_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latest_pypi_version</span></code></a>(→ str | None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.latest_pypi_version" title="annie.core.runtime.latest_pypi_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latest_pypi_version</span></code></a>([timeout]) → str | None</p></td>
 <td><p>Return the newest Annie release on PyPI, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when PyPI cannot be reached.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.annie_folder" title="annie.core.runtime.annie_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annie_folder</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.annie_folder" title="annie.core.runtime.annie_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annie_folder</span></code></a>(settings, install_dir) → pathlib.Path</p></td>
 <td><p>Return the folder the tray's &quot;Open Annie folder&quot; opens.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.examples_installed" title="annie.core.runtime.examples_installed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">examples_installed</span></code></a>(→ bool)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.examples_installed" title="annie.core.runtime.examples_installed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">examples_installed</span></code></a>(directory) → bool</p></td>
 <td><p>Whether the example datasets' configs are in <code class="docutils literal notranslate"><span class="pre">directory</span></code> (an <code class="docutils literal notranslate"><span class="pre">ANNIE_DATA_DIR</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_examples</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_examples</span></code></a>(archive, directory) → int</p></td>
 <td><p>Unpack the examples archive into <code class="docutils literal notranslate"><span class="pre">directory</span></code> and return the number of files.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.download_examples" title="annie.core.runtime.download_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_examples</span></code></a>(→ int)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.core.runtime.download_examples" title="annie.core.runtime.download_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_examples</span></code></a>(directory[, timeout]) → int</p></td>
 <td><p>Download the example datasets into <code class="docutils literal notranslate"><span class="pre">directory</span></code>; see <a class="reference internal" href="#annie.core.runtime.extract_examples" title="annie.core.runtime.extract_examples"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_examples()</span></code></a>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.decoder_problem" title="annie.core.runtime.decoder_problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decoder_problem</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.core.runtime.decoder_problem" title="annie.core.runtime.decoder_problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decoder_problem</span></code></a>(exc[, platform, installed]) → str</p></td>
 <td><p>Explain why the frame decoder (torchcodec, and PyTorch under it) could not load.</p></td>
 </tr>
 </tbody>

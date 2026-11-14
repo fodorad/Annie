@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.parsers.track" href="../track/index.html"><link rel="prev" title="annie.parsers.csvmeta" href="../csvmeta/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/parsers/participants/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.parsers.participants - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -339,22 +339,22 @@ the video id, written with the same two columns. Resolution order is
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.participants.manual_path_for" title="annie.parsers.participants.manual_path_for"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manual_path_for</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.participants.manual_path_for" title="annie.parsers.participants.manual_path_for"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manual_path_for</span></code></a>(source_file) → pathlib.Path</p></td>
 <td><p>Return the manual-correction sibling path for a source file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.participants.load_participants" title="annie.parsers.participants.load_participants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_participants</span></code></a>(→ dict[str, int])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.participants.load_participants" title="annie.parsers.participants.load_participants"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_participants</span></code></a>(path[, key_column, value_column]) → dict[str, int]</p></td>
 <td><p>Load a protagonist CSV into a <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">track_id</span></code> mapping.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.participants.resolved_mapping" title="annie.parsers.participants.resolved_mapping"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolved_mapping</span></code></a>(→ dict[str, int])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.participants.resolved_mapping" title="annie.parsers.participants.resolved_mapping"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolved_mapping</span></code></a>(source_file[, key_column, value_column]) → dict[str, int]</p></td>
 <td><p>Return the merged <code class="docutils literal notranslate"><span class="pre">video_id</span> <span class="pre">-&gt;</span> <span class="pre">track_id</span></code> mapping (manual overrides source).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.participants.resolve_active_track" title="annie.parsers.participants.resolve_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_active_track</span></code></a>(→ int)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.participants.resolve_active_track" title="annie.parsers.participants.resolve_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_active_track</span></code></a>(uuid, source_file[, key_column, ...]) → int</p></td>
 <td><p>Resolve the active track id for a video using manual ▸ source ▸ -1.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.participants.set_active_track" title="annie.parsers.participants.set_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_active_track</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.parsers.participants.set_active_track" title="annie.parsers.participants.set_active_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_active_track</span></code></a>(uuid, track_id, source_file[, ...]) → pathlib.Path</p></td>
 <td><p>Upsert a manual protagonist correction for <code class="docutils literal notranslate"><span class="pre">uuid</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.participants.export_resolved" title="annie.parsers.participants.export_resolved"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_resolved</span></code></a>(→ pathlib.Path)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.parsers.participants.export_resolved" title="annie.parsers.participants.export_resolved"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_resolved</span></code></a>(source_file, out_path[, key_column, ...]) → pathlib.Path</p></td>
 <td><p>Write the resolved (manual ▸ source) mapping to a standalone CSV.</p></td>
 </tr>
 </tbody>

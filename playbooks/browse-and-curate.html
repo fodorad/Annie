@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Playbook — Segment review (accept / drop clips)" href="segment-review.html"><link rel="prev" title="Playbooks" href="index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/playbooks/browse-and-curate.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>Playbook — Dataset, Browse &amp; Curation - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -322,7 +322,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="playbook-dataset-browse-curation">
-<h1>Playbook — Dataset, Browse &amp; Curation<a class="headerlink" href="#playbook-dataset-browse-curation" title="Link to this heading">¶</a></h1>
+<span id="playbook--dataset-browse--curation"></span><h1>Playbook — Dataset, Browse &amp; Curation<a class="headerlink" href="#playbook-dataset-browse-curation" title="Link to this heading">¶</a></h1>
 <p>This playbook follows a reviewer from <strong>defining</strong> a dataset, through <strong>finding</strong> the
 interesting samples in Browse, to <strong>supervising</strong> them in the Annotator. It reflects the
 separation Annie enforces: Browse is a read-only viewer that only <em>selects</em>; all
@@ -332,7 +332,7 @@ supervision (verdicts, notes, protagonist corrections) happens in the Annotator.
 config from the Dataset tab.</p>
 <hr class="docutils" />
 <section id="step-1-define-the-dataset-on-the-dataset-tab">
-<h2>Step 1 — Define the dataset on the Dataset tab<a class="headerlink" href="#step-1-define-the-dataset-on-the-dataset-tab" title="Link to this heading">¶</a></h2>
+<span id="step-1--define-the-dataset-on-the-dataset-tab"></span><h2>Step 1 — Define the dataset on the Dataset tab<a class="headerlink" href="#step-1-define-the-dataset-on-the-dataset-tab" title="Link to this heading">¶</a></h2>
 <p>A dataset is an ordered list of <strong>data sources</strong>, not a fixed set of folders. Pick a
 config from the selector (or build one with <strong>Add data source</strong>); adding or removing a
 source re-scans in place, so the metrics update immediately.</p>
@@ -380,7 +380,7 @@ shows where its value came from, e.g. <code class="docutils literal notranslate"
 </section>
 <hr class="docutils" />
 <section id="step-2-reshape-label-columns-with-manipulate">
-<h2>Step 2 — Reshape label columns with Manipulate<a class="headerlink" href="#step-2-reshape-label-columns-with-manipulate" title="Link to this heading">¶</a></h2>
+<span id="step-2--reshape-label-columns-with-manipulate"></span><h2>Step 2 — Reshape label columns with Manipulate<a class="headerlink" href="#step-2-reshape-label-columns-with-manipulate" title="Link to this heading">¶</a></h2>
 <p>Raw label columns are not always the ones you want to filter on. The <strong>Manipulate</strong>
 panel derives a filterable view of a column without touching the underlying data — round
 a float, or threshold it into two sides.</p>
@@ -401,7 +401,7 @@ others, so the sample rows are never pushed off screen.</p></li>
 </section>
 <hr class="docutils" />
 <section id="step-3-select-the-samples-you-want-to-supervise">
-<h2>Step 3 — Select the samples you want to supervise<a class="headerlink" href="#step-3-select-the-samples-you-want-to-supervise" title="Link to this heading">¶</a></h2>
+<span id="step-3--select-the-samples-you-want-to-supervise"></span><h2>Step 3 — Select the samples you want to supervise<a class="headerlink" href="#step-3-select-the-samples-you-want-to-supervise" title="Link to this heading">¶</a></h2>
 <p>Browse lists one row per video. Clicking the <strong>top-right corner</strong> of a row selects it for
 the Annotator; nothing else on the row toggles selection, so playing a video or opening
 the reveal menu never queues it by accident.</p>
@@ -423,7 +423,7 @@ elsewhere; Browse just no longer <em>sets</em> it.</p></li>
 </section>
 <hr class="docutils" />
 <section id="step-4-curate-the-queued-videos-in-the-annotator">
-<h2>Step 4 — Curate the queued videos in the Annotator<a class="headerlink" href="#step-4-curate-the-queued-videos-in-the-annotator" title="Link to this heading">¶</a></h2>
+<span id="step-4--curate-the-queued-videos-in-the-annotator"></span><h2>Step 4 — Curate the queued videos in the Annotator<a class="headerlink" href="#step-4-curate-the-queued-videos-in-the-annotator" title="Link to this heading">¶</a></h2>
 <p>Switch to the Annotator and pick the <strong>Curation</strong> task. It shows the queued videos with
 the like/dislike verdict and a free-text note — the supervision that used to live on
 Browse rows. Every video is liked by default until you disagree; each change saves to the

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.folder_picker" href="../folder_picker/index.html"><link rel="prev" title="annie.pages.download" href="../download/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/event_task/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.event_task - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -342,22 +342,22 @@ their own modules.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.next_default_category_name" title="annie.pages.event_task.next_default_category_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">next_default_category_name</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.next_default_category_name" title="annie.pages.event_task.next_default_category_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">next_default_category_name</span></code></a>(existing[, prefix]) → str</p></td>
 <td><p>Return the next free <code class="docutils literal notranslate"><span class="pre">&quot;&lt;prefix&gt;</span> <span class="pre">N&quot;</span></code> name given the existing names.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.cleanup" title="annie.pages.event_task.cleanup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cleanup</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.cleanup" title="annie.pages.event_task.cleanup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cleanup</span></code></a>(client_id) → None</p></td>
 <td><p>Drop a disconnected client's Event-annotation state and gesture handler flag.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.needs_metadata" title="annie.pages.event_task.needs_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">needs_metadata</span></code></a>(→ bool)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.needs_metadata" title="annie.pages.event_task.needs_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">needs_metadata</span></code></a>(state_, entry) → bool</p></td>
 <td><p>Whether <code class="docutils literal notranslate"><span class="pre">entry</span></code>'s metadata still has to be read before its work area can be built.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.load_metadata" title="annie.pages.event_task.load_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_metadata</span></code></a>(→ bool)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.load_metadata" title="annie.pages.event_task.load_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_metadata</span></code></a>(state_, entry) → bool</p></td>
 <td><p>Read <code class="docutils literal notranslate"><span class="pre">entry</span></code>'s frame rate and length off the event loop and apply them.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.event_annotation_task" title="annie.pages.event_task.event_annotation_task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">event_annotation_task</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.event_task.event_annotation_task" title="annie.pages.event_task.event_annotation_task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">event_annotation_task</span></code></a>() → None</p></td>
 <td><p>Build the Event-annotation work area for the current queued video.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.changed_fields" title="annie.pages.event_task.changed_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">changed_fields</span></code></a>(→ dict[str, object])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.event_task.changed_fields" title="annie.pages.event_task.changed_fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">changed_fields</span></code></a>(event, fields) → dict[str, object]</p></td>
 <td><p>The subset of <code class="docutils literal notranslate"><span class="pre">fields</span></code> whose value differs from what <code class="docutils literal notranslate"><span class="pre">event</span></code> stores.</p></td>
 </tr>
 </tbody>

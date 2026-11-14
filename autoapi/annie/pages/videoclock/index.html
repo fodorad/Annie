@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html"><link rel="next" title="annie.pages.viewport" href="../viewport/index.html"><link rel="prev" title="annie.pages.utils" href="../utils/index.html">
         <link rel="canonical" href="https://fodorad.github.io/Annie/autoapi/annie/pages/videoclock/index.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>annie.pages.videoclock - Annie latest documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
@@ -346,40 +346,40 @@ is exercised in the browser, not unit-tested, like the other <code class="docuti
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.element_id" title="annie.pages.videoclock.element_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_id</span></code></a>(→ str)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.element_id" title="annie.pages.videoclock.element_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_id</span></code></a>(client_id) → str</p></td>
 <td><p>Return the stable DOM id given to the task's video element for a client.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.play" title="annie.pages.videoclock.play"><code class="xref py py-obj docutils literal notranslate"><span class="pre">play</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.play" title="annie.pages.videoclock.play"><code class="xref py py-obj docutils literal notranslate"><span class="pre">play</span></code></a>(element_id_) → None</p></td>
 <td><p>Start playback of the video element.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.pause" title="annie.pages.videoclock.pause"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pause</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.pause" title="annie.pages.videoclock.pause"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pause</span></code></a>(element_id_) → None</p></td>
 <td><p>Pause the video element.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.toggle" title="annie.pages.videoclock.toggle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.toggle" title="annie.pages.videoclock.toggle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle</span></code></a>(element_id_) → None</p></td>
 <td><p>Toggle play/pause on the video element.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.seek_seconds" title="annie.pages.videoclock.seek_seconds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seek_seconds</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.seek_seconds" title="annie.pages.videoclock.seek_seconds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seek_seconds</span></code></a>(element_id_, seconds) → None</p></td>
 <td><p>Seek the video to an absolute time in seconds (clamped at zero).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.seek_frame" title="annie.pages.videoclock.seek_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seek_frame</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.seek_frame" title="annie.pages.videoclock.seek_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seek_frame</span></code></a>(element_id_, frame, fps) → None</p></td>
 <td><p>Seek the video to a specific frame via its time, with a half-frame nudge.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.step_frames" title="annie.pages.videoclock.step_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step_frames</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.step_frames" title="annie.pages.videoclock.step_frames"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step_frames</span></code></a>(element_id_, delta, fps) → None</p></td>
 <td><p>Pause and move the cursor by <code class="docutils literal notranslate"><span class="pre">delta</span></code> frames (positive forward, negative back).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.nudge_seconds" title="annie.pages.videoclock.nudge_seconds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nudge_seconds</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.nudge_seconds" title="annie.pages.videoclock.nudge_seconds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nudge_seconds</span></code></a>(element_id_, delta) → None</p></td>
 <td><p>Jump the cursor by <code class="docutils literal notranslate"><span class="pre">delta</span></code> seconds (the ±5 s buttons), clamped at the start.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.current_time" title="annie.pages.videoclock.current_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">current_time</span></code></a>(→ collections.abc.Awaitable[float])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.current_time" title="annie.pages.videoclock.current_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">current_time</span></code></a>(element_id_) → collections.abc.Awaitable[float]</p></td>
 <td><p>Read the video's current time in seconds from the browser.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.set_playhead_x" title="annie.pages.videoclock.set_playhead_x"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_playhead_x</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.set_playhead_x" title="annie.pages.videoclock.set_playhead_x"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_playhead_x</span></code></a>(timeline_id, x_fraction) → None</p></td>
 <td><p>Move the timeline playhead line to a horizontal fraction without a full re-render.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.set_scrollbar" title="annie.pages.videoclock.set_scrollbar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_scrollbar</span></code></a>(→ None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#annie.pages.videoclock.set_scrollbar" title="annie.pages.videoclock.set_scrollbar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_scrollbar</span></code></a>(scroll_id, left, width) → None</p></td>
 <td><p>Move the pan scrollbar's thumb without rebuilding it (so a drag is not interrupted).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.set_pending_band" title="annie.pages.videoclock.set_pending_band"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_pending_band</span></code></a>(→ None)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#annie.pages.videoclock.set_pending_band" title="annie.pages.videoclock.set_pending_band"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_pending_band</span></code></a>(timeline_id, start_fraction, end_fraction) → None</p></td>
 <td><p>Resize the amber capture band without a full re-render, while a start is armed.</p></td>
 </tr>
 </tbody>
