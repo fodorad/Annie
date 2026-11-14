@@ -76,8 +76,10 @@ class TestFilters(BrowseCase):
         ids.write_text("video_id\n100499_3\n", encoding="utf-8")
         self.open_panel("Filter").get_by_role("button", name="Ids from CSV…").click()
         self.pick(ids)
-        dialog = self.dialog()
-        dialog.get_by_role("button").last.click()  # confirm the suggested id column
+        # The id-column dialog opens only after the CSV has been read, so wait for it by
+        # name: right after the pick, the last dialog can still be the closing picker.
+        dialog = self.page.locator(".q-dialog").filter(has_text="Filter by ids")
+        dialog.get_by_role("button", name="Apply filter").click()  # keep the suggested column
         expect(self.rows()).to_have_count(1)
         expect(self.panel()).to_contain_text("wanted.csv")
 
