@@ -44,7 +44,7 @@ dependencies = [
 # (scanning, parsing, matching, storage, theme, colour) still install and run; only
 # frame decode/render need it.
 media = [
-  "torch==2.14.1",
+  "torch==2.15.0",
   "torchcodec==0.17.0",
 ]
 # ── Windows desktop app ──────────────────────────────────────────────────────
